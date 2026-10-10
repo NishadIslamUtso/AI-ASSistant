@@ -59,3 +59,6 @@ Current canonical vault contains local blacklist/activity/revision edits found w
 
 ### Final-review edge fixes
 Middle-click/context-menu/new-tab cannot bypass external-link preview because no external href is exposed before approval. HTTP200 lacking a genuine saved-source acknowledgement is a capture failure, not Saved; the local original/retry remains.42 Node/API and22 browser cases include these checks. Cross-window live state synchronization is not implemented/tested; do not claim live multi-window merge parity.
+
+### Final source ZIP evidence
+Verified c512e5a code snapshot:251files,CRC/all blob hashes, clean npm ci/build/42Node+22browser tests. Final delivered ZIP adds only documentation evidence, runtime/source bytes match; private canonical changes excluded. Source path deliverables/AI-ASSistant-branch-source.zip (~3.03MB), not installer. Local source commits only, no remote push/merge.

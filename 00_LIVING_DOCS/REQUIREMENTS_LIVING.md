@@ -346,3 +346,8 @@ This file IS the memory. Keep it updated.
 - Markdown exposes no external href before approval; middle-click/context-menu/new-tab cannot bypass exact destination preview. Normal/middle activation tested with no outbound request.
 - Vault HTTP200 is not automatically success: require genuine ok/source or valid blacklist acknowledgement; skipped/failed/malformed writes show failure and keep the local original with retry. Current-driver proof added, extension failed-response queue remains pending.
 - Final source build398.63kB JS/gzip123.06,34.20kB CSS/gzip7.73;42 Node/API +22 browser cases. ZIP preflight earlier62 checks superseded by latest64-check validation.
+
+### [2026-10-10 final packaging] Verified runnable branch source
+- Complete251file source ZIP, unchanged61file starter vault, no private runtime/caches/builds/credentials; CRC/all source hashes verified.
+- Clean extraction with fresh npm ci, production build,42/42 Node+22/22 mocked-browser tests passes after final safety fixes. Final evidence-only documentation update leaves runtime source identical.
+- No push/merge/native installer/real model/Windows confirmation; next beginner action remains extraction into a new folder.

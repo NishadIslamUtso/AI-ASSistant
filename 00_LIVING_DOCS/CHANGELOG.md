@@ -37,6 +37,9 @@
 - HTTP200 alone is not a saved source: validated ok/source and blacklist acknowledgements, explicit skipped/malformed failure, local original retained/retry. Added unit/browser coverage; test-helper saved-success expectation and failure-label mismatch corrected.
 - Latest42 Node +22 browser cases/build supersede prior41+21; clean ZIP verification repeated after these source changes.
 
+### Final source ZIP evidence
+Verified c512e5a local code snapshot:251files/CRC/all blob hashes/private-cache exclusions, clean npm ci/build/42Node+22browser tests; final archive adds only evidence docs with unchanged runtime source.3.03MB source, not installer; no external push/merge.
+
 ## Earlier timeline (preserved historical snapshot, superseded status)
 
 # CHANGELOG.md — What Changed Each Session (Living)

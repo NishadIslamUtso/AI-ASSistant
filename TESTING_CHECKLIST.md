@@ -65,3 +65,13 @@ Give one step and wait; do not have the beginner execute this entire list at onc
 Tests use temporary vaults; mocked model replies do not establish real quality. Canonical local blacklist/activity/revision edits found while preview ran have an unconfirmed initiating action, were retained, and are **not staged or exported**. Do not revert/delete/upload them automatically. Existing tracked vault files can still change despite ignore rules; use selective source staging.
 
 - Final edge checks: Markdown normal/middle click gated and external href absent; malformed HTTP200 capture acknowledgement shows failure/retry and preserves local original. No cross-window live-merge verification.
+
+## Final clean-source ZIP verification — 2026-10-10
+
+- **Verified code commit:** `c512e5a9d3369c18c761e6c19205ce7d44b4c254` on the fixed Arena branch (local-only).
+- Source ZIP CRC and **all251 committed file blob hashes match**; full target source/lock/tests/API/BAT plus reference/extension/61starter-vault/spec/docs/ai mirrors present. Native reference dimensions checked; caches/builds/credentials/runtime vault scope/activity/revisions excluded.
+- Clean extraction into a new sandbox directory; fresh `npm ci` installed306 pinned packages in3s. **42/42 Node/API tests, production build, and22/22 Playwright tests passed from the extracted source**. Build assets match the main checkout: `index-Zkdxa3Sr.js`, `index-F6Hb5vAH.css`.
+- Source64 checks include final middle/context-link approval and malformed-HTTP200 save-acknowledgement guards. Earlier b2700dc/62check preflight is superseded.
+- Final delivered archive adds documentation-only evidence updates; application/lock/server/test/scripts/source bytes remain identical to this verified code snapshot, with final archive CRC/all-tree hashes checked again. No private working-tree files included, no push/merge, no installer/real-model/Windows claim.
+
+Delivered path: `deliverables/AI-ASSistant-branch-source.zip` (~3.03MB). Next user step: extract into a **new** Windows folder without overwriting a real vault.
