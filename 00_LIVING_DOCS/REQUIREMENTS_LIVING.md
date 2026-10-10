@@ -1,6 +1,6 @@
 # REQUIREMENTS_LIVING.md — Single Source of Truth (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 (evening, Asia/Dhaka)
 **Version:** 1.0.0-master
 **Rule:** UPDATE THIS FILE EVERY TIME SOMETHING CHANGES. This repo is memory for AIs. If you don't update, next session loses context.
 
@@ -22,18 +22,19 @@ A native Windows app named AI ASSistant that looks exactly like Claude desktop f
 
 **Source:** spec/screenshots/ 191547.png to 191707.png — these ARE spec, not inspiration.
 
-### 2.1 Main Window (191547.png)
-- [x] Sidebar left 260px #202020: top Search field + "+ New chat" button, sections Projects, Artifacts (2), Customize, Oct 8 group, Older group
-- [x] Sidebar chat list: "Refining a 5-day workout cycle..." (Oct 8), "Identifying charisma type", "Realme 6i - realme... fix", "Fix AI generated Facebook picture", "PSY 101-01W | Unit 1 | Quiz Review", "STA201 - Elements of Statistics", "PHY-112, Principles of Physics II", "CSE220 MID - Data Structure and Algorithms", "Function: Manage memories of personal information" etc — from screenshots, use as default history
-- [x] Context menu on chat item (191646.png): Open in new window, Pin chat, Rename, Add to project, Move to group, Delete — position absolute, dark #2a2a2a, rounded
-- [x] Center #1a1a1a: greeting "Evening, Utso." serif 3xl with orange asterisk *, sub "How can I help you today?" composer #242424 rounded-xl, placeholder "How can I help you today?"
-- [x] Composer: textarea auto-grow, bottom row Project dropdown + "Sonnet 5.5 Medium Manual" model selector, send button white circle with arrow
-- [x] Top bar: "Free plan • Upgrade" right side
-- [x] Bottom left: avatar NU + "Utso" + "Free"
-- [ ] Settings modal (191707.png): Left nav General Account Privacy Billing Capabilities Memory Reflect Time and focus Claude Code System Extensions Developer Skills Connectors, right Appearance Theme options system/sun/moon, Chat font Anthropic Serif, Transcript size Small/Medium/Large, Width Narrow/Medium/Wide, Motion System/Reduced, Voice Language English, Style Buttery, Speed Normal
-- [ ] Menu bar (191558.png): File Edit View Go Help — Electron menu
-- [ ] User menu (191608.png): nishadislamutso@gmail.com, Settings, Language, Get help, Upgrade plan, Get apps and extensions, Learn more, Get API keys, Log out
-- [ ] Apps and extensions modal (191636.png): Do more with Claude everywhere you work, Claude Code Terminal VSCode etc, Microsoft 365, Chrome extension
+### 2.1 Main Window (191547.png) — status after screenshot-exact pass (2026-10-10 evening)
+- [x] Sidebar: Search, New, Projects, Artifacts, Customize, date groups (Oct 8 / Older) + Pinned/Today, search filter (sandbox-tested)
+- [x] Sidebar palette measured from pixels: sidebar #111111, main #151515, composer #20201f, border #373736, text #f0efec, muted #898781, asterisk #d97757
+- [x] Chat row ⋯ button + right-click context menu (191646.png): Open in new window, Pin (P), Rename (R), Add to project, Move to group, Delete (D). Pin/Rename/Delete/Move work; "Add to project" shows "No projects yet" (no Projects feature yet)
+- [x] Center: greeting with orange asterisk, composer "How can I help you today?", bottom row Project / model / Medium / Manual, Free plan · Upgrade pill (sandbox-tested layout vs 191547)
+- [x] Model selector is functional: lists Ollama models from /api/tags, stores choice in settings (default qwen2.5:3b). "Medium" and "Manual" are display-only
+- [x] Settings modal (191707.png): left nav + right Appearance. Theme (System/Light/Dark, default Dark), Chat font, Transcript text size, Transcript width, Motion, Voice (Language/Style/Speed). All stored in localStorage and applied. Voice choices are saved but NOT spoken yet. Other nav tabs show "not available yet"
+- [x] User menu (191608.png): email, Settings Ctrl+, / Language / Get help / Upgrade plan / Get apps and extensions / Learn more / Get API keys / Log out. Only Settings and Get apps open something; the rest show a short honest toast
+- [x] Apps and extensions modal (191636.png): layout copied; Claude Code and Microsoft 365 marked "Coming later"; Chrome card points to extension/
+- [x] Menu bar (191558.png): File / Edit / View / Go / Help dropdown opened from the ≡ button (web version; Electron native menu still roadmap P9)
+- [x] Windows-style min/max/close shown top-right (visual only in the browser build; real in the Electron wrapper, P9)
+- [ ] Projects, Artifacts panel, Code tab (</>): visible but not implemented (P3 and later)
+- [ ] Windows title bar: web build shows fake controls; real title bar needs Electron/Tauri wrapper (P9)
 
 ### 2.2 Colors (Extracted)
 - Sidebar: #202020
@@ -325,3 +326,13 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 6. Commit with message "req: <what changed>"
 
 This file IS the memory. Keep it updated.
+
+
+## 14. Dated Entry — 2026-10-10 evening: Screenshot-exact pass (apps/01)
+
+- **Requirement source:** user asked to make the Claude app an exact clone; screenshots 191547, 191558, 191608, 191636, 191646, 191707 are the spec.
+- **Measured from pixels** (not guessed): sidebar #111111, main #151515, settings #1a1a19, composer #20201f, text #f0efec, muted #898781. Layout scale: screenshot px ÷ 1.2 = CSS px.
+- **Added:** Settings modal, user menu, apps modal, ≡ app menu, context menu actions, model selector (Ollama tags), theme/motion/width/font settings wired to CSS variables, per-chat transcripts stored in localStorage.
+- **Decision:** browser code calls only relative URLs (/vault, /ollama); Vite proxies them to 127.0.0.1:8765 and 127.0.0.1:11434. No OLLAMA_ORIGINS setup needed. See DECISIONS_LOG.md.
+- **Decision:** the composer label shows the real selected model (qwen2.5:3b), not the screenshot's "Sonnet 5.5", so the UI does not claim a model that is not running.
+- **Status marking:** built + sandbox-tested with Playwright (16 interaction checks, 0 console errors) against a mock Ollama. NOT tested on Windows. NOT user-confirmed.

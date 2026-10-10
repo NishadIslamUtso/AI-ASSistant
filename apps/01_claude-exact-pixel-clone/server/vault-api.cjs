@@ -15,7 +15,9 @@ const possibleVaultPaths = [
   '/home/user/AI-Brain'
 ];
 
+// AI_BRAIN_PATH overrides auto-detection (e.g. set it to your real Obsidian vault folder on Windows)
 let VAULT_PATH = null;
+if (process.env.AI_BRAIN_PATH) possibleVaultPaths.unshift(process.env.AI_BRAIN_PATH);
 for (const p of possibleVaultPaths) {
   if (fs.existsSync(p)) { VAULT_PATH = p; break; }
 }

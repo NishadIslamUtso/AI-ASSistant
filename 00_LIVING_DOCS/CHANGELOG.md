@@ -1,9 +1,24 @@
 # CHANGELOG.md — What Changed Each Session (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 (evening, Asia/Dhaka)
 **Rule:** Log every change with date, what, why. This is memory for next AI.
 
 ## 2026-10-10
+
+### Evening — Screenshot-exact pass on apps/01_claude-exact-pixel-clone
+- **What:**
+  - Rewrote src/App.jsx (toolbar with ≡ / sidebar / back / forward / chat-code switch, Windows-style window controls, theme + motion application, keyboard shortcuts Ctrl+, Ctrl+N Ctrl+B Esc)
+  - Rewrote Sidebar.jsx (search, New, Projects/Artifacts/Customize, Pinned/Today/Oct 8/Older groups, ⋯ + right-click menu with P/R/D keys, rename, pin, move to group, delete, open in new window, user footer)
+  - Rewrote Center.jsx (greeting, composer, Ollama model selector, streaming with a line buffer, per-chat transcript, full-transcript vault capture to one file per chat)
+  - Added UserMenu.jsx, AppMenu.jsx (File/Edit/View/Go/Help), AppsExtensionsModal.jsx, SettingsModal.jsx, menu.jsx primitives, VaultPanel.jsx (status + memory search)
+  - Added src/lib/config.js, storage.js, api.js, greeting.js
+  - vite.config.js: proxy /vault -> 8765, /ollama -> 11434 (origin header removed); host from VITE_HOST (default 127.0.0.1); allowedHosts for preview
+  - tailwind.config.js + index.css: CSS-variable palette for dark/light, measured from screenshots
+  - server/vault-api.cjs: AI_BRAIN_PATH env override (point it at the real Obsidian vault on Windows)
+  - apps/01/.gitignore: package-lock.json (lockfile from Linux breaks Windows rollup optional deps)
+- **Why:** user asked for an exact Claude clone; the previous build only had sidebar + basic center and a stub VaultPanel.
+- **Verified:** vite build passes; Playwright run against Vite dev + mock Ollama + real vault-api: user menu, context menu P-pin, settings persistence, apps modal, app menu, model list, streamed reply, chat title, vault file write, Ctrl+B. 0 console errors. Not tested on Windows.
+- **Not done:** Artifacts panel, file/image upload, thinking display, capsule drag-drop, extension wiring, Today view, Electron installer, real speech output for Voice settings.
 
 ### 19:20 — Created Master Github Repo as AI Memory (Current Session)
 - **What:** Created AI-ASSistant-Github-Repo with AI-optimized structure: .ai/ (AGENT_INSTRUCTIONS, CONTEXT.json, STATE.json, INDEX.json), 00_LIVING_DOCS/ (REQUIREMENTS_LIVING, HANDOVER_LIVING, ARCHITECTURE_LIVING, DECISIONS_LOG, CHANGELOG, TODO_NEXT), apps/01_claude-exact-pixel-clone + 02_electron-claude-clone-v6, extension/, vault/AI-Brain/, spec/screenshots/, archive_zips/, docs/originals/, memory/sessions/

@@ -1,6 +1,77 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-body { background:#1a1a1a; color:#fff; font-family: Inter, sans-serif; margin:0; overflow:hidden; }
-.serif { font-family: serif; }
-::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-thumb { background:#333; border-radius:3px; }
+
+/* Dark is the default (measured from screenshots: main #151515, sidebar #111111). */
+:root,
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg-main: #151515;
+  --bg-side: #111111;
+  --bg-elev: #20201f;
+  --bg-modal: #1a1a19;
+  --bg-input: #1d1d1d;
+  --bg-hover: #262625;
+  --bg-active: #343434;
+  --border: #373736;
+  --border-soft: #292929;
+  --text: #f0efec;
+  --text-2: #c3c2b7;
+  --text-3: #898781;
+  --accent: #d97757;
+  --user-bubble: #2a2a28;
+  --btn-primary: #f0efec;
+  --btn-primary-text: #151515;
+  --link: #5b9cf6;
+  --overlay: rgba(0, 0, 0, 0.55);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg-main: #faf9f5;
+  --bg-side: #f0eee6;
+  --bg-elev: #ffffff;
+  --bg-modal: #faf9f5;
+  --bg-input: #ffffff;
+  --bg-hover: #e8e6dc;
+  --bg-active: #e3e0d5;
+  --border: #dcd9cf;
+  --border-soft: #e8e6dc;
+  --text: #1f1e1d;
+  --text-2: #3d3d3a;
+  --text-3: #6b6a64;
+  --accent: #d97757;
+  --user-bubble: #efeee9;
+  --btn-primary: #1f1e1d;
+  --btn-primary-text: #faf9f5;
+  --link: #2563eb;
+  --overlay: rgba(0, 0, 0, 0.3);
+}
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  overflow: hidden;
+  background: var(--bg-main);
+  color: var(--text);
+  font-family: "Segoe UI", Inter, system-ui, -apple-system, Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select, textarea { font-family: inherit; }
+button { cursor: pointer; }
+::selection { background: rgba(217, 119, 87, 0.35); }
+
+/* Scrollbars: thin, like the desktop app */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: #3a3a39; border-radius: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* Motion setting: "Reduced" disables streaming/hover animations */
+[data-motion='reduced'] *, [data-motion='reduced'] *::before, [data-motion='reduced'] *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+@keyframes ai-spin-star { to { transform: rotate(360deg); } }
+.spin-star { animation: ai-spin-star 3.2s linear infinite; }

@@ -1,6 +1,6 @@
 # TODO_NEXT.md — Immediate Next Actions (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 (evening, Asia/Dhaka)
 **Rule:** Update after each session, priority order, check off when done.
 
 ## Priority 1 — Test Exact Clone on Windows (User Action)
@@ -25,10 +25,10 @@
 
 **If CORS error:** Run `setx OLLAMA_ORIGINS "*"` in cmd, restart Ollama: `taskkill /F /IM ollama.exe` then `ollama serve`
 
-## Priority 2 — Add Missing Modals From Screenshots
+## Priority 2 — Add Missing Modals From Screenshots (DONE 2026-10-10 evening, Windows test pending)
 
 ### 2.1 Settings Modal (191707.png) — High Priority
-- [ ] Create src/components/SettingsModal.jsx
+- [x] Create src/components/SettingsModal.jsx (done 2026-10-10 evening, sandbox-tested)
 - Left nav: General, Account, Privacy, Billing, Capabilities, Memory, Reflect, Time and focus, Claude Code, System, Extensions, Developer, Skills, Connectors
 - Right Appearance:
   - Theme: system/sun/moon icons, options System, Light, Dark (currently dark default)
@@ -41,18 +41,18 @@
 - Store settings in localStorage claude_exact_settings
 
 ### 2.2 User Menu (191608.png)
-- [ ] Create src/components/UserMenu.jsx
+- [x] Create src/components/UserMenu.jsx (done 2026-10-10 evening)
 - Content: nishadislamutso@gmail.com, Settings, Language, Get help, Upgrade plan, Get apps and extensions, Learn more, Get API keys, Log out
 - Trigger: click avatar NU bottom left
 - Position: above avatar, dark #2a2a2a rounded
 
 ### 2.3 Apps and Extensions Modal (191636.png)
-- [ ] Create src/components/AppsExtensionsModal.jsx
+- [x] Create src/components/AppsExtensionsModal.jsx (done 2026-10-10 evening)
 - Content: Do more with Claude everywhere you work, Claude Code Terminal VSCode etc, Microsoft 365, Chrome extension
 - Trigger: Settings -> Extensions or top bar?
 
 ### 2.4 File Menu (191558.png)
-- [ ] Electron only: File Edit View Go Help menu bar — for Vite web version, hide or create custom top menu bar
+- [x] Web: File Edit View Go Help menu opens from ≡ (Electron native menu still open, P9) — for Vite web version, hide or create custom top menu bar
 - For exact clone web version, File menu not needed, but for Electron version add electron/main.js menu
 
 ### 2.5 Context Menu Already Done But Verify
@@ -73,7 +73,7 @@
 - [ ] Port ImageUpload.jsx, handle qwen3-vl:4b vision model
 
 ### 3.4 Project Dropdown + Model Selector
-- [ ] Make Project dropdown + Sonnet 5.5 Medium Manual functional, not static text
+- [x] Model dropdown functional (Project dropdown still shows "No projects yet")
 - Model selector should list Ollama models from http://127.0.0.1:11434/api/tags, plus qwen2.5:3b default
 - Store selected model in localStorage
 
@@ -137,6 +137,7 @@ Always update living docs after each task.
 
 ## Done Log
 
+- [x] 2026-10-10 evening: screenshot-exact pass on apps/01 (settings, user menu, apps modal, app menu, model selector, context menu actions). Sandbox-tested only.
 - [x] 2026-10-10 19:20 Created master repo structure with .ai/ + 00_LIVING_DOCS/ + apps/ + extension/ + vault/ + spec/ + archive_zips/
 - [x] 2026-10-10 13:19 Built exact pixel-perfect clone from 6 screenshots, Vite+React+Tailwind, direct qwen2.5:3b streaming, vault driver, bat files, zipped 13K
 - [x] 2026-10-10 13:00 Built Electron clone v6 with artifacts workbench etc (previous session)

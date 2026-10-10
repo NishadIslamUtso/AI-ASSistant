@@ -1,13 +1,21 @@
 # HANDOVER_LIVING.md — Current State + Gaps (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 (evening, Asia/Dhaka)
 **Purpose:** Give any AI/developer enough context to continue without relying on previous AI memory. Update every session.
+
+## 0. Latest Session Summary (read first)
+
+- apps/01_claude-exact-pixel-clone is now screenshot-exact for the 6 key screenshots: sidebar, center, user menu, apps modal, context menu, settings Appearance, plus the ≡ menu.
+- Working: model selector (Ollama tags), settings (theme/font/size/width/motion saved in localStorage), chat streaming, per-chat transcripts, vault capture (one file per chat).
+- Tested: sandbox only (Playwright + mock Ollama + real vault-api). NOT tested on Windows, NOT user-confirmed.
+- Next: P1 (user runs start-app.bat on TUF A15), then P3 Artifacts panel. See TODO_NEXT.md.
+- Note: NEW_SESSION_HANDOVER.md mentioned in the user's handover is NOT in this repo. This file and .ai/STATE.json are the real start points.
 
 ## 1. Executive Summary
 
 User Utso wants AI ASSistant native Windows app that looks exactly like Claude desktop from 6 screenshots (191547-191707), uses real Obsidian vault AI-Brain/ as canonical memory, extension collects from every site + every AI by default (log wasn't accessible if fails, no popup), never-check blacklist for privacy, Capsule Hub + Quillbot UX for context injection, local-first qwen2.5:3b via Ollama, driver/vault/extension architecture.
 
-**Current status:** 
+**Current status (2026-10-10 evening: see section 0):** 
 - Latest exact pixel-perfect clone built in apps/01_claude-exact-pixel-clone/ from screenshots, Vite+React+Tailwind, direct Ollama streaming, vault API, start-app.bat handling existing Ollama, zipped 13K. Not yet tested on user's Windows.
 - Previous Electron clone in apps/02_electron-claude-clone-v6/ has more features (artifacts, workbench, vision, thinking) but not exact pixel match to latest screenshots. Use as reference.
 - Extension starter in extension/ with spec for Capsule Hub + Quillbot, MV3, blacklist, failure logging. Not tested end-to-end.

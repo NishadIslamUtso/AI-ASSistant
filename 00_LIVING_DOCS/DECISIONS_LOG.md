@@ -5,6 +5,12 @@
 
 ## 2026-10-10 Decisions
 
+- **Browser calls relative URLs only (/vault, /ollama), Vite proxies to 127.0.0.1:8765 / 11434.** Why: sandbox preview rule (browser code must not hit localhost directly), and it removes the OLLAMA_ORIGINS setup step. Alternative rejected: direct calls + OLLAMA_ORIGINS=*.
+- **Composer shows the real selected model (qwen2.5:3b), not the screenshot label "Sonnet 5.5".** Why: the UI must not claim a model that is not running.
+- **Dark is the default theme even though screenshot 191707 shows System selected.** Why: user constraint "Dark default #1a1a1a".
+- **Voice settings are stored but not spoken yet; non-wired menu items show a short honest toast.** Why: do not claim features that are not built.
+- **Vite dev host defaults to 127.0.0.1; VITE_HOST=0.0.0.0 only for deliberate preview.** Why: local-only app on Windows.
+
 ### [2026-10-10 19:20] Create Master Github Repo as AI Memory
 - **What:** Create AI-ASSistant-Github-Repo with .ai/ + 00_LIVING_DOCS/ structure optimized for AI handover, not human aesthetics, single zip with all work + living requirements
 - **Why:** User requested "give me one zip file with all we did so far. also that zip file will have the requirement list which will be updated by you every time something changes. basically the repo will also work as a memory and a handover file for other AI/agents/sessions too, i will be one seeing it, s n need to make it lok like human made, make the structure that suits you and ais best for the purpose i'm making it"
