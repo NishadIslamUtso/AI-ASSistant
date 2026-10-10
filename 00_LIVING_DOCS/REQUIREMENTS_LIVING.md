@@ -312,6 +312,11 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - Added qwen2.5:3b direct use, no download, bat handling already-running Ollama
 - Created AI-optimized repo structure .ai/ + 00_LIVING_DOCS/
 
+### [2026-10-10 20:45] Added: exact-clone Settings/UserMenu/AppsExtensions modals, artifact runner, Ollama model selector, working chat context menu, per-chat persistence, light theme (Arena session)
+- Why: handover doc claimed modals existed but repo lacked them; TODO_NEXT P2/P3/P4 are the agreed next steps
+- Model-dependent options remain honest: selector lists only locally available Ollama models, offline fallback to saved qwen2.5:3b, no auto-download
+- Theme choice remembered (claude_exact_settings), dark default per constraint
+
 ### [NEXT] Add when changed:
 - Use format: ### [YYYY-MM-DD HH:MM] Added/Changed/Fixed: description + why + who requested
 

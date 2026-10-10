@@ -1,6 +1,6 @@
 # TODO_NEXT.md — Immediate Next Actions (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 20:45 Asia/Dhaka
 **Rule:** Update after each session, priority order, check off when done.
 
 ## Priority 1 — Test Exact Clone on Windows (User Action)
@@ -27,8 +27,8 @@
 
 ## Priority 2 — Add Missing Modals From Screenshots
 
-### 2.1 Settings Modal (191707.png) — High Priority
-- [ ] Create src/components/SettingsModal.jsx
+### 2.1 Settings Modal (191707.png) — High Priority (DONE 2026-10-10 Arena session)
+- [x] Create src/components/SettingsModal.jsx
 - Left nav: General, Account, Privacy, Billing, Capabilities, Memory, Reflect, Time and focus, Claude Code, System, Extensions, Developer, Skills, Connectors
 - Right Appearance:
   - Theme: system/sun/moon icons, options System, Light, Dark (currently dark default)
@@ -40,14 +40,14 @@
 - Trigger: click avatar NU Utso Free bottom left -> user menu -> Settings -> opens modal
 - Store settings in localStorage claude_exact_settings
 
-### 2.2 User Menu (191608.png)
-- [ ] Create src/components/UserMenu.jsx
+### 2.2 User Menu (191608.png) (DONE 2026-10-10 Arena session)
+- [x] Create src/components/UserMenu.jsx
 - Content: nishadislamutso@gmail.com, Settings, Language, Get help, Upgrade plan, Get apps and extensions, Learn more, Get API keys, Log out
 - Trigger: click avatar NU bottom left
 - Position: above avatar, dark #2a2a2a rounded
 
-### 2.3 Apps and Extensions Modal (191636.png)
-- [ ] Create src/components/AppsExtensionsModal.jsx
+### 2.3 Apps and Extensions Modal (191636.png) (DONE 2026-10-10 Arena session)
+- [x] Create src/components/AppsExtensionsModal.jsx
 - Content: Do more with Claude everywhere you work, Claude Code Terminal VSCode etc, Microsoft 365, Chrome extension
 - Trigger: Settings -> Extensions or top bar?
 
@@ -57,7 +57,7 @@
 
 ### 2.5 Context Menu Already Done But Verify
 - [x] Context menu Open in new window, Pin chat, Rename, Add to project, Move to group, Delete on CSE220 MID etc — implemented in Sidebar.jsx
-- [ ] Add functionality: Pin, Rename, Delete actually work (currently UI only)
+- [x] Add functionality: Pin, Rename, Delete actually work (2026-10-10: Pin group, inline rename, delete, Add-to-project + Move-to-group submenus, Open in new window via #chat= hash)
 
 ## Priority 3 — Port Features From Electron Clone
 
@@ -136,6 +136,8 @@
 Always update living docs after each task.
 
 ## Done Log
+
+- [x] 2026-10-10 20:45 Arena session: SettingsModal+UserMenu+AppsExtensionsModal (were claimed done in handover but missing from repo), ArtifactPanel runner, ModelSelector, working context menu (pin/rename/delete/submenus/open-in-new-window), per-chat message persistence, light theme, vault-api repo vault path, vite preview host fix
 
 - [x] 2026-10-10 19:20 Created master repo structure with .ai/ + 00_LIVING_DOCS/ + apps/ + extension/ + vault/ + spec/ + archive_zips/
 - [x] 2026-10-10 13:19 Built exact pixel-perfect clone from 6 screenshots, Vite+React+Tailwind, direct qwen2.5:3b streaming, vault driver, bat files, zipped 13K

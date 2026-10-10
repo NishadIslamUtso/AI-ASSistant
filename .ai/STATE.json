@@ -5,36 +5,34 @@
   "apps": {
     "01_claude-exact-pixel-clone": {
       "path": "apps/01_claude-exact-pixel-clone",
-      "status": "built-not-tested-on-windows",
+      "status": "built-and-sandbox-verified-needs-windows-test",
       "tech": "Vite 5 + React 18 + Tailwind + Express vault API",
       "features_implemented": [
-        "Sidebar 260px #202020 Search +New Projects Artifacts Customize Oct8 Older groups",
-        "Search filter, context menu Open in new window Pin Rename Add to project Move to group Delete",
-        "Center #1a1a1a Evening Utso greeting (time-based), composer #242424 rounded-xl How can I help you today?",
-        "Free plan Upgrade top, bottom NU Utso Free avatar",
-        "VaultPanel toggleable",
-        "Direct Ollama http://127.0.0.1:11434/api/chat qwen2.5:3b streaming",
-        "Vault driver http://127.0.0.1:8765/context + /capture",
-        "localStorage claude_exact_chats with defaults Refining 5-day workout cycle etc from screenshots",
-        "start-app.bat handles already-running Ollama, installs @rollup/rollup-win32-x64-msvc",
-        "build-windows.bat"
+        "Sidebar 260px #202020 lucide icons, Search, +New, Projects Artifacts(count) Customize, date groups, Pinned group",
+        "Context menu functional: Open in new window (#chat= hash), Pin, inline Rename, Add to project submenu, Move to group submenu, Delete",
+        "UserMenu.jsx 191608.png (email, Settings, Language, Get help, Upgrade plan, Get apps and extensions, Learn more, Get API keys, Log out)",
+        "SettingsModal.jsx 191707.png live settings: theme system/light/dark, chat font, transcript size/width, motion, voice; localStorage claude_exact_settings",
+        "AppsExtensionsModal.jsx 191636.png (Claude Code hero + terminal mock + invader, Microsoft 365, Chrome)",
+        "Center: time greeting + Claude starburst SVG, composer (+, mic, waveform, send-on-input), Free plan Upgrade pill centered, window controls",
+        "ModelSelector.jsx: Ollama /api/tags listing w/ offline fallback, localStorage selected_model (P4 done)",
+        "ArtifactPanel.jsx runner: Preview sandboxed iframe + Code tabs; lib/artifacts.js extracts full-HTML fences; artifacts only when explicitly asked (loop fix kept)",
+        "Per-chat message persistence claude_exact_messages; chats claude_exact_chats; new chat auto-create on send with today's group",
+        "Light theme via CSS vars; dark default #1a1a1a",
+        "Direct Ollama 11434 streaming qwen2.5:3b; vault driver 8765 /context + /capture (repo vault path added); Cook This Prompt vault injection",
+        "start-app.bat handles already-running Ollama + rollup win32; vite allowedHosts for preview, bat stays 127.0.0.1"
       ],
       "features_missing": [
-        "Settings modal Appearance Theme Chat font Transcript size Width Motion Voice Language Style Speed from 191707.png",
-        "File Edit View Go Help menu bar",
-        "User menu nishadislamutso@gmail.com Settings etc from 191608.png",
-        "Apps and extensions modal from 191636.png",
-        "Project dropdown Sonnet 5.5 Medium Manual functionality",
-        "Artifact runner",
-        "File upload, image upload",
-        "Thinking display",
-        "Capsule drag-drop inject",
-        "Quillbot inline suggestions (requires extension integration)"
+        "File upload, image upload, vision qwen3-vl (P5)",
+        "Thinking display (P5)",
+        "Project dropdown itself (model part done)",
+        "Capsule drag-drop inject, blacklist manager UI, Open Loops, Current Snapshot in VaultPanel (P7)",
+        "Today view + journal + follow-ups (P8)",
+        "Windows installer / Electron wrapper (P9)",
+        "File Edit View Go Help menu bar (Electron only)"
       ],
       "known_bugs": [
-        "Potential Tic Tac Toe loop if systemPrompt includes game example - FIXED by simple prompt in Center.jsx but need clear localStorage if looped",
-        "Ollama CORS if OLLAMA_ORIGINS not *",
-        "Vite rollup win32 optional dep may fail - fixed by bat installing @rollup/rollup-win32-x64-msvc"
+        "Ollama CORS if OLLAMA_ORIGINS not * (documented in error message + TODO)",
+        "If old looped chats exist user should clear localStorage claude_exact_chats/claude_exact_messages"
       ],
       "build_cmd": "npm install && npm run dev:server & npm run dev",
       "zip": "archive_zips/AI_ASSistant_Exact_Claude_Clone.zip 13K"
@@ -96,20 +94,17 @@
     "zip": "archive_zips/AI_ASSistant_Obsidian_Vault_v4_Clean.zip"
   },
   "current_gaps": [
-    "Exact clone missing Settings modal from 191707.png",
-    "Exact clone missing File menu + User menu modals",
-    "Extension -> Vault API -> Obsidian file writes end-to-end not tested",
-    "Capsule drag-drop + Quillbot inline not wired in exact clone",
-    "No Windows installer, only dev bats",
-    "No model manager UI",
-    "No journal auto-generation from captured sources",
-    "No monthly audit implementation",
-    "Ollama CORS fix needs documentation in bat"
+    "P5 file/image upload + thinking display",
+    "P6 extension -> vault API -> Obsidian end-to-end test",
+    "P7 VaultPanel capsule drag-drop + blacklist UI + Open Loops + Current Snapshot",
+    "P8 Today view + journal + follow-ups",
+    "P9 Windows installer",
+    "Windows user test of start-app.bat still pending"
   ],
   "last_session": {
     "date": "2026-10-10",
-    "what_done": "Built exact pixel-perfect Claude clone from 6 screenshots, created start-app.bat handling existing Ollama, direct qwen2.5:3b streaming, vault driver, zipped to AI_ASSistant_Exact_Claude_Clone.zip 13K",
-    "user_request": "give me one zip with all we did so far, requirement list updated every time, repo as memory/handover for other AIs, structure suits AIs best",
-    "action_now": "Creating master github repo AI-ASSistant-Github-Repo with living docs"
+    "what_done": "Arena session: implemented SettingsModal/UserMenu/AppsExtensionsModal (handover claimed done but were missing), ArtifactPanel runner, ModelSelector, working context menu, per-chat persistence, light theme, vault-api repo vault path, vite preview host fix; build + dev server + vault endpoints verified in sandbox",
+    "user_request": "NEW SESSION HANDOVER: continue making the Claude app exact clone",
+    "action_now": "Update living docs, commit, push arena branch, open PR"
   }
 }

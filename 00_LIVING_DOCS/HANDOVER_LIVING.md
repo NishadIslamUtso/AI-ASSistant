@@ -1,6 +1,6 @@
 # HANDOVER_LIVING.md — Current State + Gaps (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 20:45 Asia/Dhaka
 **Purpose:** Give any AI/developer enough context to continue without relying on previous AI memory. Update every session.
 
 ## 1. Executive Summary
@@ -8,7 +8,7 @@
 User Utso wants AI ASSistant native Windows app that looks exactly like Claude desktop from 6 screenshots (191547-191707), uses real Obsidian vault AI-Brain/ as canonical memory, extension collects from every site + every AI by default (log wasn't accessible if fails, no popup), never-check blacklist for privacy, Capsule Hub + Quillbot UX for context injection, local-first qwen2.5:3b via Ollama, driver/vault/extension architecture.
 
 **Current status:** 
-- Latest exact pixel-perfect clone built in apps/01_claude-exact-pixel-clone/ from screenshots, Vite+React+Tailwind, direct Ollama streaming, vault API, start-app.bat handling existing Ollama, zipped 13K. Not yet tested on user's Windows.
+- Latest exact pixel-perfect clone in apps/01_claude-exact-pixel-clone/ now has ALL six-screenshot surfaces implemented (2026-10-10 Arena session): Settings modal (live theme/font/size/width/motion/voice), user menu, apps+extensions modal, artifact runner with sandboxed preview, functional Ollama model selector, working sidebar context menu, per-chat history persistence, light theme. Still not tested on user's Windows (sandbox has no Ollama/Windows).
 - Previous Electron clone in apps/02_electron-claude-clone-v6/ has more features (artifacts, workbench, vision, thinking) but not exact pixel match to latest screenshots. Use as reference.
 - Extension starter in extension/ with spec for Capsule Hub + Quillbot, MV3, blacklist, failure logging. Not tested end-to-end.
 - Vault starter in vault/AI-Brain/ 61 files, templates, system docs. No real user data yet.
@@ -29,15 +29,17 @@ User Utso wants AI ASSistant native Windows app that looks exactly like Claude d
 ## 3. What Doesn't Work / Gaps
 
 ### Exact Clone Gaps (apps/01_claude-exact-pixel-clone)
-- [ ] Settings modal Appearance Theme Chat font Transcript size Width Motion Voice Language Style Speed from 191707.png — not implemented, need modal component
+- [x] Settings modal 191707.png — DONE 2026-10-10 (SettingsModal.jsx, live settings in claude_exact_settings)
+- [x] User menu 191608.png — DONE 2026-10-10 (UserMenu.jsx)
+- [x] Apps and extensions modal 191636.png — DONE 2026-10-10 (AppsExtensionsModal.jsx)
+- [x] Model selector — DONE 2026-10-10 (ModelSelector.jsx lists Ollama /api/tags, fallback qwen2.5:3b, localStorage selected_model); Project dropdown itself still static
+- [x] Artifact runner — DONE 2026-10-10 (ArtifactPanel.jsx preview+code, lib/artifacts.js extraction, sidebar count)
+- [x] Context menu functionality — DONE 2026-10-10 (pin/rename/delete/add-to-project/move-to-group/open-in-new-window)
+- [x] Per-chat message persistence — DONE 2026-10-10 (claude_exact_messages)
 - [ ] File Edit View Go Help menu bar — Electron menu needed, currently Vite web only
-- [ ] User menu nishadislamutso@gmail.com Settings etc from 191608.png — not implemented
-- [ ] Apps and extensions modal from 191636.png — not implemented
-- [ ] Project dropdown Sonnet 5.5 Medium Manual functionality — currently static text
-- [ ] Artifact runner — no artifact preview yet (Electron clone has it, can port)
-- [ ] File upload, image upload — missing
-- [ ] Thinking display — missing
-- [ ] Capsule drag-drop inject + Quillbot inline suggestions — requires extension integration + VaultPanel enhancement
+- [ ] File upload, image upload — missing (P5)
+- [ ] Thinking display — missing (P5)
+- [ ] Capsule drag-drop inject + Quillbot inline suggestions — requires extension integration + VaultPanel enhancement (VaultPanel now lists capsules from /context with search; drag-drop/blacklist/Open Loops/Current Snapshot still P7)
 - [ ] Today view with Current Snapshot, journal draft, follow-ups — not implemented
 - [ ] Journal auto-generation — not implemented
 - [ ] Monthly audit — not implemented

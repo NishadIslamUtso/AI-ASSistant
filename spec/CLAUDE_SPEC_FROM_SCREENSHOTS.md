@@ -126,16 +126,16 @@
 - [x] VaultPanel toggleable
 - [x] Direct Ollama streaming, vault API
 
-### Missing (Need to Implement)
-- [ ] Settings modal Appearance from 191707.png — left nav + right Theme Chat font Transcript size Width Motion Voice
-- [ ] User menu from 191608.png — nishadislamutso@gmail.com Settings Language etc
-- [ ] Apps and extensions modal from 191636.png
-- [ ] File Edit View Go Help menu bar — Electron menu, for web hide
-- [ ] Project dropdown Sonnet 5.5 Medium Manual functional — model selector listing Ollama models
-- [ ] Artifact runner — Artifacts (2) HTML Application preview
-- [ ] Search functionality — filter chat list
-- [ ] Pin Rename Delete functionality in context menu
-- [ ] Theme switcher — light/dark + remembers choice
+### Missing (Need to Implement) — updated 2026-10-10 Arena session
+- [x] Settings modal Appearance from 191707.png — SettingsModal.jsx, live settings
+- [x] User menu from 191608.png — UserMenu.jsx
+- [x] Apps and extensions modal from 191636.png — AppsExtensionsModal.jsx
+- [x] Model selector listing Ollama models — ModelSelector.jsx (Project dropdown itself still static)
+- [x] Artifact runner — ArtifactPanel.jsx Preview (sandboxed iframe) + Code tabs
+- [x] Search functionality — filters chat list (kept from v1)
+- [x] Pin Rename Delete functionality in context menu — plus Add-to-project / Move-to-group submenus, Open in new window
+- [x] Theme switcher — system/light/dark, remembered in claude_exact_settings
+- [ ] File Edit View Go Help menu bar — Electron menu, for web hide (P9)
 
 ## Pixel Measurements (Approximate from Screenshots)
 

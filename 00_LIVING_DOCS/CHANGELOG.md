@@ -1,9 +1,30 @@
 # CHANGELOG.md — What Changed Each Session (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 20:45 Asia/Dhaka
 **Rule:** Log every change with date, what, why. This is memory for next AI.
 
 ## 2026-10-10
+
+### 20:45 — Arena Session: Built the Missing Modals + Artifact Runner + Model Selector (Exact Clone)
+- **What:** Handover claimed SettingsModal/UserMenu/AppsExtensionsModal existed in apps/01 — they did NOT (repo had only App/Sidebar/Center/VaultPanel). Implemented them for real from screenshots, plus P3/P4 from TODO_NEXT:
+  - `src/components/SettingsModal.jsx` — 191707.png: left nav (General…Connectors, This computer, Customize), live Appearance (Theme system/light/dark segmented, Chat font Anthropic Serif/Sans, Transcript text size, Transcript width, Motion, Voice Language/Style/Speed). Persisted to `claude_exact_settings`; theme + sizes actually apply via CSS vars.
+  - `src/components/UserMenu.jsx` — 191608.png: nishadislamutso@gmail.com, Settings, Language, Get help, Upgrade plan, Get apps and extensions, Learn more, Get API keys, Log out.
+  - `src/components/AppsExtensionsModal.jsx` — 191636.png: "Do more with Claude, everywhere you work", Claude Code hero card w/ terminal mock + invader, Microsoft 365 + Chrome cards.
+  - `src/components/ArtifactPanel.jsx` — P3 artifact runner: sandboxed iframe Preview + Code tabs; artifacts extracted only from full-HTML code fences in assistant replies (system prompt still says create code only when explicitly asked → Tic Tac Toe loop stays fixed). Sidebar Artifacts shows live count.
+  - `src/components/ModelSelector.jsx` — P4: lists Ollama models from 127.0.0.1:11434/api/tags (15s poll), falls back to saved qwen2.5:3b when offline, selection stored in `selected_model`.
+  - Sidebar rewritten to lucide icons + working context menu: Pin (Pinned group), inline Rename, Delete, Add to project / Move to group submenus, Open in new window (#chat= hash deep-link, App reads hash on load).
+  - Per-chat message persistence `claude_exact_messages` (chat switch no longer loses history); new chats auto-created on first send with today's group label.
+  - Light theme tokens (CSS vars) for all components; dark default kept.
+  - `server/vault-api.cjs`: added repo path `../../../vault/AI-Brain` so the driver uses the canonical vault.
+  - `vite.config.js`: host 0.0.0.0 + allowedHosts for Arena preview (start-app.bat still forces --host 127.0.0.1 on Windows).
+  - Fixed focus-loss bug (Composer/ChatRow were defined inside parents → remount each keystroke); extracted to top-level.
+- **Why:** Handover doc overstated done state; repo ground truth lacked the modals. TODO_NEXT P2+P3+P4 are the agreed next steps.
+- **Tested:** `npm install` + `npm run build` clean (1480 modules); Vite dev serves all 12 modules HTTP 200; vault API `/` + `/context` + `/capture` verified (synthetic capture written then deleted, vault left pristine); live preview host accepted after allowedHosts fix.
+- **Not tested:** Ollama streaming (no Ollama in sandbox — selector falls back gracefully), Windows start-app.bat run (user action), Chrome extension end-to-end.
+- **Files Changed:** apps/01_claude-exact-pixel-clone: src/App.jsx, src/index.css, src/components/{Sidebar,Center,VaultPanel}.jsx rewritten; new {UserMenu,SettingsModal,AppsExtensionsModal,ArtifactPanel,ModelSelector}.jsx, src/lib/{defaults,artifacts}.js; vite.config.js, package.json, server/vault-api.cjs; package-lock.json committed for reproducible Windows installs.
+- **Next:** P5 file/image upload + thinking display, P6 extension end-to-end, P7 VaultPanel capsule drag-drop + blacklist UI, P8 Today view.
+
+### 19:20 — Created Master Github Repo as AI Memory (Previous Session)
 
 ### 19:20 — Created Master Github Repo as AI Memory (Current Session)
 - **What:** Created AI-ASSistant-Github-Repo with AI-optimized structure: .ai/ (AGENT_INSTRUCTIONS, CONTEXT.json, STATE.json, INDEX.json), 00_LIVING_DOCS/ (REQUIREMENTS_LIVING, HANDOVER_LIVING, ARCHITECTURE_LIVING, DECISIONS_LOG, CHANGELOG, TODO_NEXT), apps/01_claude-exact-pixel-clone + 02_electron-claude-clone-v6, extension/, vault/AI-Brain/, spec/screenshots/, archive_zips/, docs/originals/, memory/sessions/

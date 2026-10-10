@@ -8,6 +8,7 @@ const PORT = 8765;
 
 // Vault path - try multiple locations
 const possibleVaultPaths = [
+  path.join(__dirname, '../../../vault/AI-Brain'), // repo canonical vault
   path.join(__dirname, '../../AI-Brain'),
   path.join(__dirname, '../AI-Brain'),
   path.join(require('os').homedir(), 'Documents', 'AI-Brain'),
