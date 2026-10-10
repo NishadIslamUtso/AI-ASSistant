@@ -23,9 +23,9 @@
   CHANGELOG.md                <- What changed each session
   TODO_NEXT.md                <- Immediate next actions
 apps/
-  01_claude-exact-pixel-clone/ <- LATEST: Pixel-perfect clone from 6 screenshots (191547-191707.png). Vite+React+Tailwind, direct Ollama qwen2.5:3b streaming, vault driver. THIS IS CURRENT TARGET.
+  01_claude-exact-pixel-clone/ <- CURRENT TARGET: screenshot-driven Claude layout, Settings/UserMenu/Apps modals, local Ollama model selector, explicit-only sandboxed HTML artifact preview, relative same-origin proxies. Vite+React+Tailwind; Windows/model behavior still needs user testing.
   02_electron-claude-clone-v6/ <- PREVIOUS: Electron+React Open-claude fork, more features (artifacts, vision, workbench). Use as reference for features.
-extension/                    <- Browser extension MV3: default check everything, Capsule Hub + Quillbot UX
+extension/                    <- MV3 starter/spec for broad capture, blacklist, Capsule Hub + Quillbot UX; end-to-end behavior is untested
 vault/AI-Brain/               <- Obsidian vault canonical memory - 00 System, 01 Inbox, 02 Sources, 03 Memory, 04 Working Memory, 05 Knowledge, 06 Review, 07 Sharing Receipts, 08 Journal, 09 Activity & Undo, 90 Archive, .brain
 spec/
   screenshots/                <- 6 Claude desktop screenshots that ARE the spec for exact clone
@@ -51,11 +51,11 @@ memory/sessions/              <- Session logs for handover
 cd apps\01_claude-exact-pixel-clone
 .\start-app.bat
 ```
-Requires: Ollama running, qwen2.5:3b pulled (`ollama pull qwen2.5:3b`), Node.js 20+
-- start-app.bat handles already-running Ollama, installs @rollup/rollup-win32-x64-msvc, starts vault API 8765 + Vite 5173
+Requires: Node.js 20+ and Ollama installed with at least one model already pulled. `qwen2.5:3b` is the default; the app lists installed Ollama models and never downloads one.
+- `start-app.bat` handles an already-running Ollama, installs the Windows Rollup optional package if missing, starts the vault API on 8765 + Vite on 5173
 - Open http://127.0.0.1:5173
-- Uses http://127.0.0.1:11434/api/chat directly, no download
-- Vault driver at http://127.0.0.1:8765/context + /capture
+- Browser requests use same-origin `/ollama` and `/vault` routes, proxied by Vite to loopback Ollama (11434) and Vault API (8765)
+- Vault API accepts `AI_BRAIN_PATH` for an explicitly configured personal vault; otherwise the repository starter vault is used
 
 ### Electron Clone (More Features)
 ```bat
@@ -79,13 +79,10 @@ Load `extension/` as unpacked in chrome://extensions, ensure vault API running a
 
 ## GitHub Push
 
-```bat
-git init
-git add .
-git commit -m "AI ASSistant master repo - 2026-10-10 - exact clone + extension + vault"
-git branch -M main
-git remote add origin https://github.com/YOURUSERNAME/AI-ASSistant.git
-git push -u origin main
+This Arena session is fixed to branch `arena/b485c0f2-ai-assistant`. Do not run `git init`, rename/switch branches, or push to `main`. A remote push is an external upload; do it only when explicitly approved, and then push only to the session branch:
+
+```bash
+git push origin arena/b485c0f2-ai-assistant
 ```
 
 No secrets in repo. Ollama local, vault local. No API keys committed.

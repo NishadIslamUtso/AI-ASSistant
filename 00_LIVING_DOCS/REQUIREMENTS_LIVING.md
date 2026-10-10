@@ -1,7 +1,7 @@
 # REQUIREMENTS_LIVING.md — Single Source of Truth (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
-**Version:** 1.0.0-master
+**Last Updated:** 2026-10-10 20:10 Asia/Dhaka
+**Version:** 1.0.1-claude-app-increment
 **Rule:** UPDATE THIS FILE EVERY TIME SOMETHING CHANGES. This repo is memory for AIs. If you don't update, next session loses context.
 
 ## 0. Meta
@@ -30,10 +30,10 @@ A native Windows app named AI ASSistant that looks exactly like Claude desktop f
 - [x] Composer: textarea auto-grow, bottom row Project dropdown + "Sonnet 5.5 Medium Manual" model selector, send button white circle with arrow
 - [x] Top bar: "Free plan • Upgrade" right side
 - [x] Bottom left: avatar NU + "Utso" + "Free"
-- [ ] Settings modal (191707.png): Left nav General Account Privacy Billing Capabilities Memory Reflect Time and focus Claude Code System Extensions Developer Skills Connectors, right Appearance Theme options system/sun/moon, Chat font Anthropic Serif, Transcript size Small/Medium/Large, Width Narrow/Medium/Wide, Motion System/Reduced, Voice Language English, Style Buttery, Speed Normal
-- [ ] Menu bar (191558.png): File Edit View Go Help — Electron menu
-- [ ] User menu (191608.png): nishadislamutso@gmail.com, Settings, Language, Get help, Upgrade plan, Get apps and extensions, Learn more, Get API keys, Log out
-- [ ] Apps and extensions modal (191636.png): Do more with Claude everywhere you work, Claude Code Terminal VSCode etc, Microsoft 365, Chrome extension
+- [x] (in source; Linux build verified, Windows not yet tested) Settings modal (191707.png): left navigation and saved Appearance controls for Theme, Chat font, Transcript text size/width, Motion, Voice language/style/speed
+- [ ] Menu bar (191558.png): File Edit View Go Help — deferred until an Electron/native shell exists
+- [x] (in source; Linux build verified) User menu (191608.png): email, Settings, Language, Get help, Upgrade plan, Get apps and extensions, Learn more, Get API keys, Log out; local-only actions explain when a remote/account action is not connected
+- [x] (in source; Linux build verified) Apps and extensions modal (191636.png): Claude Code / Microsoft 365 / Chrome visual sections plus AI ASSistant extension setup disclosure; no external account or installation is implied
 
 ### 2.2 Colors (Extracted)
 - Sidebar: #202020
@@ -47,6 +47,9 @@ A native Windows app named AI ASSistant that looks exactly like Claude desktop f
 - Dark by default, visible persistent light/dark switch, remembers choice
 - Fully on-screen, Windows title bar + close controls visible
 - Polished, legible, simple — user should NOT manage databases/folders/backend
+- Artifacts appear only after an explicit request for a runnable app/page/game/tool; never let a sample in the system prompt cause an artifact loop
+- HTML artifacts run in a sandboxed iframe with network access blocked and a source view; local model output is not trusted code
+- Model picker lists already-installed Ollama models only; never download a model or silently fall back to a cloud provider
 
 ## 3. Architecture — Driver / Vault / Extension
 
@@ -268,37 +271,40 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 
 ## 13. Acceptance Checklist — Are We Doing It Right?
 
-- [x] App named AI ASSistant, native Windows desktop, title bar visible, dark default #1a1a1a
-- [x] Claude's chat layout copied from screenshots 191547-191707, sidebar 260px #202020 Search +New Projects Artifacts Customize Oct8 Older, center Evening Utso greeting, composer #242424 How can I help you today?, Free plan Upgrade top, NU Utso Free bottom
-- [ ] Feature inventory exists for "all Claude features" — need audit via 00 System/Claude Feature Audit.md, no parity claim without verification
+- [ ] App shell is named AI ASSistant and dark by default; native Windows wrapper/title-bar/menu and installer remain unimplemented
+- [x] (in source; build verified, not Windows-confirmed) Claude-style chat shell: 260px dark sidebar, search/groups, greeting, composer, account row and screenshot-driven colors
+- [x] (in source; build verified, not Windows-confirmed) User menu, Settings Appearance modal and Apps/extensions modal from the supplied screenshots
+- [x] (in source; unit-tested) Explicit-only HTML artifact parser and sandboxed Preview/Source panel; no network access from artifact frame
+- [x] (in source; local API smoke-tested) Installed Ollama model selector through same-origin proxy; model choice is persisted and no cloud fallback/download occurs
+- [ ] Feature inventory exists for "all Claude features" — need audit via 00 System/Claude Feature Audit.md; no parity claim without verification
 - [ ] Obsidian genuinely integrated as canonical vault, SQLite only rebuildable index under .brain/
-- [x] App is driver of vault + extension, vault organizes, extension collects + suggests contexts/prompts/files
-- [x] Browser extension default = check everything, if inaccessible log "wasn't accessible" without asking
-- [x] Never-check blacklist exists: user can paste URL/domain pattern to never collect from ever again, editable in Privacy & Access
-- [x] Extension provides contexts like Capsule Hub: capture as Capsule, organize, drag-drop inject, version/branch, transfer attachments, prompt enhancer
-- [x] Extension provides contexts like Quillbot: real-time suggestions in any text field, highlight for suggestions, inline toolbar, works where you write
-- [x] Browser extension captures from any site you allow + all AI models you use, after one-time permission
+- [x] (source architecture) App is designed as driver of vault + extension; real personal Obsidian-vault path still requires explicit configuration
+- [ ] Extension implements parts of default capture/failure logging in source, but permission flow and end-to-end capture are untested; do not treat this as accepted until verified
+- [ ] Never-check blacklist/popup code exists in the extension starter; vault sync, persistence, revocation and end-to-end behavior remain unverified
+- [ ] Capsule Hub flow is incomplete: starter code exists, but version/branch/rollback, attachments and full library/injection behavior need implementation and testing
+- [ ] Quillbot-style toolbar/suggestion code exists in the extension starter, but broad field coverage and suggestion behavior are not end-to-end tested
+- [ ] Extension supports selected adapters and host permissions in source; universal coverage and one-time permission behavior are not proven
 - [ ] Visit metadata distinguished from readable content, visit not proof of reading/agreement — need implementation in vault writes
 - [ ] Laptop file access explicitly scoped, visible, revocable, honest about actual coverage, originals stay in place
-- [x] Assistant automatically uses your template for authorized routine capture/organization, does not ask save every item
-- [x] Routine local changes inspectable and reversible with activity log + undo/version history
-- [x] Uncertainty, inferred relationships, same-time conflicts, high-impact ambiguity routed to review queue, not guessed
+- [ ] Exact clone currently captures submitted prompts; template-based extraction/organization pipeline is not implemented end-to-end
+- [ ] Vault activity append has a starter implementation; complete audit/undo/version history across routine writes is not implemented
+- [ ] Review/conflict routing remains a planned feature; no complete implementation or test exists in the exact clone
 - [x] Current-chat context not confused with long-term memory, no unsupported personal facts guessed, no name inferred
-- [x] Sensitive external sharing requires exact-content/destination preview + per-send approval, no blanket approval
-- [x] Original sources preserved until you choose deletion; archive, expire, forget-derived, delete-source remain distinct
-- [x] Journals dated Asia/Dhaka, event time vs capture time separated, source-linked, never invents offline events/feelings
+- [ ] No external model connector/send workflow is implemented in the exact clone; approval preview must exist before any remote connector is enabled
+- [ ] Retention lifecycle controls are not implemented; source-preservation and non-destructive conflict behavior need testing
+- [ ] Journal generation and provenance/date handling are not implemented in the exact clone
 - [ ] Today view surfaces Current Snapshot, today's journal draft, due follow-ups, one next action — need Today view implementation
-- [x] End-of-day prompts opt-in, offer answer/skip/snooze/stop, silence not resolution, user chooses cadence for sensitive topics
-- [x] Monthly cross-check user-triggered only, last 60 days + relevant linked older, dry-run, apply nothing until approved
-- [x] Cleanup never deletes original transcript because old or rarely retrieved; shows counts, sizes, reasons, links, batch decide
-- [x] Model-dependent options change when you switch models, unsupported disabled honestly, capability detection separate from model choice
+- [ ] Opt-in check-in/follow-up workflow is not implemented in the exact clone
+- [ ] User-triggered 60-day audit is still a design requirement, not implemented
+- [ ] Retention/cleanup dashboard and batch decisions are not implemented; old-source deletion behavior has not been tested
+- [ ] Verified model capabilities update when you switch models. The selector is in source, but vision/thinking capability checks are currently name-based heuristics and require a tested Model Registry before this acceptance item can pass
 - [x] No claim local model equals Claude, quality/speed/hardware trade-offs explained plainly, qwen2.5:3b limits acknowledged
-- [x] No passwords/cookies/tokens/payment fields/unsent drafts/hidden keystrokes collected, no keylogger/screenshot recorder, incognito off unless separately configured
+- [ ] Privacy exclusions are requirements; audit extension selectors/permissions and test sensitive-field exclusions before marking safe
 - [x] Local processing/storage default, Git local commit OK, remote push is external upload with approval, backup only to trusted destination
 - [x] Guidance delivered one simple step at a time, beginner-friendly, wait for result
-- [x] Full transcript survives summaries unchanged, duplicate handling works, failed adapter never reports false success
-- [x] Index and context rebuildable after cache deletion
-- [x] Bat commands work on Windows TUF A15 8GB RAM 4GB VRAM, app is driver of vault (127.0.0.1:8765), dark default, uses Ollama at 11434 handling already-running, no native build tools
+- [ ] Full-transcript, deduplication and adapter-failure acceptance tests have not been implemented/run
+- [ ] Rebuildable local index is not implemented yet; Markdown is the intended canonical source
+- [ ] (not yet Windows-tested) Bat script in source checks Node/Ollama, handles an already-running Ollama, starts vault API and Vite, and uses a local same-origin proxy; verify on the TUF A15 before marking this complete
 
 ## 14. Changelog of Requirements
 
@@ -311,6 +317,16 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - Added hardware constraints TUF A15 8GB RAM 4GB VRAM
 - Added qwen2.5:3b direct use, no download, bat handling already-running Ollama
 - Created AI-optimized repo structure .ai/ + 00_LIVING_DOCS/
+
+### [2026-10-10 20:10] Exact Clone Functional Baseline Increment
+- Added interactive User menu, Settings Appearance controls and Apps/extensions modal matching screenshots 191608, 191707 and 191636. Settings persist locally; unimplemented account/remote actions disclose that they are not connected.
+- Added installed-Ollama model listing via `/api/tags` behind a Vite same-origin proxy; selected model persists, and no model download/cloud fallback is performed.
+- Added text-file attachments and a gated image path, plus optional thinking output for model IDs that appear to support it. These model capabilities remain unverified until exercised against the user's Ollama models.
+- Added explicit-request-only HTML artifacts with a source view and sandboxed preview whose CSP blocks network requests; added library and parser/policy unit tests.
+- Changed browser-facing app requests to relative `/ollama` and `/vault` paths; Vite proxies them to loopback services so browser code never calls localhost directly.
+- Added `AI_BRAIN_PATH` override, safe path segments and Markdown activity logging in the vault API. The repository starter vault is only a fallback, not proof that a user's personal vault has been configured.
+- Verification: `npm test` (4/4), `npm run build`, `node --check server/vault-api.cjs`, and a synthetic API write to isolated `/tmp/ai-assistant-preview-vault` passed. Ollama and Windows behavior were not tested.
+- **Why:** Continue making the exact Claude-layout app functional and bring code into alignment with the new-session handover without claiming the missing Windows/model/extension tests are complete.
 
 ### [NEXT] Add when changed:
 - Use format: ### [YYYY-MM-DD HH:MM] Added/Changed/Fixed: description + why + who requested

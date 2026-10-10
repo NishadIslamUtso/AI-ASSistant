@@ -7,31 +7,39 @@ const app = express();
 const PORT = 8765;
 
 // Vault path - try multiple locations
-const possibleVaultPaths = [
-  path.join(__dirname, '../../AI-Brain'),
-  path.join(__dirname, '../AI-Brain'),
-  path.join(require('os').homedir(), 'Documents', 'AI-Brain'),
-  path.join(__dirname, '../../AI-Brain-Vault/AI-Brain'),
-  '/home/user/AI-Brain'
-];
+const configuredVaultPath = process.env.AI_BRAIN_PATH?.trim();
+const repositoryStarterVaultPath = path.join(__dirname, '../../../vault/AI-Brain');
+// Do not guess at personal folders; a personal vault must be explicitly selected via AI_BRAIN_PATH.
+const possibleVaultPaths = [configuredVaultPath, repositoryStarterVaultPath].filter(Boolean);
 
 let VAULT_PATH = null;
 for (const p of possibleVaultPaths) {
   if (fs.existsSync(p)) { VAULT_PATH = p; break; }
 }
 if (!VAULT_PATH) {
-  VAULT_PATH = path.join(__dirname, '../AI-Brain');
-  console.log('Vault not found, using:', VAULT_PATH);
+  VAULT_PATH = path.join(__dirname, '../../../vault/AI-Brain');
+  console.log('AI-Brain vault not found in configured locations; using the repository starter vault:', VAULT_PATH);
 }
 
 console.log('Vault path:', VAULT_PATH);
+
+function safeSegment(value, fallback = 'item') {
+  const result = String(value ?? '')
+    .replace(/[<>:"/\\|?*\u0000-\u001f]/g, '-')
+    .replace(/\.\.+/g, '-')
+    .replace(/^\.+|[. ]+$/g, '')
+    .slice(0, 120);
+  return result || fallback;
+}
 
 app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '20mb' }));
 
 // Ensure dirs
 function ensureDir(rel) {
-  const full = path.join(VAULT_PATH, rel);
+  const root = path.resolve(VAULT_PATH);
+  const full = path.resolve(root, rel);
+  if (full !== root && !full.startsWith(root + path.sep)) throw new Error('Invalid vault path');
   if (!fs.existsSync(full)) fs.mkdirSync(full, { recursive: true });
   return full;
 }
@@ -40,7 +48,13 @@ function ensureDir(rel) {
 function appendJsonl(relFile, obj) {
   const full = path.join(VAULT_PATH, relFile);
   ensureDir(path.dirname(relFile));
-  fs.appendFileSync(full, JSON.stringify(obj) + '\n');
+  fs.appendFileSync(full, JSON.stringify(obj) + '\n', 'utf-8');
+}
+
+function appendActivity(relFile, text) {
+  const full = path.join(VAULT_PATH, relFile);
+  ensureDir(path.dirname(relFile));
+  fs.appendFileSync(full, `- ${text}\n`, 'utf-8');
 }
 
 // Write markdown file
@@ -70,7 +84,7 @@ app.post('/capture', (req, res) => {
         source: data.source || 'history-api'
       });
       // Activity log
-      appendJsonl(`09 Activity & Undo/${year}/${month}.md`, `[${now.toISOString()}] visit ${data.url} - ${data.capture_status}`);
+      appendActivity(`09 Activity & Undo/${year}/${month}.md`, `[${now.toISOString()}] visit ${data.url} - ${data.capture_status}`);
     } 
     else if (data.type === 'web_page') {
       if (!data.url) throw new Error('no url');
@@ -101,8 +115,8 @@ ${(data.content||'').slice(0,10000)}
       });
     }
     else if (data.type === 'conversation') {
-      const provider = data.provider || 'Other';
-      const id = data.conversation_id || Date.now();
+      const provider = safeSegment(data.provider || 'Other', 'Other');
+      const id = safeSegment(data.conversation_id || `conversation-${Date.now()}`, `conversation-${Date.now()}`);
       const rel = `02 Sources/Conversations/${provider}/${year}/${id}.md`;
       const transcript = (data.messages||[]).map(m => `### [${m.role}] ${m.timestamp}\n${m.text}\n`).join('\n');
       const md = `---
@@ -153,8 +167,9 @@ Captured from ${provider}.
       }
     }
     else if (data.type === 'capsule') {
-      const c = data.capsule;
-      const rel = `03 Memory/Entities/capsule-${c.id}.md`;
+      const c = data.capsule || {};
+      const capsuleId = safeSegment(c.id, `capsule-${Date.now()}`);
+      const rel = `03 Memory/Entities/capsule-${capsuleId}.md`;
       const md = `---
 id: ${c.id}
 type: capsule
@@ -192,12 +207,12 @@ ${(c.sources||[]).join('\n')}
       ensureDir('01 Inbox/Processing Errors');
       const full = path.join(VAULT_PATH, rel);
       fs.appendFileSync(full, `- ${data.captured_at} wasn't accessible: ${data.url} - reason: ${data.reason} - provider: ${data.provider||'web'}\n`);
-      appendJsonl(`09 Activity & Undo/${year}/${month}.md`, `[${data.captured_at}] wasn't accessible ${data.url} - ${data.reason}`);
+      appendActivity(`09 Activity & Undo/${year}/${month}.md`, `[${data.captured_at}] wasn't accessible ${data.url} - ${data.reason}`);
     }
     else if (data.type === 'blacklist_update') {
       const rel = `00 System/Privacy & Access.md`;
       // Append to activity, actual file managed manually but log here
-      appendJsonl(`09 Activity & Undo/${year}/${month}.md`, `[${data.captured_at}] blacklist updated: ${JSON.stringify(data.excluded_patterns)}`);
+      appendActivity(`09 Activity & Undo/${year}/${month}.md`, `[${data.captured_at}] blacklist updated: ${JSON.stringify(data.excluded_patterns)}`);
     }
 
     res.json({ok: true, vault: VAULT_PATH});

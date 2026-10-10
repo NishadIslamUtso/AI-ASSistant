@@ -66,8 +66,8 @@ cd apps/01_claude-exact-pixel-clone
 start-app.bat  # handles Ollama already running, installs rollup win32, starts vault API 8765 + Vite 5173
 ```
 Open http://127.0.0.1:5173
-Ollama at http://127.0.0.1:11434/api/chat qwen2.5:3b streaming
-Vault API at http://127.0.0.1:8765/context + /capture
+The browser calls same-origin `/ollama/*` and `/vault/*`; Vite proxies to Ollama at http://127.0.0.1:11434/api/* and Vault API at http://127.0.0.1:8765. qwen2.5:3b is the default but the selector lists installed models. No model download or cloud fallback occurs.
+Set `AI_BRAIN_PATH` to the user's explicitly selected Obsidian vault; otherwise the repository starter vault is used. Verify before writing real user data.
 
 Electron clone:
 ```
@@ -81,18 +81,19 @@ Extension: load unpacked extension/ in Chrome, needs vault API running.
 
 ## 6. Current Known Bugs (From STATE.json)
 
-- No reply bug: custom ChatMode called sendMessage from useChat which doesn't exist — fixed by restoring original LLMFactory streaming in v6, but exact clone uses direct Ollama fetch which works.
-- Tic Tac Toe loop: systemPrompt for isOpenSourceModel includes Flappy Bird game example, qwen2.5:3b interprets as must create game every reply. Fix: override systemPrompt for qwen2.5:3b to simple assistant, only create artifacts when explicitly asked. Also clear localStorage chat_history that contains looped artifact context.
-- Ollama CORS: fetch http://localhost:11434/api/tags may fail if OLLAMA_ORIGINS not * — requires setx OLLAMA_ORIGINS "*" and restart ollama serve.
+- Exact clone chat/model behavior, Windows startup, and qwen2.5:3b streaming are still untested on the user's PC.
+- Tic Tac Toe loop: exact-clone prompt now forbids unsolicited artifacts; HTML artifact parsing also requires an explicit runnable-artifact request. If an old thread is affected, start a new chat; never clear all localStorage automatically.
+- The exact clone uses Vite same-origin proxies (`/ollama/*`, `/vault/*`) rather than browser-to-loopback fetches. Verify Ollama is running before changing CORS settings.
+- Model vision/thinking controls are name-based heuristics, not a verified capability registry. Do not claim support until tested.
 
 ## 7. What To Do Next (From TODO_NEXT.md)
 
-Read TODO_NEXT.md for immediate next steps. Typically:
-- Test exact clone on Windows
-- Add Settings modal from screenshot 191707 (Appearance Theme Chat font Transcript size Width Motion Voice Language Style Speed)
-- Implement VaultPanel drag-drop capsules
-- Wire extension -> vault API -> Obsidian files
-- Add blacklist UI
+Read `00_LIVING_DOCS/TODO_NEXT.md` for immediate next steps. Current order:
+- User validates exact clone on Windows/TUF A15; do not report model/Windows behavior tested before confirmation
+- Verify installed Ollama model capabilities and configure the personal vault path explicitly
+- Wire extension -> vault API -> Obsidian files and test the blacklist/failure logs
+- Implement Capsule/VaultPanel, Today, Journal and follow-up workflows
+- Add the native wrapper/installer and feature audit later
 
 ## 8. When User Says "Update Zip"
 

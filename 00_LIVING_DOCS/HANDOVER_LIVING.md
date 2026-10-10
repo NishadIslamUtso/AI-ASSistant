@@ -1,54 +1,64 @@
 # HANDOVER_LIVING.md — Current State + Gaps (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 20:10 Asia/Dhaka
 **Purpose:** Give any AI/developer enough context to continue without relying on previous AI memory. Update every session.
 
 ## 1. Executive Summary
 
 User Utso wants AI ASSistant native Windows app that looks exactly like Claude desktop from 6 screenshots (191547-191707), uses real Obsidian vault AI-Brain/ as canonical memory, extension collects from every site + every AI by default (log wasn't accessible if fails, no popup), never-check blacklist for privacy, Capsule Hub + Quillbot UX for context injection, local-first qwen2.5:3b via Ollama, driver/vault/extension architecture.
 
-**Current status:** 
-- Latest exact pixel-perfect clone built in apps/01_claude-exact-pixel-clone/ from screenshots, Vite+React+Tailwind, direct Ollama streaming, vault API, start-app.bat handling existing Ollama, zipped 13K. Not yet tested on user's Windows.
-- Previous Electron clone in apps/02_electron-claude-clone-v6/ has more features (artifacts, workbench, vision, thinking) but not exact pixel match to latest screenshots. Use as reference.
-- Extension starter in extension/ with spec for Capsule Hub + Quillbot, MV3, blacklist, failure logging. Not tested end-to-end.
-- Vault starter in vault/AI-Brain/ 61 files, templates, system docs. No real user data yet.
-- Master repo structure created 2026-10-10 as AI-optimized memory/handover repo per user request for single zip with all work + living requirements.
+**Current status (2026-10-10 20:10 Asia/Dhaka):**
+- The exact-clone source was behind the newly supplied handover: the checkout contained only the original 14-file Vite shell, not the claimed Settings/UserMenu/Apps components. This session added those components and advanced the next functional step rather than assuming the handover claims were already in Git.
+- `apps/01_claude-exact-pixel-clone/` now has screenshot-driven User menu, Settings Appearance controls (stored locally), Apps/extensions modal, installed Ollama model selector, same-origin API proxy, local text/image attachment path, model-name-gated thinking output, and an explicit-only sandboxed HTML artifact runner.
+- Verified in Linux sandbox: 4/4 artifact unit tests, Vite production build, Node syntax check, and synthetic vault API capture to isolated `/tmp/ai-assistant-preview-vault`. Vite preview is available; Ollama is not installed in the sandbox.
+- **Not verified:** Windows `start-app.bat`, model discovery/chat streaming against Utso's Ollama, image/thinking capabilities, generated artifact behavior against qwen2.5:3b, pixel comparison at the target Windows resolution, and personal Obsidian vault configuration.
+- The current app is still Vite/web, not a native Windows installer. `AI_BRAIN_PATH` can select the real personal vault; otherwise the repository starter vault is the fallback.
+- Previous Electron clone in `apps/02_electron-claude-clone-v6/` remains a feature reference; extension and vault remain starters and are not end-to-end verified.
+- Master repo structure is the memory/handover source requested by the user.
 
-## 2. What Works (Tested in Sandbox)
+## 2. What Is in Source and What Was Verified
 
-- [x] Exact clone UI: Sidebar 260px #202020 Search +New Projects Artifacts Customize Oct8 Older, context menu, Center #1a1a1a Evening Utso + composer #242424, Free plan Upgrade, NU Utso Free bottom — matches screenshots
-- [x] Direct Ollama fetch http://127.0.0.1:11434/api/chat qwen2.5:3b streaming (no download, uses existing)
-- [x] Vault API server/vault-api.cjs at 127.0.0.1:8765 with /context + /capture endpoints
-- [x] localStorage claude_exact_chats with defaults from screenshots
-- [x] start-app.bat handles already-running Ollama, installs @rollup/rollup-win32-x64-msvc for Windows
-- [x] build-windows.bat
-- [x] Electron clone has artifacts, workbench, ModelService.js supporting multiple models
-- [x] Extension manifest with <all_urls> + history, lib/blacklist pattern matching, vault-writer POST
-- [x] Vault structure 00 System to 90 Archive + .brain, templates complete
+### Source present in the exact clone (not Windows-confirmed)
+- [x] Screenshot-driven shell: 260px sidebar, search/groups, greeting, composer, account row, and functional chat context-menu actions
+- [x] User menu, local Settings Appearance controls, and Apps/extensions modal based on supplied screenshots
+- [x] Installed Ollama model selector through `/api/tags` via same-origin Vite proxy; selected model persists locally
+- [x] Streaming path sends to selected local Ollama model; no cloud fallback or model download
+- [x] Text file attachments and a model-name-gated image path (vision support is not model-verified)
+- [x] Optional thinking output path for model IDs detected by name (not a tested capability registry)
+- [x] Explicit-only HTML artifact parser/library and preview/source panel; sandbox iframe CSP blocks network requests
+- [x] Vault API path override `AI_BRAIN_PATH`, repository-starter fallback, safe path segments, `/context` and `/capture`
+- [x] Windows startup script source handles existing Ollama, the optional Rollup dependency, and local Vite/vault startup
+
+### Verified in this Linux sandbox
+- [x] `npm test`: 4 unit tests pass for artifact intent, parsing, and sandbox policy
+- [x] `npm run build`: Vite production build succeeds
+- [x] `node --check server/vault-api.cjs`: syntax check succeeds
+- [x] Synthetic POST `/vault/capture` saved a test conversation only under `/tmp/ai-assistant-preview-vault`
+- [x] Vite page and `/vault/context` same-origin proxy responded; `/ollama/tags` failed as expected because Ollama is not installed in this sandbox
+
+### Not tested / not user-confirmed
+- [ ] Windows TUF A15 startup, pixel comparison, Ollama model listing/chat streaming, attachments, model capability behavior, and generated artifact interaction
+- [ ] Extension -> API -> personal Obsidian vault flow; Chrome extension behavior
+- [ ] Personal Obsidian vault path; `AI_BRAIN_PATH` must be explicitly configured before relying on a personal vault
 
 ## 3. What Doesn't Work / Gaps
 
-### Exact Clone Gaps (apps/01_claude-exact-pixel-clone)
-- [ ] Settings modal Appearance Theme Chat font Transcript size Width Motion Voice Language Style Speed from 191707.png — not implemented, need modal component
-- [ ] File Edit View Go Help menu bar — Electron menu needed, currently Vite web only
-- [ ] User menu nishadislamutso@gmail.com Settings etc from 191608.png — not implemented
-- [ ] Apps and extensions modal from 191636.png — not implemented
-- [ ] Project dropdown Sonnet 5.5 Medium Manual functionality — currently static text
-- [ ] Artifact runner — no artifact preview yet (Electron clone has it, can port)
-- [ ] File upload, image upload — missing
-- [ ] Thinking display — missing
-- [ ] Capsule drag-drop inject + Quillbot inline suggestions — requires extension integration + VaultPanel enhancement
-- [ ] Today view with Current Snapshot, journal draft, follow-ups — not implemented
-- [ ] Journal auto-generation — not implemented
-- [ ] Monthly audit — not implemented
-- [ ] Windows installer — only bat dev scripts
+### Exact Clone Gaps (`apps/01_claude-exact-pixel-clone`)
+- [ ] File/Edit/View/Go/Help native menu and native Windows wrapper; current target is still Vite/web
+- [ ] Full feature-by-feature Claude audit; the visual shell is not proof of complete Claude parity
+- [ ] Vault capture currently records submitted user prompts only, not the full user + assistant transcript; source capture needs completion and deduplication tests
+- [ ] Verified model capability registry; current vision/thinking gates use model-name heuristics
+- [ ] PDF/DOCX uploads, camera input, voice chat, audio, and richer document handling
+- [ ] Full Claude Projects behavior (project selector currently keeps only local names)
+- [ ] Capsule drag/drop, blacklist manager, Open Loops, Current Snapshot, Today/Journal/follow-ups
+- [ ] User's Windows validation and eventual Windows installer
 
-### Electron Clone Gaps (apps/02_electron-claude-clone-v6)
+### Electron Clone Gaps (`apps/02_electron-claude-clone-v6`)
 - [ ] Not exact pixel match to latest 6 screenshots (older Claude UI)
 - [ ] SQLite still used in some paths, should be only rebuildable index
 - [ ] Extension -> vault flow partial
 
-### Extension Gaps (extension/)
+### Extension Gaps (`extension/`)
 - [ ] End-to-end test extension -> app API -> vault files
 - [ ] Queue when offline not tested
 - [ ] Real Readability integration for generic-capture
@@ -56,40 +66,43 @@ User Utso wants AI ASSistant native Windows app that looks exactly like Claude d
 - [ ] Capsule version/branch/rollback not implemented
 - [ ] No Chrome Web Store publish, only unpacked
 
-### Vault Gaps (vault/AI-Brain)
+### Vault Gaps (`vault/AI-Brain`)
 - [ ] No real user data yet, only starter templates
 - [ ] Privacy & Access.md excluded_patterns empty, need UI to edit
 - [ ] Model Registry.md not populated with tested capabilities
 - [ ] Claude Feature Audit.md tracker only, not implementation
-- [ ] No .brain/index.sqlite implementation yet (rebuildable index)
+- [ ] No `.brain/index.sqlite` implementation yet (rebuildable index)
+- [ ] Personal vault is not yet selected/configured; repo starter is only a fallback
 
 ### System Gaps
-- [ ] Ollama CORS fix: need setx OLLAMA_ORIGINS "*" in bat + docs
-- [ ] Tic Tac Toe loop: qwen2.5:3b systemPrompt with Flappy Bird example causes game creation every reply — fix is simple prompt override, but need clear localStorage if looped data exists
-- [ ] No reply bug: ChatMode called sendMessage from useChat which doesn't exist — fixed in v6 by LLMFactory, but exact clone uses direct fetch so OK
-- [ ] No Windows test yet — sandbox Linux cannot run dotnet/msbuild, user must test on TUF A15
+- [ ] No Ollama runtime in sandbox, so selected-model streaming is not exercised here
+- [ ] No Windows test yet — user must run the updated bat on TUF A15
+- [ ] `npm audit` reports 9 development-tool advisories (3 moderate, 6 high); production dependency audit is clean. Fix requires major toolchain upgrades and was deferred.
+- [ ] Artifact panel relies on the model returning a complete fenced `artifact-html`/`html` response after explicit artifact requests
 
 ## 4. Known Bugs & Fixes
 
-1. **Tic Tac Toe Loop**
-   - Cause: systemPrompt for isOpenSourceModel includes Flappy Bird game example as correct format, qwen2.5:3b interprets as must create game every reply. Seen in user screenshots: Artifacts (2) HTML Application, all replies same Tic Tac Toe.
-   - Fix: Override systemPrompt for qwen2.5:3b to simple assistant "You are AI ASSistant, helpful assistant...", only create artifacts when explicitly asked. Clear localStorage chat_history that contains looped artifact context.
-   - Status: Fixed in exact clone Center.jsx (simple prompt), but need user to clear localStorage if old data.
+1. **Tic Tac Toe / unsolicited artifact loop**
+   - The earlier Electron prompt included a game example that qwen2.5:3b sometimes repeated.
+   - Exact-clone prompt now says not to create artifacts unless explicitly asked; HTML preview parsing is also gated on an explicit request.
+   - If a saved old conversation already contains repeated game context, start a new chat or delete that specific chat only after user confirmation; do not clear all local history automatically.
+   - Status: prevention logic is in source and artifact intent parsing is unit-tested; qwen2.5:3b response behavior still needs Windows verification.
 
-2. **No Reply Bug**
-   - Cause: custom ChatMode called sendMessage from useChat which doesn't exist
-   - Fix: Restore original LLMFactory streaming, or use direct Ollama fetch as in exact clone
-   - Status: Fixed
+2. **Ollama CORS / browser proxy**
+   - Exact clone now uses relative `/ollama/*` paths; Vite rewrites and proxies them to `http://127.0.0.1:11434/api/*` with `changeOrigin`.
+   - Status: Vite proxy config is in source. Ollama was unavailable in this sandbox, so the live endpoint still needs local validation. This removes the app's need for direct browser-to-Ollama CORS access.
 
-3. **Ollama CORS**
-   - Cause: ModelService fetch http://localhost:11434/api/tags fails if OLLAMA_ORIGINS not *
-   - Fix: setx OLLAMA_ORIGINS "*" and restart ollama serve, add to start-app.bat
-   - Status: Documented, need add to bat
+3. **Vite Rollup Win32**
+   - `start-app.bat` checks for `@rollup/rollup-win32-x64-msvc` and installs it if missing.
+   - Status: in source; not yet exercised on Windows in this session.
 
-4. **Vite Rollup Win32**
-   - Cause: @rollup/rollup-win32-x64-msvc optional dep fails on Windows
-   - Fix: npm install @rollup/rollup-win32-x64-msvc --save-optional in bat
-   - Status: Fixed in start-app.bat
+4. **Model capabilities**
+   - UI checks model names for likely vision/thinking support. Names are not proof of a capability and no model is downloaded automatically.
+   - Status: deliberately marked unverified until actual model tests and Model Registry entries exist.
+
+5. **Development dependency advisories**
+   - Full `npm audit` reports 9 development-tool advisories; `npm audit --omit=dev` reports 0.
+   - Status: major Vite/Tailwind upgrade deferred to avoid an untested toolchain change before Windows testing.
 
 ## 5. User Constraints & Corrections (Never Violate)
 
@@ -102,15 +115,16 @@ User Utso wants AI ASSistant native Windows app that looks exactly like Claude d
 
 ## 6. Immediate Next Steps (Priority Order)
 
-1. **Test exact clone on Windows:** User extracts apps/01_claude-exact-pixel-clone, runs start-app.bat, confirms qwen2.5:3b replies without Tic Tac Toe loop, clears localStorage if needed
-2. **Add Settings modal from 191707.png:** Appearance Theme system/sun/moon, Chat font Anthropic Serif, Transcript size Small/Medium/Large, Width Narrow/Medium/Wide, Motion System/Reduced, Voice Language English Style Buttery Speed Normal, left nav General Account Privacy Billing Capabilities Memory Reflect Time and focus Claude Code System Extensions Developer Skills Connectors
-3. **Add File/Edit/View/Go/Help menu + User menu + Apps and extensions modal:** From 191558, 191608, 191636 screenshots
-4. **Port artifact runner from Electron clone:** Artifacts (2) HTML Application preview like in user screenshots
-5. **Wire extension -> vault API -> Obsidian files:** Test end-to-end capture, wasn't accessible logging, blacklist
-6. **Implement VaultPanel enhancements:** Capsule drag-drop, blacklist manager, Open Loops
-7. **Implement Today view:** Current Snapshot, today's journal draft, due follow-ups, one next action
-8. **Build Windows installer:** Electron builder for exact clone, or Tauri lighter for 8GB RAM
-9. **Test with synthetic data:** vault read/write, conflict safety, model capabilities, Claude UI inventory, authorized capture, journal/provenance, retention controls, model switch, external-send approval
+1. **User validates the exact clone on Windows:** in `apps/01_claude-exact-pixel-clone`, run `start-app.bat`, open `http://127.0.0.1:5173`, check model list/chat response and screenshot parity. Do not clear all localStorage; preserve existing chats.
+2. **Verify local models and capabilities:** confirm qwen2.5:3b is listed and replies; test image/thinking only with models that are already installed. Update `00 System/Model Registry.md` with tested evidence; never auto-download qwen3-vl:4b.
+3. **Configure and verify the personal vault path:** only after the user identifies it, set `AI_BRAIN_PATH`; test reads/writes against a disposable copy first.
+4. **Wire extension -> Vault API -> Obsidian files:** test submitted-chat capture, visit-only metadata, inaccessible failure logging, blacklist, and offline queue.
+5. **Implement VaultPanel enhancements:** Capsule library/drag-drop, blacklist manager, Open Loops, Current Snapshot, Cook This Prompt.
+6. **Implement Today/Journal/follow-ups** with source links, Asia/Dhaka dates, skip/snooze/stop, and no invented offline events.
+7. **Add native menu/window wrapper and installer** after web behavior is stable and Windows baseline is tested.
+8. **Run synthetic safety tests:** model capabilities, capture privacy, provenance, conflict safety, retention, external-send approvals, artifact sandbox, and no unsolicited artifact loops.
+
+**Already added in source this session:** Settings/UserMenu/Apps modal, model selector, file/image upload path, thinking path, artifact runner, same-origin proxies. Do not redo these without reading the code and test notes.
 
 ## 7. How to Continue (For Next AI)
 
@@ -125,7 +139,7 @@ User Utso wants AI ASSistant native Windows app that looks exactly like Claude d
 
 ## 8. Zips & Artifacts
 
-- archive_zips/AI_ASSistant_Exact_Claude_Clone.zip 13K — latest exact clone from screenshots, Vite+React+Tailwind, direct qwen2.5:3b, vault driver, bat files
+- `archive_zips/AI_ASSistant_Exact_Claude_Clone.zip` 13K — historical earlier exact-clone snapshot; it does not include this session's new components. Use the current repository branch source for testing.
 - archive_zips/AI_ASSistant_App_Claude_Clone_qwen2.5_3b_FIXED6.zip — previous Electron clone with more features
 - archive_zips/AI_ASSistant_Extension_v1.2_Fixed.zip — extension starter
 - archive_zips/AI_ASSistant_Obsidian_Vault_v4_Clean.zip — vault starter 61 files
@@ -136,7 +150,7 @@ All zips exclude node_modules/dist.
 
 - Written: requirement/template/docs exist
 - In source: code path exists
-- Compiled: Windows build succeeded (not tested in sandbox Linux)
+- Compiled: `npm run build` succeeds in this Linux sandbox; this is not a Windows build or native installer
 - Tested: behavior exercised with clear result
 - User-confirmed: user saw it running and accepts it
 
@@ -144,4 +158,4 @@ Don't claim feature implemented because it appears in plan/README/checklist/ZIP.
 
 ## 10. Latest Session Log
 
-**2026-10-10:** User posted 6 screenshots 191547-191707 showing actual Claude desktop: Sidebar Search +New Projects Artifacts Customize Oct8 Older, Center Evening Utso greeting with orange asterisk, composer How can I help you today?, Project dropdown Sonnet 5.5 Medium Manual, Free plan Upgrade, NU Utso Free bottom, context menu, Settings modal, Apps and extensions modal, user menu, File menu. Said "come on man, is this to hard to make?" Built exact pixel-perfect clone in AI-ASSistant-Claude-Exact, package.json vite tailwind, App.jsx localStorage claude_exact_chats, Sidebar.jsx search filter + context menu, Center.jsx greeting + textarea + vault context fetch 127.0.0.1:8765/context + direct Ollama 11434/api/chat qwen2.5:3b streaming + log to /capture, VaultPanel.jsx, server/vault-api.cjs, start-app.bat + build-windows.bat handling existing Ollama, zipped 13K. Then user asked for one zip with all we did so far, requirement list updated every time, repo as memory/handover for other AIs, structure suits AIs best. Creating master repo AI-ASSistant-Github-Repo with .ai/ + 00_LIVING_DOCS/ living docs.
+**2026-10-10 20:10 Asia/Dhaka:** User asked to continue from the GitHub repo, read `NEW_SESSION_HANDOVER.md` and `.ai/AGENT_INSTRUCTIONS.md`, and make the Claude app exact. `NEW_SESSION_HANDOVER.md` was not present in this checkout; the current `.ai/` and living docs plus supplied user handover were read. Actual source was the original 14-file shell and did not contain the Settings/UserMenu/Apps components claimed in the supplied handover. Added those interfaces, installed Ollama model selector via Vite proxy, local text/image attachment handling, optional model-name-gated thinking output, explicit-only HTML artifact parsing/library/sandbox panel, local project selector, safer vault path selection and markdown activity append. Added artifact unit tests. `npm test` (4/4), `npm run build`, `node --check`, and synthetic vault API smoke test to `/tmp/ai-assistant-preview-vault` passed. Vite preview launched; Ollama/Windows were not tested. Updated requirements, state, handover, architecture, changelog, README and session log. Next: user tests start-app.bat on Windows; then extension-vault integration, explicit personal vault configuration, capability verification, Capsule/Today workflows, native wrapper.

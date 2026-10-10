@@ -1,43 +1,48 @@
 {
   "date": "2026-10-10",
   "timezone": "Asia/Dhaka",
-  "repo_version": "1.0.0-master",
+  "repo_version": "1.0.1-claude-app-increment",
   "apps": {
     "01_claude-exact-pixel-clone": {
       "path": "apps/01_claude-exact-pixel-clone",
-      "status": "built-not-tested-on-windows",
-      "tech": "Vite 5 + React 18 + Tailwind + Express vault API",
+      "status": "source-updated-build-verified-linux-not-tested-on-windows",
+      "tech": "Vite 5 + React 18 + Tailwind 3; Vite same-origin proxies to loopback Ollama + vault API",
       "features_implemented": [
-        "Sidebar 260px #202020 Search +New Projects Artifacts Customize Oct8 Older groups",
-        "Search filter, context menu Open in new window Pin Rename Add to project Move to group Delete",
-        "Center #1a1a1a Evening Utso greeting (time-based), composer #242424 rounded-xl How can I help you today?",
-        "Free plan Upgrade top, bottom NU Utso Free avatar",
-        "VaultPanel toggleable",
-        "Direct Ollama http://127.0.0.1:11434/api/chat qwen2.5:3b streaming",
-        "Vault driver http://127.0.0.1:8765/context + /capture",
-        "localStorage claude_exact_chats with defaults Refining 5-day workout cycle etc from screenshots",
-        "start-app.bat handles already-running Ollama, installs @rollup/rollup-win32-x64-msvc",
-        "build-windows.bat"
+        "Screenshot-targeted 260px dark sidebar, chat search/groups, new chat, working context menu actions",
+        "Claude-style greeting, composer, transcript, responsive width/font/size appearance preferences",
+        "User menu with Settings and Apps and extensions entry points; local-only status notices",
+        "Settings modal from 191707: theme, chat font, transcript size/width, motion, voice preferences; localStorage persistence",
+        "Apps and extensions modal from 191636 with local extension setup disclosure and external-service boundaries",
+        "Ollama model selector lists installed models from /api/tags through Vite proxy; selected model persists; no download/cloud fallback",
+        "Streaming Ollama chat uses selected model and local /api/chat proxy; simple system prompt blocks unsolicited artifacts",
+        "Text file attachments and guarded image attachment path for model names marked vision-capable; 2 MB per-file cap",
+        "Thinking-output toggle shown only for model names with supported-looking identifiers; thinking output displayed when returned",
+        "Explicit-request HTML artifact extraction, library, preview/source panel, CSP network restrictions and sandboxed iframe",
+        "Vault driver routes through relative /vault proxy; configured AI_BRAIN_PATH and repo starter fallback",
+        "Windows start-app.bat supports already-running Ollama, optional Rollup package, vault API startup and local Vite proxy",
+        "Four Node unit tests for artifact intent, parsing and sandbox policy; API smoke test wrote only to isolated /tmp vault"
       ],
       "features_missing": [
-        "Settings modal Appearance Theme Chat font Transcript size Width Motion Voice Language Style Speed from 191707.png",
-        "File Edit View Go Help menu bar",
-        "User menu nishadislamutso@gmail.com Settings etc from 191608.png",
-        "Apps and extensions modal from 191636.png",
-        "Project dropdown Sonnet 5.5 Medium Manual functionality",
-        "Artifact runner",
-        "File upload, image upload",
-        "Thinking display",
-        "Capsule drag-drop inject",
-        "Quillbot inline suggestions (requires extension integration)"
+        "No complete Claude feature inventory / parity audit yet",
+        "Vault capture currently records each submitted user prompt, not the complete user+assistant transcript; Obsidian transcript capture is incomplete",
+        "File Edit View Go Help native menu (Electron wrapper not present in exact clone)",
+        "Project scope is a local selector, not full Claude Projects or project instructions/files",
+        "PDF/DOCX uploads, camera input, voice chat and audio are not implemented",
+        "Capability metadata is heuristic by model name and is not model-verified; qwen3-vl:4b not assumed installed",
+        "Artifact creation depends on the local model following artifact-html format; no Windows/Ollama end-to-end test",
+        "Capsule drag/drop, blacklist manager, Open Loops, Current Snapshot, Today/Journal views",
+        "Extension-to-vault end-to-end workflow and Chrome testing",
+        "Windows installer/Electron wrapper"
       ],
       "known_bugs": [
-        "Potential Tic Tac Toe loop if systemPrompt includes game example - FIXED by simple prompt in Center.jsx but need clear localStorage if looped",
-        "Ollama CORS if OLLAMA_ORIGINS not *",
-        "Vite rollup win32 optional dep may fail - fixed by bat installing @rollup/rollup-win32-x64-msvc"
+        "Windows behavior is untested in this session; run start-app.bat on the target TUF A15",
+        "Ollama was not installed in the Linux sandbox, so model discovery and chat streaming could not be exercised end-to-end",
+        "qwen2.5:3b is text-only; image upload is blocked unless a vision-named model is selected and that capability still needs verification",
+        "HTML artifacts require an explicit build/create request plus an artifact-html (or html) fenced response from the model",
+        "npm audit reports 9 dev-tool advisories (3 moderate, 6 high); production dependency audit reports 0; remediation would require major toolchain changes"
       ],
       "build_cmd": "npm install && npm run dev:server & npm run dev",
-      "zip": "archive_zips/AI_ASSistant_Exact_Claude_Clone.zip 13K"
+      "zip": "Historical only: archive_zips/AI_ASSistant_Exact_Claude_Clone.zip (13K); excludes this session's current source updates"
     },
     "02_electron-claude-clone-v6": {
       "path": "apps/02_electron-claude-clone-v6",
@@ -96,20 +101,17 @@
     "zip": "archive_zips/AI_ASSistant_Obsidian_Vault_v4_Clean.zip"
   },
   "current_gaps": [
-    "Exact clone missing Settings modal from 191707.png",
-    "Exact clone missing File menu + User menu modals",
-    "Extension -> Vault API -> Obsidian file writes end-to-end not tested",
-    "Capsule drag-drop + Quillbot inline not wired in exact clone",
-    "No Windows installer, only dev bats",
-    "No model manager UI",
-    "No journal auto-generation from captured sources",
-    "No monthly audit implementation",
-    "Ollama CORS fix needs documentation in bat"
+    "Windows start-app.bat and UI need user validation on TUF A15",
+    "Ollama model capability detection is name-based and needs a tested Model Registry",
+    "Complete Claude feature audit and native menu/Electron shell remain open",
+    "Obsidian path needs explicit user configuration for a personal vault; repo starter vault is the fallback",
+    "Extension -> Vault API -> Obsidian end-to-end capture and blacklist flows remain untested",
+    "Capsule/Today/Journal/follow-up flows, Windows installer, and other file/audio capabilities remain incomplete"
   ],
   "last_session": {
     "date": "2026-10-10",
-    "what_done": "Built exact pixel-perfect Claude clone from 6 screenshots, created start-app.bat handling existing Ollama, direct qwen2.5:3b streaming, vault driver, zipped to AI_ASSistant_Exact_Claude_Clone.zip 13K",
-    "user_request": "give me one zip with all we did so far, requirement list updated every time, repo as memory/handover for other AIs, structure suits AIs best",
-    "action_now": "Creating master github repo AI-ASSistant-Github-Repo with living docs"
+    "what_done": "Caught up the exact-clone source to the stated handover: implemented Settings/UserMenu/Apps modal, Ollama model selector via same-origin proxy, local text/image attachment path, model-gated thinking display, explicit-only sandboxed HTML artifact runner, and updated vault path safety/logging. Added artifact unit tests; npm test and Vite production build pass; synthetic vault API smoke test used /tmp only.",
+    "user_request": "Continue from the GitHub repository, read the handover and agent instructions, and continue making the Claude app exact clone.",
+    "action_now": "User should test start-app.bat on Windows; next code tasks are extension/vault integration, capability registry validation, Capsule/Today workflows, and eventual desktop wrapper."
   }
 }

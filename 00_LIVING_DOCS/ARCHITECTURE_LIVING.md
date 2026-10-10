@@ -1,6 +1,6 @@
 # ARCHITECTURE_LIVING.md — Driver / Vault / Extension
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 20:10 Asia/Dhaka
 
 ## 1. One-Line Architecture
 
@@ -73,6 +73,8 @@
 4. On failure -> POST type: wasnt_accessible with reason -> app logs to 09 Activity & Undo/<year>/<month>.md + 01 Inbox/Processing Errors/ as "wasn't accessible - [reason: permission blocked / layout changed / private window / paywall]" with URL/title/time, no popup
 5. Extension if app offline -> queues in chrome.storage.local.queue, flushes every 30s when app online. No external upload.
 
+**Current implementation status:** This is the intended flow, not an end-to-end acceptance claim. Exact-clone chat currently POSTs each submitted user prompt as a partial conversation; it does not append the assistant reply or preserve the complete multi-turn transcript in Obsidian yet. Extension capture and offline-queue behavior also remain untested.
+
 ### 3.2 Retrieval Flow (Vault -> App -> AI)
 
 1. User asks question in AI ASSistant app OR types in any AI site via extension
@@ -98,6 +100,14 @@
 - Update: add new version to existing Capsule, rollback/branch from any version
 - Transfer attachments: carry files you uploaded/generated across tools, not just text
 - Prompt enhancer: "Cook This Prompt" — enhance current prompt with relevant vault context
+
+### 3.4 Artifact Generation Flow (Exact Clone)
+
+1. Only treat a prompt as an artifact request when the user explicitly asks to build/create/generate runnable HTML, a web page, interactive tool, or game. Explanatory questions do not open an artifact.
+2. The local system prompt asks for one standalone `artifact-html` fence only for those requests; no external scripts, fonts, APIs, or CDNs.
+3. The app extracts the completed fence after streaming, adds an artifact record to the current chat, and opens the HTML preview panel. If the model does not return the expected format, no artifact preview is created.
+4. Preview runs in an iframe with `sandbox="allow-scripts"` (no same-origin, popups, or top navigation) and CSP `connect-src 'none'`, `default-src 'none'`; use a source tab to inspect the exact generated HTML.
+5. qwen2.5:3b may not follow the format reliably; this flow needs end-to-end testing on Windows. No automatic artifact or default game generation is allowed.
 
 ## 4. API Spec (Local Loopback 8765)
 
@@ -161,11 +171,14 @@ Updates 00 System/Privacy & Access.md + 00 System/Connectors/Source Scope.md + c
 ## 5. Tech Stack
 
 ### apps/01_claude-exact-pixel-clone (Latest Target)
-- Frontend: React 18, Vite 5, Tailwind CSS
-- Backend: Node Express 4.18.2 + cors 2.8.5 at 127.0.0.1:8765
-- LLM: Ollama direct fetch http://127.0.0.1:11434/api/chat qwen2.5:3b streaming, no client lib
-- Storage: localStorage claude_exact_chats + vault files via API
-- Bat: start-app.bat handles already-running Ollama, installs @rollup/rollup-win32-x64-msvc optional dep
+- Frontend: React 18, Vite 5, Tailwind CSS; dark default matches screenshots
+- Backend: Node Express 4.18.2 + cors 2.8.5 at 127.0.0.1:8765; `AI_BRAIN_PATH` explicitly selects the personal vault, repo starter is fallback
+- Browser API routes are relative: `/ollama/*` -> Vite proxy to `127.0.0.1:11434/api/*`; `/vault/*` -> Vite proxy to `127.0.0.1:8765/*`. Do not make browser code call localhost directly.
+- LLM: Ollama streaming, selected from installed models at `/api/tags`; qwen2.5:3b default, no download/cloud fallback
+- UI: user menu, Settings Appearance, Apps/extensions, model selector, file/image attachment path, optional thinking output, explicit-only HTML artifacts in CSP-restricted sandbox
+- Storage: localStorage `claude_exact_chats`, `claude_exact_settings`, selected model and projects; vault files via API
+- Bat: `start-app.bat` checks existing Ollama, installs the Rollup Win32 optional package if missing, starts API if needed and starts Vite on local Windows loopback
+- Validation: `npm test` (4 unit tests), `npm run build`, Node syntax check and isolated `/tmp` vault capture passed in Linux; Windows and Ollama runtime remain untested
 
 ### apps/02_electron-claude-clone-v6 (Reference, More Features)
 - Frontend: React 18, Vite 5, Tailwind

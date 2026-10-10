@@ -1,14 +1,14 @@
 # TODO_NEXT.md — Immediate Next Actions (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 20:10 Asia/Dhaka
 **Rule:** Update after each session, priority order, check off when done.
 
 ## Priority 1 — Test Exact Clone on Windows (User Action)
 
-- [ ] User extracts apps/01_claude-exact-pixel-clone or archive_zips/AI_ASSistant_Exact_Claude_Clone.zip on TUF A15
+- [ ] **Still next: user extracts/runs the app on TUF A15.** Do not use old archive ZIP; the current branch has the latest source.
 - [ ] Runs start-app.bat (handles already-running Ollama, installs @rollup/rollup-win32-x64-msvc)
 - [ ] Opens http://127.0.0.1:5173
-- [ ] Tests qwen2.5:3b replies without Tic Tac Toe loop — if looped, clear localStorage: in browser console `localStorage.removeItem('claude_exact_chats')` + `localStorage.clear()` + refresh
+- [ ] Tests the selected installed model replies without an unsolicited artifact loop. If an old thread is looped, start a new chat first; do not clear all localStorage or delete chat history.
 - [ ] Confirms vault API at http://127.0.0.1:8765/context returns empty or capsules
 - [ ] Reports result: does it reply? Does it match screenshots? Any errors in console?
 
@@ -23,12 +23,12 @@
 - starts npm run dev (Vite 5173)
 ```
 
-**If CORS error:** Run `setx OLLAMA_ORIGINS "*"` in cmd, restart Ollama: `taskkill /F /IM ollama.exe` then `ollama serve`
+**If the model list/chat fails:** First confirm Ollama is running at `http://127.0.0.1:11434/api/tags`. The exact clone uses a same-origin Vite proxy, so do not change `OLLAMA_ORIGINS` or terminate Ollama unless the browser console gives a specific CORS error.
 
 ## Priority 2 — Add Missing Modals From Screenshots
 
 ### 2.1 Settings Modal (191707.png) — High Priority
-- [ ] Create src/components/SettingsModal.jsx
+- [x] `src/components/SettingsModal.jsx` is in source; Vite build passes; Windows behavior still needs testing
 - Left nav: General, Account, Privacy, Billing, Capabilities, Memory, Reflect, Time and focus, Claude Code, System, Extensions, Developer, Skills, Connectors
 - Right Appearance:
   - Theme: system/sun/moon icons, options System, Light, Dark (currently dark default)
@@ -41,13 +41,13 @@
 - Store settings in localStorage claude_exact_settings
 
 ### 2.2 User Menu (191608.png)
-- [ ] Create src/components/UserMenu.jsx
+- [x] `src/components/UserMenu.jsx` is in source; local-only account actions explain that remote actions are not connected
 - Content: nishadislamutso@gmail.com, Settings, Language, Get help, Upgrade plan, Get apps and extensions, Learn more, Get API keys, Log out
 - Trigger: click avatar NU bottom left
 - Position: above avatar, dark #2a2a2a rounded
 
 ### 2.3 Apps and Extensions Modal (191636.png)
-- [ ] Create src/components/AppsExtensionsModal.jsx
+- [x] `src/components/AppsExtensionsModal.jsx` is in source; local extension setup is distinguished from external Claude/Microsoft apps
 - Content: Do more with Claude everywhere you work, Claude Code Terminal VSCode etc, Microsoft 365, Chrome extension
 - Trigger: Settings -> Extensions or top bar?
 
@@ -57,25 +57,25 @@
 
 ### 2.5 Context Menu Already Done But Verify
 - [x] Context menu Open in new window, Pin chat, Rename, Add to project, Move to group, Delete on CSE220 MID etc — implemented in Sidebar.jsx
-- [ ] Add functionality: Pin, Rename, Delete actually work (currently UI only)
+- [x] Pin/unpin, Rename, Add to project, Move to group, Delete (with confirmation), and Open in new window actions are in source; validate on Windows.
 
 ## Priority 3 — Port Features From Electron Clone
 
 ### 3.1 Artifact Runner
-- [ ] Port from apps/02_electron-claude-clone-v6/src/components/ArtifactPanel.jsx + Workbench
-- Artifacts (2) HTML Application from user screenshots shows Tic Tac Toe loop but should be generic artifact runner
-- Only create artifacts when explicitly asked (fix Tic Tac Toe loop)
+- [x] Added a smaller HTML-only artifact runner in the exact clone (not a direct port of Electron Workbench)
+- [x] Artifacts open in an HTML-only Preview/Source panel; explicit request gate prevents unrelated replies from creating artifacts
+- [x] Artifact HTML preview is sandboxed with network requests blocked; model response format still needs qwen-on-Windows verification
 
 ### 3.2 Thinking Display
-- [ ] Port ThinkingDisplay.jsx
+- [x] Optional thinking output display is in the chat; exposed only for model IDs that match known patterns, not capability-verified
 
 ### 3.3 File Upload + Image Upload
-- [ ] Port ImageUpload.jsx, handle qwen3-vl:4b vision model
+- [x] Text attachments and image upload path added; images are blocked unless selected model name matches vision patterns. Do not download qwen3-vl:4b; test only if already installed
 
 ### 3.4 Project Dropdown + Model Selector
-- [ ] Make Project dropdown + Sonnet 5.5 Medium Manual functional, not static text
-- Model selector should list Ollama models from http://127.0.0.1:11434/api/tags, plus qwen2.5:3b default
-- Store selected model in localStorage
+- [x] Project dropdown can create/select local project labels; it is not full Claude Projects functionality
+- [x] Model selector lists installed models from `/api/tags` via Vite proxy and defaults to qwen2.5:3b when unset; do not download missing models
+- [x] Selected model persists in localStorage; capabilities are not yet verified and must not be inferred from UI alone
 
 ## Priority 4 — Wire Extension -> Vault API -> Obsidian Files
 
@@ -128,15 +128,15 @@
 
 ## How to Pick Next Task
 
-1. If user reports exact clone doesn't work on Windows, fix Priority 1 first
-2. Else if user wants Settings modal, do Priority 2.1
-3. Else if extension not working, do Priority 4
-4. Else continue with Priority 3,5,6,7 in order
+1. Windows validation is the next user action; do not claim tested until result is reported.
+2. For coding after that, work on Priority 4 extension-to-vault validation, then Priority 5 Capsule/VaultPanel, then Priority 6 Today/Journal.
+3. Model capability claims remain blocked until the model is actually tested; do not pull/download models automatically.
 
 Always update living docs after each task.
 
 ## Done Log
 
+- [x] 2026-10-10 20:10 Added exact-clone dialogs, local Ollama model selector, attachment path, thinking display path, sandboxed explicit-only HTML artifact runner, relative Vite proxies and vault API path/logging fixes; tests/build pass in Linux sandbox, Windows/Ollama untested
 - [x] 2026-10-10 19:20 Created master repo structure with .ai/ + 00_LIVING_DOCS/ + apps/ + extension/ + vault/ + spec/ + archive_zips/
 - [x] 2026-10-10 13:19 Built exact pixel-perfect clone from 6 screenshots, Vite+React+Tailwind, direct qwen2.5:3b streaming, vault driver, bat files, zipped 13K
 - [x] 2026-10-10 13:00 Built Electron clone v6 with artifacts workbench etc (previous session)

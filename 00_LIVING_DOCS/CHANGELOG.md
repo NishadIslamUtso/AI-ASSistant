@@ -1,9 +1,16 @@
 # CHANGELOG.md — What Changed Each Session (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 20:10 Asia/Dhaka
 **Rule:** Log every change with date, what, why. This is memory for next AI.
 
 ## 2026-10-10
+
+### 20:10 — Catch Up Exact Clone to New-Session Handover and Add Functional Milestone
+- **What:** Added screenshot-matched UserMenu, SettingsModal, AppsExtensionsModal; local persistent appearance preferences; functional installed-model dropdown via Ollama `/api/tags`; Vite same-origin proxies for `/ollama` and `/vault`; local text/image attachment handling; optional model-name-gated thinking output; explicit-request-only HTML artifact extraction, library and sandboxed Preview/Source panel. Added local project labels and wired sidebar context actions. Hardened vault path selection with `AI_BRAIN_PATH`, path segment sanitization, and Markdown activity appends. Updated Windows launcher, package scripts, requirements, handover, state, architecture, TODO, README and AI index.
+- **Why:** User asked to continue the Claude app from GitHub and the actual checkout lacked several components marked complete in the supplied handover. Implemented the missing source features instead of assuming they were already present. Artifact security and explicit gating prevent the previous Tic Tac Toe loop; same-origin proxies satisfy the preview environment and avoid browser-side localhost calls.
+- **Tested:** `npm test` (4/4), `npm run build`, `node --check server/vault-api.cjs`, GET `/vault/context` via Vite proxy, and synthetic `/vault/capture` to `/tmp/ai-assistant-preview-vault`. Ollama was unavailable; Windows is not tested. Full npm audit reports 9 dev dependency advisories; production-only audit reports 0.
+- **Not claimed:** Native Windows app, full Claude feature parity, model capability verification, qwen2.5:3b artifact compliance, or personal Obsidian-vault configuration.
+- **Next:** User tests current source with `start-app.bat` on TUF A15; then model registry, extension-to-vault end-to-end work, VaultPanel/Capsule and Today/Journal work.
 
 ### 19:20 — Created Master Github Repo as AI Memory (Current Session)
 - **What:** Created AI-ASSistant-Github-Repo with AI-optimized structure: .ai/ (AGENT_INSTRUCTIONS, CONTEXT.json, STATE.json, INDEX.json), 00_LIVING_DOCS/ (REQUIREMENTS_LIVING, HANDOVER_LIVING, ARCHITECTURE_LIVING, DECISIONS_LOG, CHANGELOG, TODO_NEXT), apps/01_claude-exact-pixel-clone + 02_electron-claude-clone-v6, extension/, vault/AI-Brain/, spec/screenshots/, archive_zips/, docs/originals/, memory/sessions/

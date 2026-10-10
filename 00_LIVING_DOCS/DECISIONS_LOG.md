@@ -1,9 +1,30 @@
 # DECISIONS_LOG.md — All Decisions With Dates
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 20:10 Asia/Dhaka
 **Rule:** Log every decision with date, what, why, who requested, alternatives considered.
 
 ## 2026-10-10 Decisions
+
+### [2026-10-10 20:10] Explicit-Only Sandboxed HTML Artifact Runner
+- **What:** Only create an artifact preview after an explicit runnable-page/tool/game request and a complete HTML fence; render in a sandboxed iframe with network access blocked.
+- **Why:** Prevent the previous qwen2.5:3b Tic Tac Toe loop and avoid trusting model-generated code with access to the app or network.
+- **Who:** Implementation choice for the user's stated exact Claude-app handover; no new product requirement inferred.
+- **Alternative:** Auto-detect/preview every code block — rejected because ordinary explanations should not create games/apps and code is untrusted.
+- **Status:** Source + parser/policy tests; actual qwen2.5:3b output and Windows iframe behavior remain untested.
+
+### [2026-10-10 20:10] Same-Origin Vite Proxy for Local Services
+- **What:** Browser calls relative `/ollama/*` and `/vault/*` endpoints; Vite proxies to loopback Ollama and Vault API.
+- **Why:** Keeps browser code independent of the preview host's localhost and avoids direct browser-to-Ollama CORS dependence.
+- **Who:** Implementation choice required by Arena preview and compatible with the local Windows Vite app.
+- **Alternative:** Hard-coded browser fetches to `127.0.0.1` — rejected because remote preview browsers would call the user's own machine, not the sandbox.
+- **Status:** Vite page and vault proxy smoke-tested; Ollama proxy cannot connect in sandbox because no Ollama service is installed.
+
+### [2026-10-10 20:10] Local Model Selector Lists Installed Models Only
+- **What:** Read installed Ollama model names through `/api/tags`, persist the selected model locally, do not auto-pull models, and never silently use a cloud fallback.
+- **Why:** User's TUF A15 has limited RAM/VRAM and slow downloads; qwen2.5:3b is already installed.
+- **Who:** Utso requirement, as implemented in the exact clone.
+- **Alternative:** Bundle/pull qwen3-vl or show fake Sonnet capability — rejected.
+- **Status:** Source/build present; actual model listing and capability behavior still need Windows testing.
 
 ### [2026-10-10 19:20] Create Master Github Repo as AI Memory
 - **What:** Create AI-ASSistant-Github-Repo with .ai/ + 00_LIVING_DOCS/ structure optimized for AI handover, not human aesthetics, single zip with all work + living requirements

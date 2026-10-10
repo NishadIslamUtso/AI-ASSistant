@@ -1,6 +1,6 @@
 {
   "repo": "AI-ASSistant-Github-Repo",
-  "generated": "2026-10-10T13:23:00+06:00",
+  "generated": "2026-10-10T20:10:00+06:00",
   "file_index": [
     {
       "path": ".ai/AGENT_INSTRUCTIONS.md",
@@ -54,21 +54,27 @@
     },
     {
       "path": "README.md",
-      "purpose": "Root README, repo map, quick start for AI and human, GitHub push instructions",
+      "purpose": "Root README, repo map, current Windows quick start and honest implementation status",
       "type": "readme"
     },
     {
       "path": "apps/01_claude-exact-pixel-clone/",
-      "purpose": "LATEST TARGET: Pixel-perfect Claude desktop clone from 6 screenshots, Vite+React+Tailwind, direct Ollama qwen2.5:3b, vault driver 8765",
+      "purpose": "CURRENT TARGET: screenshot-driven Claude-layout app with local Settings/UserMenu/Apps dialogs, installed Ollama selector, same-origin Vite proxies, attachments and explicit-only sandboxed HTML artifacts; Linux build verified, Windows/Ollama untested",
       "type": "app",
       "key_files": [
-        "src/App.jsx - state chats localStorage claude_exact_chats",
-        "src/components/Sidebar.jsx - Search +New Projects Artifacts Customize Oct8 Older + context menu",
-        "src/components/Center.jsx - Evening Utso greeting + composer + vault context + Ollama streaming",
-        "src/components/VaultPanel.jsx - toggleable vault panel",
-        "server/vault-api.cjs - vault driver API 8765",
-        "start-app.bat - Windows one-click handling existing Ollama",
-        "build-windows.bat"
+        "src/App.jsx - chat/settings/model state in localStorage; model list refresh; dialogs and artifact panel wiring",
+        "src/components/Sidebar.jsx - 260px sidebar, search, chats and functional context menu",
+        "src/components/Center.jsx - greeting, composer, streaming local Ollama, file attachments, thinking and explicit artifact parsing",
+        "src/components/UserMenu.jsx - screenshot-matched account menu; local-only actions disclose limits",
+        "src/components/SettingsModal.jsx - screenshot-matched Appearance and saved preferences",
+        "src/components/AppsExtensionsModal.jsx - screenshot-driven apps/extensions view with honest local status",
+        "src/components/ModelSelector.jsx - installed Ollama models from /api/tags through Vite proxy",
+        "src/components/ArtifactPanel.jsx + ArtifactLibrary.jsx - HTML preview/source, sandbox and artifact list",
+        "src/lib/artifacts.js + artifacts.test.js - explicit intent, HTML extraction, sandbox document and four Node tests",
+        "src/components/VaultPanel.jsx - current minimal toggle panel; Capsule enhancements still pending",
+        "server/vault-api.cjs - local vault driver with AI_BRAIN_PATH and safe path handling",
+        "vite.config.js - relative /ollama and /vault proxies for browser requests",
+        "start-app.bat - Windows launch, existing Ollama and optional Rollup package; still needs Windows test"
       ]
     },
     {
