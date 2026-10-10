@@ -167,17 +167,15 @@ function Shell() {
   const ollamaBase = proxyBase ? '/ollama' : settings.ollamaUrl
   const vaultBase = proxyBase ? '/vault' : settings.vaultUrl
 
-  // ?demo=1 switches the offline demo responder on once, for UI testing
-  useEffect(() => {
-    if (bootRef.current) return
-    bootRef.current = true
-    try {
-      const p = new URLSearchParams(window.location.search)
-      if (p.get('demo') === '1') update({ demoMode: true })
-    } catch (e) {
-      /* ignore */
-    }
-  }, [update])
+  // ?demo=1 — switched on ONLY when Ollama is genuinely unreachable, so a link
+  // opened on a machine that does have Ollama always uses the real model.
+  const demoRequestedRef = useRef(false)
+  const demoAppliedRef = useRef(false)
+  try {
+    demoRequestedRef.current = new URLSearchParams(window.location.search).get('demo') === '1'
+  } catch (e) {
+    /* ignore */
+  }
 
   const abortRef = useRef(null)
   const projectRef = useRef('')
@@ -193,6 +191,10 @@ function Shell() {
   const refreshServices = useCallback(async () => {
     const p = await ping(ollamaBase)
     setOllamaOk(Boolean(p.ok))
+    if (!p.ok && demoRequestedRef.current && !demoAppliedRef.current) {
+      demoAppliedRef.current = true
+      update({ demoMode: true })
+    }
     if (p.ok) {
       try {
         const list = await listModels(ollamaBase)
@@ -203,7 +205,7 @@ function Shell() {
     }
     const vs = await vault.status()
     setVaultOk(Boolean(vs))
-  }, [ollamaBase])
+  }, [ollamaBase, update])
 
   useEffect(() => {
     refreshServices()
