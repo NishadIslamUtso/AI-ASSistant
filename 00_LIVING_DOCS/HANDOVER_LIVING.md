@@ -1,6 +1,6 @@
 # HANDOVER_LIVING.md — Current State + Gaps (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 22:40 Asia/Dhaka
 **Purpose:** Give any AI/developer enough context to continue without relying on previous AI memory. Update every session.
 
 ## 1. Executive Summary
@@ -17,6 +17,9 @@ User Utso wants AI ASSistant native Windows app that looks exactly like Claude d
 ## 2. What Works (Tested in Sandbox)
 
 - [x] Exact clone UI: Sidebar 260px #202020 Search +New Projects Artifacts Customize Oct8 Older, context menu, Center #1a1a1a Evening Utso + composer #242424, Free plan Upgrade, NU Utso Free bottom — matches screenshots
+- [x] (2026-10-10 22:40) Settings (191707), User menu (191608), Apps & extensions (191636), menu bar (191558) all built and working
+- [x] (2026-10-10 22:40) Model selector, artifact runner, uploads, thinking panel, capsule drag-drop, blacklist manager, Today tab
+- [x] (2026-10-10 22:40) `npx vite build` clean; 4 headless jsdom smoke suites pass with 0 console errors
 - [x] Direct Ollama fetch http://127.0.0.1:11434/api/chat qwen2.5:3b streaming (no download, uses existing)
 - [x] Vault API server/vault-api.cjs at 127.0.0.1:8765 with /context + /capture endpoints
 - [x] localStorage claude_exact_chats with defaults from screenshots
@@ -28,20 +31,31 @@ User Utso wants AI ASSistant native Windows app that looks exactly like Claude d
 
 ## 3. What Doesn't Work / Gaps
 
-### Exact Clone Gaps (apps/01_claude-exact-pixel-clone)
-- [ ] Settings modal Appearance Theme Chat font Transcript size Width Motion Voice Language Style Speed from 191707.png — not implemented, need modal component
-- [ ] File Edit View Go Help menu bar — Electron menu needed, currently Vite web only
-- [ ] User menu nishadislamutso@gmail.com Settings etc from 191608.png — not implemented
-- [ ] Apps and extensions modal from 191636.png — not implemented
-- [ ] Project dropdown Sonnet 5.5 Medium Manual functionality — currently static text
-- [ ] Artifact runner — no artifact preview yet (Electron clone has it, can port)
-- [ ] File upload, image upload — missing
-- [ ] Thinking display — missing
-- [ ] Capsule drag-drop inject + Quillbot inline suggestions — requires extension integration + VaultPanel enhancement
-- [ ] Today view with Current Snapshot, journal draft, follow-ups — not implemented
-- [ ] Journal auto-generation — not implemented
-- [ ] Monthly audit — not implemented
-- [ ] Windows installer — only bat dev scripts
+### Exact Clone Gaps (apps/01_claude-exact-pixel-clone) — updated 2026-10-10 22:40
+
+**Closed this session (verified in a headless jsdom harness, NOT yet on the user's PC):**
+- [x] Settings modal Appearance from 191707.png (Theme, Chat font, Transcript size, Width, Motion, Voice) + left nav
+- [x] File Edit View Go Help menu bar (191558) — custom bar in the web build
+- [x] User menu (191608)
+- [x] Apps and extensions modal (191636)
+- [x] Model selector functional (Ollama /api/tags) + effort + thinking controls
+- [x] Artifact runner, strict "only when explicitly asked" rule
+- [x] File upload + image upload with model-aware vision handling
+- [x] Thinking display
+- [x] Capsule drag-drop inject + blacklist manager + Today tab in the AI-Brain panel
+- [x] Ollama CORS — removed as a problem by the /ollama and /vault dev proxies
+
+**Still open:**
+- [ ] **Not tested on the user's Windows machine** — this is the single most important open item
+- [ ] Today view is partial: Snapshot + Open Loops + journal path are shown; journal draft generation and follow-up answer/skip/snooze controls are not built
+- [ ] Journal auto-generation from captured sources
+- [ ] Monthly audit
+- [ ] Windows installer (Electron wrapper or Tauri) — only bat dev scripts exist
+- [ ] Quillbot-style inline suggestions live only in the extension content script, not wired into this app (it cannot be: the app is not a browser)
+- [ ] Extension -> vault API -> Obsidian files end-to-end test
+
+**Honest status marks:** everything above is *in source + compiled + exercised headlessly*.
+Nothing in this app is *user-confirmed on Windows* yet.
 
 ### Electron Clone Gaps (apps/02_electron-claude-clone-v6)
 - [ ] Not exact pixel match to latest 6 screenshots (older Claude UI)

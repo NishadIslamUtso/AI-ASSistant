@@ -1,115 +1,133 @@
 {
   "date": "2026-10-10",
+  "time_updated": "22:40 Asia/Dhaka",
   "timezone": "Asia/Dhaka",
-  "repo_version": "1.0.0-master",
+  "repo_version": "1.1.0-exact-clone",
+  "canonical_repo": "https://github.com/NishadIslamUtso/AI-ASSistant",
+  "note_for_next_ai": "The repo is the source of truth, not any handover text. A previous handover claimed UserMenu/SettingsModal/AppsExtensionsModal existed — they did not. They were built on 2026-10-10 22:40. Verify file existence before trusting a status list.",
   "apps": {
     "01_claude-exact-pixel-clone": {
       "path": "apps/01_claude-exact-pixel-clone",
-      "status": "built-not-tested-on-windows",
-      "tech": "Vite 5 + React 18 + Tailwind + Express vault API",
+      "status": "built-compiled-headless-tested-NOT-tested-on-user-windows",
+      "tech": "Vite 5 + React 18 + Tailwind + Express vault API, direct Ollama",
+      "files": [
+        "src/App.jsx (state, sending, streaming, artifacts, shortcuts)",
+        "src/context/SettingsContext.jsx (settings + theme/motion/font applied to <html>)",
+        "src/lib/ollama.js (ping, listModels, chatStream, <think> split, vision detection)",
+        "src/lib/vault.js (vault API client, fails soft)",
+        "src/lib/artifacts.js (artifact extraction + explicit-request gate)",
+        "src/lib/markdown.jsx (dependency-free markdown renderer)",
+        "src/lib/demo.js (offline demo responder, off unless ?demo=1)",
+        "src/components/Sidebar.jsx (260px sidebar + working context menu 191646)",
+        "src/components/Center.jsx (greeting, transcript, composer placement)",
+        "src/components/Composer.jsx (model/effort/thinking/project, uploads, drops)",
+        "src/components/Message.jsx",
+        "src/components/SettingsModal.jsx (191707)",
+        "src/components/AppsExtensionsModal.jsx (191636)",
+        "src/components/UserMenu.jsx (191608)",
+        "src/components/ArtifactPanel.jsx",
+        "src/components/ThinkingDisplay.jsx",
+        "src/components/VaultPanel.jsx (capsules / blacklist / today)",
+        "src/components/TitleBar.jsx (191558)",
+        "src/components/Dropdown.jsx, src/components/ContextMenu.jsx",
+        "server/vault-api.cjs (the only writer to the vault)",
+        "start-app.bat, check-ollama.bat, build-windows.bat, README.md"
+      ],
       "features_implemented": [
-        "Sidebar 260px #202020 Search +New Projects Artifacts Customize Oct8 Older groups",
-        "Search filter, context menu Open in new window Pin Rename Add to project Move to group Delete",
-        "Center #1a1a1a Evening Utso greeting (time-based), composer #242424 rounded-xl How can I help you today?",
-        "Free plan Upgrade top, bottom NU Utso Free avatar",
-        "VaultPanel toggleable",
-        "Direct Ollama http://127.0.0.1:11434/api/chat qwen2.5:3b streaming",
-        "Vault driver http://127.0.0.1:8765/context + /capture",
-        "localStorage claude_exact_chats with defaults Refining 5-day workout cycle etc from screenshots",
-        "start-app.bat handles already-running Ollama, installs @rollup/rollup-win32-x64-msvc",
-        "build-windows.bat"
+        "Sidebar 260px #202020: Search, New chat, Projects, Artifacts (n), Customize, Pinned/Today/Oct 8/Older groups, NU Utso Free -> user menu",
+        "Context menu 191646 fully functional: open in new window, pin/unpin, inline rename, add to project, move to group, delete",
+        "Center #1a1a1a: 'Evening, Utso.' greeting with orange asterisk, composer #242424 'How can I help you today?'",
+        "Composer bottom row: attach (+), Project dropdown, model selector, effort, thinking, send",
+        "Settings modal 191707 with Appearance (Theme/Chat font/Transcript size/Width/Motion/Voice) + Account/Privacy/Capabilities/Memory/System/Extensions",
+        "User menu 191608",
+        "Apps and extensions modal 191636",
+        "File/Edit/View/Go/Help menu bar 191558 with live Ollama + Vault status dots",
+        "Model selector lists Ollama /api/tags, remembers choice, marks vision models",
+        "Artifact runner: HTML/SVG sandboxed preview, code tab, copy, download, save-to-vault, version bump",
+        "Artifacts created ONLY when the user explicitly asks (Tic Tac Toe loop fix)",
+        "File + image upload; images only sent to vision-capable models, otherwise a model-aware warning",
+        "Thinking display for <think> blocks",
+        "AI-Brain panel: capsule library with drag-drop injection, never-check blacklist manager, Today tab (snapshot/open loops/journal path)",
+        "Cook This Prompt (Capsule Hub style prompt enhancer)",
+        "Direct Ollama streaming with abort; vault capture of every turn",
+        "Vite proxies /ollama and /vault -> Ollama CORS no longer required",
+        "Light/dark/system theme, reduced motion, transcript size, width, chat font — all really applied",
+        "Keyboard: Ctrl+B sidebar, Ctrl+J AI-Brain, Ctrl+Shift+A artifacts, Ctrl+N new chat"
       ],
       "features_missing": [
-        "Settings modal Appearance Theme Chat font Transcript size Width Motion Voice Language Style Speed from 191707.png",
-        "File Edit View Go Help menu bar",
-        "User menu nishadislamutso@gmail.com Settings etc from 191608.png",
-        "Apps and extensions modal from 191636.png",
-        "Project dropdown Sonnet 5.5 Medium Manual functionality",
-        "Artifact runner",
-        "File upload, image upload",
-        "Thinking display",
-        "Capsule drag-drop inject",
-        "Quillbot inline suggestions (requires extension integration)"
+        "End-to-end test on the user's Windows machine (top priority)",
+        "Journal auto-generation",
+        "Follow-ups with answer/skip/snooze/stop",
+        "Monthly audit",
+        "Windows installer (Electron/Tauri)",
+        "Full Claude feature-parity audit in 00 System/Claude Feature Audit.md"
       ],
       "known_bugs": [
-        "Potential Tic Tac Toe loop if systemPrompt includes game example - FIXED by simple prompt in Center.jsx but need clear localStorage if looped",
-        "Ollama CORS if OLLAMA_ORIGINS not *",
-        "Vite rollup win32 optional dep may fail - fixed by bat installing @rollup/rollup-win32-x64-msvc"
+        "None currently reproducible. The Tic Tac Toe loop is fixed structurally: plain system prompt with no code example + artifacts only on explicit request; Settings > System > Reset local data clears any old looped chat."
       ],
+      "verified": {
+        "vite_build": "clean — 269 kB JS / 81 kB gzip, 20 kB CSS",
+        "headless_smoke": "4 jsdom suites pass with 0 console errors: full render, artifact gating, model selector + attach menu, sidebar context menu",
+        "user_windows_test": "NOT DONE"
+      },
       "build_cmd": "npm install && npm run dev:server & npm run dev",
-      "zip": "archive_zips/AI_ASSistant_Exact_Claude_Clone.zip 13K"
+      "run_cmd_windows": "start-app.bat"
     },
     "02_electron-claude-clone-v6": {
       "path": "apps/02_electron-claude-clone-v6",
-      "status": "built-previously, more features, not exact pixel from latest screenshots",
+      "status": "reference-only, superseded by 01 for pixel accuracy",
       "tech": "React 18 + Vite 5 + Electron 31 + Express + Tailwind, fork of Damienchakma/Open-claude MIT",
-      "features_implemented": [
-        "Claude-like layout compact history left, centered transcript, right user bubbles",
-        "Artifacts panel, Workbench FileExplorer",
-        "ModelService.js supports Ollama + OpenAI + Claude + Gemini + Groq",
-        "VaultPanel, SettingsModal, ThinkingDisplay, CitationDisplay, ImageUpload, SearchIndicator",
-        "ThemeContext dark/light",
-        "Vault API server/vault-api.js + vault-api.cjs",
-        "start-app.bat, start-app-electron.bat, build-windows.bat, check-ollama.bat"
-      ],
-      "features_missing": [
-        "Not exact pixel match to 191547-191707 screenshots (older Claude UI)",
-        "Not connected to real Obsidian vault as canonical? Actually has vault API but SQLite still used in some paths",
-        "Extension integration partial"
-      ],
+      "use_for": "ArtifactPanel/Workbench/ThinkingDisplay reference code",
       "known_bugs": [
-        "No reply bug when ChatMode called sendMessage from useChat which doesn't exist - fixed by restoring LLMFactory streaming",
-        "Tic Tac Toe loop for qwen2.5:3b due to isOpenSourceModel systemPrompt - needs override"
-      ],
-      "zip": "archive_zips/AI_ASSistant_App_Claude_Clone_qwen2.5_3b_FIXED6.zip"
+        "Not pixel-accurate to 191547-191707",
+        "Old system prompt caused the Tic Tac Toe loop"
+      ]
     }
   },
   "extension": {
     "path": "extension/",
-    "status": "starter-spec-implemented, not tested on Chrome",
-    "tech": "MV3, background.js, content-scripts ai-capture, generic-capture, capsule-inject, quillbot-suggestions, popup, lib blacklist capsule vault-writer",
+    "status": "starter-spec-implemented, not tested end-to-end in a browser",
     "features_implemented": [
-      "manifest.json host_permissions <all_urls> + history + storage + scripting + contextMenus",
+      "MV3 manifest with <all_urls> + history + storage + scripting + contextMenus",
       "background.js history listener + blacklist check + failure logging + context menu",
       "lib/blacklist.js pattern matching",
       "lib/capsule.js data model",
       "lib/vault-writer.js POST to 127.0.0.1:8765",
-      "content-scripts/ai-capture.js adapters for ChatGPT Claude Gemini DeepSeek Grok Perplexity Copilot",
-      "content-scripts/generic-capture.js Readability-style",
-      "content-scripts/capsule-inject.js drag-drop + prompt enhancer",
-      "content-scripts/quillbot-suggestions.js toolbar + highlight + inline dropdown",
-      "popup Capsule library search blacklist manager"
+      "content-scripts: ai-capture, generic-capture, capsule-inject, quillbot-suggestions",
+      "popup: capsule library, search, blacklist manager"
     ],
     "features_missing": [
-      "Actual vault file writes need vault API running",
-      "Queue when offline (storage.local) not fully tested",
+      "End-to-end test extension -> vault API -> Obsidian files",
+      "Offline queue flush test",
       "Real Readability integration",
-      "End-to-end test extension -> app API -> vault"
-    ],
-    "zip": "archive_zips/AI_ASSistant_Extension_v1.2_Fixed.zip"
+      "Capsule version/branch/rollback"
+    ]
   },
   "vault": {
     "path": "vault/AI-Brain/",
-    "status": "structure-complete, templates-complete, no real user data yet, 61 files starter",
-    "structure": "00 System, 01 Inbox, 02 Sources, 03 Memory, 04 Working Memory, 05 Knowledge, 06 Review, 07 Sharing Receipts, 08 Journal, 09 Activity & Undo, 90 Archive, .brain",
-    "templates": "Browser Visit, Capsule, Conversation Source, Daily Journal, Entity, Event, Follow-up, Laptop File Reference, Memory Claim, Monthly Audit, Sharing Receipt, Source Scope",
-    "zip": "archive_zips/AI_ASSistant_Obsidian_Vault_v4_Clean.zip"
+    "status": "structure-complete, 60 files, starter content only, no real user data yet",
+    "api_endpoints": [
+      "GET /status",
+      "GET /context?q=",
+      "GET /capsules",
+      "GET /today",
+      "GET /blacklist",
+      "POST /blacklist",
+      "POST /capture (browser_visit, web_page, conversation, capsule, artifact, journal, wasnt_accessible, blacklist_update)"
+    ]
   },
   "current_gaps": [
-    "Exact clone missing Settings modal from 191707.png",
-    "Exact clone missing File menu + User menu modals",
-    "Extension -> Vault API -> Obsidian file writes end-to-end not tested",
-    "Capsule drag-drop + Quillbot inline not wired in exact clone",
-    "No Windows installer, only dev bats",
-    "No model manager UI",
-    "No journal auto-generation from captured sources",
-    "No monthly audit implementation",
-    "Ollama CORS fix needs documentation in bat"
+    "Exact clone not yet run on the user's Windows machine",
+    "Today view partial (snapshot + open loops only, no journal generation or follow-ups)",
+    "Extension -> vault end-to-end untested",
+    "No installer",
+    "Quillbot inline suggestions live only in the extension, cannot be wired into the desktop app"
   ],
   "last_session": {
     "date": "2026-10-10",
-    "what_done": "Built exact pixel-perfect Claude clone from 6 screenshots, created start-app.bat handling existing Ollama, direct qwen2.5:3b streaming, vault driver, zipped to AI_ASSistant_Exact_Claude_Clone.zip 13K",
-    "user_request": "give me one zip with all we did so far, requirement list updated every time, repo as memory/handover for other AIs, structure suits AIs best",
-    "action_now": "Creating master github repo AI-ASSistant-Github-Repo with living docs"
+    "time": "22:40 Asia/Dhaka",
+    "what_done": "Completed the exact clone to the 6 screenshots: Settings (191707), User menu (191608), Apps & extensions (191636), menu bar (191558), functional model selector, artifact runner with strict explicit-request rule, file+image upload with model-aware vision, thinking display, AI-Brain panel (capsules drag-drop, blacklist manager, Today tab), Cook This Prompt, /ollama + /vault CORS-free proxies, extended vault API, rewritten start-app.bat + check-ollama.bat. Clean production build and 4 headless jsdom smoke suites with 0 errors.",
+    "user_request": "Continue from the GitHub repo and make the Claude app exact clone",
+    "action_now": "User runs start-app.bat on the TUF A15 and reports; then Today view/journal/follow-ups, then extension end-to-end, then installer"
   }
 }

@@ -1,7 +1,83 @@
 # CHANGELOG.md — What Changed Each Session (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 22:40 Asia/Dhaka
 **Rule:** Log every change with date, what, why. This is memory for next AI.
+
+## 2026-10-10 (session 2 — 22:40 Asia/Dhaka) — Exact Clone Completed To The Screenshots
+
+**Context:** New session started from the GitHub repo. The handover claimed UserMenu /
+SettingsModal / AppsExtensionsModal were done — they were **not in the repo**. The repo,
+not the handover, is the source of truth, so all of it was built this session.
+
+### What was added to apps/01_claude-exact-pixel-clone/
+
+**UI that was missing (from the 6 screenshots)**
+- `src/components/SettingsModal.jsx` (191707) — full left nav + Appearance: Theme
+  System/Light/Dark, Chat font (Default / Anthropic Serif / Monospace), Transcript size
+  Small/Medium/Large, Width Narrow/Medium/Wide, Motion System/Reduced, Voice
+  Language/Style/Speed. Account, Privacy, Capabilities, Memory, System and Extensions do
+  real work; the Claude-cloud only tabs say "Not in the local build" instead of faking it.
+- `src/components/UserMenu.jsx` (191608) — email header + Settings, Language, Get help,
+  Upgrade plan, Get apps and extensions, Learn more, Get API keys, Log out.
+- `src/components/AppsExtensionsModal.jsx` (191636) — "Do more with Claude everywhere you
+  work": Claude Code (Terminal / VS Code), Microsoft 365, AI ASSistant Chrome extension
+  with unpacked-load instructions, Capsule Hub, inline suggestions.
+- `src/components/TitleBar.jsx` (191558) — File / Edit / View / Go / Help with working
+  entries + Ollama and Vault status dots.
+
+**Functionality**
+- `src/context/SettingsContext.jsx` — every setting persisted to `claude_exact_settings`,
+  theme/motion/transcript-size/width applied to `<html>` as CSS variables, so light mode
+  and reduced motion are real, not decorative.
+- `src/lib/ollama.js` — ping, `listModels` from `/api/tags`, streaming `/api/chat` with
+  abort, vision detection, `<think>` splitting.
+- Model selector in the composer now lists every local Ollama model and remembers the
+  choice; effort (Low/Medium/High) maps to generation options; thinking (Manual/Auto/Off)
+  drives the reasoning panel.
+- `src/lib/artifacts.js` + `src/components/ArtifactPanel.jsx` — artifact runner.
+  **Strict rule: an artifact is only created when the user explicitly asks** (or flips
+  artifact mode in the composer). Any code block can still be promoted by hand with
+  "Open in artifacts". This is the structural fix for the Tic Tac Toe loop.
+- File + image upload. Images are only attached when the selected model supports vision;
+  otherwise the turn still runs and the reply explains which model to pick.
+- `src/components/ThinkingDisplay.jsx` — collapsible reasoning panel.
+- `src/components/VaultPanel.jsx` rewritten: Capsules (drag onto the composer to inject),
+  Never-check blacklist (add/remove, writes the vault), Today (Current Snapshot,
+  Open Loops, journal path).
+- `src/lib/markdown.jsx` — dependency-free markdown renderer (no new npm packages, which
+  matters on a slow connection).
+- `src/lib/demo.js` — offline demo responder, OFF unless `?demo=1`.
+
+**System prompt**
+- Replaced with a plain instruction containing **no code example**. The old prompt seeded a
+  Flappy Bird example and qwen2.5:3b built a game on every reply.
+
+**CORS solved at the source**
+- `vite.config.js` now proxies `/ollama` -> 127.0.0.1:11434 and `/vault` -> 127.0.0.1:8765,
+  plus a `/__ai_proxy_ping` marker. The browser stays same-origin, so `OLLAMA_ORIGINS` is
+  no longer required. The app detects the proxy and falls back to direct URLs.
+
+**Vault API (`server/vault-api.cjs`)**
+- Now finds the repo vault (`../../../vault/AI-Brain`) and adds `GET /status`,
+  `GET /capsules`, `GET /today`, `GET /blacklist`, `POST /blacklist`, and `artifact` +
+  `journal` capture types. Blacklist is written into `00 System/Privacy & Access.md` and
+  `00 System/Connectors/Source Scope.md`, and every change is logged to 09 Activity & Undo.
+
+**Bats**
+- `start-app.bat` rewritten: sets `OLLAMA_ORIGINS`, starts Ollama **only if 11434 is not
+  already listening**, offers to pull qwen2.5:3b only if missing, starts the vault API only
+  if 8765 is free, opens the browser. Added `check-ollama.bat`.
+
+**Verified**
+- `npx vite build` clean (269 kB JS / 81 kB gzip).
+- 4 headless jsdom suites: full render (0 console errors), artifact gating (a normal
+  question produces NO artifact, an explicit build request produces one), model selector +
+  attach menu, sidebar context menu (pin / rename / delete). All pass.
+- **Not yet run on the user's Windows machine** — that is still the open item.
+
+**Why:** user instruction "task is making Claude app exact clone", TODO_NEXT P2-P7.
+**Next:** user runs `start-app.bat` on the TUF A15 and reports; then P6 (Today view /
+journal / follow-ups) and P9 (installer).
 
 ## 2026-10-10
 

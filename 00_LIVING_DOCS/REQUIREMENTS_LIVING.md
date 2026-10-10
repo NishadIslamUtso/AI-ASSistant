@@ -1,6 +1,6 @@
 # REQUIREMENTS_LIVING.md — Single Source of Truth (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 22:40 Asia/Dhaka
 **Version:** 1.0.0-master
 **Rule:** UPDATE THIS FILE EVERY TIME SOMETHING CHANGES. This repo is memory for AIs. If you don't update, next session loses context.
 
@@ -270,7 +270,19 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 
 - [x] App named AI ASSistant, native Windows desktop, title bar visible, dark default #1a1a1a
 - [x] Claude's chat layout copied from screenshots 191547-191707, sidebar 260px #202020 Search +New Projects Artifacts Customize Oct8 Older, center Evening Utso greeting, composer #242424 How can I help you today?, Free plan Upgrade top, NU Utso Free bottom
-- [ ] Feature inventory exists for "all Claude features" — need audit via 00 System/Claude Feature Audit.md, no parity claim without verification
+- [~] Feature inventory exists for "all Claude features" — PARTIAL: Settings > Capabilities reports what the selected local model can actually do (text / vision / artifacts / streaming); the full audit against 00 System/Claude Feature Audit.md is still pending, no parity claim is made.
+- [x] Settings modal from 191707.png: left nav (General, Account, Privacy, Billing, Capabilities, Memory, Reflect, Time and focus, Claude Code, System, Extensions, Developer, Skills, Connectors) + Appearance (Theme System/Light/Dark, Chat font, Transcript size Small/Medium/Large, Width, Motion, Voice Language/Style/Speed), persisted to localStorage
+- [x] User menu from 191608.png: email, Settings, Language, Get help, Upgrade plan, Get apps and extensions, Learn more, Get API keys, Log out
+- [x] Apps and extensions modal from 191636.png: Claude Code, Microsoft 365, AI ASSistant Chrome extension, Capsule Hub, inline suggestions — Anthropic cloud entries are labelled "Not available locally" instead of faked
+- [x] File / Edit / View / Go / Help menu bar (191558.png) rendered in the browser build with working entries; Electron will swap in a native menu
+- [x] Model selector is functional: lists every model from Ollama /api/tags, remembers the choice, marks vision models, effort (Low/Medium/High) and thinking (Manual/Auto/Off) are live
+- [x] Artifact runner: HTML/SVG run in a sandboxed preview panel with Code/Preview tabs, copy, download, save-to-vault, version bump on edit. Artifacts are created ONLY when the user explicitly asks (or flips artifact mode) — this is the Tic Tac Toe loop fix
+- [x] File + image upload in the composer; images are only sent to models that accept them, otherwise the model-aware warning is shown and the turn still runs
+- [x] Thinking/reasoning panel: <think> blocks from qwen3/deepseek-r1 style models are split out into a collapsible panel instead of leaking into the transcript
+- [x] Capsule drag-and-drop: drag a capsule from the AI-Brain panel onto the composer to inject goals/constraints/background/decisions
+- [x] Never-check blacklist manager in the app (AI-Brain panel > Never-check), writes 00 System/Privacy & Access.md + 00 System/Connectors/Source Scope.md, logged to 09 Activity & Undo
+- [x] Sidebar context menu (191646.png) is functional: open in new window, pin/unpin, inline rename, add to project, move to group, delete
+- [x] Ollama CORS solved at the source: the Vite dev server proxies /ollama and /vault, so the browser stays same-origin and OLLAMA_ORIGINS no longer matters (the app auto-detects the proxy and falls back to direct URLs)
 - [ ] Obsidian genuinely integrated as canonical vault, SQLite only rebuildable index under .brain/
 - [x] App is driver of vault + extension, vault organizes, extension collects + suggests contexts/prompts/files
 - [x] Browser extension default = check everything, if inaccessible log "wasn't accessible" without asking
@@ -287,7 +299,7 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - [x] Sensitive external sharing requires exact-content/destination preview + per-send approval, no blanket approval
 - [x] Original sources preserved until you choose deletion; archive, expire, forget-derived, delete-source remain distinct
 - [x] Journals dated Asia/Dhaka, event time vs capture time separated, source-linked, never invents offline events/feelings
-- [ ] Today view surfaces Current Snapshot, today's journal draft, due follow-ups, one next action — need Today view implementation
+- [~] Today view surfaces Current Snapshot, today's journal draft, due follow-ups, one next action — PARTIAL: AI-Brain panel > Today tab shows Current Snapshot + Open Loops + the day's journal path, read live from 04 Working Memory/. Still missing: journal draft generation and follow-up answer/skip/snooze controls.
 - [x] End-of-day prompts opt-in, offer answer/skip/snooze/stop, silence not resolution, user chooses cadence for sensitive topics
 - [x] Monthly cross-check user-triggered only, last 60 days + relevant linked older, dry-run, apply nothing until approved
 - [x] Cleanup never deletes original transcript because old or rarely retrieved; shows counts, sizes, reasons, links, batch decide
@@ -311,6 +323,17 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - Added hardware constraints TUF A15 8GB RAM 4GB VRAM
 - Added qwen2.5:3b direct use, no download, bat handling already-running Ollama
 - Created AI-optimized repo structure .ai/ + 00_LIVING_DOCS/
+
+### [2026-10-10 22:40] Exact clone brought up to the screenshots (P2-P5, P7)
+- **Added:** Settings modal (191707), User menu (191608), Apps & extensions modal (191636), File/Edit/View/Go/Help menu bar (191558) — all four modals/bars that were listed as missing
+- **Added:** functional model selector from Ollama /api/tags + effort + thinking controls, replacing the static "Sonnet 5.5 Medium Manual" text
+- **Added:** artifact runner (HTML/SVG preview panel) with the STRICT rule that artifacts are only produced when the user explicitly asks — requested by user as the fix for the Tic Tac Toe loop
+- **Added:** file + image upload, model-aware vision handling, thinking display, capsule drag-and-drop injection, blacklist manager, Today tab (Current Snapshot + Open Loops)
+- **Added:** /ollama and /vault dev proxies, which remove the Ollama CORS requirement entirely
+- **Changed:** system prompt reduced to a plain instruction with no code example; it is what stops a 3B model from building a game on every reply
+- **Changed:** vault API extended with /status, /capsules, /today, GET+POST /blacklist, artifact + journal capture types
+- **Why:** user instruction "task is making Claude app exact clone"; the handover listed these as the open P2-P7 items
+- **Verified:** production build clean; 4 headless jsdom smoke suites (render, artifact gating, model selector, sidebar context menu) all pass with zero console errors. NOT yet run on the user's Windows machine.
 
 ### [NEXT] Add when changed:
 - Use format: ### [YYYY-MM-DD HH:MM] Added/Changed/Fixed: description + why + who requested

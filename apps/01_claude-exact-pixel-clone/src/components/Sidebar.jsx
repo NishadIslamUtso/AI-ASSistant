@@ -1,37 +1,346 @@
-import { useState } from 'react'
-export default function Sidebar({ chats, currentChat, setCurrentChat, setChats }) {
-  const [search, setSearch] = useState("")
-  const [contextMenu, setContextMenu] = useState(null)
-  const filtered = chats.filter(c => c.title.toLowerCase().includes(search.toLowerCase()))
-  const oct8 = filtered.filter(c => c.date === 'Oct 8')
-  const older = filtered.filter(c => c.date === 'Older')
+import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  Search,
+  Plus,
+  Folder,
+  Package,
+  Palette,
+  Pin,
+  Pencil,
+  Trash2,
+  ExternalLink,
+  FolderPlus,
+  MoveRight,
+  ChevronDown,
+  ChevronRight,
+  PanelLeftClose,
+  PanelLeftOpen,
+} from 'lucide-react'
+import ContextMenu from './ContextMenu.jsx'
+
+/**
+ * Sidebar — 260px, #202020, from screenshot 191547.png
+ *   [logo] [collapse]
+ *   Search
+ *   + New chat
+ *   Projects / Artifacts (n) / Customize
+ *   Oct 8  /  Older  (chat groups)
+ *   [NU] Utso · Free  ⌄        -> UserMenu
+ *
+ * Right-click a chat -> the 191646.png context menu, and every entry works:
+ * open in new window, pin, rename (inline), add to project, move to group, delete.
+ */
+
+const GROUP_ORDER = [
+  'Pinned',
+  'Today',
+  'Yesterday',
+  'Previous 7 days',
+  'Previous 30 days',
+  'Oct 8',
+  'Older',
+]
+
+export default function Sidebar({
+  chats,
+  currentChatId,
+  onSelectChat,
+  onNewChat,
+  onRenameChat,
+  onDeleteChat,
+  onTogglePin,
+  onMoveGroup,
+  onAddToProject,
+  projects = [],
+  artifactCount = 0,
+  onOpenArtifacts,
+  onOpenProjects,
+  onOpenCustomize,
+  onOpenUserMenu,
+  userMenuOpen,
+  collapsed,
+  onToggleCollapse,
+  user,
+  searchFocusToken = 0,
+}) {
+  const [search, setSearch] = useState('')
+  const [menu, setMenu] = useState(null) // {x,y,chat}
+  const [renamingId, setRenamingId] = useState(null)
+  const [renameDraft, setRenameDraft] = useState('')
+  const renameRef = useRef(null)
+  const searchRef = useRef(null)
+
+  // File > Go > Search chats (and Ctrl+K style flows) focus this box
+  useEffect(() => {
+    if (searchFocusToken > 0) {
+      searchRef.current?.focus()
+      searchRef.current?.select()
+    }
+  }, [searchFocusToken])
+
+  const visible = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    const list = q ? chats.filter((c) => (c.title || '').toLowerCase().includes(q)) : chats
+    return list
+  }, [chats, search])
+
+  const groups = useMemo(() => {
+    const g = new Map()
+    for (const c of visible) {
+      const key = c.pinned ? 'Pinned' : c.group || 'Older'
+      if (!g.has(key)) g.set(key, [])
+      g.get(key).push(c)
+    }
+    const keys = [...g.keys()].sort((a, b) => {
+      const ia = GROUP_ORDER.indexOf(a)
+      const ib = GROUP_ORDER.indexOf(b)
+      return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib)
+    })
+    // Newest first inside each group
+    for (const k of keys) g.get(k).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
+    return keys.map((k) => ({ name: k, items: g.get(k) }))
+  }, [visible])
+
+  function openMenu(e, chat) {
+    e.preventDefault()
+    setMenu({ x: e.clientX, y: e.clientY, chat })
+  }
+
+  function startRename(chat) {
+    setRenamingId(chat.id)
+    setRenameDraft(chat.title)
+    setTimeout(() => renameRef.current?.select(), 0)
+  }
+
+  function commitRename() {
+    const t = renameDraft.trim()
+    if (t) onRenameChat?.(renamingId, t)
+    setRenamingId(null)
+  }
+
+  const menuItems = (chat) => [
+    {
+      icon: <ExternalLink size={14} />,
+      label: 'Open in new window',
+      onSelect: () => window.open(window.location.href, '_blank', 'noopener'),
+    },
+    {
+      icon: <Pin size={14} />,
+      label: chat.pinned ? 'Unpin chat' : 'Pin chat',
+      onSelect: () => onTogglePin?.(chat.id),
+    },
+    { icon: <Pencil size={14} />, label: 'Rename', onSelect: () => startRename(chat) },
+    {
+      icon: <FolderPlus size={14} />,
+      label: 'Add to project',
+      hint: '›',
+      onSelect: () => {
+        const name = window.prompt('Add to project (name):', projects[0]?.name || 'My project')
+        if (name) onAddToProject?.(chat.id, name.trim())
+      },
+    },
+    {
+      icon: <MoveRight size={14} />,
+      label: 'Move to group',
+      hint: '›',
+      onSelect: () => {
+        const g = window.prompt(
+          'Move to group:',
+          chat.group || 'Older',
+        )
+        if (g) onMoveGroup?.(chat.id, g.trim())
+      },
+    },
+    { separator: true },
+    {
+      icon: <Trash2 size={14} />,
+      label: 'Delete',
+      danger: true,
+      onSelect: () => {
+        if (window.confirm(`Delete "${chat.title}"? This cannot be undone.`)) onDeleteChat?.(chat.id)
+      },
+    },
+  ]
+
+  if (collapsed) {
+    return (
+      <div className="w-[52px] bg-[var(--bg-side)] border-r border-[var(--line)] flex flex-col h-full shrink-0 items-center py-2 gap-2">
+        <button
+          onClick={onToggleCollapse}
+          title="Show sidebar"
+          className="w-8 h-8 rounded-lg hover:bg-[var(--bg-hover)] flex items-center justify-center text-[var(--ink2)]"
+        >
+          <PanelLeftOpen size={16} />
+        </button>
+        <button
+          onClick={onNewChat}
+          title="New chat"
+          className="w-8 h-8 rounded-lg hover:bg-[var(--bg-hover)] flex items-center justify-center text-[var(--ink2)]"
+        >
+          <Plus size={16} />
+        </button>
+      </div>
+    )
+  }
+
   return (
-    <div className="w-[260px] bg-[#202020] border-r border-[#2a2a2a] flex flex-col h-screen shrink-0">
-      <div className="h-11 flex items-center px-3 gap-2 border-b border-[#2a2a2a]">
-        <div className="flex items-center gap-1 text-[#666] text-xs">☰ ◫ ← →</div>
-        <div className="ml-2 flex items-center gap-1 bg-[#2a2a2a] rounded-full px-2 py-1 text-[10px]">◍ &lt;/&gt;</div>
-      </div>
-      <div className="p-3">
-        <div className="relative mb-3">
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search" className="w-full bg-[#2a2a2a] border border-[#333] rounded-lg pl-3 pr-3 py-1.5 text-sm text-white placeholder-[#666] outline-none" />
+    <div className="w-[260px] bg-[var(--bg-side)] border-r border-[var(--line)] flex flex-col h-full shrink-0">
+      {/* ── top row: brand + collapse ───────────────────────── */}
+      <div className="h-11 flex items-center justify-between px-3 shrink-0">
+        <div className="flex items-center gap-2">
+          <span className="text-[var(--accent)] text-[17px] leading-none select-none">✳</span>
+          <span className="text-[13px] text-[var(--ink2)] select-none">AI ASSistant</span>
         </div>
-        <button onClick={()=>{const id=Date.now().toString(); const nc={id, title:'New chat', date:'Oct 8'}; setChats(p=>[nc, ...p]); setCurrentChat(id)}} className="w-full bg-[#2a2a2a] hover:bg-[#333] text-sm py-2 px-3 rounded-lg flex items-center gap-2 text-[#ccc] mb-3">+ New</button>
-        <div className="space-y-1 text-sm text-[#aaa]">
-          <div className="flex items-center gap-2 px-2 py-1.5 hover:bg-[#2a2a2a] rounded cursor-pointer">📁 Projects</div>
-          <div className="flex items-center gap-2 px-2 py-1.5 hover:bg-[#2a2a2a] rounded cursor-pointer">📦 Artifacts</div>
-          <div className="flex items-center gap-2 px-2 py-1.5 hover:bg-[#2a2a2a] rounded cursor-pointer">🎨 Customize</div>
+        <button
+          onClick={onToggleCollapse}
+          title="Hide sidebar"
+          className="w-7 h-7 rounded-md hover:bg-[var(--bg-hover)] flex items-center justify-center text-[var(--ink2)]"
+        >
+          <PanelLeftClose size={15} />
+        </button>
+      </div>
+
+      {/* ── search ──────────────────────────────────────────── */}
+      <div className="px-3 pb-2 shrink-0">
+        <div className="relative">
+          <Search
+            size={14}
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--ink3)] pointer-events-none"
+          />
+          <input
+            ref={searchRef}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search"
+            className="w-full bg-[var(--bg-hover)] border border-transparent focus:border-[var(--border-strong)] rounded-lg pl-8 pr-2 py-[7px] text-[13px] text-[var(--ink)] placeholder-[var(--ink3)] outline-none"
+          />
         </div>
+
+        <button
+          onClick={onNewChat}
+          className="mt-2 w-full flex items-center gap-2 bg-[var(--bg-hover)] hover:bg-[var(--bg-active)] rounded-lg py-[7px] px-2.5 text-[13px] text-[var(--ink)] transition-colors"
+        >
+          <Plus size={15} className="text-[var(--ink2)]" />
+          New chat
+        </button>
       </div>
-      <div className="flex-1 overflow-y-auto px-3 py-2">
-        {oct8.length>0 && <><div className="flex justify-between px-2 py-2 text-xs text-[#666]"><span>Oct 8</span><span>⇅</span></div><div className="space-y-0.5 mb-4">{oct8.map(c=><div key={c.id} onClick={()=>setCurrentChat(c.id)} onContextMenu={e=>{e.preventDefault(); setContextMenu({x:e.clientX, y:e.clientY, chat:c})}} className={`px-2 py-2 rounded-lg text-sm truncate cursor-pointer hover:bg-[#2a2a2a] ${currentChat===c.id?'bg-[#2a2a2a] text-white':'text-[#aaa]'}`}>{c.title}</div>)}</div></>}
-        <div className="flex justify-between px-2 py-2 text-xs text-[#666]"><span>Older ⌄</span><span>↗</span></div>
-        <div className="space-y-0.5">{older.map(c=><div key={c.id} onClick={()=>setCurrentChat(c.id)} onContextMenu={e=>{e.preventDefault(); setContextMenu({x:e.clientX, y:e.clientY, chat:c})}} className={`px-2 py-2 rounded-lg text-sm truncate cursor-pointer hover:bg-[#2a2a2a] ${currentChat===c.id?'bg-[#2a2a2a] text-white':'text-[#aaa]'}`}>{c.title}</div>)}</div>
+
+      {/* ── Projects / Artifacts / Customize ────────────────── */}
+      <div className="px-2 pb-1 shrink-0">
+        <Row icon={<Folder size={15} />} label="Projects" onClick={onOpenProjects} />
+        <Row
+          icon={<Package size={15} />}
+          label="Artifacts"
+          count={artifactCount}
+          onClick={onOpenArtifacts}
+        />
+        <Row icon={<Palette size={15} />} label="Customize" onClick={onOpenCustomize} />
       </div>
-      <div className="border-t border-[#2a2a2a] p-3 flex items-center justify-between">
-        <div className="flex items-center gap-2"><div className="w-6 h-6 rounded-full bg-[#c4a484] flex items-center justify-center text-xs text-black font-bold">NU</div><div className="text-sm">Utso · Free</div><span className="text-[10px]">⌄</span></div>
-        <div className="text-[#666]">◫◫</div>
+
+      {/* ── chat groups ─────────────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto px-2 pb-3">
+        {groups.length === 0 ? (
+          <div className="px-2 py-6 text-[12px] text-[var(--ink3)] text-center">
+            {search ? 'No chats match your search.' : 'No chats yet.'}
+          </div>
+        ) : null}
+
+        {groups.map((g) => (
+          <div key={g.name} className="mb-1">
+            <div className="flex items-center justify-between px-2 pt-3 pb-1 text-[11px] font-medium uppercase tracking-wide text-[var(--ink3)]">
+              <span>{g.name}</span>
+              <span className="opacity-0 group-hover:opacity-100">
+                {g.name === 'Pinned' ? <Pin size={11} /> : null}
+              </span>
+            </div>
+            <div className="space-y-[2px]">
+              {g.items.map((c) => {
+                const active = c.id === currentChatId
+                return renamingId === c.id ? (
+                  <input
+                    key={c.id}
+                    ref={renameRef}
+                    value={renameDraft}
+                    onChange={(e) => setRenameDraft(e.target.value)}
+                    onBlur={commitRename}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') commitRename()
+                      if (e.key === 'Escape') setRenamingId(null)
+                    }}
+                    className="w-full px-2 py-[6px] text-[13px] rounded-lg bg-[var(--bg-active)] border border-[var(--border-strong)] text-[var(--ink)] outline-none"
+                  />
+                ) : (
+                  <div
+                    key={c.id}
+                    onClick={() => onSelectChat?.(c.id)}
+                    onContextMenu={(e) => openMenu(e, c)}
+                    title={c.title}
+                    className={`group flex items-center gap-1.5 px-2 py-[6px] rounded-lg text-[13px] cursor-pointer truncate transition-colors ${
+                      active
+                        ? 'bg-[var(--bg-active)] text-[var(--ink)]'
+                        : 'text-[var(--ink2)] hover:bg-[var(--bg-hover)] hover:text-[var(--ink)]'
+                    }`}
+                  >
+                    {c.pinned ? <Pin size={11} className="shrink-0 opacity-60" /> : null}
+                    <span className="truncate flex-1">{c.title}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        openMenu(e, c)
+                      }}
+                      className="opacity-0 group-hover:opacity-100 w-5 h-5 rounded hover:bg-[var(--border-strong)] flex items-center justify-center text-[var(--ink2)] shrink-0"
+                      title="More"
+                    >
+                      <ChevronDown size={12} />
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </div>
-      {contextMenu && <div className="fixed inset-0 z-50" onClick={()=>setContextMenu(null)}><div style={{left:contextMenu.x, top:contextMenu.y}} className="absolute bg-[#2a2a2a] border border-[#333] rounded-lg py-1 w-52 text-sm shadow-xl"><div className="px-3 py-2 hover:bg-[#333]">↗ Open in new window</div><div className="px-3 py-2 hover:bg-[#333]">📌 Pin</div><div className="px-3 py-2 hover:bg-[#333]">✎ Rename</div><div className="px-3 py-2 hover:bg-[#333] flex justify-between"><span>📁 Add to project</span><span>›</span></div><div className="px-3 py-2 hover:bg-[#333] flex justify-between"><span>👥 Move to group</span><span>›</span></div><div className="px-3 py-2 hover:bg-[#333] text-red-400">🗑 Delete</div></div></div>}
+
+      {/* ── account row -> UserMenu (191608.png) ────────────── */}
+      <div className="border-t border-[var(--line)] p-2 shrink-0">
+        <button
+          onClick={onOpenUserMenu}
+          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[var(--bg-hover)] text-left ${
+            userMenuOpen ? 'bg-[var(--bg-hover)]' : ''
+          }`}
+        >
+          <div className="w-7 h-7 rounded-full bg-[#c4a484] text-black text-[11px] font-bold flex items-center justify-center shrink-0">
+            {user.initials}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[13px] text-[var(--ink)] truncate leading-tight">{user.name}</div>
+            <div className="text-[11px] text-[var(--ink3)] leading-tight">{user.plan}</div>
+          </div>
+          <ChevronRight
+            size={13}
+            className={`text-[var(--ink3)] transition-transform ${userMenuOpen ? 'rotate-90' : ''}`}
+          />
+        </button>
+      </div>
+
+      {menu ? (
+        <ContextMenu x={menu.x} y={menu.y} items={menuItems(menu.chat)} onClose={() => setMenu(null)} />
+      ) : null}
     </div>
+  )
+}
+
+function Row({ icon, label, count, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full flex items-center gap-2 px-2 py-[6px] rounded-lg text-[13px] text-[var(--ink2)] hover:bg-[var(--bg-hover)] hover:text-[var(--ink)] text-left"
+    >
+      <span className="shrink-0 opacity-80">{icon}</span>
+      <span className="flex-1 truncate">{label}</span>
+      {typeof count === 'number' && count > 0 ? (
+        <span className="text-[11px] text-[var(--ink3)]">({count})</span>
+      ) : null}
+    </button>
   )
 }
