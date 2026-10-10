@@ -1,5 +1,5 @@
 import { useState } from 'react'
-export default function Sidebar({ chats, currentChat, setCurrentChat, setChats }) {
+export default function Sidebar({ chats, currentChat, setCurrentChat, setChats, onOpenArtifacts, artifactCount = 0 }) {
   const [search, setSearch] = useState("")
   const [contextMenu, setContextMenu] = useState(null)
   const filtered = chats.filter(c => c.title.toLowerCase().includes(search.toLowerCase()))
@@ -18,7 +18,7 @@ export default function Sidebar({ chats, currentChat, setCurrentChat, setChats }
         <button onClick={()=>{const id=Date.now().toString(); const nc={id, title:'New chat', date:'Oct 8'}; setChats(p=>[nc, ...p]); setCurrentChat(id)}} className="w-full bg-[#2a2a2a] hover:bg-[#333] text-sm py-2 px-3 rounded-lg flex items-center gap-2 text-[#ccc] mb-3">+ New</button>
         <div className="space-y-1 text-sm text-[#aaa]">
           <div className="flex items-center gap-2 px-2 py-1.5 hover:bg-[#2a2a2a] rounded cursor-pointer">📁 Projects</div>
-          <div className="flex items-center gap-2 px-2 py-1.5 hover:bg-[#2a2a2a] rounded cursor-pointer">📦 Artifacts</div>
+          <button type="button" onClick={onOpenArtifacts} className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[#2a2a2a] rounded text-left text-[#aaa]">📦 <span>Artifacts{artifactCount > 0 ? ` (${artifactCount})` : ''}</span></button>
           <div className="flex items-center gap-2 px-2 py-1.5 hover:bg-[#2a2a2a] rounded cursor-pointer">🎨 Customize</div>
         </div>
       </div>

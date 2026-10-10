@@ -23,7 +23,7 @@
   CHANGELOG.md                <- What changed each session
   TODO_NEXT.md                <- Immediate next actions
 apps/
-  01_claude-exact-pixel-clone/ <- LATEST: Pixel-perfect clone from 6 screenshots (191547-191707.png). Vite+React+Tailwind, direct Ollama qwen2.5:3b streaming, vault driver. THIS IS CURRENT TARGET.
+  01_claude-exact-pixel-clone/ <- LATEST: Claude screenshot clone. Vite+React+Tailwind, local Ollama/vault proxies, explicit-request-only HTML Artifact Runner. THIS IS CURRENT TARGET.
   02_electron-claude-clone-v6/ <- PREVIOUS: Electron+React Open-claude fork, more features (artifacts, vision, workbench). Use as reference for features.
 extension/                    <- Browser extension MV3: default check everything, Capsule Hub + Quillbot UX
 vault/AI-Brain/               <- Obsidian vault canonical memory - 00 System, 01 Inbox, 02 Sources, 03 Memory, 04 Working Memory, 05 Knowledge, 06 Review, 07 Sharing Receipts, 08 Journal, 09 Activity & Undo, 90 Archive, .brain
@@ -54,8 +54,9 @@ cd apps\01_claude-exact-pixel-clone
 Requires: Ollama running, qwen2.5:3b pulled (`ollama pull qwen2.5:3b`), Node.js 20+
 - start-app.bat handles already-running Ollama, installs @rollup/rollup-win32-x64-msvc, starts vault API 8765 + Vite 5173
 - Open http://127.0.0.1:5173
-- Uses http://127.0.0.1:11434/api/chat directly, no download
-- Vault driver at http://127.0.0.1:8765/context + /capture
+- Uses the already-installed `qwen2.5:3b` model locally via a same-origin Vite proxy to Ollama at 127.0.0.1:11434; no model download or Ollama browser CORS setting is required for this app path
+- Vault driver at http://127.0.0.1:8765/context + /capture, reached by the frontend through Vite's same-origin `/api` proxy
+- Ask explicitly for a runnable webpage/app/game to create an HTML artifact. Ordinary questions remain chat; previews are sandboxed and saved locally.
 
 ### Electron Clone (More Features)
 ```bat

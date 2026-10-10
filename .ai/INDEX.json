@@ -1,6 +1,6 @@
 {
   "repo": "AI-ASSistant-Github-Repo",
-  "generated": "2026-10-10T13:23:00+06:00",
+  "generated": "2026-10-10T20:10:00+06:00",
   "file_index": [
     {
       "path": ".ai/AGENT_INSTRUCTIONS.md",
@@ -59,16 +59,20 @@
     },
     {
       "path": "apps/01_claude-exact-pixel-clone/",
-      "purpose": "LATEST TARGET: Pixel-perfect Claude desktop clone from 6 screenshots, Vite+React+Tailwind, direct Ollama qwen2.5:3b, vault driver 8765",
+      "purpose": "LATEST TARGET: Claude screenshot clone, Vite+React+Tailwind, local Ollama + vault proxy, explicit-request-only HTML artifact runner",
       "type": "app",
       "key_files": [
-        "src/App.jsx - state chats localStorage claude_exact_chats",
+        "src/App.jsx - app state, localStorage chats + artifacts, panel orchestration",
         "src/components/Sidebar.jsx - Search +New Projects Artifacts Customize Oct8 Older + context menu",
-        "src/components/Center.jsx - Evening Utso greeting + composer + vault context + Ollama streaming",
+        "src/components/Center.jsx - greeting, chat, vault context, local Ollama streaming, explicit artifact capture",
+        "src/components/ArtifactPanel.jsx - local artifact library, sandbox preview, source edit/run, copy/download",
+        "src/lib/artifacts.js - intent gate, HTML extraction, metadata, isolated preview document",
+        "src/lib/artifacts.test.js - Node tests for artifact gate/extraction/security setup",
         "src/components/VaultPanel.jsx - toggleable vault panel",
+        "vite.config.js - same-origin Vite proxies to local vault API and Ollama",
         "server/vault-api.cjs - vault driver API 8765",
         "start-app.bat - Windows one-click handling existing Ollama",
-        "build-windows.bat"
+        "build-windows.bat - production build helper"
       ]
     },
     {

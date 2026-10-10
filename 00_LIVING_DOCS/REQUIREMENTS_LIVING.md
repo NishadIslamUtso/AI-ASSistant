@@ -1,6 +1,6 @@
 # REQUIREMENTS_LIVING.md — Single Source of Truth (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 20:10 Asia/Dhaka
 **Version:** 1.0.0-master
 **Rule:** UPDATE THIS FILE EVERY TIME SOMETHING CHANGES. This repo is memory for AIs. If you don't update, next session loses context.
 
@@ -47,6 +47,14 @@ A native Windows app named AI ASSistant that looks exactly like Claude desktop f
 - Dark by default, visible persistent light/dark switch, remembers choice
 - Fully on-screen, Windows title bar + close controls visible
 - Polished, legible, simple — user should NOT manage databases/folders/backend
+
+### 2.4 Artifact Runner (2026-10-10)
+- [x] Create a runnable artifact only after a direct user request for a web page, app, game, or similar visual output. Ordinary questions and greetings must remain ordinary chat; asking how to build something does not create it.
+- [x] Accept a single complete HTML document from the local model; keep explanatory response text in the transcript and provide the runnable file in the Artifacts panel.
+- [x] Artifacts are stored in localStorage (`claude_exact_artifacts`), can be reopened, previewed, edited in the Source view, re-run, copied, or downloaded as `.html`.
+- [x] Preview runs in an isolated sandboxed iframe. Inline CSS/JavaScript and data/blob assets are supported; external network requests, external scripts, forms and top navigation are blocked.
+- [ ] Multi-file/npm projects, React/Bolt artifact builds, terminal commands and deployment are not part of this lightweight runner. Do not execute model-generated shell commands or claim Workbench parity.
+- [ ] Verify artifact and normal-chat behavior with qwen2.5:3b on the user's Windows PC; Linux unit/build checks are not Windows/Ollama confirmation.
 
 ## 3. Architecture — Driver / Vault / Extension
 
@@ -270,6 +278,7 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 
 - [x] App named AI ASSistant, native Windows desktop, title bar visible, dark default #1a1a1a
 - [x] Claude's chat layout copied from screenshots 191547-191707, sidebar 260px #202020 Search +New Projects Artifacts Customize Oct8 Older, center Evening Utso greeting, composer #242424 How can I help you today?, Free plan Upgrade top, NU Utso Free bottom
+- [x] In-source lightweight HTML artifact runner: explicit-request gate, local library, sandboxed preview, source editing/re-run, copy and download; unit tests/build pass in Linux sandbox, still needs Windows + live Ollama test
 - [ ] Feature inventory exists for "all Claude features" — need audit via 00 System/Claude Feature Audit.md, no parity claim without verification
 - [ ] Obsidian genuinely integrated as canonical vault, SQLite only rebuildable index under .brain/
 - [x] App is driver of vault + extension, vault organizes, extension collects + suggests contexts/prompts/files
@@ -311,6 +320,14 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - Added hardware constraints TUF A15 8GB RAM 4GB VRAM
 - Added qwen2.5:3b direct use, no download, bat handling already-running Ollama
 - Created AI-optimized repo structure .ai/ + 00_LIVING_DOCS/
+
+### [2026-10-10 20:10] Added: Explicit local HTML Artifact Runner
+- Added an explicit-request-only artifact flow: a user asks for a runnable web page/app/game; the local model returns one self-contained HTML block; only then is it saved and opened.
+- Added local artifact persistence and a source/preview workflow. Preview is sandboxed and has a restrictive Content Security Policy; network-loaded scripts and external requests are blocked.
+- Ordinary-question and educational-prompt tests specifically prevent the Tic Tac Toe/game loop from becoming a default behavior.
+- Replaced browser-facing loopback URLs with same-origin Vite proxy routes for the local vault API and Ollama; Ollama's browser CORS setting is no longer required for this app path. Vite defaults to loopback and only allows the Arena `.e2b.app` host suffix for explicit live preview.
+- Requested by the new-session handover's P3 item; adapted for local-only use and 8GB RAM by not porting WebContainer shell execution.
+- Verification: 7 Node unit tests pass and Vite production build passes in the Linux sandbox. Windows/qwen2.5:3b behavior remains untested.
 
 ### [NEXT] Add when changed:
 - Use format: ### [YYYY-MM-DD HH:MM] Added/Changed/Fixed: description + why + who requested

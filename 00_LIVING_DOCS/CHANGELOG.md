@@ -1,9 +1,21 @@
 # CHANGELOG.md — What Changed Each Session (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 20:10 Asia/Dhaka
 **Rule:** Log every change with date, what, why. This is memory for next AI.
 
 ## 2026-10-10
+
+### 20:10 — Added Local HTML Artifact Runner (P3)
+- **What:** Added `ArtifactPanel.jsx` with a local artifact library, Preview/Source tabs, source editing + Apply & run, copy and `.html` download. Added intent detection and HTML extraction helpers in `src/lib/artifacts.js`; artifacts persist at `claude_exact_artifacts` in localStorage and open automatically after a successful explicit build request.
+- **Why:** Followed P3 in the user's new-session handover. The earlier game loop showed why artifact creation must be opt-in and not a side effect of normal questions.
+- **Safety/Scope:** Preview uses `iframe sandbox="allow-scripts allow-forms allow-modals"` without `allow-same-origin`, plus restrictive CSP blocking external network resources. No WebContainer, terminal, npm installs, shell execution, remote publish, or generated command execution was ported; the lightweight HTML scope is suitable for local-first/8GB hardware.
+- **Prompt Behavior:** Local system prompt now asks for a single self-contained HTML fence only when user explicitly asks for a runnable visual artifact. Client-side explicit-intent gate additionally prevents ordinary/educational prompts from becoming artifacts. No game example is in the prompt.
+- **Network:** Browser calls now use same-origin `/api/*` and `/ollama/*`; Vite proxies those paths to the local vault API (`127.0.0.1:8765`) and Ollama (`127.0.0.1:11434`). App use no longer needs Ollama browser CORS configuration. Dev server binds to `127.0.0.1` by default and allowlists only `.e2b.app` for the requested Arena live preview.
+- **Files:** `src/App.jsx`, `src/components/Center.jsx`, `src/components/Sidebar.jsx`, new `src/components/ArtifactPanel.jsx`, new `src/lib/artifacts.js`, new `src/lib/artifacts.test.js`, `vite.config.js`, `package.json`, generated `package-lock.json`, REQUIREMENTS/HANDOVER/STATE/ARCHITECTURE/TODO/session docs.
+- **Tested:** `npm test` passed 7/7 unit tests; `npm run build` passed. Not tested on Windows or with live Ollama. `npm audit` reports 9 dev-dependency findings (3 moderate, 6 high); `npm audit --omit=dev` reports 0 production findings. Major dev-toolchain migration deferred.
+- **Preview:** Started the Vite UI on port 5173 for the user's preview request. HTTP 200 verified. The sandbox has no Ollama or vault API, so chat inference is not available in this live preview.
+- **Reconciliation:** New-session handover claims Settings/UserMenu/AppsExtensions are implemented, but the current checkout does not contain those components; leave them as gaps until source is present.
+- **Next:** User/Windows verify normal chat does not create an artifact and explicit HTML/game request opens a working local preview; then P4 model selector.
 
 ### 19:20 — Created Master Github Repo as AI Memory (Current Session)
 - **What:** Created AI-ASSistant-Github-Repo with AI-optimized structure: .ai/ (AGENT_INSTRUCTIONS, CONTEXT.json, STATE.json, INDEX.json), 00_LIVING_DOCS/ (REQUIREMENTS_LIVING, HANDOVER_LIVING, ARCHITECTURE_LIVING, DECISIONS_LOG, CHANGELOG, TODO_NEXT), apps/01_claude-exact-pixel-clone + 02_electron-claude-clone-v6, extension/, vault/AI-Brain/, spec/screenshots/, archive_zips/, docs/originals/, memory/sessions/

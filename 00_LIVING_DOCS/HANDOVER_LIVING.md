@@ -1,6 +1,6 @@
 # HANDOVER_LIVING.md — Current State + Gaps (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 20:10 Asia/Dhaka
 **Purpose:** Give any AI/developer enough context to continue without relying on previous AI memory. Update every session.
 
 ## 1. Executive Summary
@@ -8,18 +8,24 @@
 User Utso wants AI ASSistant native Windows app that looks exactly like Claude desktop from 6 screenshots (191547-191707), uses real Obsidian vault AI-Brain/ as canonical memory, extension collects from every site + every AI by default (log wasn't accessible if fails, no popup), never-check blacklist for privacy, Capsule Hub + Quillbot UX for context injection, local-first qwen2.5:3b via Ollama, driver/vault/extension architecture.
 
 **Current status:** 
-- Latest exact pixel-perfect clone built in apps/01_claude-exact-pixel-clone/ from screenshots, Vite+React+Tailwind, direct Ollama streaming, vault API, start-app.bat handling existing Ollama, zipped 13K. Not yet tested on user's Windows.
-- Previous Electron clone in apps/02_electron-claude-clone-v6/ has more features (artifacts, workbench, vision, thinking) but not exact pixel match to latest screenshots. Use as reference.
-- Extension starter in extension/ with spec for Capsule Hub + Quillbot, MV3, blacklist, failure logging. Not tested end-to-end.
-- Vault starter in vault/AI-Brain/ 61 files, templates, system docs. No real user data yet.
-- Master repo structure created 2026-10-10 as AI-optimized memory/handover repo per user request for single zip with all work + living requirements.
+- The exact-clone app is in `apps/01_claude-exact-pixel-clone/`. This session added the lightweight HTML Artifact Runner, same-origin API proxies and a more explicit artifact-only-on-request model prompt. `npm test` (7/7) and `npm run build` passed in the Linux sandbox. A Vite UI preview is currently running on port 5173; sandbox Ollama/vault services are absent, so chat inference/capture are not available there. It has NOT been tested on the user's Windows PC.
+- The previous Electron clone in `apps/02_electron-claude-clone-v6/` has a larger WebContainer Workbench, but it is reference code only; do not treat it as integrated into app 01.
+- The extension starter in `extension/` has Capsule Hub + Quillbot specifications and is not tested end-to-end.
+- The vault starter in `vault/AI-Brain/` has templates/system docs and no real user data.
+- The master repo structure was created 2026-10-10 as AI-optimized memory/handover per user's request.
+
+**Handover/source reconciliation:** The new-session summary supplied by the user says UserMenu, SettingsModal and AppsExtensionsModal are done. They are not present in this checkout's `apps/01_claude-exact-pixel-clone/src` at this branch/commit, and `.ai/STATE.json`/the existing live docs also list them as missing. Treat them as not implemented here until source is added or verified; this turn did not recreate them.
 
 ## 2. What Works (Tested in Sandbox)
 
 - [x] Exact clone UI: Sidebar 260px #202020 Search +New Projects Artifacts Customize Oct8 Older, context menu, Center #1a1a1a Evening Utso + composer #242424, Free plan Upgrade, NU Utso Free bottom — matches screenshots
-- [x] Direct Ollama fetch http://127.0.0.1:11434/api/chat qwen2.5:3b streaming (no download, uses existing)
+- [x] Ollama qwen2.5:3b streaming through same-origin Vite proxy `/ollama/api/chat` to local Ollama `127.0.0.1:11434` (no model download; browser CORS not required)
+- [x] Vite same-origin `/api/context` and `/api/capture` proxy routes to the local vault API `127.0.0.1:8765`
+- [x] Vite dev server defaults to loopback (`127.0.0.1`); Arena live preview is allowlisted via `.e2b.app`, and same-origin requests do not expose a backend address to browser code
 - [x] Vault API server/vault-api.cjs at 127.0.0.1:8765 with /context + /capture endpoints
-- [x] localStorage claude_exact_chats with defaults from screenshots
+- [x] localStorage `claude_exact_chats` with defaults from screenshots
+- [x] Artifact sidebar/library, explicit-request-only HTML extraction, localStorage `claude_exact_artifacts`, preview/source views, in-source edit + run, copy and download
+- [x] HTML execution is isolated by a sandboxed iframe and CSP; no shell/WebContainer command runner was ported
 - [x] start-app.bat handles already-running Ollama, installs @rollup/rollup-win32-x64-msvc for Windows
 - [x] build-windows.bat
 - [x] Electron clone has artifacts, workbench, ModelService.js supporting multiple models
@@ -34,7 +40,8 @@ User Utso wants AI ASSistant native Windows app that looks exactly like Claude d
 - [ ] User menu nishadislamutso@gmail.com Settings etc from 191608.png — not implemented
 - [ ] Apps and extensions modal from 191636.png — not implemented
 - [ ] Project dropdown Sonnet 5.5 Medium Manual functionality — currently static text
-- [ ] Artifact runner — no artifact preview yet (Electron clone has it, can port)
+- [x] Lightweight single-file HTML runner is in source; unit-tested and production build passed in Linux sandbox. Still needs a Windows/Ollama test.
+- [ ] Full Electron WebContainer Workbench (multi-file npm projects, terminal, server preview/deploy) is not ported by design; no model-generated shell commands are executed.
 - [ ] File upload, image upload — missing
 - [ ] Thinking display — missing
 - [ ] Capsule drag-drop inject + Quillbot inline suggestions — requires extension integration + VaultPanel enhancement
@@ -64,32 +71,27 @@ User Utso wants AI ASSistant native Windows app that looks exactly like Claude d
 - [ ] No .brain/index.sqlite implementation yet (rebuildable index)
 
 ### System Gaps
-- [ ] Ollama CORS fix: need setx OLLAMA_ORIGINS "*" in bat + docs
-- [ ] Tic Tac Toe loop: qwen2.5:3b systemPrompt with Flappy Bird example causes game creation every reply — fix is simple prompt override, but need clear localStorage if looped data exists
-- [ ] No reply bug: ChatMode called sendMessage from useChat which doesn't exist — fixed in v6 by LLMFactory, but exact clone uses direct fetch so OK
-- [ ] No Windows test yet — sandbox Linux cannot run dotnet/msbuild, user must test on TUF A15
+- [ ] No Windows test yet — Linux sandbox build/tests passed, but user must test app + Ollama on the TUF A15
+- [ ] qwen2.5:3b may ignore the artifact-only-on-explicit-request prompt; the client-side gate prevents automatic artifact creation, but the live model behavior still needs Windows verification
+- [ ] `npm audit` reports 9 vulnerabilities in development dependencies resolved under current Vite/Tailwind version ranges (3 moderate, 6 high); `npm audit --omit=dev` reports 0 production vulnerabilities. A safe major-version migration was not included in this feature task; review before exposing a development server beyond localhost.
+- [ ] Windows Rollup optional dependency fix in `start-app.bat` is not validated by the Linux build
 
 ## 4. Known Bugs & Fixes
 
-1. **Tic Tac Toe Loop**
-   - Cause: systemPrompt for isOpenSourceModel includes Flappy Bird game example as correct format, qwen2.5:3b interprets as must create game every reply. Seen in user screenshots: Artifacts (2) HTML Application, all replies same Tic Tac Toe.
-   - Fix: Override systemPrompt for qwen2.5:3b to simple assistant "You are AI ASSistant, helpful assistant...", only create artifacts when explicitly asked. Clear localStorage chat_history that contains looped artifact context.
-   - Status: Fixed in exact clone Center.jsx (simple prompt), but need user to clear localStorage if old data.
+1. **Tic Tac Toe / unsolicited artifact loop**
+   - The older Electron clone had a prompt example that could nudge qwen2.5:3b toward games. The exact clone now has no game example, explicitly tells the model to answer ordinary questions normally, and only converts output into an artifact when the user's request passes an explicit-intent gate.
+   - Status: prompt + client-side gate are in source and intent tests pass; live qwen2.5:3b behavior is not yet tested. Existing stored chats/artifacts are not automatically cleared or deleted.
 
-2. **No Reply Bug**
-   - Cause: custom ChatMode called sendMessage from useChat which doesn't exist
-   - Fix: Restore original LLMFactory streaming, or use direct Ollama fetch as in exact clone
-   - Status: Fixed
+2. **No Reply Bug (legacy Electron clone)**
+   - The v6 custom ChatMode previously called a nonexistent `sendMessage`; v6 uses the restored LLMFactory streaming path. Exact clone uses its own Ollama streaming path through the Vite proxy.
+   - Status: this turn's Vite build passes; live Ollama streaming remains untested.
 
 3. **Ollama CORS**
-   - Cause: ModelService fetch http://localhost:11434/api/tags fails if OLLAMA_ORIGINS not *
-   - Fix: setx OLLAMA_ORIGINS "*" and restart ollama serve, add to start-app.bat
-   - Status: Documented, need add to bat
+   - The app frontend now uses same-origin `/ollama/...` requests and Vite proxies them to local Ollama, so this app path does not require `OLLAMA_ORIGINS="*"`.
+   - Direct browser access to Ollama outside the Vite proxy can still need an Ollama CORS setting; do not set it unnecessarily for this app.
 
 4. **Vite Rollup Win32**
-   - Cause: @rollup/rollup-win32-x64-msvc optional dep fails on Windows
-   - Fix: npm install @rollup/rollup-win32-x64-msvc --save-optional in bat
-   - Status: Fixed in start-app.bat
+   - The prior Windows optional dependency issue is addressed by the existing optional `@rollup/rollup-win32-x64-msvc` dependency + bat install. Windows execution is still unverified in this checkout.
 
 ## 5. User Constraints & Corrections (Never Violate)
 
@@ -102,15 +104,15 @@ User Utso wants AI ASSistant native Windows app that looks exactly like Claude d
 
 ## 6. Immediate Next Steps (Priority Order)
 
-1. **Test exact clone on Windows:** User extracts apps/01_claude-exact-pixel-clone, runs start-app.bat, confirms qwen2.5:3b replies without Tic Tac Toe loop, clears localStorage if needed
-2. **Add Settings modal from 191707.png:** Appearance Theme system/sun/moon, Chat font Anthropic Serif, Transcript size Small/Medium/Large, Width Narrow/Medium/Wide, Motion System/Reduced, Voice Language English Style Buttery Speed Normal, left nav General Account Privacy Billing Capabilities Memory Reflect Time and focus Claude Code System Extensions Developer Skills Connectors
-3. **Add File/Edit/View/Go/Help menu + User menu + Apps and extensions modal:** From 191558, 191608, 191636 screenshots
-4. **Port artifact runner from Electron clone:** Artifacts (2) HTML Application preview like in user screenshots
-5. **Wire extension -> vault API -> Obsidian files:** Test end-to-end capture, wasn't accessible logging, blacklist
-6. **Implement VaultPanel enhancements:** Capsule drag-drop, blacklist manager, Open Loops
-7. **Implement Today view:** Current Snapshot, today's journal draft, due follow-ups, one next action
-8. **Build Windows installer:** Electron builder for exact clone, or Tauri lighter for 8GB RAM
-9. **Test with synthetic data:** vault read/write, conflict safety, model capabilities, Claude UI inventory, authorized capture, journal/provenance, retention controls, model switch, external-send approval
+1. **Windows verification (user action):** Run `start-app.bat`; test an ordinary question (must not create a game/artifact), then explicitly ask for a small HTML game and verify preview, Source edit/run, local persistence, copy and download. Report any console/API errors.
+2. **P4 Model selector:** Proxy Ollama `/api/tags`, list installed models only (do not download), default to `qwen2.5:3b`, store selection, and only expose verified capabilities.
+3. **P5 File/image upload + thinking:** port lightweight UI from Electron reference; test a local model only if already installed (do not download `qwen3-vl:4b` without approval).
+4. **P6 Extension -> vault API -> Obsidian end-to-end:** capture, inaccessible logs, blacklist and offline queue.
+5. **P7 VaultPanel:** capsule library/drag-drop injection, blacklist manager, Open Loops, Current Snapshot, Cook This Prompt.
+6. **P8 Today view + journal/follow-ups:** source-backed only, no invented offline events, provide answer/skip/snooze/stop.
+7. **UI-source discrepancy:** the user-provided handover says Settings/UserMenu/AppsExtensions are implemented, but they are absent from this checkout. Locate/copy the actual code or implement them and then verify against the screenshots; until then keep them marked missing.
+8. **Windows installer and test pass:** only after the web app paths work; preserve 8GB RAM and avoid large/native build requirements.
+9. **Synthetic acceptance tests:** vault read/write, capture policy, model capabilities, provenance, retention, external-send approval.
 
 ## 7. How to Continue (For Next AI)
 
@@ -143,5 +145,7 @@ All zips exclude node_modules/dist.
 Don't claim feature implemented because it appears in plan/README/checklist/ZIP. Mark accurately.
 
 ## 10. Latest Session Log
+
+**2026-10-10 20:10 Asia/Dhaka:** Continued the exact clone's P3 from the new-session handover. Added a lightweight single-file HTML Artifact Runner in app 01: explicit request detection, one HTML code-block extraction, local artifact library, isolated preview iframe, Source edit + Apply & run, copy and download. Updated the qwen prompt to avoid unsolicited code/games and added client-side gating to prevent the Tic Tac Toe loop from auto-creating an artifact. Routed frontend calls through Vite same-origin `/api` and `/ollama` proxies, avoiding browser loopback calls/CORS. Added seven Node tests. `npm test` passed 7/7 and `npm run build` passed in Linux. Not tested with Windows/Ollama. `npm audit` reports 9 dev dependency vulnerabilities (3 moderate, 6 high) and needs later dependency review. Important discrepancy: user's latest handover says settings/user/apps modals are complete, but they are absent in this checkout and remain gaps. Next intended feature per user handover: P4 installed-model selector.
 
 **2026-10-10:** User posted 6 screenshots 191547-191707 showing actual Claude desktop: Sidebar Search +New Projects Artifacts Customize Oct8 Older, Center Evening Utso greeting with orange asterisk, composer How can I help you today?, Project dropdown Sonnet 5.5 Medium Manual, Free plan Upgrade, NU Utso Free bottom, context menu, Settings modal, Apps and extensions modal, user menu, File menu. Said "come on man, is this to hard to make?" Built exact pixel-perfect clone in AI-ASSistant-Claude-Exact, package.json vite tailwind, App.jsx localStorage claude_exact_chats, Sidebar.jsx search filter + context menu, Center.jsx greeting + textarea + vault context fetch 127.0.0.1:8765/context + direct Ollama 11434/api/chat qwen2.5:3b streaming + log to /capture, VaultPanel.jsx, server/vault-api.cjs, start-app.bat + build-windows.bat handling existing Ollama, zipped 13K. Then user asked for one zip with all we did so far, requirement list updated every time, repo as memory/handover for other AIs, structure suits AIs best. Creating master repo AI-ASSistant-Github-Repo with .ai/ + 00_LIVING_DOCS/ living docs.

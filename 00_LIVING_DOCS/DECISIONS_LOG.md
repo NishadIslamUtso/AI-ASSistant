@@ -1,9 +1,22 @@
 # DECISIONS_LOG.md — All Decisions With Dates
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 20:10 Asia/Dhaka
 **Rule:** Log every decision with date, what, why, who requested, alternatives considered.
 
 ## 2026-10-10 Decisions
+
+### [2026-10-10 20:10] Keep P3 Artifact Runner Local, Explicit and HTML-Only
+- **What:** Add a lightweight local single-file HTML artifact library/preview to app 01. Creation is gated by a direct request for a runnable visual artifact; source editing/run, copy and download are provided.
+- **Why:** User's new-session handover identifies Artifact Runner as P3 and explicitly says artifacts should only be created when asked, to prevent the Tic Tac Toe loop.
+- **Who:** User request + implementation safety decision
+- **Safety:** Use sandboxed iframe without same-origin access plus CSP; no network scripts, shell commands, npm install, WebContainer, multi-file builds or deployment.
+- **Hardware:** Keep memory/CPU use modest for TUF A15 8GB RAM; no new runtime dependency.
+- **Verification:** 7/7 Node tests and Vite build pass in Linux; Windows/Ollama verification remains open.
+
+### [2026-10-10 20:10] Route Browser Requests Through Vite Same-Origin Proxies
+- **What:** Frontend uses `/api/*` and `/ollama/*`; Vite proxies to local vault API and Ollama.
+- **Why:** Avoid browser CORS configuration and direct `localhost` calls from a browser preview; keep services local and remove need for `OLLAMA_ORIGINS="*"` on this app path.
+- **Alternative:** Direct browser fetch to Ollama/8765; rejected due CORS/preview-origin mismatch.
 
 ### [2026-10-10 19:20] Create Master Github Repo as AI Memory
 - **What:** Create AI-ASSistant-Github-Repo with .ai/ + 00_LIVING_DOCS/ structure optimized for AI handover, not human aesthetics, single zip with all work + living requirements

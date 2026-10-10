@@ -63,11 +63,13 @@ This is NOT human portfolio structure. It's for AI continuity.
 Latest exact clone:
 ```
 cd apps/01_claude-exact-pixel-clone
-start-app.bat  # handles Ollama already running, installs rollup win32, starts vault API 8765 + Vite 5173
+npm install
+npm test      # Node tests for the artifact intent gate and HTML preview helpers
+npm run build # production bundle check
+start-app.bat # Windows: handles already-running Ollama, installs Rollup Win32 optional dep, starts vault API 8765 + Vite 5173
 ```
-Open http://127.0.0.1:5173
-Ollama at http://127.0.0.1:11434/api/chat qwen2.5:3b streaming
-Vault API at http://127.0.0.1:8765/context + /capture
+Open http://127.0.0.1:5173. Frontend uses same-origin `/api/*` and `/ollama/*`; Vite proxies to local vault API 127.0.0.1:8765 and Ollama 127.0.0.1:11434. Ollama CORS configuration is not required for this app path.
+Artifacts are single-file HTML only, created after an explicit runnable-output request, persisted locally and run in an isolated iframe. Do not claim WebContainer/terminal/multi-file project support.
 
 Electron clone:
 ```
@@ -81,18 +83,14 @@ Extension: load unpacked extension/ in Chrome, needs vault API running.
 
 ## 6. Current Known Bugs (From STATE.json)
 
-- No reply bug: custom ChatMode called sendMessage from useChat which doesn't exist — fixed by restoring original LLMFactory streaming in v6, but exact clone uses direct Ollama fetch which works.
-- Tic Tac Toe loop: systemPrompt for isOpenSourceModel includes Flappy Bird game example, qwen2.5:3b interprets as must create game every reply. Fix: override systemPrompt for qwen2.5:3b to simple assistant, only create artifacts when explicitly asked. Also clear localStorage chat_history that contains looped artifact context.
-- Ollama CORS: fetch http://localhost:11434/api/tags may fail if OLLAMA_ORIGINS not * — requires setx OLLAMA_ORIGINS "*" and restart ollama serve.
+- Legacy Electron v6 once had a no-reply bug from calling nonexistent `sendMessage`; its LLMFactory path was restored. Exact clone's current Ollama stream has Linux build coverage but not a live Windows/Ollama test.
+- Tic Tac Toe loop: the older Electron prompt's game example could encourage unsolicited games. Exact clone now has no game example, instructs normal answers for normal questions, and client-gates artifact extraction to explicit runnable-output requests. Unit tests pass; small-model compliance still needs live verification. Do not automatically clear saved chats or artifacts.
+- Development dependencies: `npm audit` reports 9 vulnerabilities (3 moderate, 6 high) under current Vite/Tailwind ranges. A major migration was not part of the artifact task; review before exposing dev server beyond localhost.
+- Ollama CORS: not needed for app calls through the Vite same-origin proxy; do not tell user to set `OLLAMA_ORIGINS="*"` unless a direct-browser integration specifically needs it.
 
 ## 7. What To Do Next (From TODO_NEXT.md)
 
-Read TODO_NEXT.md for immediate next steps. Typically:
-- Test exact clone on Windows
-- Add Settings modal from screenshot 191707 (Appearance Theme Chat font Transcript size Width Motion Voice Language Style Speed)
-- Implement VaultPanel drag-drop capsules
-- Wire extension -> vault API -> Obsidian files
-- Add blacklist UI
+Read TODO_NEXT.md for immediate next steps. Current order: Windows-test normal chat vs an explicit artifact request; then implement P4 installed Ollama model selector (no model downloads); then lightweight thinking/file/image upload and extension/vault integration. Note the user-provided handover says Settings/UserMenu/AppsExtensions are implemented, but those components are absent from this checkout; treat them as open until source is reconciled.
 
 ## 8. When User Says "Update Zip"
 

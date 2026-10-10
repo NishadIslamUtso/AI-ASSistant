@@ -1,6 +1,6 @@
 # ARCHITECTURE_LIVING.md — Driver / Vault / Extension
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 20:10 Asia/Dhaka
 
 ## 1. One-Line Architecture
 
@@ -26,13 +26,14 @@
   v
 [AI ASSistant Windows App] — THE DRIVER
   - UI: Claude exact from screenshots 191547-191707, Sidebar 260px #202020, Center #1a1a1a Evening Utso, Composer #242424
-  - LLM: Ollama qwen2.5:3b direct via http://127.0.0.1:11434/api/chat streaming, no download
-  - Vault API: Express server at http://127.0.0.1:8765
+  - LLM: Ollama qwen2.5:3b streamed locally; browser requests same-origin `/ollama/api/chat` and Vite proxies to `127.0.0.1:11434` (no browser CORS setting needed)
+  - Vault API: Express server at http://127.0.0.1:8765; browser requests same-origin `/api/*` and Vite proxies locally
     - GET /context?q=... -> returns {capsules, entities, claims} ranked by relevance/importance/recency
     - POST /capture {type, provider, url, title, content, completeness, reason}
     - POST /capsule {id, title, goals, constraints, background, decisions, sources, version, attachments}
     - POST /blacklist {excluded_patterns}
   - Context builder: searches exact terms + semantic in local index (.brain/), follows small number of relevant links, ranks, includes source links + evidence labels, omits unrelated/expired
+  - Artifact runner (app 01): client-side explicit-intent gate; local HTML artifacts in localStorage; isolated iframe preview, no remote scripts/network requests, no generated shell commands
   - Model Registry: tracks per-model capabilities, updates UI when model changes
   - Privacy gate: shows exact context + destination before remote send, sensitive requires one-send approval, no blanket approval
   - Activity log: 09 Activity & Undo + 01 Inbox/Processing Errors
@@ -90,7 +91,15 @@
    - Quillbot style: inline dropdown "Use capsule: Website project - blue-white design" or "Add memory: You prefer step-by-step" in any text field
 6. Save sharing receipt in 07 Sharing Receipts/ — what was approved and sent, to which provider, when
 
-### 3.3 Capsule Flow
+### 3.3 Artifact Flow (App 01)
+
+1. Client classifies the user's request; greetings, ordinary questions, and educational prompts do not count as artifact requests.
+2. For a direct runnable web/app/game request, the model is instructed to return one self-contained HTML code block. The client extracts an HTML block only when the request passes the explicit-intent gate.
+3. Artifact source and metadata persist locally in `claude_exact_artifacts`; the sidebar opens its library and the new artifact's preview.
+4. Preview runs in an iframe sandbox without `allow-same-origin`, with a restrictive CSP permitting inline styles/scripts and data/blob assets but blocking external network resources. Source can be edited and explicitly re-run, copied, or downloaded.
+5. No WebContainer, terminal, generated shell command, npm install, multi-file project or remote publish is executed. The older Electron Workbench is not ported.
+
+### 3.4 Capsule Flow
 
 - Capture: in any AI chat, button "Capture as Capsule" saves goals, constraints, decisions, background, attachments as Capsule
 - Organise: Capsules filed by project in popup library + 03 Memory/Entities/capsule-*.md + 00 System/Templates/Capsule.md
@@ -163,8 +172,10 @@ Updates 00 System/Privacy & Access.md + 00 System/Connectors/Source Scope.md + c
 ### apps/01_claude-exact-pixel-clone (Latest Target)
 - Frontend: React 18, Vite 5, Tailwind CSS
 - Backend: Node Express 4.18.2 + cors 2.8.5 at 127.0.0.1:8765
-- LLM: Ollama direct fetch http://127.0.0.1:11434/api/chat qwen2.5:3b streaming, no client lib
-- Storage: localStorage claude_exact_chats + vault files via API
+- Browser-to-local routing: same-origin `/api/*` and `/ollama/*`; Vite rewrites/proxies to the local vault API and Ollama
+- LLM: qwen2.5:3b via local Ollama streaming API at 127.0.0.1:11434, no client lib or model download
+- Storage: localStorage `claude_exact_chats` + `claude_exact_artifacts`; vault Markdown via API
+- Artifact preview: explicit-request-only standalone HTML, sandboxed iframe + CSP, no WebContainer/shell execution
 - Bat: start-app.bat handles already-running Ollama, installs @rollup/rollup-win32-x64-msvc optional dep
 
 ### apps/02_electron-claude-clone-v6 (Reference, More Features)

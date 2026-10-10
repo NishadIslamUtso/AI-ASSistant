@@ -5,19 +5,25 @@
   "apps": {
     "01_claude-exact-pixel-clone": {
       "path": "apps/01_claude-exact-pixel-clone",
-      "status": "built-not-tested-on-windows",
-      "tech": "Vite 5 + React 18 + Tailwind + Express vault API",
+      "status": "source-updated; 7/7 unit tests and Vite production build passed in Linux; not tested on Windows or live Ollama",
+      "tech": "Vite 5 + React 18 + Tailwind + Express vault API; loopback-only dev server with same-origin Vite proxies; .e2b.app allowlisted for Arena preview",
       "features_implemented": [
         "Sidebar 260px #202020 Search +New Projects Artifacts Customize Oct8 Older groups",
         "Search filter, context menu Open in new window Pin Rename Add to project Move to group Delete",
         "Center #1a1a1a Evening Utso greeting (time-based), composer #242424 rounded-xl How can I help you today?",
         "Free plan Upgrade top, bottom NU Utso Free avatar",
         "VaultPanel toggleable",
-        "Direct Ollama http://127.0.0.1:11434/api/chat qwen2.5:3b streaming",
         "Vault driver http://127.0.0.1:8765/context + /capture",
         "localStorage claude_exact_chats with defaults Refining 5-day workout cycle etc from screenshots",
         "start-app.bat handles already-running Ollama, installs @rollup/rollup-win32-x64-msvc",
-        "build-windows.bat"
+        "build-windows.bat",
+        "Ollama qwen2.5:3b streaming through same-origin /ollama/api/chat Vite proxy to local 127.0.0.1:11434",
+        "Vault API accessed from browser through same-origin /api/context and /api/capture Vite proxies to 127.0.0.1:8765",
+        "Explicit user artifact-request classifier; ordinary/educational prompts do not auto-create HTML artifacts",
+        "Local HTML artifact library persisted in localStorage claude_exact_artifacts; sidebar shows actual count",
+        "Artifact preview/source panel: isolated sandbox iframe + restrictive CSP, source edit and Apply & run, copy, download",
+        "Simple model prompt prohibits unsolicited games/artifacts; direct artifact request asks for one self-contained HTML block",
+        "Seven Node tests for intent detection, extraction, local records and sandbox preview document"
       ],
       "features_missing": [
         "Settings modal Appearance Theme Chat font Transcript size Width Motion Voice Language Style Speed from 191707.png",
@@ -25,19 +31,29 @@
         "User menu nishadislamutso@gmail.com Settings etc from 191608.png",
         "Apps and extensions modal from 191636.png",
         "Project dropdown Sonnet 5.5 Medium Manual functionality",
-        "Artifact runner",
         "File upload, image upload",
         "Thinking display",
         "Capsule drag-drop inject",
-        "Quillbot inline suggestions (requires extension integration)"
+        "Quillbot inline suggestions (requires extension integration)",
+        "Full Electron WebContainer Workbench (multi-file npm projects, shell terminal, server runner/deployment) is intentionally not ported",
+        "Only standalone HTML artifacts are supported; React/Bolt artifacts are not compiled or run"
       ],
       "known_bugs": [
-        "Potential Tic Tac Toe loop if systemPrompt includes game example - FIXED by simple prompt in Center.jsx but need clear localStorage if looped",
-        "Ollama CORS if OLLAMA_ORIGINS not *",
-        "Vite rollup win32 optional dep may fail - fixed by bat installing @rollup/rollup-win32-x64-msvc"
+        "Artifact intent prompt/classifier has unit coverage, but qwen2.5:3b live output must be verified on Windows; existing chats/artifacts are not auto-cleared",
+        "Vite/Tailwind/related build-toolchain dependency audit reports 9 vulnerabilities (3 moderate, 6 high); breaking dependency migration deferred",
+        "Windows @rollup/rollup-win32-x64-msvc optional dependency workaround exists in start-app.bat but is not validated in Linux"
       ],
-      "build_cmd": "npm install && npm run dev:server & npm run dev",
-      "zip": "archive_zips/AI_ASSistant_Exact_Claude_Clone.zip 13K"
+      "build_cmd": "cd apps/01_claude-exact-pixel-clone && npm install && npm test && npm run build",
+      "zip": "not regenerated this session; any existing archive_zips/AI_ASSistant_Exact_Claude_Clone.zip is stale relative to the current source",
+      "verification": {
+        "unit_tests": "passed 7/7 in Linux sandbox on 2026-10-10",
+        "vite_production_build": "passed in Linux sandbox on 2026-10-10",
+        "windows_runtime": "not tested by agent; user confirmation required",
+        "live_ollama": "not tested; no Ollama runtime available in sandbox",
+        "npm_audit": "9 development-dependency findings: 3 moderate, 6 high",
+        "npm_audit_production_only": "0 findings with npm audit --omit=dev",
+        "arena_live_preview": "Vite UI running on port 5173; HTTP 200 verified. Sandbox has no Ollama or vault API, so inference/capture are unavailable there."
+      }
     },
     "02_electron-claude-clone-v6": {
       "path": "apps/02_electron-claude-clone-v6",
@@ -96,20 +112,21 @@
     "zip": "archive_zips/AI_ASSistant_Obsidian_Vault_v4_Clean.zip"
   },
   "current_gaps": [
-    "Exact clone missing Settings modal from 191707.png",
-    "Exact clone missing File menu + User menu modals",
-    "Extension -> Vault API -> Obsidian file writes end-to-end not tested",
-    "Capsule drag-drop + Quillbot inline not wired in exact clone",
-    "No Windows installer, only dev bats",
-    "No model manager UI",
-    "No journal auto-generation from captured sources",
-    "No monthly audit implementation",
-    "Ollama CORS fix needs documentation in bat"
+    "Exact clone checkout lacks Settings modal, UserMenu, and AppsExtensionsModal even though the new-session user handover says they are implemented; reconcile against actual source before claiming completion",
+    "File Edit View Go Help menu bar is still missing in web app",
+    "Project dropdown, functional installed-model selector, file/image upload and model-dependent controls are missing",
+    "Thinking display beyond the basic Thinking indicator is missing",
+    "Extension -> Vault API -> Obsidian file writes end-to-end are not tested",
+    "Capsule drag-drop + Quillbot inline are not wired in exact clone",
+    "No Windows installer, only development bat scripts",
+    "Today view, journal auto-generation, follow-ups and monthly audit are not implemented",
+    "Windows Ollama/artifact runtime test remains outstanding",
+    "Development dependency audit findings have not been resolved"
   ],
   "last_session": {
     "date": "2026-10-10",
-    "what_done": "Built exact pixel-perfect Claude clone from 6 screenshots, created start-app.bat handling existing Ollama, direct qwen2.5:3b streaming, vault driver, zipped to AI_ASSistant_Exact_Claude_Clone.zip 13K",
-    "user_request": "give me one zip with all we did so far, requirement list updated every time, repo as memory/handover for other AIs, structure suits AIs best",
-    "action_now": "Creating master github repo AI-ASSistant-Github-Repo with living docs"
+    "what_done": "Added an explicit-request-only local HTML artifact runner to app 01, same-origin Vite proxies for Ollama and vault API, and seven unit tests. Linux unit tests and Vite build pass.",
+    "user_request": "Continue making the exact Claude clone; new-session handover identified Artifact Runner as P3 and specified no artifact creation unless explicitly requested.",
+    "action_now": "Windows test normal chat vs explicit HTML request; next planned implementation is P4 installed Ollama model selector. Reconcile the reported Settings/UserMenu/AppsExtensions completion with current checkout, where those files are absent."
   }
 }

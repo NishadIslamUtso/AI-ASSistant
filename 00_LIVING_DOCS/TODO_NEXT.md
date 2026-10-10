@@ -1,6 +1,6 @@
 # TODO_NEXT.md — Immediate Next Actions (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 20:10 Asia/Dhaka
 **Rule:** Update after each session, priority order, check off when done.
 
 ## Priority 1 — Test Exact Clone on Windows (User Action)
@@ -23,9 +23,11 @@
 - starts npm run dev (Vite 5173)
 ```
 
-**If CORS error:** Run `setx OLLAMA_ORIGINS "*"` in cmd, restart Ollama: `taskkill /F /IM ollama.exe` then `ollama serve`
+**If CORS error:** App calls now use the same-origin `/ollama` Vite proxy, so check proxy/server logs first; don't broaden Ollama origins by default. Only configure `OLLAMA_ORIGINS` if testing a direct browser-to-Ollama call outside this proxy.
 
 ## Priority 2 — Add Missing Modals From Screenshots
+
+**Checkout reconciliation:** The user's latest handover says SettingsModal, UserMenu and AppsExtensionsModal are done; they are absent from `apps/01_claude-exact-pixel-clone/src` in this checkout. Keep these tasks open until matching source files are added/verified here.
 
 ### 2.1 Settings Modal (191707.png) — High Priority
 - [ ] Create src/components/SettingsModal.jsx
@@ -61,21 +63,21 @@
 
 ## Priority 3 — Port Features From Electron Clone
 
-### 3.1 Artifact Runner
-- [ ] Port from apps/02_electron-claude-clone-v6/src/components/ArtifactPanel.jsx + Workbench
-- Artifacts (2) HTML Application from user screenshots shows Tic Tac Toe loop but should be generic artifact runner
-- Only create artifacts when explicitly asked (fix Tic Tac Toe loop)
+### 3.1 Artifact Runner — Source Complete, Windows Test Pending
+- [x] Add Artifacts library, single-file HTML preview, Source view, editing + Apply & run, copy and download in app 01
+- [x] Create artifacts only after an explicit user request; ordinary and how-to prompts remain chat responses (client-side gate + system prompt)
+- [x] Sandbox preview with isolated iframe + CSP; no external network scripts or generated shell commands
+- [x] Add unit coverage for intent detection/extraction; `npm test` 7/7 and `npm run build` pass in Linux sandbox
+- [ ] On Windows/Ollama, verify ordinary questions do not create an artifact and an explicit HTML/game request creates a working preview
+- **Scope note:** Did not port Electron's WebContainer terminal, shell command runner, npm/multi-file app support or publishing; keep those out of this lightweight local runner unless separately requested and reviewed.
 
-### 3.2 Thinking Display
-- [ ] Port ThinkingDisplay.jsx
+### 3.2 P4 Model Selector
+- [ ] Proxy Ollama `/api/tags`, list installed models only (no model downloads), default to qwen2.5:3b and persist selection
+- [ ] Make Project / model / capability controls truthful to the selected local model; do not label qwen as Sonnet
 
-### 3.3 File Upload + Image Upload
-- [ ] Port ImageUpload.jsx, handle qwen3-vl:4b vision model
-
-### 3.4 Project Dropdown + Model Selector
-- [ ] Make Project dropdown + Sonnet 5.5 Medium Manual functional, not static text
-- Model selector should list Ollama models from http://127.0.0.1:11434/api/tags, plus qwen2.5:3b default
-- Store selected model in localStorage
+### 3.3 P5 Thinking + File/Image Upload
+- [ ] Port a lightweight ThinkingDisplay from the Electron reference
+- [ ] Add file and image upload; only enable vision if a vision-capable model is already installed/verified (never auto-download qwen3-vl:4b)
 
 ## Priority 4 — Wire Extension -> Vault API -> Obsidian Files
 
@@ -137,6 +139,7 @@ Always update living docs after each task.
 
 ## Done Log
 
+- [x] 2026-10-10 20:10 Added explicit-request-only standalone HTML Artifact Runner to app 01; 7/7 unit tests + Vite build pass in Linux; Windows/Ollama confirmation pending.
 - [x] 2026-10-10 19:20 Created master repo structure with .ai/ + 00_LIVING_DOCS/ + apps/ + extension/ + vault/ + spec/ + archive_zips/
 - [x] 2026-10-10 13:19 Built exact pixel-perfect clone from 6 screenshots, Vite+React+Tailwind, direct qwen2.5:3b streaming, vault driver, bat files, zipped 13K
 - [x] 2026-10-10 13:00 Built Electron clone v6 with artifacts workbench etc (previous session)

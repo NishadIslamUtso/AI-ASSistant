@@ -30,8 +30,8 @@
     "ollama_api": "http://127.0.0.1:11434",
     "vault_api": "http://127.0.0.1:8765",
     "vite_dev": "http://127.0.0.1:5173",
-    "ollama_origins_needed": "*",
-    "fix_cors": "setx OLLAMA_ORIGINS \"*\" and restart ollama serve"
+    "ollama_origins_needed": "not for apps/01 frontend; Vite proxies same-origin /ollama/* to local Ollama",
+    "fix_cors": "Use relative /ollama/* through Vite proxy for app requests. Set OLLAMA_ORIGINS only if direct browser access is specifically used."
   },
   "app_identity": {
     "name": "AI ASSistant",
@@ -92,12 +92,12 @@
   },
   "model_constraints": {
     "qwen2.5:3b_limits": [
-      "misreads 'slow' as 'Solow'",
-      "generic answers",
-      "claims cannot remember current chat",
-      "interprets Flappy Bird example in system prompt as must create game every reply -> Tic Tac Toe loop"
+      "misreads slow as Solow in observed user test",
+      "can give generic answers",
+      "may claim it cannot remember current chat despite history being sent",
+      "historically interpreted an Electron-clone Flappy Bird prompt example as a game instruction; exact clone now has an explicit artifact-intent gate, no game example, and ordinary-chat instructions"
     ],
-    "fix_tictactoe": "override systemPrompt for qwen2.5:3b to simple assistant, only create artifacts when explicitly asked, clear localStorage chat_history",
+    "fix_tictactoe": "Exact clone prompt instructs normal answers and self-contained HTML only for direct runnable-artifact requests; client classifier gates artifact extraction. Live qwen2.5:3b behavior still requires user/Windows verification.",
     "ui_vs_intelligence": "UI parity != intelligence, don't promise local model equals Claude",
     "model_aware": "expose every verified option for selected model, hide/disable unsupported, update controls when model changes"
   },
