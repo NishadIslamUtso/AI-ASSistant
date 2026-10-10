@@ -118,24 +118,27 @@
 
 ## Implementation Checklist for Exact Clone
 
-### Done (apps/01_claude-exact-pixel-clone)
-- [x] Sidebar 260px #202020, Search, +New chat, Projects Artifacts Customize, Oct8 Older groups, chat list from screenshots
-- [x] Context menu Open in new window Pin Rename Add to project Move to group Delete — UI implemented, functionality partial
-- [x] Center #1a1a1a Evening Utso greeting with orange asterisk, composer #242424 How can I help you today?
-- [x] Top Free plan Upgrade, bottom NU Utso Free avatar
-- [x] VaultPanel toggleable
-- [x] Direct Ollama streaming, vault API
+**Status legend:** “In source” means the code path exists; it does not mean the feature has been accepted visually or tested against local services. Current Linux production build passes. Windows, Ollama runtime, actual-vault writes, and screenshot pixel comparison remain unverified.
 
-### Missing (Need to Implement)
-- [ ] Settings modal Appearance from 191707.png — left nav + right Theme Chat font Transcript size Width Motion Voice
-- [ ] User menu from 191608.png — nishadislamutso@gmail.com Settings Language etc
-- [ ] Apps and extensions modal from 191636.png
-- [ ] File Edit View Go Help menu bar — Electron menu, for web hide
-- [ ] Project dropdown Sonnet 5.5 Medium Manual functional — model selector listing Ollama models
-- [ ] Artifact runner — Artifacts (2) HTML Application preview
-- [ ] Search functionality — filter chat list
-- [ ] Pin Rename Delete functionality in context menu
-- [ ] Theme switcher — light/dark + remembers choice
+### In source (apps/01_claude-exact-pixel-clone)
+- [x] Sidebar structure/colors, Search, +New chat, Projects/Artifacts/Customize, Today/Oct 8/Older groups, screenshot seed chats
+- [x] Chat context actions: open in new window (browser window), pin/unpin, rename, add project, move group, delete; deletion removes local messages but retains any vault copy
+- [x] Center greeting/composer, dark base colors, Free plan indicator, user menu/avatar
+- [x] Screenshot-based Settings, User Menu, and Apps and Extensions surfaces; settings theme/font/size/width controls are persisted, while account/service-specific menu destinations are honest local-build notices/placeholders
+- [x] Search filters chats; theme preference persists and light/dark styling is available
+- [x] Ollama installed-model listing and streaming via same-origin proxy; user model choice persists
+- [x] Explicit-request HTML artifact creation, isolated preview, source view, and download
+- [x] Bounded text/image attachments and optional thinking display; image content is session-only
+- [x] Toggleable VaultPanel; chat turns use stable conversation/turn IDs and are designed to append/deduplicate rather than overwrite
+
+### Still missing or not accepted
+- [ ] Native File/Edit/View/Go/Help menu bar and native Windows wrapper; keep the Windows title bar visible
+- [ ] Pixel-by-pixel visual/browser acceptance against screenshots 191707, 191608, and 191636
+- [ ] Runtime verification with already-running Ollama + installed `qwen2.5:3b`, with no model download
+- [ ] End-to-end vault write/idempotency test against the user's actual Obsidian vault
+- [ ] P6 extension-to-vault integration, capture/blacklist/offline-queue tests, and P7 Capsule/Quillbot wiring
+- [ ] Full P8 Today view (sidebar date grouping is present but is not the requested Today dashboard)
+- [ ] Native wrapper/installer; source/batch scripts are not Windows-tested
 
 ## Pixel Measurements (Approximate from Screenshots)
 
@@ -160,9 +163,10 @@
 
 ## Reference Implementation
 
-See apps/01_claude-exact-pixel-clone/src/components/Sidebar.jsx for sidebar + context menu
-See apps/01_claude-exact-pixel-clone/src/components/Center.jsx for greeting + composer
-See apps/02_electron-claude-clone-v6/src/components/SettingsModal.jsx for Settings modal reference (needs update to match 191707.png)
+See `apps/01_claude-exact-pixel-clone/src/components/Sidebar.jsx` for the sidebar + context menu.
+See `apps/01_claude-exact-pixel-clone/src/components/Center.jsx` for the greeting + composer.
+See `apps/01_claude-exact-pixel-clone/src/components/SettingsModal.jsx` for the current Appearance settings source; screenshot-level visual acceptance is still pending.
+The Electron clone's older Settings modal is a historical feature reference only, not the current target.
 
 ## Notes
 

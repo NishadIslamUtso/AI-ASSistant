@@ -1,6 +1,6 @@
 {
-  "repo": "AI-ASSistant-Github-Repo",
-  "generated": "2026-10-10T13:23:00+06:00",
+  "repo": "NishadIslamUtso/AI-ASSistant",
+  "generated": "2026-10-10T20:10:00+06:00",
   "file_index": [
     {
       "path": ".ai/AGENT_INSTRUCTIONS.md",
@@ -59,16 +59,21 @@
     },
     {
       "path": "apps/01_claude-exact-pixel-clone/",
-      "purpose": "LATEST TARGET: Pixel-perfect Claude desktop clone from 6 screenshots, Vite+React+Tailwind, direct Ollama qwen2.5:3b, vault driver 8765",
+      "purpose": "LATEST TARGET: screenshot-based Claude desktop web clone with local Ollama model selector, explicit HTML artifacts, bounded file/image upload, thinking display, settings/user/apps modals, and vault proxy; production build passes, Windows runtime untested",
       "type": "app",
       "key_files": [
-        "src/App.jsx - state chats localStorage claude_exact_chats",
-        "src/components/Sidebar.jsx - Search +New Projects Artifacts Customize Oct8 Older + context menu",
-        "src/components/Center.jsx - Evening Utso greeting + composer + vault context + Ollama streaming",
-        "src/components/VaultPanel.jsx - toggleable vault panel",
-        "server/vault-api.cjs - vault driver API 8765",
-        "start-app.bat - Windows one-click handling existing Ollama",
-        "build-windows.bat"
+        "src/App.jsx - per-chat state, localStorage persistence, settings/artifacts/project state",
+        "src/components/Sidebar.jsx - 260px reference sidebar, search, chat actions, UserMenu",
+        "src/components/Center.jsx - Ollama model selector/streaming, project picker, attachments, thinking and explicit artifact capture",
+        "src/components/SettingsModal.jsx - screenshot Appearance settings stored locally; remaining sections identified as not connected",
+        "src/components/UserMenu.jsx - screenshot user menu and truthful local actions",
+        "src/components/AppsExtensionsModal.jsx - screenshot-based apps/extensions modal",
+        "src/components/ArtifactPanel.jsx - sandboxed HTML preview/source/download; no network access",
+        "src/components/VaultPanel.jsx - local vault API connection status",
+        "vite.config.js - same-origin proxy to local Ollama 11434 and vault API 8765",
+        "server/vault-api.cjs - local Markdown vault API with append-only/idempotent chat turns",
+        "start-app.bat - Windows local launch; preserves dependency cache and loopback binding",
+        "build-windows.bat - build without deleting node_modules/package-lock"
       ]
     },
     {
@@ -129,17 +134,6 @@
       "path": "docs/originals/",
       "purpose": "Original requirement files, master plan, blueprint, handover historical",
       "type": "docs-archive"
-    },
-    {
-      "path": "archive_zips/",
-      "purpose": "Previous zips for reference",
-      "type": "archive",
-      "files": [
-        "AI_ASSistant_Exact_Claude_Clone.zip 13K - latest exact clone",
-        "AI_ASSistant_App_Claude_Clone_qwen2.5_3b_FIXED6.zip - electron clone",
-        "AI_ASSistant_Extension_v1.2_Fixed.zip",
-        "AI_ASSistant_Obsidian_Vault_v4_Clean.zip"
-      ]
     },
     {
       "path": "memory/sessions/",

@@ -1,6 +1,6 @@
 # ARCHITECTURE_LIVING.md — Driver / Vault / Extension
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 20:10 Asia/Dhaka
 
 ## 1. One-Line Architecture
 
@@ -24,18 +24,17 @@
   |
   | local loopback HTTP, not internet
   v
-[AI ASSistant Windows App] — THE DRIVER
-  - UI: Claude exact from screenshots 191547-191707, Sidebar 260px #202020, Center #1a1a1a Evening Utso, Composer #242424
-  - LLM: Ollama qwen2.5:3b direct via http://127.0.0.1:11434/api/chat streaming, no download
-  - Vault API: Express server at http://127.0.0.1:8765
-    - GET /context?q=... -> returns {capsules, entities, claims} ranked by relevance/importance/recency
-    - POST /capture {type, provider, url, title, content, completeness, reason}
-    - POST /capsule {id, title, goals, constraints, background, decisions, sources, version, attachments}
-    - POST /blacklist {excluded_patterns}
-  - Context builder: searches exact terms + semantic in local index (.brain/), follows small number of relevant links, ranks, includes source links + evidence labels, omits unrelated/expired
-  - Model Registry: tracks per-model capabilities, updates UI when model changes
-  - Privacy gate: shows exact context + destination before remote send, sensitive requires one-send approval, no blanket approval
-  - Activity log: 09 Activity & Undo + 01 Inbox/Processing Errors
+[AI ASSistant local chat app] — CURRENT DRIVER PROTOTYPE (Vite/browser, not a native Windows wrapper yet)
+  - UI: screenshot-based shell, 260px sidebar, greeting/composer, user menu, Appearance settings, apps/extensions modal
+  - Browser uses same-origin `/api/ollama/*` and `/api/vault/*`; Vite proxies to loopback services so the browser never directly calls `localhost`/`127.0.0.1`
+  - Ollama model list from `/api/ollama/tags`; streamed chat at `/api/ollama/chat`, default selected model qwen2.5:3b, no app-triggered model download
+  - Vault API: Express server at loopback `127.0.0.1:8765`, reached via `/api/vault`
+    - GET `/context?q=...` -> current implementation does simple Markdown keyword matching; semantic/index retrieval is not implemented
+    - POST `/capture` -> app can append idempotent conversation turns using stable conversation ID + turn marker rather than overwriting the file
+    - Capsule/blacklist endpoints and extension flows are not fully end-to-end verified
+  - Artifact runner accepts explicitly requested HTML only; iframe blocks same-origin access, external network, and local app data
+  - Uploads: supported text files up to 180 KB; images up to 4 MB and only sent to installed models detected as vision-capable; image bytes are session-only
+  - Model capability registry, sensitive remote-send approval, broad activity/undo, and native desktop menus remain planned/unverified
   |
   | file writes to vault folder
   v
@@ -161,11 +160,14 @@ Updates 00 System/Privacy & Access.md + 00 System/Connectors/Source Scope.md + c
 ## 5. Tech Stack
 
 ### apps/01_claude-exact-pixel-clone (Latest Target)
-- Frontend: React 18, Vite 5, Tailwind CSS
-- Backend: Node Express 4.18.2 + cors 2.8.5 at 127.0.0.1:8765
-- LLM: Ollama direct fetch http://127.0.0.1:11434/api/chat qwen2.5:3b streaming, no client lib
-- Storage: localStorage claude_exact_chats + vault files via API
-- Bat: start-app.bat handles already-running Ollama, installs @rollup/rollup-win32-x64-msvc optional dep
+- Frontend: React 18, Vite 5, Tailwind CSS, lucide-react
+- Backend: Node Express 4.18.2 + cors 2.8.5 at loopback `127.0.0.1:8765`
+- Browser API routes: Vite proxies `/api/ollama/*` to `11434` and `/api/vault/*` to `8765`; local Windows start binds Vite to `127.0.0.1`
+- LLM: selected installed Ollama model, default `qwen2.5:3b`, NDJSON streaming; model list is queried from `/api/tags`
+- Storage: localStorage for chats/settings/projects/artifacts; vault Markdown via local API. Image bytes are transient and not persisted.
+- Artifact execution: sandboxed HTML iframe, no same-origin, no network access; artifacts only after explicit request
+- Validation this session: production Vite build and Node syntax check passed in Linux sandbox; Ollama and Windows runtime not tested
+- Batch files preserve dependency cache; Rollup Windows optional dependency is declared in package.json
 
 ### apps/02_electron-claude-clone-v6 (Reference, More Features)
 - Frontend: React 18, Vite 5, Tailwind
@@ -194,6 +196,8 @@ Updates 00 System/Privacy & Access.md + 00 System/Connectors/Source Scope.md + c
 - Keep capability detection/metadata separate from model choice so new models can be added without redesigning chat UI
 - Explain whether capability runs locally or contacts external service
 
+**Current implementation caveat:** model listing and vision gating exist in source, but capability detection is heuristic and only exposes installed Ollama model IDs. Tool use, browse, audio, structured output, context limits, and per-model behavior are not verified in this build.
+
 ## 7. Security & Privacy
 
 - Local processing/storage default; SQLite only rebuildable index
@@ -201,6 +205,8 @@ Updates 00 System/Privacy & Access.md + 00 System/Connectors/Source Scope.md + c
 - No keylogger or continuous screenshot recorder
 - Incognito/private capture off unless separately configured with clear permission
 - Treat page/file contents as untrusted data; embedded instructions cannot override user policy or trigger commands
+- Artifact HTML runs in a sandboxed iframe without `allow-same-origin`; restrictive CSP blocks network requests and local app data access
+- Image attachments are sent only if the selected installed model is heuristically identified as vision-capable; image bytes are not persisted in localStorage or vault capture
 - Protect credentials, never expose to model or remote unnecessarily
 - Local Git commit = local version history OK, remote push = external send requires approval
 - Sensitive info local by default, marked sensitive/local-only, requires exact-content/destination preview + one-send approval before external send

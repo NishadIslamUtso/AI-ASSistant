@@ -1,43 +1,60 @@
 {
   "date": "2026-10-10",
   "timezone": "Asia/Dhaka",
-  "repo_version": "1.0.0-master",
+  "repo_version": "1.1.0-working",
   "apps": {
     "01_claude-exact-pixel-clone": {
       "path": "apps/01_claude-exact-pixel-clone",
-      "status": "built-not-tested-on-windows",
-      "tech": "Vite 5 + React 18 + Tailwind + Express vault API",
+      "status": "source-updated-production-build-passes-linux-not-tested-on-windows",
+      "tech": "Vite 5 + React 18 + Tailwind + Express vault API; browser API calls use Vite same-origin proxies",
       "features_implemented": [
-        "Sidebar 260px #202020 Search +New Projects Artifacts Customize Oct8 Older groups",
-        "Search filter, context menu Open in new window Pin Rename Add to project Move to group Delete",
-        "Center #1a1a1a Evening Utso greeting (time-based), composer #242424 rounded-xl How can I help you today?",
-        "Free plan Upgrade top, bottom NU Utso Free avatar",
-        "VaultPanel toggleable",
-        "Direct Ollama http://127.0.0.1:11434/api/chat qwen2.5:3b streaming",
-        "Vault driver http://127.0.0.1:8765/context + /capture",
-        "localStorage claude_exact_chats with defaults Refining 5-day workout cycle etc from screenshots",
-        "start-app.bat handles already-running Ollama, installs @rollup/rollup-win32-x64-msvc",
-        "build-windows.bat"
+        "Screenshot-based sidebar, greeting, composer, free-plan pill, and account footer; dark default and persistent light/system theme controls",
+        "Searchable chat history; pin, rename, project assignment, group movement, and explicit local chat deletion actions",
+        "UserMenu with Settings and Apps/Extensions entry points; Appearance Settings persisted to claude_exact_settings; unconnected sections identified honestly",
+        "Apps and Extensions modal with local extension status and unconnected external service disclosures",
+        "Ollama model selector reads installed /api/tags through /api/ollama proxy and persists selection",
+        "Streaming chat uses selected local Ollama model through /api/ollama/chat; prompt explicitly prevents unrequested games/artifacts",
+        "Project picker and locally persisted project names",
+        "Explicit-request HTML artifact creation, persistent list, source/preview panel, sandboxed iframe with network/local-data access blocked",
+        "Text file attachment (supported text formats up to 180 KB) and image attachment (up to 4 MB); images require detected vision model and are session-only",
+        "Thinking disclosure reads Ollama thinking deltas or think tags when available; not runtime-verified against qwen2.5:3b",
+        "Per-chat localStorage transcript/settings/projects/artifacts persistence; image bytes are not persisted",
+        "Vault API capture appends idempotent turn blocks instead of overwriting existing conversation notes; repo vault path added as fallback",
+        "Vite proxy handles Ollama and vault endpoints; browser code contains no direct localhost calls",
+        "start-app.bat avoids reinstalling dependencies on each launch, checks existing Ollama/vault service, and preserves local-only loopback binding",
+        "build-windows.bat no longer removes node_modules/package-lock before building"
       ],
       "features_missing": [
-        "Settings modal Appearance Theme Chat font Transcript size Width Motion Voice Language Style Speed from 191707.png",
-        "File Edit View Go Help menu bar",
-        "User menu nishadislamutso@gmail.com Settings etc from 191608.png",
-        "Apps and extensions modal from 191636.png",
-        "Project dropdown Sonnet 5.5 Medium Manual functionality",
-        "Artifact runner",
-        "File upload, image upload",
-        "Thinking display",
-        "Capsule drag-drop inject",
-        "Quillbot inline suggestions (requires extension integration)"
+        "Native Windows/Electron wrapper and File/Edit/View/Go/Help native menu",
+        "Windows/TUF A15 runtime and pixel-level user visual confirmation",
+        "Model capability manifest/testing beyond installed-model list and heuristic vision gating",
+        "PDF/Office parsing; file upload is limited to supported text files and images",
+        "Artifact React/JSX runtime; current runner accepts HTML artifacts only",
+        "Voice input/output; current controls report not connected",
+        "Complete settings behavior for Account, Privacy, Billing, Memory, Connectors, and other non-Appearance sections",
+        "Capsule drag-drop, inline Quillbot suggestions, and extension wiring in the exact clone",
+        "Today view, journal, follow-ups, monthly audit, and full memory review workflow"
       ],
       "known_bugs": [
-        "Potential Tic Tac Toe loop if systemPrompt includes game example - FIXED by simple prompt in Center.jsx but need clear localStorage if looped",
-        "Ollama CORS if OLLAMA_ORIGINS not *",
-        "Vite rollup win32 optional dep may fail - fixed by bat installing @rollup/rollup-win32-x64-msvc"
+        "Windows batch scripts and local Ollama streaming have not been tested on the user TUF A15",
+        "Ollama /api/tags and /api/chat proxy requests were not runtime-tested because no Ollama service is running in the sandbox",
+        "Vision detection uses installed model names/family metadata heuristics; qwen3-vl:4b has not been tested and is not downloaded by the app",
+        "Settings sections outside General/Appearance are navigation placeholders",
+        "Artifact runner supports isolated HTML only; React/JSX artifacts are not supported",
+        "Vault capture and extension-to-vault flow have not been end-to-end tested on the configured Obsidian vault"
       ],
-      "build_cmd": "npm install && npm run dev:server & npm run dev",
-      "zip": "archive_zips/AI_ASSistant_Exact_Claude_Clone.zip 13K"
+      "build_cmd": "npm install --no-audit --no-fund && npm run build; Windows runtime: start-app.bat",
+      "verification": {
+        "production_build": "passed in Linux sandbox (Vite 5.4.21)",
+        "vault_api_syntax": "passed node --check",
+        "git_diff_check": "passed",
+        "preview_host_probe": "HTTP 200 for *.e2b.app Host/Origin",
+        "browser_direct_loopback_calls": "none found in src/",
+        "ollama_runtime": "not tested; service unavailable in sandbox",
+        "windows_runtime": "not tested; requires user TUF A15 or Windows environment",
+        "visual_acceptance": "not user-confirmed"
+      },
+      "archive_status": "No archive file/directory is present in this checkout; historical filenames are unverified."
     },
     "02_electron-claude-clone-v6": {
       "path": "apps/02_electron-claude-clone-v6",
@@ -61,7 +78,7 @@
         "No reply bug when ChatMode called sendMessage from useChat which doesn't exist - fixed by restoring LLMFactory streaming",
         "Tic Tac Toe loop for qwen2.5:3b due to isOpenSourceModel systemPrompt - needs override"
       ],
-      "zip": "archive_zips/AI_ASSistant_App_Claude_Clone_qwen2.5_3b_FIXED6.zip"
+      "archive_status": "No archive file/directory is present in this checkout; historical filenames are unverified."
     }
   },
   "extension": {
@@ -86,30 +103,28 @@
       "Real Readability integration",
       "End-to-end test extension -> app API -> vault"
     ],
-    "zip": "archive_zips/AI_ASSistant_Extension_v1.2_Fixed.zip"
+    "archive_status": "No archive file/directory is present in this checkout; historical filenames are unverified."
   },
   "vault": {
     "path": "vault/AI-Brain/",
     "status": "structure-complete, templates-complete, no real user data yet, 61 files starter",
     "structure": "00 System, 01 Inbox, 02 Sources, 03 Memory, 04 Working Memory, 05 Knowledge, 06 Review, 07 Sharing Receipts, 08 Journal, 09 Activity & Undo, 90 Archive, .brain",
     "templates": "Browser Visit, Capsule, Conversation Source, Daily Journal, Entity, Event, Follow-up, Laptop File Reference, Memory Claim, Monthly Audit, Sharing Receipt, Source Scope",
-    "zip": "archive_zips/AI_ASSistant_Obsidian_Vault_v4_Clean.zip"
+    "archive_status": "No archive file/directory is present in this checkout; historical filenames are unverified."
   },
   "current_gaps": [
-    "Exact clone missing Settings modal from 191707.png",
-    "Exact clone missing File menu + User menu modals",
-    "Extension -> Vault API -> Obsidian file writes end-to-end not tested",
-    "Capsule drag-drop + Quillbot inline not wired in exact clone",
-    "No Windows installer, only dev bats",
-    "No model manager UI",
-    "No journal auto-generation from captured sources",
-    "No monthly audit implementation",
-    "Ollama CORS fix needs documentation in bat"
+    "Test current app on Windows with already-running Ollama and qwen2.5:3b; verify bat launch and visual match",
+    "Verify the local Vite proxy, Ollama streaming, model selector, text/image upload, and thinking display on the target PC",
+    "Test artifact creation only after explicit request, isolated preview behavior, and no Tic Tac Toe loop",
+    "Test app capture append/idempotency against the actual Obsidian vault and extension captures",
+    "Wire Capsule drag-drop, blacklist manager, Quillbot suggestions, and Today view",
+    "Build a native Windows wrapper with titlebar/menu after browser target is verified",
+    "Implement remaining Claude/settings capabilities and local-first memory workflows without claiming full parity"
   ],
   "last_session": {
     "date": "2026-10-10",
-    "what_done": "Built exact pixel-perfect Claude clone from 6 screenshots, created start-app.bat handling existing Ollama, direct qwen2.5:3b streaming, vault driver, zipped to AI_ASSistant_Exact_Claude_Clone.zip 13K",
-    "user_request": "give me one zip with all we did so far, requirement list updated every time, repo as memory/handover for other AIs, structure suits AIs best",
-    "action_now": "Creating master github repo AI-ASSistant-Github-Repo with living docs"
+    "what_done": "Updated apps/01 with missing screenshot modals plus functional local model/project selectors, explicit HTML artifact runner, bounded text/image uploads, thinking disclosure, per-chat local persistence, same-origin Ollama/vault proxy, and non-overwriting idempotent vault turn capture. Production build and static checks pass in Linux; no Ollama/Windows runtime test.",
+    "user_request": "Continue making the Claude app exact to screenshots and use NEW_SESSION_HANDOVER as clean start.",
+    "action_now": "Run start-app.bat on the target Windows PC, verify Ollama/model/file/artifact flows, then proceed with extension/vault Capsule wiring and Today view."
   }
 }

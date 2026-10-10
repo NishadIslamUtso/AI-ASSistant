@@ -1,9 +1,16 @@
 # CHANGELOG.md — What Changed Each Session (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 20:10 Asia/Dhaka
 **Rule:** Log every change with date, what, why. This is memory for next AI.
 
 ## 2026-10-10
+
+### 20:10 — Continued Claude App From Current Repository State
+- **What:** Restored missing Settings/User menu/Apps and Extensions screenshot surfaces; added working local model and project selectors, explicit-request HTML artifact runner with restrictive sandbox, bounded text/image attachments with model vision gating, optional thinking disclosure, local per-chat persistence/actions, same-origin Vite proxies, and append-only/idempotent vault turn capture. Updated launch/build batch files to preserve dependencies and check for an already-running vault service. Updated living architecture, requirements, state, handover, and AI index.
+- **Why:** Continue the user’s clean-start Claude app handover. The actual checked-out commit did not contain the three modal components that the supplied handover marked done, and P3-P5 were the next stated priorities.
+- **Files Changed:** `apps/01_claude-exact-pixel-clone/{src/App.jsx,src/components/*,src/index.css,vite.config.js,server/vault-api.cjs,start-app.bat,build-windows.bat,package-lock.json}`, `.ai/{AGENT_INSTRUCTIONS.md,CONTEXT.json,STATE.json,INDEX.json}`, mirrored `ai/{AGENT_INSTRUCTIONS.md,CONTEXT.json,STATE.json,INDEX.json}`, `00_LIVING_DOCS/{REQUIREMENTS_LIVING.md,HANDOVER_LIVING.md,ARCHITECTURE_LIVING.md,CHANGELOG.md,TODO_NEXT.md}`, `README.md`, `spec/CLAUDE_SPEC_FROM_SCREENSHOTS.md`, and `memory/sessions/2026-10-10-session.md`.
+- **Tested:** `npm run build` passed; `node --check server/vault-api.cjs` passed; `git diff --check` passed; preview proxy accepted `*.e2b.app` Host/Origin with HTTP 200; no browser-facing direct localhost fetches found. Ollama, the actual Obsidian vault, Windows batch files, and screenshot-level visual acceptance were not tested.
+- **Next:** User-side Windows smoke test; then P6 extension-to-vault verification, P7 Capsule/VaultPanel, P8 Today view, P9 native wrapper.
 
 ### 19:20 — Created Master Github Repo as AI Memory (Current Session)
 - **What:** Created AI-ASSistant-Github-Repo with AI-optimized structure: .ai/ (AGENT_INSTRUCTIONS, CONTEXT.json, STATE.json, INDEX.json), 00_LIVING_DOCS/ (REQUIREMENTS_LIVING, HANDOVER_LIVING, ARCHITECTURE_LIVING, DECISIONS_LOG, CHANGELOG, TODO_NEXT), apps/01_claude-exact-pixel-clone + 02_electron-claude-clone-v6, extension/, vault/AI-Brain/, spec/screenshots/, archive_zips/, docs/originals/, memory/sessions/

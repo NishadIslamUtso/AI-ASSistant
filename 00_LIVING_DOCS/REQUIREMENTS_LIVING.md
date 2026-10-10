@@ -1,7 +1,7 @@
 # REQUIREMENTS_LIVING.md — Single Source of Truth (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
-**Version:** 1.0.0-master
+**Last Updated:** 2026-10-10 20:10 Asia/Dhaka
+**Version:** 1.1.0-working
 **Rule:** UPDATE THIS FILE EVERY TIME SOMETHING CHANGES. This repo is memory for AIs. If you don't update, next session loses context.
 
 ## 0. Meta
@@ -30,10 +30,10 @@ A native Windows app named AI ASSistant that looks exactly like Claude desktop f
 - [x] Composer: textarea auto-grow, bottom row Project dropdown + "Sonnet 5.5 Medium Manual" model selector, send button white circle with arrow
 - [x] Top bar: "Free plan • Upgrade" right side
 - [x] Bottom left: avatar NU + "Utso" + "Free"
-- [ ] Settings modal (191707.png): Left nav General Account Privacy Billing Capabilities Memory Reflect Time and focus Claude Code System Extensions Developer Skills Connectors, right Appearance Theme options system/sun/moon, Chat font Anthropic Serif, Transcript size Small/Medium/Large, Width Narrow/Medium/Wide, Motion System/Reduced, Voice Language English, Style Buttery, Speed Normal
-- [ ] Menu bar (191558.png): File Edit View Go Help — Electron menu
-- [ ] User menu (191608.png): nishadislamutso@gmail.com, Settings, Language, Get help, Upgrade plan, Get apps and extensions, Learn more, Get API keys, Log out
-- [ ] Apps and extensions modal (191636.png): Do more with Claude everywhere you work, Claude Code Terminal VSCode etc, Microsoft 365, Chrome extension
+- [x] Settings modal (191707.png): left navigation and Appearance controls (Theme, Chat font, Transcript size/width, Motion, Voice) persist in `claude_exact_settings`; other sections are visible but explicitly marked as not connected
+- [ ] Menu bar (191558.png): File Edit View Go Help — native/Electron menu is still pending; web preview keeps OS/browser controls outside the app
+- [x] User menu (191608.png): email, Settings, Language, Get help, Upgrade plan, Get apps and extensions, Learn more, Get API keys, Log out; local-only actions show honest status notices
+- [x] Apps and extensions modal (191636.png): Claude Code, Microsoft 365 and local AI ASSistant Chrome extension cards; unsupported external services are not represented as connected
 
 ### 2.2 Colors (Extracted)
 - Sidebar: #202020
@@ -48,6 +48,15 @@ A native Windows app named AI ASSistant that looks exactly like Claude desktop f
 - Fully on-screen, Windows title bar + close controls visible
 - Polished, legible, simple — user should NOT manage databases/folders/backend
 
+### 2.4 Local chat features added in source
+- [x] Ollama model selector reads installed models from `/api/tags` through a same-origin Vite proxy and persists the selection. The build has not yet been exercised against the user's Ollama runtime.
+- [x] Artifact runner previews explicitly requested, self-contained HTML in a sandboxed iframe; external network access and local-app data access are blocked. It does not auto-create games/artifacts.
+- [x] File attach supports bounded text formats (up to 180 KB per file) and images (up to 4 MB); image sends are enabled only for installed models identified as vision-capable. Image bytes are session-only, not stored in chat localStorage or the vault. PDF/office parsing is not implemented.
+- [x] Thinking disclosure displays model-provided `thinking` deltas or `<think>` content when available; qwen2.5:3b runtime behavior has not been verified here.
+- [x] Chats, settings, projects, and HTML artifacts persist locally; selected-chat transcript streams through the local model proxy.
+
+**Verification note:** these features are in source and the Vite production build passes in the Linux sandbox. Windows/Ollama runtime testing and user visual confirmation remain pending; do not mark the full acceptance as complete from a successful build alone.
+
 ## 3. Architecture — Driver / Vault / Extension
 
 ```
@@ -59,10 +68,10 @@ You browsing any site + chatting any AI (ChatGPT, Claude, Gemini, DeepSeek, Grok
   - Never-check blacklist: user pastes URL/domain/pattern, never collect ever again, stored in 00 System/Privacy & Access.md + storage.sync excluded_patterns
   - Captures submitted AI chats + readable page text + visit trail URL/title/time
   ↕ local loopback, not internet
-[AI ASSistant Windows App] — THE DRIVER, Claude exact UI, at 127.0.0.1:8765
-  - Controls permissions, privacy, action-log, undo
-  - Context builder & retriever, review queue, journals, follow-ups
-  - Uses qwen2.5:3b directly via 11434/api/chat streaming
+[AI ASSistant local app prototype] — THE DRIVER, screenshot-based UI, currently Vite at 127.0.0.1:5173 (native Windows wrapper pending)
+  - Browser calls same-origin /api/ollama/* and /api/vault/*; Vite proxies to Ollama 127.0.0.1:11434 and vault API 127.0.0.1:8765
+  - Current UI features are partial; permissions, privacy, action-log, undo, context workflows, journals, and follow-ups remain planned or unverified
+  - qwen2.5:3b is the existing local baseline; model streaming is not yet runtime-tested on Windows
   ↕
 [Obsidian Vault AI-Brain/] — CANONICAL MEMORY, readable Markdown, 61 files starter
   + .brain/index.sqlite — rebuildable index only, NOT source of truth
@@ -268,11 +277,11 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 
 ## 13. Acceptance Checklist — Are We Doing It Right?
 
-- [x] App named AI ASSistant, native Windows desktop, title bar visible, dark default #1a1a1a
-- [x] Claude's chat layout copied from screenshots 191547-191707, sidebar 260px #202020 Search +New Projects Artifacts Customize Oct8 Older, center Evening Utso greeting, composer #242424 How can I help you today?, Free plan Upgrade top, NU Utso Free bottom
+- [ ] Native Windows desktop wrapper/title bar is not built; current runnable target is Vite in a browser. The AI ASSistant dark chat shell is in source.
+- [x] Screenshot-based chat shell is implemented in source and production-builds: 260px sidebar, chat groups, greeting/composer, plan label, account footer. Pixel-level user confirmation is still pending.
 - [ ] Feature inventory exists for "all Claude features" — need audit via 00 System/Claude Feature Audit.md, no parity claim without verification
 - [ ] Obsidian genuinely integrated as canonical vault, SQLite only rebuildable index under .brain/
-- [x] App is driver of vault + extension, vault organizes, extension collects + suggests contexts/prompts/files
+- [ ] App-to-extension-to-vault end-to-end flow is not yet tested; current app has local API proxy/capture paths and the extension remains unverified.
 - [x] Browser extension default = check everything, if inaccessible log "wasn't accessible" without asking
 - [x] Never-check blacklist exists: user can paste URL/domain pattern to never collect from ever again, editable in Privacy & Access
 - [x] Extension provides contexts like Capsule Hub: capture as Capsule, organize, drag-drop inject, version/branch, transfer attachments, prompt enhancer
@@ -280,27 +289,33 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - [x] Browser extension captures from any site you allow + all AI models you use, after one-time permission
 - [ ] Visit metadata distinguished from readable content, visit not proof of reading/agreement — need implementation in vault writes
 - [ ] Laptop file access explicitly scoped, visible, revocable, honest about actual coverage, originals stay in place
-- [x] Assistant automatically uses your template for authorized routine capture/organization, does not ask save every item
-- [x] Routine local changes inspectable and reversible with activity log + undo/version history
-- [x] Uncertainty, inferred relationships, same-time conflicts, high-impact ambiguity routed to review queue, not guessed
+- [ ] Automatic vault organization from authorized sources has not been implemented end-to-end.
+- [ ] A complete app-wide activity log and undo/version workflow is not implemented.
+- [ ] Review queue and conflict/uncertainty routing are not implemented end-to-end.
 - [x] Current-chat context not confused with long-term memory, no unsupported personal facts guessed, no name inferred
-- [x] Sensitive external sharing requires exact-content/destination preview + per-send approval, no blanket approval
-- [x] Original sources preserved until you choose deletion; archive, expire, forget-derived, delete-source remain distinct
-- [x] Journals dated Asia/Dhaka, event time vs capture time separated, source-linked, never invents offline events/feelings
+- [ ] External-provider routing and per-send sensitive-content approval are not implemented; current chat path is local Ollama only.
+- [ ] Full source retention and the four distinct archive/expire/forget/delete actions are not yet integrated.
+- [ ] Journal generation and source-linked event/capture-time handling are not implemented.
 - [ ] Today view surfaces Current Snapshot, today's journal draft, due follow-ups, one next action — need Today view implementation
-- [x] End-of-day prompts opt-in, offer answer/skip/snooze/stop, silence not resolution, user chooses cadence for sensitive topics
-- [x] Monthly cross-check user-triggered only, last 60 days + relevant linked older, dry-run, apply nothing until approved
-- [x] Cleanup never deletes original transcript because old or rarely retrieved; shows counts, sizes, reasons, links, batch decide
-- [x] Model-dependent options change when you switch models, unsupported disabled honestly, capability detection separate from model choice
+- [ ] Opt-in end-of-day prompts and follow-up controls are not implemented.
+- [ ] User-triggered monthly audit and approval workflow are not implemented.
+- [ ] Cleanup/retention review is not implemented.
+- [ ] Full per-model capability detection is pending. Current source lists Ollama models and gates image sending based on a model-name/family vision heuristic.
 - [x] No claim local model equals Claude, quality/speed/hardware trade-offs explained plainly, qwen2.5:3b limits acknowledged
 - [x] No passwords/cookies/tokens/payment fields/unsent drafts/hidden keystrokes collected, no keylogger/screenshot recorder, incognito off unless separately configured
-- [x] Local processing/storage default, Git local commit OK, remote push is external upload with approval, backup only to trusted destination
+- [ ] Backup destination and remote-sharing approval UI are not implemented. Local app chat data is stored in browser localStorage.
 - [x] Guidance delivered one simple step at a time, beginner-friendly, wait for result
-- [x] Full transcript survives summaries unchanged, duplicate handling works, failed adapter never reports false success
-- [x] Index and context rebuildable after cache deletion
-- [x] Bat commands work on Windows TUF A15 8GB RAM 4GB VRAM, app is driver of vault (127.0.0.1:8765), dark default, uses Ollama at 11434 handling already-running, no native build tools
+- [ ] Full conversation-source deduplication and capture-completeness validation are not implemented across providers.
+- [ ] Rebuildable search index is not implemented; current vault context endpoint uses simple Markdown scanning.
+- [ ] Windows batch files and local Ollama/vault runtime have not been tested on the TUF A15 in this session.
 
 ## 14. Changelog of Requirements
+
+### [2026-10-10 20:10] Updated Claude-app implementation and verification status
+- Added working source/build for user menu, Appearance settings, Apps and Extensions modal, functional local model/project selectors, explicit-request HTML artifacts, text/image upload, thinking disclosure, local conversation persistence, and chat actions.
+- Added same-origin Ollama/vault proxies so the browser preview never calls `localhost` directly.
+- Recorded upload boundaries, image session-only retention, artifact sandbox restrictions, and the fact that Windows/Ollama runtime and visual acceptance remain untested.
+- Corrected system-level checklist items that were previously marked complete without an integrated implementation.
 
 ### [2026-10-10 19:20] Initial living version created
 - Consolidated from REQUIREMENTS.md, HANDOVER.md, Master Plan, Blueprint, Extension Spec, 6 screenshots

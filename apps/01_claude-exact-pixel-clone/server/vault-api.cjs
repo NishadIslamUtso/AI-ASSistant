@@ -11,6 +11,7 @@ const possibleVaultPaths = [
   path.join(__dirname, '../../AI-Brain'),
   path.join(__dirname, '../AI-Brain'),
   path.join(require('os').homedir(), 'Documents', 'AI-Brain'),
+  path.join(__dirname, '../../../vault/AI-Brain'),
   path.join(__dirname, '../../AI-Brain-Vault/AI-Brain'),
   '/home/user/AI-Brain'
 ];
@@ -101,55 +102,25 @@ ${(data.content||'').slice(0,10000)}
       });
     }
     else if (data.type === 'conversation') {
-      const provider = data.provider || 'Other';
-      const id = data.conversation_id || Date.now();
-      const rel = `02 Sources/Conversations/${provider}/${year}/${id}.md`;
-      const transcript = (data.messages||[]).map(m => `### [${m.role}] ${m.timestamp}\n${m.text}\n`).join('\n');
-      const md = `---
-id: ${id}
-provider: ${provider}
-url: ${data.url || ''}
-title: ${data.title || ''}
-captured_at: ${data.captured_at}
-completeness: ${data.completeness || 'full'}
----
+      const provider = String(data.provider || 'Other');
+      const providerFolder = provider.replace(/[^a-z0-9._-]/gi, '-').replace(/-+/g, '-').slice(0, 64) || 'Other';
+      const id = String(data.conversation_id || Date.now()).replace(/[^a-z0-9._-]/gi, '-').slice(0, 120) || String(Date.now());
+      const turnId = String(data.turn_id || `turn-${Date.now()}`).replace(/[^a-z0-9._-]/gi, '-').slice(0, 120);
+      const title = String(data.title || `Conversation ${id}`).replace(/[\r\n]+/g, ' ').slice(0, 180);
+      const rel = `02 Sources/Conversations/${providerFolder}/${year}/${id}.md`;
+      const full = path.join(VAULT_PATH, rel);
+      const turnMarker = `<!-- turn:${turnId} -->`;
+      const transcript = (data.messages || []).map(m => `### [${String(m.role || 'unknown').replace(/[\r\n]+/g, ' ')}] ${String(m.timestamp || data.captured_at || now.toISOString()).replace(/[\r\n]+/g, ' ')}\n${String(m.text || '').replace(/\r/g, '')}\n`).join('\n');
+      const turnBlock = `${turnMarker}\n${transcript}`;
 
-# ${data.title || 'Conversation '+id}
-
-Provider: ${provider}
-URL: ${data.url || ''}
-
-## Transcript
-${transcript}
-`;
-      writeMarkdown(rel, md);
-      // Also create entity if needed - simple heuristic
-      if (data.title && data.title.length > 5) {
-        const entityId = 'entity-' + id;
-        const entityRel = `03 Memory/Entities/${entityId}.md`;
-        if (!fs.existsSync(path.join(VAULT_PATH, entityRel))) {
-          const entityMd = `---
-id: ${entityId}
-type: topic
-status: confirmed
-importance: normal
-sensitivity: ordinary
-retention: keep-until-user-deletes
-created: ${data.captured_at}
-updated: ${data.captured_at}
-sources: ["[[${id}]]"]
----
-
-# ${data.title}
-
-## Overview
-Captured from ${provider}.
-
-## Sources
-- [[${id}]]
-`;
-          writeMarkdown(entityRel, entityMd);
-        }
+      ensureDir(path.dirname(rel));
+      if (fs.existsSync(full)) {
+        const existing = fs.readFileSync(full, 'utf-8');
+        // Append individual turns instead of silently replacing an existing source note.
+        if (!existing.includes(turnMarker)) fs.appendFileSync(full, `\n${turnBlock}\n`, 'utf-8');
+      } else {
+        const md = `---\nid: ${JSON.stringify(id)}\nprovider: ${JSON.stringify(provider)}\nurl: ${JSON.stringify(data.url || '')}\ntitle: ${JSON.stringify(title)}\ncaptured_at: ${JSON.stringify(data.captured_at || now.toISOString())}\ncompleteness: ${JSON.stringify(data.completeness || 'partial')}\n---\n\n# ${title}\n\nProvider: ${provider}\nURL: ${data.url || ''}\n\n## Transcript\n\n${turnBlock}\n`;
+        writeMarkdown(rel, md);
       }
     }
     else if (data.type === 'capsule') {

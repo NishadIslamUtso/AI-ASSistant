@@ -30,8 +30,8 @@
     "ollama_api": "http://127.0.0.1:11434",
     "vault_api": "http://127.0.0.1:8765",
     "vite_dev": "http://127.0.0.1:5173",
-    "ollama_origins_needed": "*",
-    "fix_cors": "setx OLLAMA_ORIGINS \"*\" and restart ollama serve"
+    "ollama_origins_needed": "No for the browser app: Vite uses same-origin proxies; Windows/Ollama runtime is not yet tested.",
+    "fix_cors": "Do not set global OLLAMA_ORIGINS for this app; use same-origin /api/ollama/* routes through Vite."
   },
   "app_identity": {
     "name": "AI ASSistant",
