@@ -1,8 +1,14 @@
 # REQUIREMENTS_LIVING.md — Single Source of Truth (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
-**Version:** 1.0.0-master
+**Last Updated:** 2026-10-10 (continued) Asia/Dhaka
+**Version:** 1.1.0-master / active app 0.2.0
 **Rule:** UPDATE THIS FILE EVERY TIME SOMETHING CHANGES. This repo is memory for AIs. If you don't update, next session loses context.
+
+## Current evidence notice (2026-10-10 continuation)
+
+The accepted product requirements below remain in force. Old checkmarks in sections2–12 describe the earlier requirement/UI inventory, **not proof of shipped or user-confirmed behavior**. Section13 is now the honest implementation/evidence checklist. Active target is apps/01_claude-exact-pixel-clone v0.2.0, not the native Electron reference. Source/build, 41 Node tests and 21 mocked-browser tests pass; real Windows/Ollama/extension and exact-pixel confirmation remain open.
+
+References are native **1920×1020**. Our comparison uses1280×680CSS/DPR1.5; actual laptop DPI/fonts are unknown. Fresh width is **Narrow588**, not older approximate Medium; Medium768/Wide960. Dark main#1a1a1a/sidebar260px#202020/composer#242424 remains mandatory. Actual local model name is shown, not a fake Sonnet label; screenshot titles are empty UI placeholders, not imported evidence.
 
 ## 0. Meta
 
@@ -27,13 +33,13 @@ A native Windows app named AI ASSistant that looks exactly like Claude desktop f
 - [x] Sidebar chat list: "Refining a 5-day workout cycle..." (Oct 8), "Identifying charisma type", "Realme 6i - realme... fix", "Fix AI generated Facebook picture", "PSY 101-01W | Unit 1 | Quiz Review", "STA201 - Elements of Statistics", "PHY-112, Principles of Physics II", "CSE220 MID - Data Structure and Algorithms", "Function: Manage memories of personal information" etc — from screenshots, use as default history
 - [x] Context menu on chat item (191646.png): Open in new window, Pin chat, Rename, Add to project, Move to group, Delete — position absolute, dark #2a2a2a, rounded
 - [x] Center #1a1a1a: greeting "Evening, Utso." serif 3xl with orange asterisk *, sub "How can I help you today?" composer #242424 rounded-xl, placeholder "How can I help you today?"
-- [x] Composer: textarea auto-grow, bottom row Project dropdown + "Sonnet 5.5 Medium Manual" model selector, send button white circle with arrow
+- [x] Composer: textarea auto-grow, bottom row Project dropdown + screenshot-shaped model controls showing the actual installed local model, Medium/Manual, send button white circle with arrow
 - [x] Top bar: "Free plan • Upgrade" right side
 - [x] Bottom left: avatar NU + "Utso" + "Free"
-- [ ] Settings modal (191707.png): Left nav General Account Privacy Billing Capabilities Memory Reflect Time and focus Claude Code System Extensions Developer Skills Connectors, right Appearance Theme options system/sun/moon, Chat font Anthropic Serif, Transcript size Small/Medium/Large, Width Narrow/Medium/Wide, Motion System/Reduced, Voice Language English, Style Buttery, Speed Normal
+- [x] Settings modal UI (source/build/mocked browser; voice engine unavailable) (191707.png): Left nav General Account Privacy Billing Capabilities Memory Reflect Time and focus Claude Code System Extensions Developer Skills Connectors, right Appearance Theme options system/sun/moon, Chat font Anthropic Serif, Transcript size Small/Medium/Large, Width Narrow/Medium/Wide, Motion System/Reduced, Voice Language English, Style Buttery, Speed Normal
 - [ ] Menu bar (191558.png): File Edit View Go Help — Electron menu
-- [ ] User menu (191608.png): nishadislamutso@gmail.com, Settings, Language, Get help, Upgrade plan, Get apps and extensions, Learn more, Get API keys, Log out
-- [ ] Apps and extensions modal (191636.png): Do more with Claude everywhere you work, Claude Code Terminal VSCode etc, Microsoft 365, Chrome extension
+- [x] User menu UI (source/build/mocked browser; official-service actions honestly unavailable) (191608.png): nishadislamutso@gmail.com, Settings, Language, Get help, Upgrade plan, Get apps and extensions, Learn more, Get API keys, Log out
+- [x] Apps and extensions modal UI (source/build/mocked browser, not connected official integrations) (191636.png): Do more with Claude everywhere you work, Claude Code Terminal VSCode etc, Microsoft 365, Chrome extension
 
 ### 2.2 Colors (Extracted)
 - Sidebar: #202020
@@ -266,39 +272,40 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - Don't promise larger model will run well on 8GB RAM / 4GB VRAM without checking
 - Bat files must work with existing Ollama, handle already-running, no native build tools
 
-## 13. Acceptance Checklist — Are We Doing It Right?
+## 13. Acceptance Checklist — actual implementation evidence
 
-- [x] App named AI ASSistant, native Windows desktop, title bar visible, dark default #1a1a1a
-- [x] Claude's chat layout copied from screenshots 191547-191707, sidebar 260px #202020 Search +New Projects Artifacts Customize Oct8 Older, center Evening Utso greeting, composer #242424 How can I help you today?, Free plan Upgrade top, NU Utso Free bottom
-- [ ] Feature inventory exists for "all Claude features" — need audit via 00 System/Claude Feature Audit.md, no parity claim without verification
-- [ ] Obsidian genuinely integrated as canonical vault, SQLite only rebuildable index under .brain/
-- [x] App is driver of vault + extension, vault organizes, extension collects + suggests contexts/prompts/files
-- [x] Browser extension default = check everything, if inaccessible log "wasn't accessible" without asking
-- [x] Never-check blacklist exists: user can paste URL/domain pattern to never collect from ever again, editable in Privacy & Access
-- [x] Extension provides contexts like Capsule Hub: capture as Capsule, organize, drag-drop inject, version/branch, transfer attachments, prompt enhancer
-- [x] Extension provides contexts like Quillbot: real-time suggestions in any text field, highlight for suggestions, inline toolbar, works where you write
-- [x] Browser extension captures from any site you allow + all AI models you use, after one-time permission
-- [ ] Visit metadata distinguished from readable content, visit not proof of reading/agreement — need implementation in vault writes
-- [ ] Laptop file access explicitly scoped, visible, revocable, honest about actual coverage, originals stay in place
-- [x] Assistant automatically uses your template for authorized routine capture/organization, does not ask save every item
-- [x] Routine local changes inspectable and reversible with activity log + undo/version history
-- [x] Uncertainty, inferred relationships, same-time conflicts, high-impact ambiguity routed to review queue, not guessed
-- [x] Current-chat context not confused with long-term memory, no unsupported personal facts guessed, no name inferred
-- [x] Sensitive external sharing requires exact-content/destination preview + per-send approval, no blanket approval
-- [x] Original sources preserved until you choose deletion; archive, expire, forget-derived, delete-source remain distinct
-- [x] Journals dated Asia/Dhaka, event time vs capture time separated, source-linked, never invents offline events/feelings
-- [ ] Today view surfaces Current Snapshot, today's journal draft, due follow-ups, one next action — need Today view implementation
-- [x] End-of-day prompts opt-in, offer answer/skip/snooze/stop, silence not resolution, user chooses cadence for sensitive topics
-- [x] Monthly cross-check user-triggered only, last 60 days + relevant linked older, dry-run, apply nothing until approved
-- [x] Cleanup never deletes original transcript because old or rarely retrieved; shows counts, sizes, reasons, links, batch decide
-- [x] Model-dependent options change when you switch models, unsupported disabled honestly, capability detection separate from model choice
-- [x] No claim local model equals Claude, quality/speed/hardware trade-offs explained plainly, qwen2.5:3b limits acknowledged
-- [x] No passwords/cookies/tokens/payment fields/unsent drafts/hidden keystrokes collected, no keylogger/screenshot recorder, incognito off unless separately configured
-- [x] Local processing/storage default, Git local commit OK, remote push is external upload with approval, backup only to trusted destination
-- [x] Guidance delivered one simple step at a time, beginner-friendly, wait for result
-- [x] Full transcript survives summaries unchanged, duplicate handling works, failed adapter never reports false success
-- [x] Index and context rebuildable after cache deletion
-- [x] Bat commands work on Windows TUF A15 8GB RAM 4GB VRAM, app is driver of vault (127.0.0.1:8765), dark default, uses Ollama at 11434 handling already-running, no native build tools
+`[x]` = evidenced only within the scope written here; `[ ]` = unfinished/unverified, even if a template or earlier plan exists.
+
+- [x] Active app named AI ASSistant, mandated dark palette/sidebar/composer, screenshot-led web layout and menus/dialogs. **Not confirmed exact Windows pixels.**
+- [ ] Native Windows title bar/window controls, File/Edit/View/Go/Help and installer; current build BAT is web dist.
+- [x] Bounded feature inventory/status in target README and handover; no all-Claude parity claim.
+- [ ] Exhaustive official-Claude feature audit/parity and user confirmation.
+- [x] Per-chat history/reload/Stop/error/partial persistence, storage recovery/legacy IDs, originals not wiped; verified with mocked browser, not real model quality.
+- [x] Existing local Ollama tags/show model discovery and selected metadata verification; no download/auto-switch/cloud alias/wildcard origins. Unsupported options disabled honestly; no fake thinking.
+- [x] UTF8 byte-safe NDJSON with done/errors; conservative12k-character request guard/4096context. Not an exact tokenizer or unlimited cognition.
+- [x] Explicit-request/mode-only HTML/SVG artifact Preview/Code/local versions/import/download/library; opaque sandbox + CSP, tested parent/fetch/external and same-origin API navigation denial. No shell/React/CDN/publish runner; downloaded originals unsandboxed.
+- [x] Actual text/verified-vision payloads and original attachments in IndexedDB/vault; 4max,64KB/12ktext,2MBimages; PDF/Word unsupported. Real vision/VRAM performance remains open.
+- [x] Canonical repository Obsidian-vault API, immutable originals/revisions/dedup/paths/realpath/Dhaka dates, temporary-vault tests; no authoritative SQLite added.
+- [x] Visit metadata distinct from readable content; no reading/agreement inference; inaccessible logs in both required locations.
+- [x] Initial capsule/entity keyword library, typed drag/drop/exact-content preview, explicit send, local Cook preview/cancel; not full memory graph or Capsule Hub.
+- [x] Vault blacklist editor stores editable/revocable domain/URL/globs in Privacy/Source Scope, archives previous documents, tests capture skips. **Browser never-check synchronization before observations remains open.**
+- [x] Local appearance/transcript/motion/project/chat controls wired; billing/voice/official integrations unavailable, not fake services.
+- [x] Model-authored remote Markdown images blocked; external links show exact URL/path/query and require navigation approval. No cloud AI provider enabled.
+- [x] Windows scripts in source with existing-service/readiness/dependency probes and no model downloads/native compiler/wildcard settings. **Not cmd.exe/laptop tested.**
+- [x] 41 Node/API tests and21 mocked-browser tests pass; production build and final DPR-aware visuals reviewed.
+- [ ] User's real qwen2.5:3b tags/show/replies/speed/RAM and Windows BAT execution confirmed.
+- [ ] Extension default check-all/all-AIs after one-time permission verified; never-check scope enforced before URL/history/DOM access, offline queue reliable on non-2xx/malformed responses.
+- [ ] Extension→app API→real Obsidian E2E capture, original attachments and inaccessible logging; no universal access claim.
+- [ ] Complete Capsule project library/editor/goals/constraints/decisions, branches/rollback/files transfer; Quillbot assistance in real third-party fields.
+- [ ] Laptop folder/app access explicitly scoped/visible/revocable and tested.
+- [ ] Automated evidence-aware entities/events/claims/decisions/relationships, ambiguity/review workflow, Current Snapshot/Open Loops implemented; templates alone are not implementation.
+- [ ] Source-linked Today/Dhaka journals/follow-ups and sensitive opt-in cadence/skip/snooze/stop; never invent offline events/feelings or resolve by silence.
+- [ ] User-triggered monthly last60days+linked older dry-run audit with approval and distinct archive/expire/forget-derived/delete-source controls.
+- [ ] Comprehensive secret/draft/token/sensitive-URL/incognito collection audit for all extension/import adapters; policy accepted, not universally verified.
+- [x] Local-only default, source originals preserved on local-chat delete, no unsupported personal facts/name-from-path/automatic Arena import.
+- [x] Local commits allowed; no remote push/merge this continuation. Runtime vault edits kept intact/unshared. New runtime notes ignored by default, tracked-template edits still reviewed selectively.
+- [ ] Full external-send receipt/approval workflow across future providers/extension/backup integrations; no blanket approval.
+- [x] Beginner next step is one action: extract into a new folder; no reinstall/pull or entire checklist at once.
 
 ## 14. Changelog of Requirements
 
@@ -325,3 +332,12 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 6. Commit with message "req: <what changed>"
 
 This file IS the memory. Keep it updated.
+
+### [2026-10-10 continuation] Added implementation/evidence boundaries and repaired target
+- Restore screenshot account/settings/apps UI; actual local model selector/capabilities, per-chat streaming/history/Stop, real upload/thinking, explicit isolated HTML/SVG runner.
+- Canonical source API/path/date/originals/retry/deny fixes, initial capsule library/drop/Cook, stored blacklist/revocation; labels distinguish API deny from browser never-check.
+- New safety requirements exercised: no model-authored remote image fetch; exact HTTP(S) link approval; cloud models/remote proxy targets blocked; whitelisted same-origin JSON proxy; parent CSP blocks same-origin API frame navigation too.
+- Correct fresh Narrow width and native1920×1020 reference dimensions/DPR comparison assumption; system font fallbacks and native/user parity unverified.
+- Correct old checkbox overclaims: native installer, extension E2E, full Capsule/Quillbot, Today/journals/follow-ups/monthly audit and comprehensive capture-safety audit are unfinished.
+- New source tests/build/visual evidence; source ZIP exporter refuses private committed vault changes, does not overwrite archives or send externally. Windows runtime and real model checks pending.
+- Found local canonical-vault blacklist/activity/revision edits during preview (initiating action unconfirmed); retained, not reverted/staged/exported/pushed.

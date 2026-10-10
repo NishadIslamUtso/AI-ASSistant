@@ -1,126 +1,51 @@
-# AGENT INSTRUCTIONS — For Any AI Continuing This Repo
+# AGENT INSTRUCTIONS — continuing AI ASSistant
 
-**You are an AI taking over this repo. Read this before doing anything.**
+**Updated:** 2026-10-10. This repository is Utso's memory/handover/living requirements, not a portfolio. Read before changing code.
 
-## 1. What This Repo Is
+## Mandatory read order
 
-This is NOT a normal human GitHub repo. It is **memory + handover + living requirements** for project AI ASSistant. Owner is Utso, single user, wants structure optimized for AIs, not human aesthetics. Human-readable polish secondary.
+1. `NEW_SESSION_HANDOVER.md`.
+2. `.ai/CONTEXT.json`, `.ai/STATE.json` (visible `ai/` is a synchronized mirror).
+3. `00_LIVING_DOCS/REQUIREMENTS_LIVING.md`, `HANDOVER_LIVING.md`, `TODO_NEXT.md`.
+4. `00_LIVING_DOCS/ARCHITECTURE_LIVING.md`, `TESTING_CHECKLIST.md`, `BRANCH_TESTING.md`.
+5. `spec/CLAUDE_SPEC_FROM_SCREENSHOTS.md` and the six actual191547–191707 references (native1920×1020, viewer scales them).
 
-- **App = driver** (Claude exact UI, controls everything)
-- **Vault = organizer** (Obsidian Markdown canonical memory, AI-Brain/)
-- **Extension = collector + suggester** (browser, default check everything, Capsule Hub + Quillbot UX)
+## Target and roles
 
-## 2. Mandatory Read Order
+Work in **apps/01_claude-exact-pixel-clone/**, app0.2.0, React/Vite + canonical API. Electron v6 is reference only, not the active implementation or proof of native parity.
 
-1. `.ai/CONTEXT.json` — who user is, hardware, constraints
-2. `.ai/STATE.json` — what is built, what is broken, current bugs
-3. `00_LIVING_DOCS/REQUIREMENTS_LIVING.md` — living truth, acceptance checklist
-4. `00_LIVING_DOCS/HANDOVER_LIVING.md` — gaps, next steps
-5. `00_LIVING_DOCS/ARCHITECTURE_LIVING.md` — driver/vault/extension flow
-6. `spec/CLAUDE_SPEC_FROM_SCREENSHOTS.md` — pixel-perfect UI spec from 6 screenshots
-7. `spec/screenshots/` — view the 6 actual screenshots (191547 to 191707)
+**App = driver. Vault = canonical Obsidian Markdown organizer/memory. Extension = collector/context suggester.** SQLite, if introduced, is rebuildable only. Do not silently create a competing app-local vault.
 
-## 3. Rules You MUST Follow
+This Arena session is fixed to **arena/01199af1-ai-assistant**; never switch/create/push another branch. Local commits are allowed. Remote Git push/cloud sync is external send: review exact destination/content and get approval. No private vault push automatically. No push/merge occurred in this continuation.
 
-### Living Docs Update Rule (CRITICAL)
-- **EVERY TIME you change code, requirements, architecture, or fix bug, you MUST update:**
-  - `00_LIVING_DOCS/REQUIREMENTS_LIVING.md` — add dated entry, update checklist
-  - `00_LIVING_DOCS/CHANGELOG.md` — log what you changed
-  - `00_LIVING_DOCS/HANDOVER_LIVING.md` — update current state + gaps
-  - `.ai/STATE.json` — update build status
-  - `memory/sessions/<date>-session.md` — log session
+## Living memory rule — every change
 
-If you don't update living docs, next AI loses memory. This is the whole purpose of repo.
+Update REQUIREMENTS_LIVING, CHANGELOG, HANDOVER_LIVING, `.ai/STATE.json`, `memory/sessions/<date>-session.md`, and relevant testing/architecture/todo/spec docs. Copy `.ai/{AGENT_INSTRUCTIONS.md,CONTEXT.json,STATE.json,INDEX.json}` to visible `ai/` after any update. Source/build/tested/user-confirmed are different statuses; templates/plans are not shipped functionality.
 
-### Constraints From User (Never Violate)
-- Default capture = check everything by default across all sites + all AIs after one-time permission; if inaccessible, log "wasn't accessible - reason" in 09 Activity & Undo + 01 Inbox/Processing Errors, no popup/ask; explicit collect only when user instructs (right-click "Collect this page now" or paste URL to force).
-- Never-check blacklist: user can paste URL/domain/pattern (e.g., bank.com/*) into Privacy & Access / Source Scope excluded_patterns to never check any data from that URL ever again; editable, revocable; default allow, explicit deny; stored in 00 System/Privacy & Access.md and 00 System/Connectors scope files.
-- Extension UX = provide contexts like Capsule Hub by Tilantra (capture once as reusable Capsule with goals/constraints/background/decisions/attachments, library, drag-drop inject into any AI chat box, version/branch/rollback, transfer attachments, prompt enhancer "Cook This Prompt") and Quillbot (works in background ready when needed, works in any text field across web, highlight text or open toolbar for instant suggestions, real-time suggestions as you type, inline dropdown, no tab switching), local-only no external account required.
-- Use already downloaded qwen2.5:3b directly, no download. Bat files must work on Windows TUF A15 8GB RAM 4GB VRAM, handle already-running Ollama, no native build tools.
-- Dark default #1a1a1a, Windows title bar visible, Claude exact layout from screenshots, not loosely inspired.
-- Never infer user name from Windows path. Arena.ai chats not auto-imported. No passwords/cookies/tokens/payment/unsent drafts collection.
+## Standing user constraints
 
-### Code Rules
-- Don't ask user to repeat requirements already in REQUIREMENTS_LIVING.md
-- Give Windows instructions one step at a time, beginner-friendly
-- Don't claim feature implemented because it appears in plan — mark planned/in source/compiled/tested/user-confirmed
-- Keep original conversations/sources until user deletes, never auto-delete
-- Local-first: no external upload without exact-content/destination preview + approval
+- Claude exact layout from six screenshots, not loosely inspired. Dark default main#1a1a1a, sidebar260CSSpx#202020, composer#242424. Native Windows title bar/controls/File/Edit/View/Go/Help ultimately required; web may hide native menu. No native/user-confirmed pixel claim yet. Font fallbacks and assumed1280×680CSS/DPR1.5 comparison are not verified Windows fonts/DPI. Fresh widthNarrow588 is selected in the actual reference; Medium768/Wide960.
+- Use **already-installed Ollama + already-pulled qwen2.5:3b**. No model downloads/reinstallation/auto-switch by default. Handle already-running Ollama. BAT must work without native compiler tools on Windows11/TUF A15/Ryzen7/8GB RAM/RTX3050 4GB/500GB/slow downloads. Do not promise larger models/frontier intelligence.
+- No wildcard `OLLAMA_ORIGINS` advice for this app: relative browser APIs + local proxy remove that need. Proxy targets are loopback-only, remote/cloud models disabled, selected metadata verified before chat. Capabilities come from metadata, not model names; never fake thinking.
+- Default authorized capture: check all accessible sites/all AIs after one-time permission, default allow/explicit deny. Inaccessible: quietly log **wasn't accessible - reason** in both09 Activity & Undo and01 Inbox/Processing Errors; no popup/permission request per inaccessible source. Explicit collect only when instructed (context menu/pasted URL).
+- Editable/revocable never-check URL/domain/glob blacklist in Privacy & Access and connector Source Scope excluded_patterns; denied sources must never be checked. API deny alone does not prove extension never-check; synchronize browser scope **before URL/history/DOM observation**.
+- Never collect passwords/cookies/tokens/payment fields, unsent third-party composer/form drafts, hidden keystrokes or continuous screenshots. Incognito off unless separately authorized. Comprehensive extension/import/URL-secret audit is pending; do not claim universal safe capture.
+- Extension combines Capsule Hub (project library, goals/constraints/background/decisions/files, drop/inject/versions/branches/rollback/attachment transfer/Cook) and Quillbot (background-ready text-field/highlight/toolbar/inline assistance, no tab switching), local-only/no external account. Current preview/drop/Cook is only an initial subset.
+- Keep originals until user deletes. No silent destructive rewrites/deletion, arbitrary commands/posts/irreversible actions. Source-linked, evidence-aware memory. Journal drafts never invent offline events/feelings; silence does not resolve follow-ups. Sensitive cadence opt-in; monthly review user-triggered dry-run with approval.
+- External uploads/injections need exact-content/destination preview and per-send approval. Model-authored remote Markdown images blocked; links require explicit URL preview/approval. Artifact preview stays opaque/CSP-bound; no same-origin/CDN/raw SVG/shell runner or fake publish. Downloaded original HTML is not sandboxed.
+- Name is **Utso**, provided by user. Do not infer it from Windows paths. Arena chats are not automatically imported.
+- Give Windows beginner **one step at a time**, wait for result; do not ask them to repeat documented requirements or run a full checklist at once.
 
-## 4. Repo Structure Logic (Why AI-Optimized)
+## What is actually tested / next
 
-- `.ai/` = machine-readable JSON for fast context injection (RAG-friendly)
-- `00_LIVING_DOCS/` = prefix 00 ensures it sorts first, living docs are single source of truth
-- `apps/01_...` = numbered for priority, 01 is latest target
-- `vault/` = full Obsidian vault copy, canonical memory
-- `spec/screenshots/` = visual spec, ground truth for UI
-- `memory/sessions/` = chronological logs for temporal memory
+Latest build + **41 Node/API tests + 21 mocked-browser tests pass**. Real laptop Ollama/Windows/BAT/vision/performance, extension E2E, user exact-pixel approval, full Capsule/working memory, Today/journals/follow-ups/monthly audit, and native installer remain pending. Read TODO_NEXT, not old checked boxes or v6 feature lists.
 
-This is NOT human portfolio structure. It's for AI continuity.
+Do not clear localStorage/chat_history/vault to fix an old game loop. Simple no-game prompt + explicit-current-request artifact gate is implemented. Start a new chat if old context is unhelpful while retaining originals. Storage recovery copies exist; latest capture-status guard prevents older responses overriding newer status.
 
-## 5. How to Build/Test
+## Source packaging and data boundary
 
-Latest exact clone:
-```
-cd apps/01_claude-exact-pixel-clone
-start-app.bat  # handles Ollama already running, installs rollup win32, starts vault API 8765 + Vite 5173
-```
-Open http://127.0.0.1:5173
-Ollama at http://127.0.0.1:11434/api/chat qwen2.5:3b streaming
-Vault API at http://127.0.0.1:8765/context + /capture
+Use `node scripts/package-source.cjs` (or safe .sh/.bat wrappers) after a selective reviewed **local source commit**. It packages committed HEAD, requires the unchanged approved starter vault, refuses dirty source/private committed vault changes, and never overwrites an existing ZIP or sends externally. Source ZIP must contain all runnable source before merge. A downloaded source ZIP requires Node for the app, not Git to launch, and is not an installer/private-data backup.
 
-Electron clone:
-```
-cd apps/02_electron-claude-clone-v6
-npm install
-npm run dev:server
-npm run dev
-```
+During final review, uncommitted canonical-vault blacklist/activity/revision edits were found from while preview ran; initiating action unconfirmed. Leave them intact, outside staging/packaging; do not attribute, revert, delete or auto-upload them. New runtime vault data is ignored by default, but existing tracked templates can still be modified: never blanket-stage/push.
 
-Extension: load unpacked extension/ in Chrome, needs vault API running.
-
-## 6. Current Known Bugs (From STATE.json)
-
-- No reply bug: custom ChatMode called sendMessage from useChat which doesn't exist — fixed by restoring original LLMFactory streaming in v6, but exact clone uses direct Ollama fetch which works.
-- Tic Tac Toe loop: systemPrompt for isOpenSourceModel includes Flappy Bird game example, qwen2.5:3b interprets as must create game every reply. Fix: override systemPrompt for qwen2.5:3b to simple assistant, only create artifacts when explicitly asked. Also clear localStorage chat_history that contains looped artifact context.
-- Ollama CORS: fetch http://localhost:11434/api/tags may fail if OLLAMA_ORIGINS not * — requires setx OLLAMA_ORIGINS "*" and restart ollama serve.
-
-## 7. What To Do Next (From TODO_NEXT.md)
-
-Read TODO_NEXT.md for immediate next steps. Typically:
-- Test exact clone on Windows
-- Add Settings modal from screenshot 191707 (Appearance Theme Chat font Transcript size Width Motion Voice Language Style Speed)
-- Implement VaultPanel drag-drop capsules
-- Wire extension -> vault API -> Obsidian files
-- Add blacklist UI
-
-## 8. When User Says "Update Zip"
-
-When user asks for zip again, run:
-```
-cd /home/user
-zip -r AI-ASSistant-Master-Github-Repo.zip AI-ASSistant-Github-Repo -x "*node_modules/*" "*dist/*" "*.git/*" "*archive_zips/*"
-```
-But keep archive_zips excluded from inner to avoid recursion? Actually include archive_zips as reference but exclude node_modules.
-
-Better: use script in repo root `scripts/build-master-zip.bat` and `.sh`
-
-## 9. Handover Format
-
-When you finish session, write:
-- memory/sessions/YYYY-MM-DD-session.md with what you did, what broke, what next
-- Update CHANGELOG.md
-- Update HANDOVER_LIVING.md
-- Update STATE.json
-- Update REQUIREMENTS_LIVING.md if requirements changed
-
-This ensures next AI can continue without asking user to repeat.
-
-## 10. Don'ts
-
-- Don't make it look human-made, keep AI-optimized structure
-- Don't ask user to reinstall Ollama/qwen2.5:3b unless necessary — use existing
-- Don't create separate SQLite as authoritative memory — Obsidian vault is canonical
-- Don't claim universal access without honest scope
-- Don't silently retrain model or assume preferences
-- Don't invent personal facts, offline events, feelings
+For dev: target README has commands. API defaults canonical repository vault and loopback8765, refuses missing root; Vite5173 proxies localhost services. Tests use disposable vaults/API18765/Vite5174 with mocked models. A hosted preview cannot reach the user's laptop Ollama. Never disable browser web security/site isolation to make artifact tests pass.

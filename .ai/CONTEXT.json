@@ -31,7 +31,13 @@
     "vault_api": "http://127.0.0.1:8765",
     "vite_dev": "http://127.0.0.1:5173",
     "ollama_origins_needed": "*",
-    "fix_cors": "setx OLLAMA_ORIGINS \"*\" and restart ollama serve"
+    "fix_cors": "setx OLLAMA_ORIGINS \"*\" and restart ollama serve",
+    "scope": "User Windows laptop. Sandbox preview has no real Ollama model; browser tests mock responses.",
+    "browser_api": {
+      "ollama": "/api/ollama",
+      "vault": "/api/vault",
+      "policy": "Same-origin relative proxy to unauthenticated loopback services only; no wildcard CORS needed; cloud entries disabled."
+    }
   },
   "app_identity": {
     "name": "AI ASSistant",
@@ -97,9 +103,10 @@
       "claims cannot remember current chat",
       "interprets Flappy Bird example in system prompt as must create game every reply -> Tic Tac Toe loop"
     ],
-    "fix_tictactoe": "override systemPrompt for qwen2.5:3b to simple assistant, only create artifacts when explicitly asked, clear localStorage chat_history",
+    "fix_tictactoe": "Simple no-game prompt and explicit-current-request/mode artifact gate implemented. Never clear storage/originals automatically; start a new chat when old context is unhelpful.",
     "ui_vs_intelligence": "UI parity != intelligence, don't promise local model equals Claude",
-    "model_aware": "expose every verified option for selected model, hide/disable unsupported, update controls when model changes"
+    "model_aware": "expose every verified option for selected model, hide/disable unsupported, update controls when model changes",
+    "cloud_policy": "Only installed local models with selected metadata verified; cloud tags/remote aliases blocked until a future exact-destination/content approval workflow exists."
   },
   "claude_screenshots_spec": {
     "files": [
@@ -110,6 +117,19 @@
       "191646.png - context menu Open in new window Pin Rename Add to project Move to group Delete on CSE220 MID",
       "191707.png - Settings Appearance Theme system/sun/moon Chat font Anthropic Serif Transcript size Small/Medium/Large Width Narrow/Medium/Wide Motion System/Reduced Voice Language English Style Buttery Speed Normal left nav General Account Privacy Billing Capabilities Memory Reflect Time and focus Claude Code System Extensions Developer Skills Connectors"
     ],
-    "exact_clone_target": "apps/01_claude-exact-pixel-clone"
-  }
+    "exact_clone_target": "apps/01_claude-exact-pixel-clone",
+    "native_dimensions": {
+      "width": 1920,
+      "height": 1020
+    },
+    "comparison_assumption": {
+      "css_width": 1280,
+      "css_height": 680,
+      "dpr": 1.5,
+      "user_laptop_dpi_confirmed": false,
+      "fonts": "system/Georgia fallback; no licensed Anthropic typeface bundled"
+    },
+    "fresh_width_default": "Narrow588px (actual reference selection); Medium768/Wide960"
+  },
+  "updated_at": "2026-10-10T22:22:40+06:00"
 }

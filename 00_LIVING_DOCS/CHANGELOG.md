@@ -1,3 +1,39 @@
+# CHANGELOG — dated implementation and verification
+
+## 2026-10-10 continuation — active app0.2.0 / repo1.1.0-master
+
+### Added/repaired
+- Replaced target chat foundation with per-conversation messages/history/model labels/status, stop/timeout/error/partials and reload; schema/corrupt-state recovery preserves originals and legacy IDs/titles. Screenshot history remains empty UI placeholders, not imported evidence.
+- Restored screenshot account menu, Settings/Appearance and Apps/Extensions dialogs, keyboard/focus handling, local appearance/transcript/motion/projects/chat context actions; official services/voice unavailable honestly. Supported Lucide exports and Pin accessible name fixed.
+- Installed model selector via real Ollama tags/show, verified capabilities, abort-safe metadata, loopback-only proxy targets and cloud-entry refusal. No model downloads/reinstall/auto-switch/name guesses/wildcard origins/fake thinking.
+- Byte-safe NDJSON (split UTF8/JSON/CRLF, errors/done/oversized records); no game example prompt, conservative12k-character refusal/4096context rather than silently pruning client history.
+- Explicit-current-request/mode HTML/SVG artifact runner, Preview/Code/local versions/edits/download/import/library. Opaque sandbox + child CSP, validated errors, no CDN/shell/raw same-origin runner. Parent HTML/header CSP `frame-src 'none'` tested to keep inline srcdoc interactive while denying external and same-origin API navigation. Downloads are original, unsandboxed outside app.
+- Real text/code and verified PNG/JPEG/WebP uploads,4max/64KB+12ktext/2MBimages; IndexedDB/base64 and canonical original attachments; no PDF/Word parsing or bigger-model performance claim.
+- Immediate submitted-source and final/partial immutable vault captures, latest-status token prevents out-of-order old save overwrites; originals persist on local chat delete.
+- Canonical API8765 repaired to use repository vault or explicit existing root, no missing-root creation; schema/path/realpath/source/title/URL/origin validation, immutable digest IDs/dedup/revisions/Dhaka dates, visit-only distinction, two-location inaccessible logs, local keyword capsules/entities. Latest archived capsule no longer resurrects old active version.
+- Initial capsule library/typed drop/exact preview/local Cook and revocable vault deny editor; synchronized YAML/frontmatter/all blocks and revision archives, best-effort rollback. Not full Capsule Hub or browser pre-check enforcement.
+- Prevent automatic model-authored Markdown image fetches; explicit exact HTTP(S) destination/path/query preview and navigation approval.
+- Whitelisted local frontend APIs; foreign-origin/non-JSON writes rejected; browser cookies/authorization stripped, only local Ollama Origin removed. No download/delete/command/cloud endpoints exposed.
+- Windows launch/build replaced with existing-service/readiness/dependency/lock probes, optional prebuilt Rollup repair, no native tool/model/kill/wildcard commands. Quoted Node version comparison corrected; real Windows run pending.
+- Source-safe ZIP exporter/wrappers replace hardcoded-folder/blind-data-copy/destructive-temp/false-success archive scripts; reviewed local HEAD only, unchanged starter vault required, no overwrites/uploads.
+
+### Visual corrections
+- All six references verified native1920×1020; viewer1568×833 was a resize, not native dimensions. Comparable captures1280×680CSS/DPR1.5, not laptop-confirmed DPI.
+- Sidebar260CSSpx and mandated palette retained. Retuned sidebar density, greeting30/mark28/composer spacing, modal insets/nav/control spacing, Apps card/terminal/chip typography and local inline brand illustrations.
+- Fresh width **Narrow588** (actual selected reference), Medium768/Wide960. Older approximate Medium assumption corrected. Georgia/system font fallback and native title/menu/user exact pixels remain unconfirmed.
+
+### Verification
+- **41/41 Node/API tests and21/21 Playwright tests pass**, Vite production build1752modules (JS397.87kB/gzip122.80; CSS34.20kB/gzip7.73).
+- Final four screenshot captures reviewed, zero page errors. Chromium153 ran with web security/site isolation intact; mocked Ollama + disposable API18765/Vite5174/temporary vaults.
+- Clean source ZIP/extraction results recorded in BRANCH_TESTING when completed; not an installer/real-model/Windows claim.
+
+### Continuity and unfinished work
+- Added missing NEW_SESSION_HANDOVER and target README; corrected living requirement checkbox overclaims/status/architecture/testing/todo/agent/state/index/context and visible ai mirror. Session history retained.
+- Local canonical blacklist/activity/revision edits found during preview, initiating action unconfirmed; retained outside source staging/export. New runtime vault data ignored; tracked template edits still need selective staging. No remote push/merge.
+- Extension Chrome E2E/deny-before-observation/non-2xx queue, full Capsule branches/rollback/attachments/working memory, Today/journals/follow-ups/monthly audit and native Windows menus/title/installer remain open. Electron reference/extension code not changed.
+
+## Earlier timeline (preserved historical snapshot, superseded status)
+
 # CHANGELOG.md — What Changed Each Session (Living)
 
 **Last Updated:** 2026-10-10 19:20 Asia/Dhaka
@@ -73,3 +109,5 @@
 - **Verified:** unzip -l shows .ai/ 5 files, ai/ 6 files, .gitignore, gitignore.txt, GITIGNORE.txt all in zip. git status shows .ai/ and .gitignore untracked and not ignored.
 - **New Zips:** Rebuilt AI-ASSistant-Github-Complete-Testable.zip 2.8M and AI-ASSistant-Github-EVERYTHING.zip 3.8M with both dot and visible copies
 - **Recommendation:** Use git push via command line (git add . includes dotfiles) not web UI upload, or upload both dot and visible versions via web UI
+
+- Preview API restarted on current hardened source; read-only localhost and HTTPS e2b-shaped Host/Origin health/proxy probes verified. Correct sandbox-only flag is `ALLOW_PREVIEW_ORIGINS=1`; Windows defaults remain loopback with no preview-origin opt-in. Foreign writes/model pull denied403; absent sandbox Ollama returns503.

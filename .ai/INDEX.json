@@ -1,6 +1,6 @@
 {
-  "repo": "AI-ASSistant-Github-Repo",
-  "generated": "2026-10-10T13:23:00+06:00",
+  "repo": "NishadIslamUtso/AI-ASSistant",
+  "generated": "2026-10-10T22:22:40+06:00",
   "file_index": [
     {
       "path": ".ai/AGENT_INSTRUCTIONS.md",
@@ -145,6 +145,61 @@
       "path": "memory/sessions/",
       "purpose": "Session logs for handover, chronological",
       "type": "memory-session"
+    },
+    {
+      "path": "NEW_SESSION_HANDOVER.md",
+      "purpose": "Current canonical continuation entry point and data/branch boundaries",
+      "type": "handover"
+    },
+    {
+      "path": "apps/01_claude-exact-pixel-clone/README.md",
+      "purpose": "Active0.2.0 runtime, source limits, model/file/artifact/privacy behavior and commands",
+      "type": "app-guide"
+    },
+    {
+      "path": "apps/01_claude-exact-pixel-clone/src/hooks/",
+      "purpose": "Per-chat persistent/generation/local-model/dismissal state",
+      "type": "source"
+    },
+    {
+      "path": "apps/01_claude-exact-pixel-clone/src/lib/",
+      "purpose": "Safe Ollama streams, uploads, storage, gated artifacts and vault helpers",
+      "type": "source"
+    },
+    {
+      "path": "apps/01_claude-exact-pixel-clone/src/components/",
+      "purpose": "Screenshot dialogs, composer/transcript, models, artifacts, capsule/vault/privacy UI",
+      "type": "source"
+    },
+    {
+      "path": "apps/01_claude-exact-pixel-clone/server/proxy-policy.cjs",
+      "purpose": "Loopback-only targets and browser API origin/JSON/operation boundary",
+      "type": "source"
+    },
+    {
+      "path": "apps/01_claude-exact-pixel-clone/server/check-deps.cjs",
+      "purpose": "Launcher dependency/lock/Windows prebuilt Rollup checks",
+      "type": "source"
+    },
+    {
+      "path": "apps/01_claude-exact-pixel-clone/server/check-service.cjs",
+      "purpose": "Existing Ollama/model/vault readiness without downloads or destructive actions",
+      "type": "source"
+    },
+    {
+      "path": "apps/01_claude-exact-pixel-clone/tests/",
+      "purpose": "41 Node/API and21 Playwright cases with temporary vaults/mocked models",
+      "type": "tests"
+    },
+    {
+      "path": "apps/01_claude-exact-pixel-clone/playwright.config.js",
+      "purpose": "Disposable test services and browser/security options",
+      "type": "tests"
+    },
+    {
+      "path": "scripts/package-source.cjs",
+      "purpose": "Local committed runnable-source ZIP, refuses private committed vault changes/overwrites; no sends",
+      "type": "build-script"
     }
   ],
   "search_hints_for_ai": {
@@ -155,5 +210,14 @@
     "where_is_vault_structure": "vault/AI-Brain/00 System/",
     "where_is_extension_spec": "extension/README.md + extension/EXTENSION_SPEC.md",
     "where_to_log_changes": "00_LIVING_DOCS/CHANGELOG.md + memory/sessions/"
+  },
+  "inventory_notes": {
+    "screenshots_total": 22,
+    "active_references": 6,
+    "reference_native_dimensions": "1920x1020",
+    "vault_committed_starter_files": 61,
+    "historical_zips": "optional ignored/local archives, not required or present by default in source ZIP",
+    "active_target": "apps/01_claude-exact-pixel-clone",
+    "visible_mirror": "ai/"
   }
 }

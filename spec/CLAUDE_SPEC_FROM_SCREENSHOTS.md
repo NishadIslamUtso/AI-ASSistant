@@ -1,5 +1,14 @@
 # CLAUDE SPEC FROM SCREENSHOTS — Extracted Pixel Spec
 
+## 2026-10-10 measured-dimension correction / active implementation evidence
+
+All six191547–191707 PNGs are **1920×1020 native**. The tool viewer resizes them; older1568×833 measurements are display previews, not source files. Current comparable captures1280×680CSS/DPR1.5 output1920×1020. This is a comparison assumption, not the user's confirmed laptop DPI.
+
+Keep user-mandated main#1a1a1a/sidebar260CSSpx#202020/composer#242424. Fresh selected width in191707 is **Narrow**, implemented588CSSpx (Medium768/Wide960), overriding earlier approximate Medium descriptions. Greeting30/mark28 and modal/sidebar/card geometry tuned using matched captures. Georgia/system fallback typography and mandated palette are not a claim of native Windows pixel/brand-font parity. Actual model names/capabilities replace fake Sonnet and artifact counts reflect actual artifacts. Native title/menu stays P9; screenshot UI source/build/mocked-browser evidence is in target README/testing docs.
+
+The original extraction below is preserved as historical approximate geometry. Where it conflicts with the actual screenshots/current units, screenshots + the corrections above are authoritative.
+
+
 **Source:** 6 screenshots 191547.png to 191707.png in spec/screenshots/
 **Date:** 2026-10-10
 **Purpose:** Exact pixel measurements, colors, layout for apps/01_claude-exact-pixel-clone

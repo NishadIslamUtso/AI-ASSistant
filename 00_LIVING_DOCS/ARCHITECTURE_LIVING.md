@@ -1,221 +1,83 @@
-# ARCHITECTURE_LIVING.md — Driver / Vault / Extension
+# ARCHITECTURE_LIVING — driver / vault / extension
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Updated:** 2026-10-10 · **Active target:** `apps/01_claude-exact-pixel-clone/` v0.2.0.
 
-## 1. One-Line Architecture
+## Current implemented path
 
-**App is driver, Vault is organizer, Extension is collector+suggester, all local by default.**
-
-## 2. Component Diagram
-
-```
-[User] 
-  |
-  |-- browses any site + chats any AI (ChatGPT, Claude, Gemini, DeepSeek, Grok, Perplexity, Copilot, Other)
-  |
-[Browser Extension] MV3 — sensor + context suggester
-  - background.js: history API listener URL/title/time, blacklist check, failure logging, context menu
-  - content-scripts/ai-capture.js: site adapters for AI chats, captures submitted messages only, not unsent drafts
-  - content-scripts/generic-capture.js: readable text extraction for any allowed site (default all minus blacklist)
-  - content-scripts/capsule-inject.js: inject Capsule button, drag-drop handler, prompt enhancer "Cook This Prompt"
-  - content-scripts/quillbot-suggestions.js: toolbar in text fields, highlight handler, inline suggestions
-  - popup/: Capsule library, search, blacklist manager, activity log
-  - lib/: capsule.js (data model), blacklist.js (pattern matching), vault-writer.js (POST to local API)
-  |
-  | local loopback HTTP, not internet
-  v
-[AI ASSistant Windows App] — THE DRIVER
-  - UI: Claude exact from screenshots 191547-191707, Sidebar 260px #202020, Center #1a1a1a Evening Utso, Composer #242424
-  - LLM: Ollama qwen2.5:3b direct via http://127.0.0.1:11434/api/chat streaming, no download
-  - Vault API: Express server at http://127.0.0.1:8765
-    - GET /context?q=... -> returns {capsules, entities, claims} ranked by relevance/importance/recency
-    - POST /capture {type, provider, url, title, content, completeness, reason}
-    - POST /capsule {id, title, goals, constraints, background, decisions, sources, version, attachments}
-    - POST /blacklist {excluded_patterns}
-  - Context builder: searches exact terms + semantic in local index (.brain/), follows small number of relevant links, ranks, includes source links + evidence labels, omits unrelated/expired
-  - Model Registry: tracks per-model capabilities, updates UI when model changes
-  - Privacy gate: shows exact context + destination before remote send, sensitive requires one-send approval, no blanket approval
-  - Activity log: 09 Activity & Undo + 01 Inbox/Processing Errors
-  |
-  | file writes to vault folder
-  v
-[Obsidian Vault AI-Brain/] — CANONICAL MEMORY, Markdown, readable, portable
-  - 00 System/: START HERE, Blueprint, Memory Schema, Privacy & Access (blacklist), Source Capture Map, Model Registry, Claude Feature Audit, Templates, Connectors
-  - 01 Inbox/: New Imports, Processing Errors (wasn't accessible logs)
-  - 02 Sources/: Conversations/<provider>/<year>/<id>.md, Browser Activity/<year>/<month>.jsonl, Web Pages, Laptop Files, Imports, Attachments — ORIGINALS, never silently rewrite
-  - 03 Memory/: Entities/<id>.md, Events/<date>-<id>.md, Connections/ — derived, source-linked
-  - 04 Working Memory/: Current Snapshot.md (short-lived NOW), Open Loops.md, Active/<entity-id>.md
-  - 05 Knowledge/: reusable synthesis linked to evidence
-  - 06 Review/: Questions, Conflicts, Keep-or-Forget, Cleanup, Monthly Audits
-  - 07 Sharing Receipts/: exact one-send approvals kept local
-  - 08 Journal/<year>/<date>.md: Asia/Dhaka, event time vs capture time
-  - 09 Activity & Undo/<year>/<month>.md: what captured/created/failed/sent
-  - 90 Archive/: inactive derived notes, not source deletion
-  - .brain/: rebuildable index.sqlite + cache, NOT source of truth
-  |
-  | when user asks question in App OR on claude.ai/chatgpt.com via extension
-  v
-[Context Injection]
-  Vault finds relevant memories -> shows exact bundle preview -> injects into that AI's finite context
-  AI sees only bundle, not whole vault. Full vault stays local. Doesn't make context window infinite — vault huge, but each AI receives selected bundle.
+```text
+Browser / future native renderer
+  React: sidebar + screenshot dialogs + composer + per-chat transcript
+  useModels → installed /tags and selected /show; local verification, no cloud
+  useChat → NDJSON /chat; history, Stop, bounded context, original/final capture
+  localStorage → rebuildable UI cache (chats, settings, grouping, artifacts)
+  IndexedDB → local image originals pending/submitted
+    |
+    | relative same-origin /api/ollama and /api/vault
+    v
+Vite driver proxy (5173)
+  loopback-only targets, endpoint allowlist, JSON + same-origin writes
+  strips cookies/authorization; removes Origin only for local Ollama calls
+    |                             |
+    v                             v
+Existing Ollama11434         canonical vault API8765 (Express)
+  existing qwen2.5:3b          default root: repository vault/AI-Brain
+  capabilities verified       explicit AI_BRAIN_VAULT → existing root only
+  no downloads/auto-switch    realpath containment, no arbitrary read/shell/delete
+    |                             |
+    | streamed response           | immutable originals + revision/activity records
+    v                             v
+Chat/HTML-SVG artifact        Obsidian Markdown/source attachments (canonical)
+  opaque allow-scripts frame  02 Sources, 03 Memory capsules/entities, 09 Activity
+  restrictive child CSP       Dhaka dates, source IDs/digests, retry dedup
+  parent frame-src 'none'      visit metadata ≠ reading/agreement
+  no network/parent/API       inaccessible → Activity + Processing Errors
 ```
 
-## 3. Data Flows
+A hosted preview runs on the sandbox, not the user's laptop. The API defaults to loopback on Windows; `0.0.0.0`/preview origins are sandbox-only opt-in.
 
-### 3.1 Capture Flow (Extension -> App -> Vault)
+## Active source map
 
-1. User visits any site -> background.js checks blacklist lib/blacklist.js, if excluded -> skip, log "skipped - blacklist"
-2. Else -> generic-capture.js extracts readable text if allowed, ai-capture.js captures if AI chat + submitted
-3. On success -> POST to local app http://127.0.0.1:8765/capture -> app writes to vault per Source Capture Map:
-   - Browser Activity: 02 Sources/Browser Activity/<year>/<month>.jsonl one JSON per line
-   - Conversations: 02 Sources/Conversations/<provider>/<year>/<source-id>.md using Templates/Conversation Source.md
-   - Web Pages: 02 Sources/Web Pages/<year>/<source-id>.md
-4. On failure -> POST type: wasnt_accessible with reason -> app logs to 09 Activity & Undo/<year>/<month>.md + 01 Inbox/Processing Errors/ as "wasn't accessible - [reason: permission blocked / layout changed / private window / paywall]" with URL/title/time, no popup
-5. Extension if app offline -> queues in chrome.storage.local.queue, flushes every 30s when app online. No external upload.
+- `src/App.jsx`: orchestration, persisted appearance/model/projects, views, dialogs, approved context, external-link preview.
+- `src/hooks/useModels.js`: abort-safe tags/show refresh, installed-local verification, capability controls.
+- `src/hooks/useChat.js`: per-chat generation, immutable submitted-source capture, partial/final capture, latest-status tokens; one concurrent generation.
+- `src/hooks/usePersistentState.js` / `src/lib/storage.js`: schema normalization, legacy title-only migration, corrupt-state recovery without clearing originals.
+- `src/lib/ollama.js`: byte-safe NDJSON, selected-model request, capability/remote metadata, simple no-game prompt, actual thinking separation.
+- `src/lib/artifacts.js`: explicit-current-request gate, HTML/SVG extraction and isolated preview document.
+- `src/lib/attachments.js`: size/type validation, original text, vision gate, IndexedDB/base64; PDF/Word unsupported.
+- `src/components`: screenshot menus/dialogs, model selector/composer/transcript, isolated artifact workbench/library, capsule/vault and blacklist panels.
+- `server/vault-api.cjs`: canonical reader/writer, validation/containment, immutable IDs, latest-version index, patterns/revisions/logging.
+- `server/proxy-policy.cjs`: loopback destination validation and frontend API boundary. Browser model-pull/delete/shell routes are not exposed.
+- `server/check-{deps,service}.cjs` and BAT launch/build: existing-service/readiness/dependency probes, web build only.
 
-### 3.2 Retrieval Flow (Vault -> App -> AI)
+## Actual vault API
 
-1. User asks question in AI ASSistant app OR types in any AI site via extension
-2. App/extension queries GET /context?q=current text (last 100 chars or current field)
-3. Context builder:
-   - Search exact terms + semantic meaning in local rebuildable index (.brain/index.sqlite)
-   - Follow only small number of relevant links (person/project/event/routine/topic)
-   - Rank by relevance, current validity, importance, recency
-   - Include source links + label user-stated / observed / hypothesis
-   - Omit unrelated, expired, unavailable
-   - Keep current-chat context separate from long-term vault memory
-4. Show exact context + destination before remote send; sensitive excerpts require one-send approval
-5. If approved, inject as Capsule or prompt enhancement:
-   - Capsule Hub style: drag-drop Capsule from library into chat box, versioned
-   - Quillbot style: inline dropdown "Use capsule: Website project - blue-white design" or "Add memory: You prefer step-by-step" in any text field
-6. Save sharing receipt in 07 Sharing Receipts/ — what was approved and sent, to which provider, when
+| Method/path | Implemented responsibility |
+|---|---|
+| GET `/`, `/health` | Health and actual root |
+| GET `/context?q=…` | Local keyword-ranked current capsules/entities, source paths; not vector/general-graph search |
+| GET `/capsules` | Latest active versions; archived/expired/superseded latest versions excluded without resurrecting old versions |
+| GET `/blacklist` | Union of Privacy & Access / Source Scope excluded patterns |
+| POST `/blacklist` | Set/add/remove, synchronized YAML/frontmatter, immutable old-document revisions; best-effort rollback on write failure |
+| POST `/capture` | Validated conversation/page/visit/error/capsule sources, original attachments; denied URL skips capture |
 
-### 3.3 Capsule Flow
+There is no implemented `/today`, `/command`, `/capsule` mutation route, arbitrary-path reader, source deletion, model install, shell execution, cloud publish, semantic graph promoter or SQLite service. Do not use older architecture proposals as evidence of implemented endpoints.
 
-- Capture: in any AI chat, button "Capture as Capsule" saves goals, constraints, decisions, background, attachments as Capsule
-- Organise: Capsules filed by project in popup library + 03 Memory/Entities/capsule-*.md + 00 System/Templates/Capsule.md
-- Inject: drag Capsule from popup library into any AI chat box — capsule-inject.js injects content as if typed, shows preview before send
-- Update: add new version to existing Capsule, rollback/branch from any version
-- Transfer attachments: carry files you uploaded/generated across tools, not just text
-- Prompt enhancer: "Cook This Prompt" — enhance current prompt with relevant vault context
+## Source versus caches
 
-## 4. API Spec (Local Loopback 8765)
+Markdown and original attachment files are canonical. SQLite would be a **rebuildable index only**; none is added here. Capture keeps full original text, timestamps, actual thinking and explicitly approved context; identical retries deduplicate, revisions coexist, local chat deletion does not delete source files.
 
-### POST /capture
-```json
-{
-  "type": "conversation" | "web_page" | "browser_visit" | "wasnt_accessible",
-  "provider": "claude" | "chatgpt" | "gemini" | "deepseek" | "grok" | "perplexity" | "copilot" | "other" | "AI ASSistant",
-  "url": "https://...",
-  "title": "Page title",
-  "visited_at": "2026-10-10T12:00:00+06:00",
-  "captured_at": "2026-10-10T12:01:00+06:00",
-  "content": "readable text or conversation md",
-  "completeness": "full" | "partial" | "failed",
-  "reason": "permission blocked / layout changed / private window / paywall / blacklist"
-}
-```
-Writes to:
-- browser_visit -> 02 Sources/Browser Activity/<year>/<month>.jsonl
-- conversation -> 02 Sources/Conversations/<provider>/<year>/<source-id>.md
-- web_page -> 02 Sources/Web Pages/<year>/<source-id>.md
-- wasnt_accessible -> 09 Activity & Undo/<year>/<month>.md + 01 Inbox/Processing Errors/
+Browser draft state is local UI cache, not vaulted before submission. Artifact imports/source-edit versions and project grouping are currently browser-local; complete canonical artifact/project indexing remains future work. A finite-context bundle is not the full vault or unlimited model cognition. The 12k-character guard is conservative, not an exact tokenizer.
 
-### POST /capsule
-```json
-{
-  "id": "capsule-website-blue-white-001",
-  "title": "Website project - blue-white design",
-  "goals": ["simple step-by-step", "blue-white"],
-  "constraints": ["8GB RAM"],
-  "background": "We previously chose blue-white design",
-  "decisions": ["Use Tailwind"],
-  "sources": ["[[chatgpt-2026-10-10-001]]"],
-  "version": 2,
-  "attachments": ["path/to/file"]
-}
-```
-Writes to 03 Memory/Entities/capsule-*.md
+## Privacy/action boundaries
 
-### GET /context?q=...
-Query: current text, last 100 chars, or selected capsule search
-Returns:
-```json
-{
-  "capsules": [{"id", "title", "relevance": 0.9, "content"}],
-  "entities": [{"id", "type", "relevance"}],
-  "claims": [{"id", "text", "evidence", "source", "importance"}]
-}
-```
-Ranked by relevance, current validity, importance, recency. Filters generic test titles. Returns top 5.
+- All AI execution is local; cloud Ollama entries are disabled and remote proxy targets refused.
+- Model-authored Markdown images are blocked, raw chat HTML is not executed, links require exact destination/path/query approval.
+- Artifact srcdoc can run JS/CSS only inside its opaque sandbox. Child CSP denies network/forms/nested frames; parent CSP denies **all frame navigations**, including same-origin API endpoints. Saved original downloads are not sandboxed outside this app.
+- Capsule/drop/Cook shows exact content/source paths before insertion, and insertion does not send. External extension injections still need per-destination/send approval in the future full flow.
+- API deny does not prove extension **never checked** a source. Browser history/DOM checks must enforce canonical deny before observation, with synchronization and offline/error handling still pending.
+- Never collect passwords/cookies/tokens/payment fields, unsent third-party drafts, keystrokes/continuous screenshots; incognito off unless separately authorized. Journals may not invent events or feelings.
+- Remote Git push is external send. Source packaging exports reviewed local committed code plus unchanged committed starter templates; live/runtime vault changes are excluded/refused, not auto-uploaded.
 
-### POST /blacklist
-```json
-{
-  "excluded_patterns": ["bank.com/*", "https://private.example.com/page"],
-  "action": "add" | "remove" | "set"
-}
-```
-Updates 00 System/Privacy & Access.md + 00 System/Connectors/Source Scope.md + chrome.storage.sync
+## Planned architecture (not shipped)
 
-## 5. Tech Stack
-
-### apps/01_claude-exact-pixel-clone (Latest Target)
-- Frontend: React 18, Vite 5, Tailwind CSS
-- Backend: Node Express 4.18.2 + cors 2.8.5 at 127.0.0.1:8765
-- LLM: Ollama direct fetch http://127.0.0.1:11434/api/chat qwen2.5:3b streaming, no client lib
-- Storage: localStorage claude_exact_chats + vault files via API
-- Bat: start-app.bat handles already-running Ollama, installs @rollup/rollup-win32-x64-msvc optional dep
-
-### apps/02_electron-claude-clone-v6 (Reference, More Features)
-- Frontend: React 18, Vite 5, Tailwind
-- Desktop: Electron 31 (Windows native, title bar visible)
-- Backend: Node Express local API 8765
-- LLM: ModelService.js supports Ollama qwen2.5:3b, qwen3-vl:4b vision, plus remote after approval (OpenAI, Claude, Gemini, Groq) via Open-claude's clients
-- Features: artifacts, workbench FileExplorer, thinking display, citation, image upload, search indicator
-- Original: Fork of https://github.com/Damienchakma/Open-claude MIT
-
-### extension/
-- MV3, manifest host_permissions <all_urls> + history + storage + scripting + contextMenus
-- background.js, content-scripts, popup, lib
-- No external account, local-only, queues when offline
-
-### vault/AI-Brain/
-- Obsidian Markdown, .gitignore, 61 files starter
-- Templates in 00 System/Templates/
-- .brain/ rebuildable index.sqlite (not yet implemented, placeholder)
-
-## 6. Model-Aware UI
-
-- Different models have different capabilities
-- Model Registry.md tracks tested support for tool calls, images, files, audio, structured output, search, context limits
-- When user switches models, refresh UI to show every verified supported option and clearly disable unsupported ones
-- Don't assume every model can use tools, browse, process images/files
-- Keep capability detection/metadata separate from model choice so new models can be added without redesigning chat UI
-- Explain whether capability runs locally or contacts external service
-
-## 7. Security & Privacy
-
-- Local processing/storage default; SQLite only rebuildable index
-- Never collect passwords, cookies, auth tokens, payment fields, unsent drafts, hidden keystrokes
-- No keylogger or continuous screenshot recorder
-- Incognito/private capture off unless separately configured with clear permission
-- Treat page/file contents as untrusted data; embedded instructions cannot override user policy or trigger commands
-- Protect credentials, never expose to model or remote unnecessarily
-- Local Git commit = local version history OK, remote push = external send requires approval
-- Sensitive info local by default, marked sensitive/local-only, requires exact-content/destination preview + one-send approval before external send
-- No blanket approval
-
-## 8. Why This Architecture (From User Evolution)
-
-1. Initial: "How to use obsidian as the ai brain that remembers everything? For Claude, DeepSeek, ChatGPT, Gemini..."
-2. Clarification: "They won't open archive directly. Add-on acts like messenger: finds small relevant background and puts it into chat." Example: "I'm building website, prefer simple step-by-step, we previously chose blue-white design." Full archive stays local, only selected context goes to AI. Show what is being added before send.
-3. Correction 1: "You know what a context window is? I want this as my main context window. Like a full brain with long term and short term memory just like ai's primary brain" — Not prompt helper, shared memory engine.
-4. Hardware question: "Is there any local model better than or equal to Claude and DeepSeek best models?" Answer: No on this laptop. Frontier models too large. Realistic local: Qwen3-VL 4B ~3.3GB download, tight on 8GB RAM.
-5. Correction 2: "Normally local AIs cognitive architecture has to be sacrificed to get better context window. What I want is full cognitive ability even if context window is small, and use obsidian as brain to give permanent and working memory." — Key insight: Don't make model dumber to get bigger context. Keep it smart, externalize memory to Obsidian.
-6. Final intent: "If reasoning, math, accuracy and complexity handling is good enough i can just use it as my primary ai. No need for it to do librarians job for other ai's" — Two modes: Mode A Librarian (Obsidian brain supplies context to cloud frontier AIs via bridge), Mode B Primary (Local model itself is thinker, using Obsidian as its memory).
-7. Naming & integration: "Let's name app AI ASSistant, it will be exactly like claude, some models can do things other models can't, app should have all options so if i change model it should be able to do it. This app will be the one connected to obsidian."
-8. Latest clarification: "Meh, it can all the access. It is a local ai after all. It is no problem. The app will be the driver of vault, and the browser extension, vault will organize and keep the memory, extension will take data and suggest contexts/prompts/files to give to the new ai session. The app will be like claude, where i can chat, command, and do everything claude app can do, it will use vault as its memory and organize memory in the way we decided. It will ask me things too."
-9. Latest capture policy: "by default check everything, if unaccessible, just say wasn't accessible, no need to ask unless i give instructions to collect something (like a option where i put in a url and it won't check any data from that url ever again)." + "Extension should provide contexts like Capsule Hub by Tilantra or Quillbot test suggestions"
-
-This architecture satisfies all evolution steps.
+Extension→canonical-scope synchronization and verified capture queue; full project Capsule Hub/editor/branches/rollback/files; evidence-aware temporal graph/review; Current Snapshot/Open Loops; Today/Dhaka journal/follow-ups; user-started monthly audit dry-run; native wrapper/preload/menu/title bar/installer. Refer to living requirements for accepted behavior, not claims that these are done.

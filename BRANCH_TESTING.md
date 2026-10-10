@@ -1,78 +1,38 @@
-# Branch Testing Guide — How to Test Before Merging
+# BRANCH_TESTING — source ZIP before merge
 
-This repo is designed so any branch is fully testable.
+**Branch:** `arena/01199af1-ai-assistant` · **Date:** 2026-10-10 · **No push/merge performed.**
 
-## What This Repo Contains (Everything)
+## Included runnable source
 
-- `apps/01_claude-exact-pixel-clone/` — Latest exact pixel-perfect Claude clone from 6 screenshots, Vite+React+Tailwind, direct Ollama qwen2.5:3b, vault driver 8765, start-app.bat
-- `apps/02_electron-claude-clone-v6/` — Previous Electron clone with more features (artifacts, workbench, thinking, vision), reference
-- `extension/` — MV3 extension, default check everything, Capsule Hub + Quillbot UX, blacklist, failure logging
-- `vault/AI-Brain/` — Obsidian vault canonical memory 61 files starter
-- `spec/screenshots/` — 6 Claude desktop screenshots that ARE spec + CLAUDE_SPEC_FROM_SCREENSHOTS.md
-- `00_LIVING_DOCS/` — Living requirements, handover, architecture, decisions, changelog, todo (UPDATED EVERY CHANGE)
-- `.ai/` — Machine-readable context for any AI agent (CONTEXT.json, STATE.json, INDEX.json, AGENT_INSTRUCTIONS.md)
-- `docs/originals/` — Original requirement files historical
-- `archive_zips/` — Previous zips for reference (optional, excluded from GitHub push by .gitignore but included in FULL zip)
-- `scripts/` — build-master-zip.sh/.bat
-- `memory/sessions/` — Session logs
+The source ZIP contains the full committed repository, not only a changed-file patch: active `apps/01_claude-exact-pixel-clone` (including new components/helpers/tests/package lock/API/BAT files), Electron reference, `extension`, **committed starter** `vault/AI-Brain`, all screenshot/spec files, living/testing/requirements docs, `.ai` + visible `ai`, original requirement history, scripts and session memory.
 
-## How to Test From a Branch (Your Workflow)
+It excludes `.git`/credentials, node_modules, build outputs, caches, test reports/traces, nested historical ZIPs and **uncommitted runtime/private vault data**. This is **source**, not a Windows installer or private-data backup. Preserve your existing vault; extract into a new folder.
 
-1. Create branch on GitHub:
-   ```
-   git checkout -b feature/settings-modal
-   # make changes
-   git add .
-   git commit -m "feat: add Settings modal from 191707.png"
-   git push -u origin feature/settings-modal
-   ```
+## Safe developer source export
 
-2. On GitHub, go to your repo -> Branch dropdown -> select `feature/settings-modal` -> Code -> Download ZIP
+Local commits are allowed. Review and stage code/docs selectively; never `git add .` when vault data has changed. In this Arena session do all work on the fixed branch above; do not create/switch/push another branch.
 
-3. Extract ZIP on your TUF A15 Windows machine
+```sh
+node scripts/package-source.cjs
+# optional new output path; existing output is never overwritten:
+node scripts/package-source.cjs --output deliverables/another-source.zip
+```
 
-4. Test exact clone:
-   ```
-   cd apps\01_claude-exact-pixel-clone
-   .\start-app.bat
-   ```
-   - Handles already-running Ollama
-   - Installs @rollup/rollup-win32-x64-msvc
-   - Starts vault API 8765 + Vite 5173
-   - Open http://127.0.0.1:5173
-   - If Tic Tac Toe loop, clear localStorage: F12 console -> localStorage.clear() -> refresh
+`build-master-zip.sh/.bat` delegate to this exporter. Unlike the old scripts, they do not assume a renamed master directory, blindly copy private runtime data, delete temp directories or mask archive failures. Packaging requires a Git checkout, Node and a reviewed local HEAD. A downloaded app ZIP does **not** require Git to launch.
 
-5. Test Electron clone:
-   ```
-   cd apps\02_electron-claude-clone-v6
-   npm install
-   npm run dev:server
-   npm run dev
-   ```
+The exporter refuses uncommitted source, excludes uncommitted runtime files through Git-tree export, and refuses HEAD vault changes relative to the approved61-file starting templates. This prevents a later local private-memory commit being silently included in a shareable source ZIP. It does not upload anything.
 
-6. Test extension:
-   - Chrome -> chrome://extensions -> Load unpacked -> select `extension/` folder
-   - Ensure vault API running at 8765
-   - Visit any site, check `vault/AI-Brain/02 Sources/Browser Activity/`
+## Current evidence
 
-7. If works, merge:
-   ```
-   git checkout main
-   git merge feature/settings-modal
-   git push
-   ```
+- [x] Active production build passes.
+- [x] **41 Node/API tests + 21 mocked-browser tests pass.** Browser isolation tests run with web security intact.
+- [x] Home/menu/settings/apps visually reviewed at native1920×1020 via1280×680CSS/DPR1.5, zero page errors. Actual Windows font/DPI and exact-pixel approval remain unverified.
+- [ ] Source ZIP integrity/file completeness and clean-extraction `npm ci`/build/tests — verification result appended below when complete.
+- [ ] Real Windows BAT/existing Ollama/real replies/capability/Obsidian/extension E2E/user screenshot confirmation.
+- [ ] Thin native wrapper/title bar/menu/installer.
 
-## Why This Works
+## Remote boundary
 
-- No node_modules in repo (installed via npm install on test machine)
-- No dist/build in repo (built via npm run build)
-- Bat files handle Windows TUF A15 8GB RAM 4GB VRAM, existing Ollama, no native build tools
-- All source included, not just md files
-- Living docs updated every change so next AI knows state
+A GitHub push is external send. Preview the **exact reviewed source diff and destination branch**, get approval, and only then push `origin arena/01199af1-ai-assistant`. Never push private vault data automatically. No PR merge until the branch ZIP contains all runnable source and laptop checks are honestly recorded. Do not confuse a passing Linux/mock test with native Windows or real model confirmation.
 
-## What .gitignore Excludes
-
-- node_modules/, dist/, build/, .git/, logs, .cache, etc. (heavy, rebuildable)
-- archive_zips/ (nested zips, optional history) — excluded from GitHub push but included in FULL zip for local backup
-
-If you WANT archive_zips on GitHub too, remove `archive_zips/` line from .gitignore
+For the Windows beginner, the **next single action** is extracting the supplied ZIP into a new folder. Wait for the result before giving the launcher step. Do not ask to pull/reinstall Ollama/qwen2.5:3b.

@@ -1,57 +1,100 @@
 {
   "date": "2026-10-10",
   "timezone": "Asia/Dhaka",
-  "repo_version": "1.0.0-master",
+  "repo_version": "1.1.0-master",
   "apps": {
     "01_claude-exact-pixel-clone": {
       "path": "apps/01_claude-exact-pixel-clone",
-      "status": "built-not-tested-on-windows",
-      "tech": "Vite 5 + React 18 + Tailwind + Express vault API",
-      "features_implemented": [
-        "Sidebar 260px #202020 Search +New Projects Artifacts Customize Oct8 Older groups",
-        "Search filter, context menu Open in new window Pin Rename Add to project Move to group Delete",
-        "Center #1a1a1a Evening Utso greeting (time-based), composer #242424 rounded-xl How can I help you today?",
-        "Free plan Upgrade top, bottom NU Utso Free avatar",
-        "VaultPanel toggleable",
-        "Direct Ollama http://127.0.0.1:11434/api/chat qwen2.5:3b streaming",
-        "Vault driver http://127.0.0.1:8765/context + /capture",
-        "localStorage claude_exact_chats with defaults Refining 5-day workout cycle etc from screenshots",
-        "start-app.bat handles already-running Ollama, installs @rollup/rollup-win32-x64-msvc",
-        "build-windows.bat"
+      "version": "0.2.0",
+      "status": "in-source-built-sandbox-tested; not Windows/real-model/user-pixel-confirmed",
+      "tech": "Vite5.4 + React18 + Tailwind + ReactMarkdown/remark-gfm + Express canonical vault API",
+      "features_in_source": [
+        "Screenshot sidebar/chat actions/account/Settings/Apps views with persisted local appearance/transcript/motion/projects and accessible focus/dismissal",
+        "Per-chat messages/history/reload/Stop/partial/error recovery; legacy title IDs and malformed data preserved; original source captured immediately and final snapshots immutably",
+        "Byte-safe NDJSON, simple no-game prompt,4096context/conservative12k-character guard,5minute timeout; actual thinking separated",
+        "Installed local tags/show selector, verified capabilities/local metadata, no downloads/auto-switch/cloud aliases; relative loopback-only proxies and API boundary",
+        "Explicit HTML/SVG Preview/Code/local versions/edit/import/download/library in opaque CSP sandbox; parent denies all frame navigations including local API; no shell/CDN/React bundler",
+        "Up to4 text/code64KB+12kchar and verified PNG/JPEG/WebP2MB uploads; IndexedDB/base64 and original vault attachments; no PDF/Word parsing",
+        "Canonical vault API8765 immutable sources/dedup/Dhaka/source-scope/errors/path/realpath/origin validation, capsule/entity keyword index and latest archived version filtering",
+        "Initial capsule library/typed drop/exact preview/explicit send/local Cook; revocable vault deny editor with synchronized YAML/frontmatter/revision originals",
+        "Markdown remote images blocked; exact HTTP(S) destination/path/query preview before navigation",
+        "Windows existing-service/dependency/readiness scripts and web build; runtime unverified"
       ],
       "features_missing": [
-        "Settings modal Appearance Theme Chat font Transcript size Width Motion Voice Language Style Speed from 191707.png",
-        "File Edit View Go Help menu bar",
-        "User menu nishadislamutso@gmail.com Settings etc from 191608.png",
-        "Apps and extensions modal from 191636.png",
-        "Project dropdown Sonnet 5.5 Medium Manual functionality",
-        "Artifact runner",
-        "File upload, image upload",
-        "Thinking display",
-        "Capsule drag-drop inject",
-        "Quillbot inline suggestions (requires extension integration)"
+        "User-confirmed exact Windows pixels/fonts/DPI and real qwen2.5:3b/runtime performance",
+        "Native title bar/window controls/File Edit View Go Help/Windows installer",
+        "Chrome extension E2E with deny-before-observation synchronization, correct matching and non-2xx/malformed-response queue retention",
+        "Full Capsule project editor/branches/rollback/attachment transfer, canonical artifact/project indexes",
+        "Current Snapshot/Open Loops and evidence-aware graph/review automation",
+        "Today/source-linked Dhaka journal/follow-ups and user-triggered monthly audit implementation",
+        "Configured local voice, official Claude billing/integrations/providers, React/npm artifact bundling/shell execution (not enabled)"
       ],
-      "known_bugs": [
-        "Potential Tic Tac Toe loop if systemPrompt includes game example - FIXED by simple prompt in Center.jsx but need clear localStorage if looped",
-        "Ollama CORS if OLLAMA_ORIGINS not *",
-        "Vite rollup win32 optional dep may fail - fixed by bat installing @rollup/rollup-win32-x64-msvc"
-      ],
-      "build_cmd": "npm install && npm run dev:server & npm run dev",
-      "zip": "archive_zips/AI_ASSistant_Exact_Claude_Clone.zip 13K"
+      "verification": {
+        "build": {
+          "passed": true,
+          "modules": 1752,
+          "js_kb": 397.87,
+          "js_gzip_kb": 122.8,
+          "css_kb": 34.2,
+          "css_gzip_kb": 7.73
+        },
+        "node_tests": {
+          "passed": 41,
+          "total": 41
+        },
+        "browser_tests": {
+          "passed": 21,
+          "total": 21,
+          "ollama": "mocked",
+          "api_port": 18765,
+          "vite_port": 5174,
+          "vault": "temporary disposable fixtures",
+          "browser": "Chromium153; web security/site isolation enabled"
+        },
+        "visual": {
+          "reviewed": [
+            "home",
+            "user-menu",
+            "settings",
+            "apps"
+          ],
+          "page_errors": 0,
+          "native_png": "1920x1020",
+          "css_viewport": "1280x680",
+          "dpr": 1.5,
+          "dpi_assumed_not_user_confirmed": true
+        },
+        "windows_bat": false,
+        "real_model": false,
+        "extension_end_to_end": false,
+        "user_confirmed_pixel_parity": false
+      },
+      "visual_constants": {
+        "main": "#1a1a1a",
+        "sidebar": "#202020",
+        "composer": "#242424",
+        "sidebar_css_px": 260,
+        "greeting_css_px": 30,
+        "fresh_transcript_width": "Narrow",
+        "widths_css_px": {
+          "Narrow": 588,
+          "Medium": 768,
+          "Wide": 960
+        },
+        "fonts": "OS/Georgia fallback"
+      },
+      "known_limits": [
+        "Conservative character guard is not exact tokenization, especially Bengali",
+        "Artifact edited/imported versions and project grouping remain browser-local",
+        "API deny is not proof of browser never-check before DOM/history observation",
+        "Downloaded artifact originals are not sandboxed outside app",
+        "Hosted preview cannot reach user laptop Ollama"
+      ]
     },
     "02_electron-claude-clone-v6": {
       "path": "apps/02_electron-claude-clone-v6",
-      "status": "built-previously, more features, not exact pixel from latest screenshots",
+      "status": "reference-only; unchanged this continuation; previous feature lists are not current verification",
       "tech": "React 18 + Vite 5 + Electron 31 + Express + Tailwind, fork of Damienchakma/Open-claude MIT",
-      "features_implemented": [
-        "Claude-like layout compact history left, centered transcript, right user bubbles",
-        "Artifacts panel, Workbench FileExplorer",
-        "ModelService.js supports Ollama + OpenAI + Claude + Gemini + Groq",
-        "VaultPanel, SettingsModal, ThinkingDisplay, CitationDisplay, ImageUpload, SearchIndicator",
-        "ThemeContext dark/light",
-        "Vault API server/vault-api.js + vault-api.cjs",
-        "start-app.bat, start-app-electron.bat, build-windows.bat, check-ollama.bat"
-      ],
       "features_missing": [
         "Not exact pixel match to 191547-191707 screenshots (older Claude UI)",
         "Not connected to real Obsidian vault as canonical? Actually has vault API but SQLite still used in some paths",
@@ -61,14 +104,29 @@
         "No reply bug when ChatMode called sendMessage from useChat which doesn't exist - fixed by restoring LLMFactory streaming",
         "Tic Tac Toe loop for qwen2.5:3b due to isOpenSourceModel systemPrompt - needs override"
       ],
-      "zip": "archive_zips/AI_ASSistant_App_Claude_Clone_qwen2.5_3b_FIXED6.zip"
+      "features_in_source": [
+        "Claude-like layout compact history left, centered transcript, right user bubbles",
+        "Artifacts panel, Workbench FileExplorer",
+        "ModelService.js supports Ollama + OpenAI + Claude + Gemini + Groq",
+        "VaultPanel, SettingsModal, ThinkingDisplay, CitationDisplay, ImageUpload, SearchIndicator",
+        "ThemeContext dark/light",
+        "Vault API server/vault-api.js + vault-api.cjs",
+        "start-app.bat, start-app-electron.bat, build-windows.bat, check-ollama.bat"
+      ]
     }
   },
   "extension": {
     "path": "extension/",
-    "status": "starter-spec-implemented, not tested on Chrome",
+    "status": "starter-only; unchanged; real Chrome end-to-end/privacy behavior unverified",
     "tech": "MV3, background.js, content-scripts ai-capture, generic-capture, capsule-inject, quillbot-suggestions, popup, lib blacklist capsule vault-writer",
-    "features_implemented": [
+    "features_missing": [
+      "Canonical deny synchronization before any URL/history/DOM observation",
+      "Normalized exact domain/subdomain/URL/glob matching (current substring logic needs repair)",
+      "Retain offline queue on HTTP non-2xx/malformed success; deduplicate retries",
+      "Real extension to API to Obsidian files and original attachments E2E",
+      "Full Capsule versions/branches/rollback/transfer and Quillbot field coverage/per-destination approval"
+    ],
+    "features_in_source": [
       "manifest.json host_permissions <all_urls> + history + storage + scripting + contextMenus",
       "background.js history listener + blacklist check + failure logging + context menu",
       "lib/blacklist.js pattern matching",
@@ -79,37 +137,48 @@
       "content-scripts/capsule-inject.js drag-drop + prompt enhancer",
       "content-scripts/quillbot-suggestions.js toolbar + highlight + inline dropdown",
       "popup Capsule library search blacklist manager"
-    ],
-    "features_missing": [
-      "Actual vault file writes need vault API running",
-      "Queue when offline (storage.local) not fully tested",
-      "Real Readability integration",
-      "End-to-end test extension -> app API -> vault"
-    ],
-    "zip": "archive_zips/AI_ASSistant_Extension_v1.2_Fixed.zip"
+    ]
   },
   "vault": {
     "path": "vault/AI-Brain/",
-    "status": "structure-complete, templates-complete, no real user data yet, 61 files starter",
+    "status": "61 committed starter files; canonical API tests pass with temporary vaults; local policy/activity/revision changes retained outside source staging/export",
     "structure": "00 System, 01 Inbox, 02 Sources, 03 Memory, 04 Working Memory, 05 Knowledge, 06 Review, 07 Sharing Receipts, 08 Journal, 09 Activity & Undo, 90 Archive, .brain",
     "templates": "Browser Visit, Capsule, Conversation Source, Daily Journal, Entity, Event, Follow-up, Laptop File Reference, Memory Claim, Monthly Audit, Sharing Receipt, Source Scope",
-    "zip": "archive_zips/AI_ASSistant_Obsidian_Vault_v4_Clean.zip"
+    "committed_starter_files": 61,
+    "runtime_data_private_by_default": true,
+    "local_edits_origin": "Unconfirmed initiating action while preview ran; do not revert/attribute/push automatically"
   },
   "current_gaps": [
-    "Exact clone missing Settings modal from 191707.png",
-    "Exact clone missing File menu + User menu modals",
-    "Extension -> Vault API -> Obsidian file writes end-to-end not tested",
-    "Capsule drag-drop + Quillbot inline not wired in exact clone",
-    "No Windows installer, only dev bats",
-    "No model manager UI",
-    "No journal auto-generation from captured sources",
-    "No monthly audit implementation",
-    "Ollama CORS fix needs documentation in bat"
+    "User-confirmed exact Windows pixels/fonts/DPI and real qwen2.5:3b/runtime performance",
+    "Native title bar/window controls/File Edit View Go Help/Windows installer",
+    "Chrome extension E2E with deny-before-observation synchronization, correct matching and non-2xx/malformed-response queue retention",
+    "Full Capsule project editor/branches/rollback/attachment transfer, canonical artifact/project indexes",
+    "Current Snapshot/Open Loops and evidence-aware graph/review automation",
+    "Today/source-linked Dhaka journal/follow-ups and user-triggered monthly audit implementation",
+    "Configured local voice, official Claude billing/integrations/providers, React/npm artifact bundling/shell execution (not enabled)"
   ],
   "last_session": {
     "date": "2026-10-10",
-    "what_done": "Built exact pixel-perfect Claude clone from 6 screenshots, created start-app.bat handling existing Ollama, direct qwen2.5:3b streaming, vault driver, zipped to AI_ASSistant_Exact_Claude_Clone.zip 13K",
-    "user_request": "give me one zip with all we did so far, requirement list updated every time, repo as memory/handover for other AIs, structure suits AIs best",
-    "action_now": "Creating master github repo AI-ASSistant-Github-Repo with living docs"
+    "user_request": "Continue canonical GitHub source, read NEW_SESSION_HANDOVER and .ai instructions; make exact Claude app clone",
+    "scope": "Foundation, screenshot dialogs/geometry, isolated HTML/SVG artifacts, local installed model selector/uploads/thinking, initial capsule/vault controls; not full P3-P9 completion",
+    "verification": "41 Node/API +21 mocked-browser tests, production build, final DPR-aware visual review pass; no real Windows/model/extension or user pixel confirmation",
+    "next": "Source ZIP/laptop checks, P6 extension safety/reliability E2E, full P7, P8, P9; one beginner step at a time"
+  },
+  "updated_at": "2026-10-10T22:22:40+06:00",
+  "working_branch": "arena/01199af1-ai-assistant",
+  "starting_commit": "547b4d81401a9e56232234fb96649386e89f362a",
+  "git_delivery": {
+    "local_source_commit": "allowed; review/selective staging",
+    "pushed": false,
+    "merged": false,
+    "remote_policy": "Exact content/destination preview and approval required. Never automatically push private vault data."
+  },
+  "source_bundle": {
+    "exporter": "scripts/package-source.cjs",
+    "path": "deliverables/AI-ASSistant-branch-source.zip",
+    "status": "pending clean-extraction verification; see BRANCH_TESTING",
+    "contents": "reviewed committed runnable repository + unchanged starter templates, no uncommitted runtime vault data",
+    "windows_installer": false,
+    "external_send": false
   }
 }

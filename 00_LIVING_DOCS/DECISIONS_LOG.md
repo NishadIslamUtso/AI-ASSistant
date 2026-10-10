@@ -1,6 +1,6 @@
 # DECISIONS_LOG.md — All Decisions With Dates
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 continuation Asia/Dhaka
 **Rule:** Log every decision with date, what, why, who requested, alternatives considered.
 
 ## 2026-10-10 Decisions
@@ -91,3 +91,14 @@
 - **Who:** ...
 - **Alternative:** ... (if any, why rejected)
 - **Implementation:** ...
+
+## 2026-10-10 continuation decisions
+
+- **Active target, not v6 rewrite:** restore screenshot views and repair foundations in apps/01; v6 remains reference. Native menus/title bar/installer deferred to P9, not claimed done.
+- **Installed local truth:** tags/show metadata before send, cloud tags/aliases/remote proxy targets disabled, no download/auto-switch/name-based vision/think; supports user's existing qwen2.5:3b and tight hardware.
+- **Originals and explicit intent:** per-chat immutable source capture and local history recovery, simple prompt with no game example, artifacts require current explicit request/mode. Never clear originals to fix a loop.
+- **Bounded runner:** opaque allow-scripts srcdoc + restrictive child CSP and parent frame-src none. Keep interaction, deny parent/API/external fetch AND all network frame navigation; no same-origin/CDN/shell runner. Downloads remain originals with warning.
+- **No implicit external requests:** block model Markdown images, require exact URL/path/query preview for links, loopback-only driver endpoints with same-origin JSON writes and no forwarded cookies/authorization.
+- **Visual units:** native references1920×1020; compare1280×680CSS/DPR1.5, not user-confirmed DPI. Fresh Narrow588 from selected screenshot, Medium768/Wide960; system/Georgia fonts, not licensed Anthropic bundling.
+- **Honest scope/evidence:** 41 Node +21 mocked-browser tests and build/visual review, not real model/Windows/extension or user exact pixels. Initial capsule/drop/Cook/blacklist is not full P7.
+- **Source ZIP and private boundary:** local committed-source exporter, unchanged starter vault only, no overwrite/upload. Runtime policy/activity/revision edits found during preview have unconfirmed initiating action; retain/unshared, selective staging. New runtime vault data ignored; tracked template edits still reviewed. Remote push/merge requires explicit exact-content/destination approval.
