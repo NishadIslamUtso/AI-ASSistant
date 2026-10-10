@@ -21,10 +21,10 @@ Native menus/title bar/installer, Chrome-extension end-to-end and never-check sy
 
 ## Git/data boundary
 
-Local commits are permitted; remote push is external send and requires destination/content approval. **No push or merge has been performed in this continuation.** Do all Arena work on `arena/01199af1-ai-assistant`.
+Local commits are permitted; remote push is external send and requires destination/content approval. **Source pushed only after the user explicitly requested [PR #9](https://github.com/NishadIslamUtso/AI-ASSistant/pull/9); PR open against main, not merged.** Do all Arena work on `arena/01199af1-ai-assistant`.
 
 The final review found uncommitted canonical-vault blacklist edits and local activity/revision files from while the preview was running; their initiating action was not confirmed. Leave them intact and outside source staging/packaging. Do not attribute them to the user, restore them, revoke exclusions, delete originals, or upload them automatically. New runtime vault data is ignored by default, but existing tracked templates can still be modified: selective staging remains essential.
 
 A source ZIP must contain the entire runnable repository structure before merging. It is not a backup of private runtime vault data. See `BRANCH_TESTING.md` and the safe `scripts/package-source.cjs` flow. Give the Windows beginner **one step at a time**; next step is extracting into a new folder without overwriting an existing vault.
 
-Final source package verified:251files, clean npm ci/build/42Node+22browser tests from c512e5a code snapshot; final documentation-only evidence commit preserves identical runtime source. Delivered source ZIP at deliverables/AI-ASSistant-branch-source.zip (~3.03MB). No push/merge; private canonical edits retained/outside source.
+Final source package verified:251files, clean npm ci/build/42Node+22browser tests from c512e5a code snapshot; final documentation-only evidence commit preserves identical runtime source. Delivered source ZIP at deliverables/AI-ASSistant-branch-source.zip (~3.03MB), generated before PR publication. PR #9 is now open; no merge, private canonical edits retained/outside source.

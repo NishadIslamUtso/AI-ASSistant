@@ -303,7 +303,7 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - [ ] User-triggered monthly last60days+linked older dry-run audit with approval and distinct archive/expire/forget-derived/delete-source controls.
 - [ ] Comprehensive secret/draft/token/sensitive-URL/incognito collection audit for all extension/import adapters; policy accepted, not universally verified.
 - [x] Local-only default, source originals preserved on local-chat delete, no unsupported personal facts/name-from-path/automatic Arena import.
-- [x] Local commits allowed; no remote push/merge this continuation. Runtime vault edits kept intact/unshared. New runtime notes ignored by default, tracked-template edits still reviewed selectively.
+- [x] Local commits allowed; source pushed only after the explicit user request for PR #9 (open against main, not merged). Runtime vault edits kept intact/unshared. New runtime notes ignored by default, tracked-template edits still reviewed selectively.
 - [ ] Full external-send receipt/approval workflow across future providers/extension/backup integrations; no blanket approval.
 - [x] Beginner next step is one action: extract into a new folder; no reinstall/pull or entire checklist at once.
 
@@ -351,3 +351,7 @@ This file IS the memory. Keep it updated.
 - Complete251file source ZIP, unchanged61file starter vault, no private runtime/caches/builds/credentials; CRC/all source hashes verified.
 - Clean extraction with fresh npm ci, production build,42/42 Node+22/22 mocked-browser tests passes after final safety fixes. Final evidence-only documentation update leaves runtime source identical.
 - No push/merge/native installer/real model/Windows confirmation; next beginner action remains extraction into a new folder.
+
+## 2026-10-10 — user-requested pull request #9
+
+The user explicitly requested opening a pull request for this branch. Reviewed committed source/docs were pushed to `origin arena/01199af1-ai-assistant`; [PR #9](https://github.com/NishadIslamUtso/AI-ASSistant/pull/9) is **OPEN**, targeting `main`, not merged. No committed `vault/AI-Brain/` changes are included. Uncommitted local vault policy/activity/revision edits remain intact and excluded. The build/42 Node+22 browser checks and validated runtime code are unchanged; this publication records workflow metadata only. The existing verified source ZIP remains a pre-PR documentation snapshot with identical runnable code. This approval is for this source PR, not a blanket authorization for private vault uploads or merging.

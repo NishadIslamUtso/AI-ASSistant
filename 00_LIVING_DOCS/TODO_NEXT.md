@@ -47,4 +47,4 @@
 
 ## Always
 
-Update REQUIREMENTS/CHANGELOG/HANDOVER/STATE/session/visible ai mirror each change. Do not clear localStorage or originals to fix a loop. Do not wildcard CORS, invent thinking/parity, auto-install a model, auto-push data, or merge without approval. Retain the uncommitted canonical-vault policy/activity/revision edits found during preview; initiating action is unconfirmed, excluded from source packaging. No push/merge has occurred.
+Update REQUIREMENTS/CHANGELOG/HANDOVER/STATE/session/visible ai mirror each change. Do not clear localStorage or originals to fix a loop. Do not wildcard CORS, invent thinking/parity, auto-install a model, auto-push data, or merge without approval. Retain the uncommitted canonical-vault policy/activity/revision edits found during preview; initiating action is unconfirmed, excluded from source packaging. Source is now published for explicitly requested PR #9 (open against main); no merge, no private-vault upload.

@@ -1,6 +1,6 @@
 # BRANCH_TESTING — source ZIP before merge
 
-**Branch:** `arena/01199af1-ai-assistant` · **Date:** 2026-10-10 · **No push/merge performed.**
+**Branch:** `arena/01199af1-ai-assistant` · **Date:** 2026-10-10 · **[PR #9](https://github.com/NishadIslamUtso/AI-ASSistant/pull/9) open; user-authorized source push, not merged.**
 
 ## Included runnable source
 

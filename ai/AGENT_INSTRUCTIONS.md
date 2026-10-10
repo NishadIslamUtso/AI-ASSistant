@@ -16,7 +16,7 @@ Work in **apps/01_claude-exact-pixel-clone/**, app0.2.0, React/Vite + canonical 
 
 **App = driver. Vault = canonical Obsidian Markdown organizer/memory. Extension = collector/context suggester.** SQLite, if introduced, is rebuildable only. Do not silently create a competing app-local vault.
 
-This Arena session is fixed to **arena/01199af1-ai-assistant**; never switch/create/push another branch. Local commits are allowed. Remote Git push/cloud sync is external send: review exact destination/content and get approval. No private vault push automatically. No push/merge occurred in this continuation.
+This Arena session is fixed to **arena/01199af1-ai-assistant**; never switch/create/push another branch. Local commits are allowed. Remote Git push/cloud sync is external send: review exact destination/content and get approval. No private vault push automatically. Source publication was explicitly authorized by the user request to open [PR #9](https://github.com/NishadIslamUtso/AI-ASSistant/pull/9); the PR is open against main, not merged. Private vault changes remain excluded.
 
 ## Living memory rule — every change
 

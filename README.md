@@ -36,7 +36,7 @@ A hosted Arena preview runs in the sandbox and cannot access laptop Ollama; an o
 
 ## Source/data/Git rules
 
-This Arena session stays on **`arena/01199af1-ai-assistant`**. Local source commits are allowed. No push/merge performed; remote send requires exact-content/destination approval. Never blindly `git add .` or auto-push private vault data. New runtime vault files are ignored; already tracked starter-file edits still require selective review.
+This Arena session stays on **`arena/01199af1-ai-assistant`**. Local source commits are allowed. Source was pushed after the user explicitly requested [PR #9](https://github.com/NishadIslamUtso/AI-ASSistant/pull/9), which is open against main and not merged; further external sends still require exact-content/destination approval. Never blindly `git add .` or auto-push private vault data. New runtime vault files are ignored; already tracked starter-file edits still require selective review.
 
 Local blacklist/activity/revision changes found during preview are retained, initiating action unconfirmed, and excluded from source staging/export. Source packaging uses reviewed committed HEAD + unchanged committed starter templates; it is not a private-memory backup. `node scripts/package-source.cjs` refuses dirty source/private committed vault changes and existing ZIP overwrites. See `BRANCH_TESTING.md` before merging.
 

@@ -164,16 +164,27 @@
     "user_request": "Continue canonical GitHub source, read NEW_SESSION_HANDOVER and .ai instructions; make exact Claude app clone",
     "scope": "Foundation, screenshot dialogs/geometry, isolated HTML/SVG artifacts, local installed model selector/uploads/thinking, initial capsule/vault controls; not full P3-P9 completion",
     "verification": "42 Node/API +22 mocked-browser cases, production build, final DPR-aware visual review; no real Windows/model/extension or user pixel confirmation. See BRANCH_TESTING for current clean ZIP.",
-    "next": "Source ZIP/laptop checks, P6 extension safety/reliability E2E, full P7, P8, P9; one beginner step at a time"
+    "next": "Source ZIP/laptop checks, P6 extension safety/reliability E2E, full P7, P8, P9; one beginner step at a time",
+    "publication": "User-requested source PR #9 open against main; vault working edits retained outside commits; no merge."
   },
-  "updated_at": "2026-10-10T22:46:30+06:00",
+  "updated_at": "2026-10-10T22:51:58+06:00",
   "working_branch": "arena/01199af1-ai-assistant",
   "starting_commit": "547b4d81401a9e56232234fb96649386e89f362a",
   "git_delivery": {
     "local_source_commit": "b2700dc initial source; c512e5a final safety source; final documentation evidence local-only",
-    "pushed": false,
+    "pushed": true,
     "merged": false,
-    "remote_policy": "Exact content/destination preview and approval required. Never automatically push private vault data."
+    "remote_policy": "Exact content/destination preview and approval required. Never automatically push private vault data.",
+    "pull_request": {
+      "number": 9,
+      "url": "https://github.com/NishadIslamUtso/AI-ASSistant/pull/9",
+      "state": "OPEN",
+      "is_draft": false,
+      "base": "main",
+      "head": "arena/01199af1-ai-assistant"
+    },
+    "approval": "Explicit user request: Please open a pull request for the changes on this branch. Committed source/docs only; not private vault upload or merge approval.",
+    "private_vault_changes_pushed": false
   },
   "source_bundle": {
     "exporter": "scripts/package-source.cjs",
@@ -191,6 +202,7 @@
       "browser_tests": 22,
       "model": "mocked",
       "windows": false
-    }
+    },
+    "publication_note": "Verified ZIP was produced before PR metadata updates at a78eb25; runnable source remains identical. PR #9 now open, no merge."
   }
 }
