@@ -1,6 +1,6 @@
 # HANDOVER_LIVING.md — Current State + Gaps (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 22:55 Asia/Dhaka
 **Purpose:** Give any AI/developer enough context to continue without relying on previous AI memory. Update every session.
 
 ## 1. Executive Summary
@@ -8,7 +8,8 @@
 User Utso wants AI ASSistant native Windows app that looks exactly like Claude desktop from 6 screenshots (191547-191707), uses real Obsidian vault AI-Brain/ as canonical memory, extension collects from every site + every AI by default (log wasn't accessible if fails, no popup), never-check blacklist for privacy, Capsule Hub + Quillbot UX for context injection, local-first qwen2.5:3b via Ollama, driver/vault/extension architecture.
 
 **Current status:** 
-- Latest exact pixel-perfect clone built in apps/01_claude-exact-pixel-clone/ from screenshots, Vite+React+Tailwind, direct Ollama streaming, vault API, start-app.bat handling existing Ollama, zipped 13K. Not yet tested on user's Windows.
+- Latest exact clone in apps/01_claude-exact-pixel-clone/ from screenshots, Vite+React+Tailwind, direct Ollama streaming, vault API, start-app.bat handling existing Ollama. **Every box is now measured against the PNGs, not guessed** (2026-10-10 22:55 pass). Not yet tested on user's Windows.
+- **Measured pixel parity** (mean abs diff, 1920x1020, median 0.0 on all six): 191547 main **3.77**, 191558 File menu **4.46**, 191608 user menu **3.39**, 191636 Apps & extensions **7.31**, 191646 context menu **4.52**, 191707 Settings **4.90**. Residual is almost entirely font glyph shape (Anthropic Serif/Sans unavailable). See §2.1.
 - Previous Electron clone in apps/02_electron-claude-clone-v6/ has more features (artifacts, workbench, vision, thinking) but not exact pixel match to latest screenshots. Use as reference.
 - Extension starter in extension/ with spec for Capsule Hub + Quillbot, MV3, blacklist, failure logging. Not tested end-to-end.
 - Vault starter in vault/AI-Brain/ 61 files, templates, system docs. No real user data yet.
@@ -17,6 +18,24 @@ User Utso wants AI ASSistant native Windows app that looks exactly like Claude d
 ## 2. What Works (Tested in Sandbox)
 
 - [x] Exact clone UI: Sidebar 260px #202020 Search +New Projects Artifacts Customize Oct8 Older, context menu, Center #1a1a1a Evening Utso + composer #242424, Free plan Upgrade, NU Utso Free bottom — matches screenshots
+- [x] Settings modal (191707), User menu (191608), Apps & extensions modal (191636), chat context menu (191646) — **all built and running** (earlier handover said missing; that is now false)
+- [x] Today view (Current snapshot / Open loops / Due follow-ups with Answer-Skip-Snooze-Stop / Journal draft) — built, reads `vault.today()`, invents nothing
+- [x] Artifact panel — 46 % width, preview/code tabs, sandboxed `srcDoc` iframe, reload/download/open-in-new/close, artifact switcher
+- [x] Vault panel — capsule list, drag-drop into composer, never-check blacklist editor persisted through the vault API
+- [x] Thinking display extraction + streaming from Ollama, model/effort/memory controls in the composer footer
+- [x] Dev servers verified by curl: `/`, `/ollama/api/tags`, `/vault/`, `/vault/today`; all 22 src modules return 200 with no Vite transform errors; Playwright console/pageerror empty
+
+### 2.1 Pixel-parity measurement rig (how to re-verify)
+
+```bash
+# from apps/01_claude-exact-pixel-clone (servers must be running: vite 5173)
+node scripts/shot.mjs app-main                 # or: settings | user | apps | file | ctx | vault | today | chat | artifact
+python3 /home/user/tools/compare.py \
+  "../../spec/screenshots/Screenshot 2026-10-10 191547.png" /home/user/shots/app-main.png 16 12
+python3 /home/user/tools/geom.py   <png>       # sidebar edge, search/newchat/composer/greeting boxes
+python3 /home/user/tools/cropdiff.py <ref> <png> x0 y0 x1 y1   # ink-box diff of one crop
+```
+Screenshots are 1280x680 CSS @1.5 DPR = 1920x1020, so **device px = CSS px x 1.5**.
 - [x] Direct Ollama fetch http://127.0.0.1:11434/api/chat qwen2.5:3b streaming (no download, uses existing)
 - [x] Vault API server/vault-api.cjs at 127.0.0.1:8765 with /context + /capture endpoints
 - [x] localStorage claude_exact_chats with defaults from screenshots
@@ -28,20 +47,23 @@ User Utso wants AI ASSistant native Windows app that looks exactly like Claude d
 
 ## 3. What Doesn't Work / Gaps
 
-### Exact Clone Gaps (apps/01_claude-exact-pixel-clone)
-- [ ] Settings modal Appearance Theme Chat font Transcript size Width Motion Voice Language Style Speed from 191707.png — not implemented, need modal component
-- [ ] File Edit View Go Help menu bar — Electron menu needed, currently Vite web only
-- [ ] User menu nishadislamutso@gmail.com Settings etc from 191608.png — not implemented
-- [ ] Apps and extensions modal from 191636.png — not implemented
-- [ ] Project dropdown Sonnet 5.5 Medium Manual functionality — currently static text
-- [ ] Artifact runner — no artifact preview yet (Electron clone has it, can port)
-- [ ] File upload, image upload — missing
-- [ ] Thinking display — missing
-- [ ] Capsule drag-drop inject + Quillbot inline suggestions — requires extension integration + VaultPanel enhancement
-- [ ] Today view with Current Snapshot, journal draft, follow-ups — not implemented
-- [ ] Journal auto-generation — not implemented
+### Exact Clone Gaps (apps/01_claude-exact-pixel-clone) — updated 2026-10-10 22:55
+- [x] Settings modal (191707) — **done**; remaining diff 4.90 is content-level (ours exposes vault/model settings, Claude exposes Sonnet/Opus billing rows)
+- [x] User menu (191608) — **done**, 3.39
+- [x] Apps & extensions modal (191636) — **done**, 7.31 (worst shot: our featured card is a simplified version of Claude's marketing card)
+- [x] Chat context menu (191646) — **done**, 4.52
+- [x] Today view — **done**
+- [x] Artifact runner — **done**
+- [x] Thinking display — **done**
+- [x] Capsule drag-drop inject — **done** in VaultPanel → composer
+- [ ] File Edit View Go Help **native** menu bar — 191558 shows the Electron/Windows native menu; a browser build cannot draw it. Needs the Electron shell to close this gap (4.46 today).
+- [ ] Project dropdown + model/effort/memory buttons still partly static text
+- [ ] File upload / image (vision) upload — buttons exist, wiring unverified
+- [ ] Quillbot-style inline suggestions inside the app (extension side only so far)
+- [ ] Journal auto-generation from captured sources — not implemented
 - [ ] Monthly audit — not implemented
 - [ ] Windows installer — only bat dev scripts
+- [ ] **Not tested on the user's Windows TUF A15 yet** — sandbox is Linux, has no Ollama and no GPU. `start-app.bat`, real qwen2.5:3b streaming and the Windows caption bar are *in source, untested* until the user runs them.
 
 ### Electron Clone Gaps (apps/02_electron-claude-clone-v6)
 - [ ] Not exact pixel match to latest 6 screenshots (older Claude UI)

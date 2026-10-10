@@ -1,6 +1,50 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-body { background:#1a1a1a; color:#fff; font-family: Inter, sans-serif; margin:0; overflow:hidden; }
-.serif { font-family: serif; }
-::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-thumb { background:#333; border-radius:3px; }
+
+:root {
+  --app-bg: #151515;
+  --sidebar-bg: #111111;
+  --composer-bg: #20201f;
+  --text: #f0efec;
+  --text2: #c3c2b7;
+  --text3: #898781;
+  --border: #292929;
+  --transcript-size: 14.5px;
+  --transcript-width: 586px;
+  --motion: 160ms;
+  --chat-font: "Anthropic Serif", Copernicus, Georgia, serif;
+}
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  overflow: hidden;
+  background: #151515;
+  color: #f0efec;
+  font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* thin dark scrollbars, like the desktop app */
+/* Claude sidebar scrollbar: 7px gutter, thumb #3a3a39 / #5a5957 on hover (measured from 191547) */
+.scroll-thin { scrollbar-color: #3a3a39 transparent; }
+@supports not selector(::-webkit-scrollbar) { .scroll-thin { scrollbar-width: thin; } }
+.scroll-thin:hover { scrollbar-color: #5a5957 transparent; }
+.scroll-thin::-webkit-scrollbar { width: 7px; height: 7px; }
+.scroll-thin::-webkit-scrollbar-track { background: transparent; }
+.scroll-thin::-webkit-scrollbar-thumb { background: #3a3a39; border-radius: 4px; }
+.scroll-thin:hover::-webkit-scrollbar-thumb { background: #5a5957; }
+*::-webkit-scrollbar { width: 7px; height: 7px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+
+input::placeholder, textarea::placeholder { color: #898781; }
+button { transition: opacity var(--motion); }
+:focus-visible { outline: 1px solid #6da7ec; outline-offset: 1px; }
+
+@keyframes claude-pulse { 0%,100% { opacity: .35 } 50% { opacity: 1 } }
+.thinking-dot { animation: claude-pulse 1.2s infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .thinking-dot { animation: none; }
+}

@@ -1,0 +1,98 @@
+AI-ASSistant — PR change set
+============================
+Branch : feature/pixel-parity-apps01
+Base   : main (547b4d8)
+Date   : 2026-10-10 23:05 Asia/Dhaka
+
+Only the files that differ from main are included, at their exact repo-relative
+paths. Copy this folder over a clone of `main` (or upload it) to review / open a PR.
+
+Status legend:  A = added (new file)   M = modified
+
+  M  .ai/STATE.json
+  M  00_LIVING_DOCS/CHANGELOG.md
+  M  00_LIVING_DOCS/HANDOVER_LIVING.md
+  M  00_LIVING_DOCS/REQUIREMENTS_LIVING.md
+  M  00_LIVING_DOCS/TODO_NEXT.md
+  M  apps/01_claude-exact-pixel-clone/index.html
+  A  apps/01_claude-exact-pixel-clone/package-lock.json
+  M  apps/01_claude-exact-pixel-clone/package.json
+  A  apps/01_claude-exact-pixel-clone/scripts/shot.mjs
+  A  apps/01_claude-exact-pixel-clone/server/mock-ollama.cjs
+  M  apps/01_claude-exact-pixel-clone/server/vault-api.cjs
+  M  apps/01_claude-exact-pixel-clone/src/App.jsx
+  A  apps/01_claude-exact-pixel-clone/src/components/AppsExtensionsModal.jsx
+  A  apps/01_claude-exact-pixel-clone/src/components/ArtifactPanel.jsx
+  M  apps/01_claude-exact-pixel-clone/src/components/Center.jsx
+  A  apps/01_claude-exact-pixel-clone/src/components/Composer.jsx
+  A  apps/01_claude-exact-pixel-clone/src/components/FileMenu.jsx
+  A  apps/01_claude-exact-pixel-clone/src/components/Icons.jsx
+  A  apps/01_claude-exact-pixel-clone/src/components/SettingsModal.jsx
+  M  apps/01_claude-exact-pixel-clone/src/components/Sidebar.jsx
+  A  apps/01_claude-exact-pixel-clone/src/components/ThinkingDisplay.jsx
+  A  apps/01_claude-exact-pixel-clone/src/components/TitleBar.jsx
+  A  apps/01_claude-exact-pixel-clone/src/components/TodayView.jsx
+  A  apps/01_claude-exact-pixel-clone/src/components/UserMenu.jsx
+  M  apps/01_claude-exact-pixel-clone/src/components/VaultPanel.jsx
+  M  apps/01_claude-exact-pixel-clone/src/index.css
+  A  apps/01_claude-exact-pixel-clone/src/lib/artifact-runner.js
+  A  apps/01_claude-exact-pixel-clone/src/lib/artifacts.js
+  A  apps/01_claude-exact-pixel-clone/src/lib/markdown.jsx
+  A  apps/01_claude-exact-pixel-clone/src/lib/ollama.js
+  A  apps/01_claude-exact-pixel-clone/src/lib/prompt.js
+  A  apps/01_claude-exact-pixel-clone/src/lib/settings.js
+  A  apps/01_claude-exact-pixel-clone/src/lib/thinking-parser.js
+  A  apps/01_claude-exact-pixel-clone/src/lib/vault.js
+  M  apps/01_claude-exact-pixel-clone/src/main.jsx
+  A  apps/01_claude-exact-pixel-clone/src/theme.js
+  M  apps/01_claude-exact-pixel-clone/vite.config.js
+  M  memory/sessions/2026-10-10-session.md
+
+Diffstat (vs main):
+
+ .ai/STATE.json                                     |   83 +-
+ 00_LIVING_DOCS/CHANGELOG.md                        |   34 +-
+ 00_LIVING_DOCS/HANDOVER_LIVING.md                  |   50 +-
+ 00_LIVING_DOCS/REQUIREMENTS_LIVING.md              |   23 +-
+ 00_LIVING_DOCS/TODO_NEXT.md                        |    8 +-
+ apps/01_claude-exact-pixel-clone/index.html        |   14 +-
+ apps/01_claude-exact-pixel-clone/package-lock.json | 3523 ++++++++++++++++++++
+ apps/01_claude-exact-pixel-clone/package.json      |   24 +-
+ apps/01_claude-exact-pixel-clone/scripts/shot.mjs  |   77 +
+ .../server/mock-ollama.cjs                         |  108 +
+ .../server/vault-api.cjs                           |  106 +
+ apps/01_claude-exact-pixel-clone/src/App.jsx       |  408 ++-
+ .../src/components/AppsExtensionsModal.jsx         |  106 +
+ .../src/components/ArtifactPanel.jsx               |   78 +
+ .../src/components/Center.jsx                      |  207 +-
+ .../src/components/Composer.jsx                    |  169 +
+ .../src/components/FileMenu.jsx                    |   55 +
+ .../src/components/Icons.jsx                       |   96 +
+ .../src/components/SettingsModal.jsx               |  364 ++
+ .../src/components/Sidebar.jsx                     |  279 +-
+ .../src/components/ThinkingDisplay.jsx             |   29 +
+ .../src/components/TitleBar.jsx                    |   34 +
+ .../src/components/TodayView.jsx                   |  103 +
+ .../src/components/UserMenu.jsx                    |   60 +
+ .../src/components/VaultPanel.jsx                  |  143 +-
+ apps/01_claude-exact-pixel-clone/src/index.css     |   50 +-
+ .../src/lib/artifact-runner.js                     |  299 ++
+ .../src/lib/artifacts.js                           |   79 +
+ .../src/lib/markdown.jsx                           |   85 +
+ apps/01_claude-exact-pixel-clone/src/lib/ollama.js |   88 +
+ apps/01_claude-exact-pixel-clone/src/lib/prompt.js |   30 +
+ .../src/lib/settings.js                            |   71 +
+ .../src/lib/thinking-parser.js                     |   62 +
+ apps/01_claude-exact-pixel-clone/src/lib/vault.js  |   85 +
+ apps/01_claude-exact-pixel-clone/src/main.jsx      |    6 +-
+ apps/01_claude-exact-pixel-clone/src/theme.js      |  112 +
+ apps/01_claude-exact-pixel-clone/vite.config.js    |   28 +-
+ memory/sessions/2026-10-10-session.md              |   39 +
+ 38 files changed, 7022 insertions(+), 193 deletions(-)
+
+Included in this zip:
+  _CHANGES.txt   — this manifest (file list + diffstat)
+  changes.patch  — full unified diff vs main (`git apply changes.patch`)
+  <repo paths>   — the 38 changed/new files, full contents
+
+Not included: node_modules/, dist/, and anything unchanged from main.

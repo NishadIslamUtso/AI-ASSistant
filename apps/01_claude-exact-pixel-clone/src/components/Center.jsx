@@ -1,81 +1,146 @@
-import { useState, useEffect, useRef } from 'react'
-export default function Center({ chats, currentChat, messages, setMessages, setChats, showVault, setShowVault }) {
-  const [input, setInput] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [vaultContext, setVaultContext] = useState([])
+import React, { useEffect, useRef } from 'react'
+import { C, M } from '../theme.js'
+import { Asterisk, Icon, P } from './Icons.jsx'
+import Composer from './Composer.jsx'
+import ThinkingDisplay from './ThinkingDisplay.jsx'
+import Markdown from '../lib/markdown.jsx'
+
+function greeting() {
+  const h = new Date().getHours()
+  return h < 12 ? 'Morning' : h < 17 ? 'Afternoon' : 'Evening'
+}
+
+export default function Center({
+  messages, input, setInput, onSend, onStop, loading,
+  models, model, onModel, effort, onEffort, memory, onMemory,
+  onAttach, onImage, onCook, attachments,
+  artifacts, onOpenArtifact, onUpgrade, userName = 'Utso',
+  modelLabel, width,
+}) {
   const endRef = useRef(null)
-  useEffect(()=>{ endRef.current?.scrollIntoView({behavior:"smooth"}) }, [messages])
-  useEffect(()=>{
-    if (input.length<3){ setVaultContext([]); return }
-    const t=setTimeout(async()=>{
-      try{
-        const res=await fetch(`http://127.0.0.1:8765/context?q=${encodeURIComponent(input.slice(-80))}`)
-        if(res.ok){ const data=await res.json(); setVaultContext((data.capsules||[]).slice(0,3)) }
-      }catch(e){}
-    },500)
-    return()=>clearTimeout(t)
-  },[input])
-  async function send(){
-    if(!input.trim()||isLoading) return
-    const userMsg=input.trim()
-    const userMessage={role:'user', content:userMsg, id:Date.now().toString()}
-    setMessages(prev=>[...prev, userMessage])
-    setInput(""); setVaultContext([])
-    try{
-      await fetch('http://127.0.0.1:8765/capture',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({type:'conversation', provider:'AI ASSistant', title:userMsg.slice(0,50), messages:[{role:'user', text:userMsg, timestamp:new Date().toISOString()}], completeness:'full', captured_at:new Date().toISOString()})})
-    }catch(e){}
-    setIsLoading(true)
-    try{
-      let vaultInjection=""
-      if(vaultContext.length>0) vaultInjection="\n\nRelevant vault memory:\n"+vaultContext.map(c=>`[${c.title}: ${c.background?.slice(0,200)}]`).join("\n")+"\n"
-      const res=await fetch('http://127.0.0.1:11434/api/chat',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({model:'qwen2.5:3b', messages:[{role:'system', content:`You are AI ASSistant, helpful local AI. Use AI-Brain vault as memory. Prefer simple step-by-step. User is Utso. Only create code when explicitly asked.`}, ...messages.map(m=>({role:m.role, content:m.content})), {role:'user', content:userMsg+vaultInjection}], stream:true})})
-      if(!res.ok) throw new Error('Ollama not responding')
-      const reader=res.body.getReader()
-      const decoder=new TextDecoder()
-      let assistantContent=""
-      const assistantMsg={role:'assistant', content:'', id:(Date.now()+1).toString()}
-      setMessages(prev=>[...prev, assistantMsg])
-      while(true){
-        const {done, value}=await reader.read()
-        if(done) break
-        const chunk=decoder.decode(value)
-        const lines=chunk.split('\n').filter(l=>l.trim())
-        for(const line of lines){
-          try{
-            const json=JSON.parse(line)
-            if(json.message?.content){ assistantContent+=json.message.content; setMessages(prev=>prev.map(m=> m.id===assistantMsg.id ? {...m, content:assistantContent} : m)) }
-          }catch(e){}
-        }
-      }
-    }catch(e){
-      setMessages(prev=>[...prev, {role:'assistant', content:`Error: ${e.message}. Check Ollama at 11434 and OLLAMA_ORIGINS=*`, id:Date.now().toString()}])
-    }finally{ setIsLoading(false) }
-  }
+  const hasMsgs = messages.length > 0
+
+  useEffect(() => {
+    if (hasMsgs) endRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, loading])
+
   return (
-    <div className="flex-1 flex flex-col bg-[#1a1a1a] h-screen">
-      <div className="h-11 flex items-center justify-between px-4 border-b border-[#2a2a2a] shrink-0">
-        <div></div>
-        <div className="flex items-center gap-2"><div className="bg-[#2a2a2a] rounded-full px-3 py-1 text-xs flex items-center gap-2"><span className="text-[#aaa]">Free plan</span><span className="text-[#6b9bff]">· Upgrade</span></div></div>
+    <div className="flex-1 flex flex-col min-w-0 h-full" style={{ background: 'var(--app-bg)' }}>
+      {/* title-bar spacer (32px custom title bar drawn by TitleBar) */}
+      <div className="shrink-0" style={{ height: M.titleBar }} />
+
+      {/* Free plan · Upgrade — measured y=91..114, centred, bg #111111 */}
+      <div className="shrink-0 flex justify-center" style={{ height: 23, marginTop: 56 }}>
+        <div
+          className="flex items-center gap-[6px] rounded-[6px] px-[10px] text-[12px]"
+          style={{ background: '#111111', color: C.text3 }}
+        >
+          <span>Free plan</span>
+          <span style={{ color: C.text3 }}>·</span>
+          <button onClick={onUpgrade} style={{ color: C.link }}>Upgrade</button>
+        </div>
       </div>
-      <div className="flex-1 overflow-y-auto flex flex-col items-center">
-        {messages.length===0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center w-full max-w-2xl px-6">
-            <div className="flex items-center gap-3 mb-8"><div className="w-8 h-8 rounded-full bg-[#ff6b35] flex items-center justify-center">✳</div><h1 className="text-3xl serif">Evening, Utso</h1></div>
-            <div className="w-full bg-[#242424] border border-[#333] rounded-xl p-3">
-              <textarea value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); } }} placeholder="How can I help you today?" className="w-full bg-transparent resize-none outline-none text-[15px] min-h-[24px] placeholder-[#666]" rows={1} />
-              <div className="flex items-center justify-between mt-3"><button className="w-7 h-7 rounded-full bg-[#2a2a2a] border border-[#333] flex items-center justify-center text-[#888]">+</button><div className="flex items-center gap-3 text-[#666]">🎤 〰</div></div>
+
+      {!hasMsgs ? (
+        /* ---------- new-chat screen: greeting + composer, measured top y=290 ---------- */
+        <div className="flex-1 flex flex-col items-center justify-center pb-[35px] px-[24px]">
+          <div className="w-full" style={{ maxWidth: 'var(--transcript-width)' }}>
+            <div className="flex items-center justify-center gap-[11px] mb-[20px]">
+              <Asterisk size={M.greeting.asterisk} />
+              <h1 style={{ fontFamily: 'var(--chat-font)', fontSize: M.greeting.size, color: C.text, lineHeight: 1.15 }}>
+                {greeting()}, {userName}.
+              </h1>
             </div>
-            <div className="flex items-center justify-between w-full mt-3 text-xs"><div className="text-[#aaa]">Project ⌄</div><div className="flex gap-3 text-[#666]"><span>Sonnet 5.5</span><span>Medium</span><span>Manual</span></div></div>
+            <Composer
+              value={input} onChange={setInput} onSend={onSend} onStop={onStop} loading={loading}
+              models={models} model={model} onModel={onModel}
+              effort={effort} onEffort={onEffort} memory={memory} onMemory={onMemory}
+              onAttach={onAttach} onImage={onImage} onCook={onCook}
+              captureCount={attachments?.length || 0} modelLabel={modelLabel}
+            />
           </div>
+        </div>
+      ) : (
+        /* ---------- conversation ---------- */
+        <>
+          <div className="flex-1 overflow-y-auto scroll-thin">
+            <div className="mx-auto px-[24px] py-[24px] space-y-[22px]"
+              style={{ maxWidth: 'var(--transcript-width)', fontSize: 'var(--transcript-size)' }}>
+              {messages.map((m, i) => (
+                <Message key={m.id || i} m={m} onOpenArtifact={onOpenArtifact} />
+              ))}
+              {loading && messages[messages.length - 1]?.role !== 'assistant' && (
+                <div className="flex gap-[11px]">
+                  <Asterisk size={22} />
+                  <div className="text-[13px] pt-[4px]" style={{ color: C.text3 }}>Thinking…</div>
+                </div>
+              )}
+              <div ref={endRef} />
+            </div>
+          </div>
+
+          <div className="shrink-0 px-[24px] pb-[28px] pt-[8px] flex justify-center">
+            <Composer
+              value={input} onChange={setInput} onSend={onSend} onStop={onStop} loading={loading}
+              models={models} model={model} onModel={onModel}
+              effort={effort} onEffort={onEffort} memory={memory} onMemory={onMemory}
+              onAttach={onAttach} onImage={onImage} onCook={onCook}
+              captureCount={attachments?.length || 0} modelLabel={modelLabel}
+            />
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+function Message({ m, onOpenArtifact }) {
+  if (m.role === 'user') {
+    return (
+      <div className="flex justify-end">
+        <div
+          className="rounded-[18px] px-[14px] py-[8px] whitespace-pre-wrap"
+          style={{ background: '#2a2a29', color: C.text, maxWidth: '80%' }}
+        >
+          {m.images?.length > 0 && (
+            <div className="flex gap-[6px] mb-[6px] flex-wrap">
+              {m.images.map((src, i) => (
+                <img key={i} src={`data:image/png;base64,${src}`} alt="attachment"
+                  className="rounded-[8px]" style={{ maxHeight: 140, maxWidth: 200 }} />
+              ))}
+            </div>
+          )}
+          {m.content}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex gap-[11px]">
+      <div className="shrink-0 pt-[2px]"><Asterisk size={22} /></div>
+      <div className="flex-1 min-w-0" style={{ color: 'var(--text)' }}>
+        {m.thinking && <ThinkingDisplay text={m.thinking} streaming={!!m.streaming} />}
+        {m.artifacts?.length > 0 && (
+          <div className="flex flex-wrap gap-[8px] mb-[10px]">
+            {m.artifacts.map((a) => (
+              <button
+                key={a.id}
+                onClick={() => onOpenArtifact(a)}
+                className="flex items-center gap-[8px] rounded-[8px] px-[11px] py-[7px] text-[12.5px] hover:brightness-110"
+                style={{ background: '#1d1d1c', border: '1px solid #2a2a29', color: C.text2 }}
+              >
+                <Icon d={P.code} size={13} />
+                <span>{a.title}</span>
+                <span style={{ color: C.text3 }}>{a.kind}</span>
+              </button>
+            ))}
+          </div>
+        )}
+        {m.content ? (
+          <Markdown text={m.content} />
         ) : (
-          <div className="w-full max-w-2xl px-6 py-8 space-y-6">
-            {messages.map(m=><div key={m.id} className={`flex gap-3 ${m.role==='user'?'justify-end':''}`}>{m.role==='assistant' && <div className="w-6 h-6 rounded-full bg-[#ff6b35] flex items-center justify-center text-[10px] shrink-0">✳</div>}<div className={`${m.role==='user'?'bg-[#2a2a2a] rounded-2xl px-4 py-2 max-w-[80%]':''} text-[15px] leading-6 whitespace-pre-wrap`}>{m.content}</div>{m.role==='user' && <div className="w-6 h-6 rounded-full bg-[#c4a484] flex items-center justify-center text-xs shrink-0">N</div>}</div>)}
-            {isLoading && <div className="flex gap-3"><div className="w-6 h-6 rounded-full bg-[#ff6b35] flex items-center justify-center text-[10px]">✳</div><div className="text-[#666] text-sm">Thinking...</div></div>}
-            <div ref={endRef} />
-            <div className="sticky bottom-0 bg-[#1a1a1a] pt-4">
-              <div className="bg-[#242424] border border-[#333] rounded-xl p-3"><textarea value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); } }} placeholder="Reply..." className="w-full bg-transparent resize-none outline-none text-[15px] min-h-[24px] placeholder-[#666]" rows={1} /><div className="flex justify-between mt-3"><div className="text-[#666] text-xs">◍ 📎 📷</div><div className="flex items-center gap-2"><span className="text-[10px] text-[#666]">qwen2.5:3b</span><button onClick={send} className="w-7 h-7 rounded-full bg-white text-black flex items-center justify-center">↑</button></div></div><div className="mt-2 bg-[#2a2a2a] rounded-full py-1 text-center text-[11px] text-[#666]">Cook This Prompt</div></div>
-            </div>
-          </div>
+          !m.thinking && <span className="opacity-60">…</span>
         )}
       </div>
     </div>

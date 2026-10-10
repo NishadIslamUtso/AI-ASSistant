@@ -1,28 +1,30 @@
 {
   "name": "ai-assistant-claude-exact",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.3.0",
   "type": "module",
-  "description": "AI ASSistant - Exact pixel-perfect Claude desktop clone",
+  "description": "AI ASSistant — exact Claude desktop clone (measured from the user's own screenshots) driving local Ollama qwen2.5:3b + the AI-Brain Obsidian vault",
   "scripts": {
-    "dev": "vite --host 127.0.0.1 --port 5173",
+    "dev": "vite",
     "dev:server": "node server/vault-api.cjs",
+    "dev:mock": "node server/mock-ollama.cjs",
+    "dev:all": "node scripts/dev-all.mjs",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview --host 0.0.0.0 --port 5173"
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "lucide-react": "^0.344.0",
+    "cors": "^2.8.5",
     "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.1",
-    "vite": "^5.1.4",
-    "tailwindcss": "^3.4.1",
+    "autoprefixer": "^10.4.18",
+    "playwright": "^1.49.1",
     "postcss": "^8.4.33",
-    "autoprefixer": "^10.4.18"
+    "tailwindcss": "^3.4.1",
+    "vite": "^5.1.4"
   },
   "optionalDependencies": {
     "@rollup/rollup-win32-x64-msvc": "^4.0.0"

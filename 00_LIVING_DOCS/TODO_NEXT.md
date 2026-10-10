@@ -1,6 +1,6 @@
 # TODO_NEXT.md — Immediate Next Actions (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 22:55 Asia/Dhaka
 **Rule:** Update after each session, priority order, check off when done.
 
 ## Priority 1 — Test Exact Clone on Windows (User Action)
@@ -25,10 +25,10 @@
 
 **If CORS error:** Run `setx OLLAMA_ORIGINS "*"` in cmd, restart Ollama: `taskkill /F /IM ollama.exe` then `ollama serve`
 
-## Priority 2 — Add Missing Modals From Screenshots
+## Priority 2 — Add Missing Modals From Screenshots  *(DONE 2026-10-10 22:55 — all four modals exist and run)*
 
 ### 2.1 Settings Modal (191707.png) — High Priority
-- [ ] Create src/components/SettingsModal.jsx
+- [x] Create src/components/SettingsModal.jsx
 - Left nav: General, Account, Privacy, Billing, Capabilities, Memory, Reflect, Time and focus, Claude Code, System, Extensions, Developer, Skills, Connectors
 - Right Appearance:
   - Theme: system/sun/moon icons, options System, Light, Dark (currently dark default)
@@ -41,7 +41,7 @@
 - Store settings in localStorage claude_exact_settings
 
 ### 2.2 User Menu (191608.png)
-- [ ] Create src/components/UserMenu.jsx
+- [x] Create src/components/UserMenu.jsx
 - Content: nishadislamutso@gmail.com, Settings, Language, Get help, Upgrade plan, Get apps and extensions, Learn more, Get API keys, Log out
 - Trigger: click avatar NU bottom left
 - Position: above avatar, dark #2a2a2a rounded

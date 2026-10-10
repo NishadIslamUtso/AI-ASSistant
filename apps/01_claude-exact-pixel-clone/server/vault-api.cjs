@@ -8,6 +8,8 @@ const PORT = 8765;
 
 // Vault path - try multiple locations
 const possibleVaultPaths = [
+  path.join(__dirname, '../../../vault/AI-Brain'),  // repo layout: <root>/vault/AI-Brain
+  path.join(__dirname, '../../vault/AI-Brain'),
   path.join(__dirname, '../../AI-Brain'),
   path.join(__dirname, '../AI-Brain'),
   path.join(require('os').homedir(), 'Documents', 'AI-Brain'),
@@ -251,6 +253,110 @@ app.get('/context', (req, res) => {
     console.error(e);
     res.json({capsules: [], entities: [], claims: []});
   }
+});
+
+/* ---------- helpers for the app UI (read side) ---------- */
+function readIfExists(rel) {
+  try {
+    const full = path.join(VAULT_PATH, rel);
+    if (fs.existsSync(full)) return fs.readFileSync(full, 'utf-8');
+  } catch (e) {}
+  return null;
+}
+
+/** GET /capsules — capsule library for the vault panel */
+app.get('/capsules', (req, res) => {
+  try {
+    const dir = path.join(VAULT_PATH, '03 Memory/Entities');
+    const capsules = [];
+    if (fs.existsSync(dir)) {
+      for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.md')).slice(-200)) {
+        const content = readIfExists(`03 Memory/Entities/${f}`) || '';
+        if (!/type:\s*capsule/i.test(content) && !f.startsWith('capsule-')) continue;
+        const fm = (k) => (content.match(new RegExp(`${k}:\\s*(.+)`)) || [])[1]?.trim();
+        const section = (name) => {
+          const m = content.match(new RegExp(`##\\s*${name}\\n([\\s\\S]*?)(?=\\n##\\s|$)`, 'i'));
+          return m ? m[1].trim() : '';
+        };
+        capsules.push({
+          id: fm('id') || f.replace('.md', ''),
+          title: fm('title') || section('Goals').split('\n')[0] || f.replace('.md', ''),
+          background: section('Background') || content.slice(0, 400),
+          goals: section('Goals').split('\n').filter(Boolean),
+          constraints: section('Constraints').split('\n').filter(Boolean),
+          decisions: section('Decisions').split('\n').filter(Boolean),
+          file: `03 Memory/Entities/${f}`,
+        });
+      }
+    }
+    res.json({ ok: true, capsules });
+  } catch (e) {
+    res.json({ ok: false, capsules: [], error: e.message });
+  }
+});
+
+/** GET /today — snapshot, open loops, due follow-ups, today's journal draft */
+app.get('/today', (req, res) => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const dateStr = now.toISOString().split('T')[0];
+
+  const snapshot = readIfExists('04 Working Memory/Current Snapshot.md');
+  const openLoops = readIfExists('04 Working Memory/Open Loops.md');
+  const journal = readIfExists(`08 Journal/${year}/${dateStr}.md`);
+
+  // follow-ups: frontmatter next_check <= today and status open
+  const followups = [];
+  const dir = path.join(VAULT_PATH, '03 Memory/Events');
+  const walk = (d) => {
+    if (!fs.existsSync(d)) return;
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const p = path.join(d, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (e.name.endsWith('.md')) {
+        const c = fs.readFileSync(p, 'utf-8');
+        if (!/type:\s*follow-?up/i.test(c)) continue;
+        const fm = (k) => (c.match(new RegExp(`${k}:\\s*(.+)`)) || [])[1]?.trim();
+        const status = (fm('status') || 'open').toLowerCase();
+        const next = fm('next_check') || fm('next-check');
+        if (status !== 'open') continue;
+        if (next && next > dateStr) continue;
+        followups.push({ topic: fm('topic') || path.basename(p, '.md'), last_update: fm('updated') || fm('last_update') || '', next_check: next || '', file: path.relative(VAULT_PATH, p) });
+      }
+    }
+  };
+  walk(dir);
+
+  res.json({ ok: true, vault: VAULT_PATH, date: dateStr, snapshot, openLoops, journal, followups });
+});
+
+/** GET /blacklist + POST /blacklist — never-check patterns (00 System/Privacy & Access.md) */
+const PRIVACY_REL = '00 System/Privacy & Access.md';
+app.get('/blacklist', (req, res) => {
+  const md = readIfExists(PRIVACY_REL) || '';
+  const m = md.match(/excluded_patterns:\s*\n((?:\s*-\s*.+\n)+)/i);
+  const patterns = m
+    ? m[1].split('\n').map((l) => l.replace(/^\s*-\s*/, '').trim()).filter(Boolean)
+    : [];
+  res.json({ ok: true, excluded_patterns: patterns, source: PRIVACY_REL });
+});
+
+app.post('/blacklist', (req, res) => {
+  const patterns = req.body?.excluded_patterns || [];
+  const nowIso = new Date().toISOString();
+  const year = new Date().getFullYear();
+  const month = String(new Date().getMonth() + 1).padStart(2, '0');
+  let md = readIfExists(PRIVACY_REL);
+  if (!md) {
+    md = `# Privacy & Access\n\nDefault policy: check everything after one-time permission.\nInaccessible -> logged as "wasn't accessible - reason", never a popup.\n\n## Never-check blacklist\n\neditable: true\nrevocable: true\ndefault: allow\nexplicit: deny\n\nexcluded_patterns:\n`;
+  }
+  const block = `excluded_patterns:\n${patterns.map((p) => `- ${p}`).join('\n')}`;
+  md = md.includes('excluded_patterns:')
+    ? md.replace(/excluded_patterns:\s*\n(?:\s*-\s*.+\n)*/, block + '\n')
+    : md + '\n' + block + '\n';
+  writeMarkdown(PRIVACY_REL, md);
+  appendJsonl(`09 Activity & Undo/${year}/${month}.md`, `[${nowIso}] blacklist updated -> ${JSON.stringify(patterns)}`);
+  res.json({ ok: true, excluded_patterns: patterns, file: PRIVACY_REL });
 });
 
 app.get('/', (req,res)=>res.json({ok:true, vault: VAULT_PATH, message: 'AI ASSistant Vault API at 127.0.0.1:8765'}));

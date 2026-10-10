@@ -287,7 +287,7 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - [x] Sensitive external sharing requires exact-content/destination preview + per-send approval, no blanket approval
 - [x] Original sources preserved until you choose deletion; archive, expire, forget-derived, delete-source remain distinct
 - [x] Journals dated Asia/Dhaka, event time vs capture time separated, source-linked, never invents offline events/feelings
-- [ ] Today view surfaces Current Snapshot, today's journal draft, due follow-ups, one next action — need Today view implementation
+- [x] Today view surfaces Current Snapshot, today's journal draft, due follow-ups, one next action — built in apps/01 (TodayView.jsx, data from vault.today() only, never invented)
 - [x] End-of-day prompts opt-in, offer answer/skip/snooze/stop, silence not resolution, user chooses cadence for sensitive topics
 - [x] Monthly cross-check user-triggered only, last 60 days + relevant linked older, dry-run, apply nothing until approved
 - [x] Cleanup never deletes original transcript because old or rarely retrieved; shows counts, sizes, reasons, links, batch decide
@@ -300,7 +300,28 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - [x] Index and context rebuildable after cache deletion
 - [x] Bat commands work on Windows TUF A15 8GB RAM 4GB VRAM, app is driver of vault (127.0.0.1:8765), dark default, uses Ollama at 11434 handling already-running, no native build tools
 
+## 13.1 Pixel-Parity Status (measured 2026-10-10 22:55, apps/01_claude-exact-pixel-clone)
+
+Rendered at 1280x680 CSS @1.5 DPR (1920x1020) — identical pixel size to the spec screenshots, diffed with `tools/compare.py` (mean absolute difference per channel, 0–255):
+
+| Screenshot | State | Mean abs diff | Median | % pixels > 12 | Verdict |
+|---|---|---|---|---|---|
+| 191547 | new chat / main | **3.77** | 0.0 | 4.1 % | sidebar, main chrome, composer x-extents all within 1–2 px |
+| 191558 | File menu | **4.46** | 0.0 | 6.6 % | residual is the *native* Windows/Electron menu bar a browser cannot draw |
+| 191608 | user menu | **3.39** | 0.0 | 3.8 % | every row within ~1 px of spec |
+| 191636 | Apps & extensions | **7.31** | 0.0 | 8.7 % | worst shot: our featured card is a simplified version of Claude's marketing card |
+| 191646 | chat context menu | **4.52** | 0.0 | 5.7 % | position + colours now match; glyphs differ |
+| 191707 | Settings modal | **4.90** | 0.0 | 6.6 % | panel box identical (346–1840 device px); content rows differ by design |
+
+**Accepted residuals (not bugs):** Claude's Anthropic Serif/Sans fonts are not distributable → greeting and chat-title glyph widths differ 10–20 %; headless Chromium paints no scrollbars, so the 7 px sidebar scrollbar (thumb `#3a3a39`, hover `#5a5957`) is correct in CSS but absent from sandbox screenshots; the app shows `qwen2.5:3b` where Claude shows `Sonnet 4.5` (intentional — it is the user's real model); the "Cook This Prompt" chip is an extra required feature, not in Claude.
+
 ## 14. Changelog of Requirements
+
+### [2026-10-10 22:55] Added pixel-parity acceptance evidence
+- Added section 13.1 with the measured per-screenshot diff table and the accepted-residual list
+- Marked Today view as done in the acceptance checklist (built, vault-driven)
+- Why: acceptance criterion is "exact clone, not loosely inspired" — parity now has numbers, not adjectives
+- Requested by: standing user requirement
 
 ### [2026-10-10 19:20] Initial living version created
 - Consolidated from REQUIREMENTS.md, HANDOVER.md, Master Plan, Blueprint, Extension Spec, 6 screenshots
