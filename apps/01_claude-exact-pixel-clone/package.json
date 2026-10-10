@@ -1,0 +1,30 @@
+{
+  "name": "ai-assistant-claude-exact",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "AI ASSistant - Exact pixel-perfect Claude desktop clone",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5173",
+    "dev:server": "node server/vault-api.cjs",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "lucide-react": "^0.344.0",
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.1",
+    "vite": "^5.1.4",
+    "tailwindcss": "^3.4.1",
+    "postcss": "^8.4.33",
+    "autoprefixer": "^10.4.18"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-win32-x64-msvc": "^4.0.0"
+  }
+}
