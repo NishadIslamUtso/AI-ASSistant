@@ -25,15 +25,15 @@ A native Windows app named AI ASSistant that looks exactly like Claude desktop f
 ### 2.1 Main Window (191547.png)
 - [x] Sidebar left 260px #202020: top Search field + "+ New chat" button, sections Projects, Artifacts (2), Customize, Oct 8 group, Older group
 - [x] Sidebar chat list: "Refining a 5-day workout cycle..." (Oct 8), "Identifying charisma type", "Realme 6i - realme... fix", "Fix AI generated Facebook picture", "PSY 101-01W | Unit 1 | Quiz Review", "STA201 - Elements of Statistics", "PHY-112, Principles of Physics II", "CSE220 MID - Data Structure and Algorithms", "Function: Manage memories of personal information" etc — from screenshots, use as default history
-- [x] Context menu on chat item (191646.png): Open in new window, Pin chat, Rename, Add to project, Move to group, Delete — position absolute, dark #2a2a2a, rounded
+- [x] Context menu on chat item (191646.png): Open in new window, Pin, Rename, Delete work (keys P/R/D); Add to project and Move to group shown disabled — position absolute, dark #2a2a2a, rounded
 - [x] Center #1a1a1a: greeting "Evening, Utso." serif 3xl with orange asterisk *, sub "How can I help you today?" composer #242424 rounded-xl, placeholder "How can I help you today?"
-- [x] Composer: textarea auto-grow, bottom row Project dropdown + "Sonnet 5.5 Medium Manual" model selector, send button white circle with arrow
+- [x] Composer: textarea auto-grow, send button white circle. Model slot is now a real Ollama model picker (shows qwen2.5:3b). "Medium" and "Manual" are display-only. Project dropdown is a placeholder.
 - [x] Top bar: "Free plan • Upgrade" right side
 - [x] Bottom left: avatar NU + "Utso" + "Free"
-- [ ] Settings modal (191707.png): Left nav General Account Privacy Billing Capabilities Memory Reflect Time and focus Claude Code System Extensions Developer Skills Connectors, right Appearance Theme options system/sun/moon, Chat font Anthropic Serif, Transcript size Small/Medium/Large, Width Narrow/Medium/Wide, Motion System/Reduced, Voice Language English, Style Buttery, Speed Normal
-- [ ] Menu bar (191558.png): File Edit View Go Help — Electron menu
-- [ ] User menu (191608.png): nishadislamutso@gmail.com, Settings, Language, Get help, Upgrade plan, Get apps and extensions, Learn more, Get API keys, Log out
-- [ ] Apps and extensions modal (191636.png): Do more with Claude everywhere you work, Claude Code Terminal VSCode etc, Microsoft 365, Chrome extension
+- [x] Settings modal (191707.png) — built + checked in headless Chromium (not yet on Windows): Left nav General Account Privacy Billing Capabilities Memory Reflect Time and focus Claude Code System Extensions Developer Skills Connectors, right Appearance Theme options system/sun/moon, Chat font Anthropic Serif, Transcript size Small/Medium/Large, Width Narrow/Medium/Wide, Motion System/Reduced, Voice Language English, Style Buttery, Speed Normal
+- [x] Menu bar (191558.png): File Edit View Go Help — drawn in web build from hamburger (Electron native menu later)
+- [x] User menu (191608.png): nishadislamutso@gmail.com, Settings, Language, Get help, Upgrade plan, Get apps and extensions, Learn more, Get API keys, Log out
+- [x] Apps and extensions modal (191636.png): Do more with Claude everywhere you work, Claude Code Terminal VSCode etc, Microsoft 365, Chrome extension
 
 ### 2.2 Colors (Extracted)
 - Sidebar: #202020
@@ -311,6 +311,14 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - Added hardware constraints TUF A15 8GB RAM 4GB VRAM
 - Added qwen2.5:3b direct use, no download, bat handling already-running Ollama
 - Created AI-optimized repo structure .ai/ + 00_LIVING_DOCS/
+
+### [2026-10-10 (session 2)] Added/Changed: Claude clone modals, model picker, per-chat history
+- **Added:** UserMenu (191608), AppsExtensionsModal (191636), SettingsModal with left nav + Appearance/Voice (191707), MenuBar File/Edit/View/Go/Help (191558), ModelPicker reading Ollama /api/tags, working row menu (Pin, Rename, Delete), Pinned section, Light/Dark/System theme.
+- **Changed:** Each chat now keeps its own transcript (localStorage claude_exact_messages_v2). Sidebar defaults use the chat titles visible in 191547. Storage keys moved to *_v2 (old claude_exact_chats is ignored).
+- **Why:** Handover P2 (modals) and P4 (model selector) plus the context-menu actions. User asked for an exact clone, not loose inspiration.
+- **Requested by:** Utso, via NEW_SESSION handover.
+- **Verified:** Headless Chromium + mock Ollama/vault (test-only, not in repo). 30/30 checks pass. Not yet tested on Windows.
+- **Deviations from spec:** Theme shows System highlighted in 191707, but app default stays Dark (user rule). Accent colour set to #d97757 from screenshot look, not #ff8c00 from the earlier spec. Voice settings saved but not used yet.
 
 ### [NEXT] Add when changed:
 - Use format: ### [YYYY-MM-DD HH:MM] Added/Changed/Fixed: description + why + who requested

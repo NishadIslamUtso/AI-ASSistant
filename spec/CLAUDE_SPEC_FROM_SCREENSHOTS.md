@@ -172,3 +172,14 @@ See apps/02_electron-claude-clone-v6/src/components/SettingsModal.jsx for Settin
 - Chat list defaults from screenshots: Refining 5-day workout cycle etc — use as initial localStorage data for exact match
 - Free plan Upgrade top right is Claude's free tier indicator — keep for exact match, but our app is local free
 - NU Utso Free bottom left avatar — from user email nishadislamutso@gmail.com, initials NU, name Utso, Free badge
+
+## Session 2 corrections (2026-10-10, verified against screenshots)
+
+- Transcript width: 191707 shows **Narrow** selected (not Medium). Implemented: Narrow 720px, Medium 880px, Wide 1040px.
+- Transcript text size: **Medium** selected. Implemented: Small 14px, Medium 16px, Large 18px.
+- Theme: 191707 shows **System** highlighted. The app default stays Dark (user rule), and System follows the OS.
+- Accent asterisk looks coral in the screenshots. Implemented as #d97757 (approximate, not measured).
+- Settings nav: General, Account, Privacy, Billing, Capabilities, Memory, Reflect, Time and focus, Claude Code / This computer: System, Extensions, Developer / Customize: Skills, Connectors. Implemented.
+- Free plan · Upgrade pill sits top-centre of the main column (191547), not top-right.
+- Chat list defaults use the titles visible in 191547 (cut-off titles stored as the visible prefix).
+- Row menu shortcuts: P Pin, R Rename, D Delete (191646). Implemented.

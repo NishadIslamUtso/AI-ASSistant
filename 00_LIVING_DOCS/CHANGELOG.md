@@ -1,7 +1,28 @@
 # CHANGELOG.md — What Changed Each Session (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 (session 2) Asia/Dhaka
 **Rule:** Log every change with date, what, why. This is memory for next AI.
+
+## 2026-10-10 — Session 2 (Claude clone: modals, model picker, chat history)
+
+### Claude exact clone — apps/01_claude-exact-pixel-clone
+- **Added** `src/components/UserMenu.jsx` — email header + Settings / Language / Get help / Upgrade plan / Get apps and extensions / Learn more / Get API keys / Log out (screenshot 191608).
+- **Added** `src/components/AppsExtensionsModal.jsx` — Claude Code card, Microsoft 365, AI ASSistant Chrome extension with setup steps (screenshot 191636).
+- **Added** `src/components/SettingsModal.jsx` — left nav from 191707; Appearance (Theme, Chat font, Transcript text size, Transcript width, Motion) and Voice (Language, Style, Speed) save to localStorage `claude_exact_settings`. Escape/Ctrl+, support.
+- **Added** `src/components/MenuBar.jsx` — hamburger menu File/Edit/View/Go/Help with flyouts (screenshot 191558).
+- **Added** `src/components/ModelPicker.jsx` — lists installed models from `GET http://127.0.0.1:11434/api/tags`, saves choice to `selected_model`. Used by next chat request.
+- **Added** `src/components/Composer.jsx`, `Spark.jsx` (starburst logo), `src/lib/store.js` (constants, storage hook), `src/lib/ollama.js` (streaming with split-line buffering, vault context lookup), `src/lib/hooks.js` (outside-click dismiss).
+- **Changed** `Sidebar.jsx` — rows now have hover ⋮ button + right-click menu. Pin/Unpin, Rename (inline), Delete work. Shortcuts P/R/D. Pinned/Today/Oct 8/Older sections. Search filters live.
+- **Changed** `Center.jsx` — single composer component, greeting time-based (Morning/Afternoon/Evening), transcript width and text size follow settings.
+- **Changed** `App.jsx` — per-chat message storage, New chat creates the chat on first send, appearance applied to document (data-theme, data-motion, CSS vars), `?chat=` opens a chat (used by "Open in new window"), stop button during streaming.
+- **Changed** `index.css` — colours moved to CSS variables; Dark is default; Light via `html[data-theme=light]`; reduced motion via `html[data-motion=reduced]`.
+- **Fixed** Rename shortcut typed the letter into the rename field (keydown now preventDefault).
+- **Not changed:** VaultPanel.jsx (still a stub), start-app.bat, vault-api.cjs.
+
+### Tests (not committed)
+- Headless Chromium via @sparticuz/chromium + puppeteer-core, run against Vite dev server with a test-only mock of Ollama (11434) and vault (8765). 30 checks pass, no console errors. Screenshots were checked against 191547, 191608, 191636, 191707.
+- `npx vite build` passes.
+- Not tested: real Ollama, real vault API, Windows start-app.bat.
 
 ## 2026-10-10
 

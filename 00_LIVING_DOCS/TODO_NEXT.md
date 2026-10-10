@@ -1,6 +1,6 @@
 # TODO_NEXT.md — Immediate Next Actions (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 (session 2) Asia/Dhaka
 **Rule:** Update after each session, priority order, check off when done.
 
 ## Priority 1 — Test Exact Clone on Windows (User Action)
@@ -27,8 +27,8 @@
 
 ## Priority 2 — Add Missing Modals From Screenshots
 
-### 2.1 Settings Modal (191707.png) — High Priority
-- [ ] Create src/components/SettingsModal.jsx
+### 2.1 Settings Modal (191707.png) — DONE session 2
+- [x] Create src/components/SettingsModal.jsx
 - Left nav: General, Account, Privacy, Billing, Capabilities, Memory, Reflect, Time and focus, Claude Code, System, Extensions, Developer, Skills, Connectors
 - Right Appearance:
   - Theme: system/sun/moon icons, options System, Light, Dark (currently dark default)
@@ -40,24 +40,25 @@
 - Trigger: click avatar NU Utso Free bottom left -> user menu -> Settings -> opens modal
 - Store settings in localStorage claude_exact_settings
 
-### 2.2 User Menu (191608.png)
-- [ ] Create src/components/UserMenu.jsx
+### 2.2 User Menu (191608.png) — DONE session 2
+- [x] Create src/components/UserMenu.jsx
 - Content: nishadislamutso@gmail.com, Settings, Language, Get help, Upgrade plan, Get apps and extensions, Learn more, Get API keys, Log out
 - Trigger: click avatar NU bottom left
 - Position: above avatar, dark #2a2a2a rounded
 
-### 2.3 Apps and Extensions Modal (191636.png)
-- [ ] Create src/components/AppsExtensionsModal.jsx
+### 2.3 Apps and Extensions Modal (191636.png) — DONE session 2
+- [x] Create src/components/AppsExtensionsModal.jsx
 - Content: Do more with Claude everywhere you work, Claude Code Terminal VSCode etc, Microsoft 365, Chrome extension
 - Trigger: Settings -> Extensions or top bar?
 
-### 2.4 File Menu (191558.png)
+### 2.4 File Menu (191558.png) — web menu DONE session 2, Electron native still open
+- [x] Web: hamburger MenuBar.jsx with File Edit View Go Help
 - [ ] Electron only: File Edit View Go Help menu bar — for Vite web version, hide or create custom top menu bar
 - For exact clone web version, File menu not needed, but for Electron version add electron/main.js menu
 
 ### 2.5 Context Menu Already Done But Verify
 - [x] Context menu Open in new window, Pin chat, Rename, Add to project, Move to group, Delete on CSE220 MID etc — implemented in Sidebar.jsx
-- [ ] Add functionality: Pin, Rename, Delete actually work (currently UI only)
+- [x] Pin, Rename, Delete work (session 2). Add to project + Move to group still disabled
 
 ## Priority 3 — Port Features From Electron Clone
 
@@ -72,10 +73,11 @@
 ### 3.3 File Upload + Image Upload
 - [ ] Port ImageUpload.jsx, handle qwen3-vl:4b vision model
 
-### 3.4 Project Dropdown + Model Selector
-- [ ] Make Project dropdown + Sonnet 5.5 Medium Manual functional, not static text
-- Model selector should list Ollama models from http://127.0.0.1:11434/api/tags, plus qwen2.5:3b default
-- Store selected model in localStorage
+### 3.4 Project Dropdown + Model Selector — model part DONE session 2
+- [ ] Project dropdown still placeholder
+- [ ] Medium / Manual still display-only
+- [x] Model selector lists Ollama models from http://127.0.0.1:11434/api/tags, qwen2.5:3b default
+- [x] Store selected model in localStorage (selected_model)
 
 ## Priority 4 — Wire Extension -> Vault API -> Obsidian Files
 
@@ -137,6 +139,7 @@ Always update living docs after each task.
 
 ## Done Log
 
+- [x] 2026-10-10 (session 2) Settings modal, user menu, Apps and extensions modal, web menu bar, model picker, row menu actions, per-chat history. Verified headless only, not on Windows.
 - [x] 2026-10-10 19:20 Created master repo structure with .ai/ + 00_LIVING_DOCS/ + apps/ + extension/ + vault/ + spec/ + archive_zips/
 - [x] 2026-10-10 13:19 Built exact pixel-perfect clone from 6 screenshots, Vite+React+Tailwind, direct qwen2.5:3b streaming, vault driver, bat files, zipped 13K
 - [x] 2026-10-10 13:00 Built Electron clone v6 with artifacts workbench etc (previous session)

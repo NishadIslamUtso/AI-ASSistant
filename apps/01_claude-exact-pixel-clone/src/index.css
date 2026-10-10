@@ -1,6 +1,94 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-body { background:#1a1a1a; color:#fff; font-family: Inter, sans-serif; margin:0; overflow:hidden; }
-.serif { font-family: serif; }
-::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-thumb { background:#333; border-radius:3px; }
+
+/* Dark is the default theme (user rule). Light is applied via html[data-theme="light"]. */
+:root {
+  --bg-main: #1a1a1a;
+  --bg-side: #202020;
+  --bg-composer: #242424;
+  --bg-hover: #2a2a2a;
+  --bg-active: #333333;
+  --bg-menu: #2a2a2a;
+  --border: #2a2a2a;
+  --border-strong: #333333;
+  --text: #e0e0e0;
+  --text-2: #aaaaaa;
+  --text-3: #888888;
+  --text-4: #666666;
+  --accent: #d97757;
+  --danger: #f08080;
+  --send-bg: #ffffff;
+  --send-fg: #000000;
+  --overlay: rgba(0, 0, 0, 0.5);
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --transcript-size: 16px;
+  --transcript-width: 720px;
+  --chat-font: Georgia, 'Times New Roman', serif;
+}
+
+html[data-theme="light"] {
+  --bg-main: #faf9f5;
+  --bg-side: #f0eee6;
+  --bg-composer: #ffffff;
+  --bg-hover: #e8e6dc;
+  --bg-active: #dedbd0;
+  --bg-menu: #ffffff;
+  --border: #e5e3dc;
+  --border-strong: #d8d5ca;
+  --text: #1f1e1d;
+  --text-2: #4d4c48;
+  --text-3: #6b6a68;
+  --text-4: #8f8d88;
+  --accent: #d97757;
+  --danger: #b3261e;
+  --send-bg: #1f1e1d;
+  --send-fg: #ffffff;
+  --overlay: rgba(0, 0, 0, 0.3);
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+html[data-motion="reduced"] *,
+html[data-motion="reduced"] *::before,
+html[data-motion="reduced"] *::after {
+  transition: none !important;
+  animation: none !important;
+  scroll-behavior: auto !important;
+}
+
+body {
+  background: var(--bg-main);
+  color: var(--text);
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  margin: 0;
+  overflow: hidden;
+}
+
+.serif { font-family: Georgia, 'Times New Roman', serif; }
+.chat-text { font-family: var(--chat-font); font-size: var(--transcript-size); line-height: 1.6; }
+
+/* Semantic surfaces used by components (keeps light/dark in one place). */
+.c-main { background: var(--bg-main); color: var(--text); }
+.c-side { background: var(--bg-side); color: var(--text); }
+.c-composer { background: var(--bg-composer); border: 1px solid var(--border-strong); }
+.c-menu { background: var(--bg-menu); border: 1px solid var(--border-strong); box-shadow: var(--shadow); color: var(--text); }
+.c-hover:hover { background: var(--bg-hover); }
+.c-active { background: var(--bg-hover); color: var(--text); }
+.c-muted { color: var(--text-3); }
+.c-muted-2 { color: var(--text-2); }
+.c-border { border-color: var(--border); }
+.c-overlay { background: var(--overlay); }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+select.c-select {
+  background: var(--bg-hover);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 14px;
+  outline: none;
+}

@@ -1,11 +1,13 @@
 # HANDOVER_LIVING.md — Current State + Gaps (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 (session 2) Asia/Dhaka
 **Purpose:** Give any AI/developer enough context to continue without relying on previous AI memory. Update every session.
 
 ## 1. Executive Summary
 
 User Utso wants AI ASSistant native Windows app that looks exactly like Claude desktop from 6 screenshots (191547-191707), uses real Obsidian vault AI-Brain/ as canonical memory, extension collects from every site + every AI by default (log wasn't accessible if fails, no popup), never-check blacklist for privacy, Capsule Hub + Quillbot UX for context injection, local-first qwen2.5:3b via Ollama, driver/vault/extension architecture.
+
+**Session 2 update (2026-10-10):** Settings, user menu, Apps and extensions modal, web menu bar, Ollama model picker, working row menu (Pin/Rename/Delete), per-chat transcripts added to apps/01. Verified in headless Chromium against a test mock of Ollama and the vault API (30 checks pass). NOT yet tested on Windows with real Ollama and real vault API.
 
 **Current status:** 
 - Latest exact pixel-perfect clone built in apps/01_claude-exact-pixel-clone/ from screenshots, Vite+React+Tailwind, direct Ollama streaming, vault API, start-app.bat handling existing Ollama, zipped 13K. Not yet tested on user's Windows.
@@ -29,11 +31,11 @@ User Utso wants AI ASSistant native Windows app that looks exactly like Claude d
 ## 3. What Doesn't Work / Gaps
 
 ### Exact Clone Gaps (apps/01_claude-exact-pixel-clone)
-- [ ] Settings modal Appearance Theme Chat font Transcript size Width Motion Voice Language Style Speed from 191707.png — not implemented, need modal component
-- [ ] File Edit View Go Help menu bar — Electron menu needed, currently Vite web only
-- [ ] User menu nishadislamutso@gmail.com Settings etc from 191608.png — not implemented
-- [ ] Apps and extensions modal from 191636.png — not implemented
-- [ ] Project dropdown Sonnet 5.5 Medium Manual functionality — currently static text
+- [x] Settings modal from 191707.png — built session 2 (Voice settings saved, not used yet)
+- [x] File Edit View Go Help — web menu built session 2; Electron native menu still needed
+- [x] User menu from 191608.png — built session 2
+- [x] Apps and extensions modal from 191636.png — built session 2
+- [ ] Project dropdown still placeholder. Model picker is real (session 2). Medium / Manual are display-only
 - [ ] Artifact runner — no artifact preview yet (Electron clone has it, can port)
 - [ ] File upload, image upload — missing
 - [ ] Thinking display — missing
@@ -102,15 +104,14 @@ User Utso wants AI ASSistant native Windows app that looks exactly like Claude d
 
 ## 6. Immediate Next Steps (Priority Order)
 
-1. **Test exact clone on Windows:** User extracts apps/01_claude-exact-pixel-clone, runs start-app.bat, confirms qwen2.5:3b replies without Tic Tac Toe loop, clears localStorage if needed
-2. **Add Settings modal from 191707.png:** Appearance Theme system/sun/moon, Chat font Anthropic Serif, Transcript size Small/Medium/Large, Width Narrow/Medium/Wide, Motion System/Reduced, Voice Language English Style Buttery Speed Normal, left nav General Account Privacy Billing Capabilities Memory Reflect Time and focus Claude Code System Extensions Developer Skills Connectors
-3. **Add File/Edit/View/Go/Help menu + User menu + Apps and extensions modal:** From 191558, 191608, 191636 screenshots
-4. **Port artifact runner from Electron clone:** Artifacts (2) HTML Application preview like in user screenshots
-5. **Wire extension -> vault API -> Obsidian files:** Test end-to-end capture, wasn't accessible logging, blacklist
-6. **Implement VaultPanel enhancements:** Capsule drag-drop, blacklist manager, Open Loops
-7. **Implement Today view:** Current Snapshot, today's journal draft, due follow-ups, one next action
-8. **Build Windows installer:** Electron builder for exact clone, or Tauri lighter for 8GB RAM
-9. **Test with synthetic data:** vault read/write, conflict safety, model capabilities, Claude UI inventory, authorized capture, journal/provenance, retention controls, model switch, external-send approval
+1. **Test on Windows (user action):** run apps/01_claude-exact-pixel-clone/start-app.bat with real Ollama. Check replies stream, the model picker lists installed models, and the vault API answers on 8765.
+2. **P3 Artifact runner:** port ArtifactPanel from apps/02 (only create artifacts when explicitly asked).
+3. **P5 File/image upload + thinking display:** the handover mentions qwen3-vl:4b for vision. Confirm it is installed in Ollama (ollama list) before wiring vision.
+4. **Project dropdown + Medium/Manual:** make real or leave clearly labelled as display-only.
+5. **Markdown rendering in transcript:** replies are plain text (pre-wrap) right now.
+6. **P6 Extension wiring:** extension -> vault API -> Obsidian files, end-to-end test.
+7. **P7 VaultPanel:** capsule library, drag-drop inject, blacklist manager, Open Loops, Current Snapshot.
+8. **P8 Today view, P9 Windows installer (Electron wrapper gives native title bar and menu).**
 
 ## 7. How to Continue (For Next AI)
 
