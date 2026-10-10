@@ -1,9 +1,11 @@
 # TODO_NEXT.md — Immediate Next Actions (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 (session 2) Asia/Dhaka
 **Rule:** Update after each session, priority order, check off when done.
 
 ## Priority 1 — Test Exact Clone on Windows (User Action)
+
+**Updated 2026-10-10 session 2:** the CORS step is no longer needed (browser calls go through the Vite proxy). Test with start-app.bat, then compare the screen against spec/screenshots 191547-191707 and report differences.
 
 - [ ] User extracts apps/01_claude-exact-pixel-clone or archive_zips/AI_ASSistant_Exact_Claude_Clone.zip on TUF A15
 - [ ] Runs start-app.bat (handles already-running Ollama, installs @rollup/rollup-win32-x64-msvc)
@@ -27,8 +29,8 @@
 
 ## Priority 2 — Add Missing Modals From Screenshots
 
-### 2.1 Settings Modal (191707.png) — High Priority
-- [ ] Create src/components/SettingsModal.jsx
+### 2.1 Settings Modal (191707.png) — DONE in source (session 2), needs user check
+- [x] Create src/components/SettingsModal.jsx
 - Left nav: General, Account, Privacy, Billing, Capabilities, Memory, Reflect, Time and focus, Claude Code, System, Extensions, Developer, Skills, Connectors
 - Right Appearance:
   - Theme: system/sun/moon icons, options System, Light, Dark (currently dark default)
@@ -40,24 +42,26 @@
 - Trigger: click avatar NU Utso Free bottom left -> user menu -> Settings -> opens modal
 - Store settings in localStorage claude_exact_settings
 
-### 2.2 User Menu (191608.png)
-- [ ] Create src/components/UserMenu.jsx
+### 2.2 User Menu (191608.png) — DONE in source (session 2)
+- [x] Create src/components/UserMenu.jsx
 - Content: nishadislamutso@gmail.com, Settings, Language, Get help, Upgrade plan, Get apps and extensions, Learn more, Get API keys, Log out
 - Trigger: click avatar NU bottom left
 - Position: above avatar, dark #2a2a2a rounded
 
-### 2.3 Apps and Extensions Modal (191636.png)
-- [ ] Create src/components/AppsExtensionsModal.jsx
+### 2.3 Apps and Extensions Modal (191636.png) — DONE in source (session 2)
+- [x] Create src/components/AppsExtensionsModal.jsx
 - Content: Do more with Claude everywhere you work, Claude Code Terminal VSCode etc, Microsoft 365, Chrome extension
 - Trigger: Settings -> Extensions or top bar?
 
 ### 2.4 File Menu (191558.png)
-- [ ] Electron only: File Edit View Go Help menu bar — for Vite web version, hide or create custom top menu bar
+- [x] Web: hamburger menu with File Edit View Go Help flyouts (session 2)
+- [ ] Electron: native menu bar in electron/main.js (not built)
 - For exact clone web version, File menu not needed, but for Electron version add electron/main.js menu
 
 ### 2.5 Context Menu Already Done But Verify
-- [x] Context menu Open in new window, Pin chat, Rename, Add to project, Move to group, Delete on CSE220 MID etc — implemented in Sidebar.jsx
-- [ ] Add functionality: Pin, Rename, Delete actually work (currently UI only)
+- [x] Context menu Open in new window, Pin chat, Rename, Add to project, Move to group, Delete — implemented in Sidebar.jsx
+- [x] Pin, Rename, Delete, Open in new window work (session 2, smoke-tested)
+- [ ] Add to project / Move to group still disabled (need Projects + Groups data model)
 
 ## Priority 3 — Port Features From Electron Clone
 
@@ -73,9 +77,10 @@
 - [ ] Port ImageUpload.jsx, handle qwen3-vl:4b vision model
 
 ### 3.4 Project Dropdown + Model Selector
-- [ ] Make Project dropdown + Sonnet 5.5 Medium Manual functional, not static text
-- Model selector should list Ollama models from http://127.0.0.1:11434/api/tags, plus qwen2.5:3b default
-- Store selected model in localStorage
+- [ ] Project dropdown still static. Medium and Manual still static labels.
+- [x] Model picker shows the real Ollama model (session 2)
+- Model selector lists Ollama models via /api/ollama/api/tags (session 2 done), default qwen2.5:3b
+- Selected model stored in localStorage claude_exact_model (session 2 done)
 
 ## Priority 4 — Wire Extension -> Vault API -> Obsidian Files
 
@@ -137,6 +142,7 @@ Always update living docs after each task.
 
 ## Done Log
 
+- [x] 2026-10-10 (session 2) Measured colours/layout from screenshots; rebuilt sidebar, centre, composer, user menu, apps modal, settings modal, menu bar, context menu; per-chat transcripts; model picker; browser calls via Vite proxy; start-app.bat reordered; vault-api repo path. Build passes; jsdom smoke 25/25 vs mock Ollama.
 - [x] 2026-10-10 19:20 Created master repo structure with .ai/ + 00_LIVING_DOCS/ + apps/ + extension/ + vault/ + spec/ + archive_zips/
 - [x] 2026-10-10 13:19 Built exact pixel-perfect clone from 6 screenshots, Vite+React+Tailwind, direct qwen2.5:3b streaming, vault driver, bat files, zipped 13K
 - [x] 2026-10-10 13:00 Built Electron clone v6 with artifacts workbench etc (previous session)

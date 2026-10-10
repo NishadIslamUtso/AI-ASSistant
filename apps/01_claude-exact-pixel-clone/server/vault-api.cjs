@@ -7,20 +7,23 @@ const app = express();
 const PORT = 8765;
 
 // Vault path - try multiple locations
+// AI_BRAIN_PATH wins if set. Otherwise the first existing folder is used.
+// The repo copy of the vault is vault/AI-Brain (three levels up from server/).
 const possibleVaultPaths = [
+  process.env.AI_BRAIN_PATH,
+  path.join(__dirname, '../../../vault/AI-Brain'),
   path.join(__dirname, '../../AI-Brain'),
   path.join(__dirname, '../AI-Brain'),
   path.join(require('os').homedir(), 'Documents', 'AI-Brain'),
   path.join(__dirname, '../../AI-Brain-Vault/AI-Brain'),
-  '/home/user/AI-Brain'
-];
+].filter(Boolean);
 
 let VAULT_PATH = null;
 for (const p of possibleVaultPaths) {
   if (fs.existsSync(p)) { VAULT_PATH = p; break; }
 }
 if (!VAULT_PATH) {
-  VAULT_PATH = path.join(__dirname, '../AI-Brain');
+  VAULT_PATH = path.join(__dirname, '../../../vault/AI-Brain');
   console.log('Vault not found, using:', VAULT_PATH);
 }
 

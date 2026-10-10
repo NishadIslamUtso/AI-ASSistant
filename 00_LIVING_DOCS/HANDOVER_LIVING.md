@@ -14,6 +14,10 @@ User Utso wants AI ASSistant native Windows app that looks exactly like Claude d
 - Vault starter in vault/AI-Brain/ 61 files, templates, system docs. No real user data yet.
 - Master repo structure created 2026-10-10 as AI-optimized memory/handover repo per user request for single zip with all work + living requirements.
 
+**Session 2 update (2026-10-10):** The first handover's "✅" list was partly wrong. UserMenu.jsx, AppsExtensionsModal.jsx and SettingsModal.jsx did not exist in the repo. They now exist and are wired (in source, compiled, smoke-tested). The colours in the old spec were guesses; they are now measured from the screenshots (see spec/CLAUDE_SPEC_FROM_SCREENSHOTS.md "MEASURED VALUES"). Still not done: artifact runner, file and image upload, thinking display, capsule drag-drop, Today view, Windows installer, Windows user test.
+
+---
+
 ## 2. What Works (Tested in Sandbox)
 
 - [x] Exact clone UI: Sidebar 260px #202020 Search +New Projects Artifacts Customize Oct8 Older, context menu, Center #1a1a1a Evening Utso + composer #242424, Free plan Upgrade, NU Utso Free bottom — matches screenshots
@@ -143,5 +147,7 @@ All zips exclude node_modules/dist.
 Don't claim feature implemented because it appears in plan/README/checklist/ZIP. Mark accurately.
 
 ## 10. Latest Session Log
+
+**2026-10-10 session 2:** Took over from the NEW_SESSION_HANDOVER text. Measured the six key screenshots at pixel level. Rebuilt apps/01 UI to match them: sidebar, centre composer, user menu, apps modal, settings modal, menu bar, context menu (Pin/Rename/Delete working). Moved browser calls to the Vite proxy (/api/ollama, /api/vault). Per-chat transcripts. Model picker from Ollama. Fixed vault path so captures go to the repo vault. Reordered start-app.bat (CRLF). Verified: vite build; proxy curl tests; jsdom smoke test 25/25 against a mock Ollama. Not verified: real browser screenshot comparison, real qwen2.5:3b, Windows. The dev server was left running on 0.0.0.0:5173 for the Arena preview.
 
 **2026-10-10:** User posted 6 screenshots 191547-191707 showing actual Claude desktop: Sidebar Search +New Projects Artifacts Customize Oct8 Older, Center Evening Utso greeting with orange asterisk, composer How can I help you today?, Project dropdown Sonnet 5.5 Medium Manual, Free plan Upgrade, NU Utso Free bottom, context menu, Settings modal, Apps and extensions modal, user menu, File menu. Said "come on man, is this to hard to make?" Built exact pixel-perfect clone in AI-ASSistant-Claude-Exact, package.json vite tailwind, App.jsx localStorage claude_exact_chats, Sidebar.jsx search filter + context menu, Center.jsx greeting + textarea + vault context fetch 127.0.0.1:8765/context + direct Ollama 11434/api/chat qwen2.5:3b streaming + log to /capture, VaultPanel.jsx, server/vault-api.cjs, start-app.bat + build-windows.bat handling existing Ollama, zipped 13K. Then user asked for one zip with all we did so far, requirement list updated every time, repo as memory/handover for other AIs, structure suits AIs best. Creating master repo AI-ASSistant-Github-Repo with .ai/ + 00_LIVING_DOCS/ living docs.

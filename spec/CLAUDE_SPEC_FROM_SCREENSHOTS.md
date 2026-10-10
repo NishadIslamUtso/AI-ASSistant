@@ -4,6 +4,49 @@
 **Date:** 2026-10-10
 **Purpose:** Exact pixel measurements, colors, layout for apps/01_claude-exact-pixel-clone
 
+
+## MEASURED VALUES (2026-10-10 session 2) — these supersede the estimates below
+
+Method: the PNGs were decoded with the Python standard library and pixels sampled directly. Source images are 1920x1020 (native). Layout is in native pixels, treated as CSS pixels at 1:1, so it matches the screen the screenshots were taken on at 100% scaling.
+
+### Colours
+| Role | Hex | Where |
+|---|---|---|
+| Sidebar | #111111 | left column, Free plan pill |
+| Main | #151515 | centre column, modal body (apps) |
+| Composer, menus, Claude Code card | #20201f | composer, user menu, context menu |
+| Search field | #1d1d1d | sidebar search |
+| Active / New row / selected nav | #343434 | New row, selected chat, settings selected item |
+| Primary text | #f0efec | greeting, headings |
+| Body text | #b8b8ad | chat titles, nav |
+| Muted | #898781 | section labels, placeholder, Medium |
+| Accent (asterisk) | #d97757 | greeting spark |
+| Link | #4099ec | Upgrade |
+| Avatar | #292929 | NU circle |
+| Settings content | #1a1a19 | right pane of settings |
+
+### Layout (native px)
+- Sidebar width 384. Toolbar height 48. Icon buttons 28px, 36px pitch, first centre at x=29.
+- Search box y 63-93 (h 31), inset x 14. New row y 107-142 (h 36). Nav rows 36px, 37px pitch.
+- Chat rows 34px high, 38px pitch. Date headers 14px muted.
+- Footer avatar centre y 989.
+- Greeting centre y 457, serif ~44px, asterisk ~46px.
+- Composer x 714-1592 (width 878, i.e. Narrow = 880px), y 517-658, radius ~18.
+- Under composer: Project at x 735, model/Medium/Manual right-aligned to x 1571, y 684.
+- Free plan pill x 1063-1255, y 126-170, bg #111111.
+- Caption buttons 63px wide at top right (ghost, minimise, maximise, close).
+- User menu x 12-383, y 621-964. Context menu about 233px wide, opening near the row.
+- Settings modal x 82-1839, y 51-971. Nav 263px wide, nav items 44px pitch. Content starts x 378.
+- Apps modal x 82-1839, y 67-954. Header 65px. Title serif ~44px centred at y 202.
+
+### Settings values from 191707 (what is in the UI)
+- Left nav: Settings (General, Account, Privacy, Billing, Capabilities, Memory, Reflect, Time and focus, Claude Code); This computer (System, Extensions, Developer); Customize (Skills, Connectors).
+- Appearance: Theme [monitor, sun, moon]; Chat font Anthropic Serif; Transcript text size Small/Medium/Large (Medium); Transcript width Narrow/Medium/Wide (Narrow); Motion System/Reduced (System); Voice: Language English, Style Buttery, Speed Normal.
+
+### What was NOT sampled
+- Light theme (not in any screenshot). Values in index.css are approximations.
+- Message bubbles and assistant text (no messages in screenshots).
+
 ## Screenshot 191547.png — Main Window
 
 ### Layout

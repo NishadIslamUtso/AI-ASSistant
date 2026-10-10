@@ -1,6 +1,89 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-body { background:#1a1a1a; color:#fff; font-family: Inter, sans-serif; margin:0; overflow:hidden; }
-.serif { font-family: serif; }
-::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-thumb { background:#333; border-radius:3px; }
+
+/* Dark is the default. Values measured from spec/screenshots (191547 etc.). */
+:root {
+  --c-side: #111111;
+  --c-main: #151515;
+  --c-panel: #1a1a19;
+  --c-composer: #20201f;
+  --c-menu: #20201f;
+  --c-search: #1d1d1d;
+  --c-seg: #252524;
+  --c-hover: #242423;
+  --c-active: #343434;
+  --c-line: #2d2d2b;
+  --c-text: #f0efec;
+  --c-body: #b8b8ad;
+  --c-muted: #898781;
+  --c-faint: #5a5957;
+  --c-accent: #d97757;
+  --c-link: #4099ec;
+  --c-avatar: #292929;
+  --c-pill: #111111;
+  --c-overlay: rgba(0, 0, 0, 0.5);
+  --c-danger: #e5534b;
+
+  --font-ui: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  --font-serif: "Anthropic Serif", "Tiempos Text", Georgia, "Times New Roman", serif;
+  --col-w: 880px;
+  --transcript-size: 16px;
+  color-scheme: dark;
+}
+
+/* Light palette: approximate (not in the screenshots). */
+html[data-theme="light"] {
+  --c-side: #f4f3ee;
+  --c-main: #faf9f5;
+  --c-panel: #ffffff;
+  --c-composer: #ffffff;
+  --c-menu: #ffffff;
+  --c-search: #ecebe6;
+  --c-seg: #ebeae4;
+  --c-hover: #e9e8e2;
+  --c-active: #e2e1da;
+  --c-line: #dddbd3;
+  --c-text: #1f1e1d;
+  --c-body: #3d3d3a;
+  --c-muted: #75736d;
+  --c-faint: #a8a6a0;
+  --c-link: #2f6fd6;
+  --c-avatar: #e6e4dd;
+  --c-pill: #f0efe9;
+  --c-overlay: rgba(0, 0, 0, 0.3);
+  --c-danger: #c2412d;
+  color-scheme: light;
+}
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: var(--c-main);
+  color: var(--c-text);
+  font-family: var(--font-ui);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+button { font-family: inherit; }
+
+html[data-font="serif"] .transcript-text { font-family: var(--font-serif); }
+html[data-font="sans"] .transcript-text { font-family: var(--font-ui); }
+.transcript-text { font-size: var(--transcript-size); line-height: 1.65; }
+
+@keyframes ai-spin { to { transform: rotate(360deg); } }
+.animate-ai-spin { animation: ai-spin 2.4s linear infinite; }
+
+/* Settings > Motion: "Reduced" always, "System" follows the OS setting. */
+html[data-motion="reduced"] *,
+html[data-motion="reduced"] *::before,
+html[data-motion="reduced"] *::after { animation: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  html[data-motion="system"] *,
+  html[data-motion="system"] *::before,
+  html[data-motion="system"] *::after { animation: none !important; transition: none !important; }
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--c-line); border-radius: 4px; }

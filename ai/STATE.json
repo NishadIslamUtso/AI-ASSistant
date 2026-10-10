@@ -5,39 +5,46 @@
   "apps": {
     "01_claude-exact-pixel-clone": {
       "path": "apps/01_claude-exact-pixel-clone",
-      "status": "built-not-tested-on-windows",
-      "tech": "Vite 5 + React 18 + Tailwind + Express vault API",
+      "status": "in-source; compiled (vite build); smoke-tested in jsdom against mock Ollama and real vault API; NOT browser-visually verified; NOT user-confirmed on Windows",
+      "tech": "Vite 5 + React 18 + Tailwind (CSS-variable palette) + lucide-react + Express vault API; browser calls via Vite proxy /api/ollama and /api/vault",
       "features_implemented": [
-        "Sidebar 260px #202020 Search +New Projects Artifacts Customize Oct8 Older groups",
-        "Search filter, context menu Open in new window Pin Rename Add to project Move to group Delete",
-        "Center #1a1a1a Evening Utso greeting (time-based), composer #242424 rounded-xl How can I help you today?",
-        "Free plan Upgrade top, bottom NU Utso Free avatar",
-        "VaultPanel toggleable",
-        "Direct Ollama http://127.0.0.1:11434/api/chat qwen2.5:3b streaming",
-        "Vault driver http://127.0.0.1:8765/context + /capture",
-        "localStorage claude_exact_chats with defaults Refining 5-day workout cycle etc from screenshots",
-        "start-app.bat handles already-running Ollama, installs @rollup/rollup-win32-x64-msvc",
-        "build-windows.bat"
+        "Sidebar 384px #111111 measured from screenshots: toolbar, Search, New, Projects/Artifacts/Customize (nav only), date groups Pinned/Today/Oct 8-style/Older",
+        "Chat rows with hover ⋯ button and right-click context menu: Open in new window, Pin/Unpin (P), Rename (R, inline), Delete (D, confirm)",
+        "Add to project and Move to group shown disabled (no Projects/Groups yet)",
+        "Hamburger menu bar File/Edit/View/Go/Help with flyouts (active items only)",
+        "Centre: Free plan · Upgrade pill, time-based greeting with orange asterisk, composer (Enter send, Shift+Enter newline, auto-grow, stop button while streaming, send button when typing)",
+        "Footer model picker lists Ollama models from /api/ollama/api/tags, selection saved (default qwen2.5:3b)",
+        "Per-chat transcripts stored in localStorage claude_exact_messages; chat created on first message",
+        "Streaming replies from Ollama /api/chat with buffered NDJSON parsing; Thinking indicator; friendly error message when Ollama is down",
+        "Short system prompt (fixes Tic Tac Toe trigger); artifacts only when asked (instruction in prompt, artifact runner not built)",
+        "Vault context lookup while typing (debounced) and per-message vault capture (fire-and-forget)",
+        "User menu (email, Settings Ctrl+,, Get apps and extensions, others dimmed)",
+        "Apps and extensions modal (Claude Code/Microsoft 365 layout-only; AI ASSistant browser extension card with setup steps)",
+        "Settings modal: nav with 14 items (General built), Appearance: Theme system/light/dark (dark default), Chat font, Transcript size, Transcript width (applies live), Motion; Voice values stored only",
+        "Settings persisted (claude_exact_settings) and applied before first paint",
+        "vault-api.cjs looks for repo vault (vault/AI-Brain) and AI_BRAIN_PATH; start-app.bat starts Ollama first, model check is a warning (CRLF)",
+        "VaultPanel placeholder (View > Toggle vault panel)"
       ],
       "features_missing": [
-        "Settings modal Appearance Theme Chat font Transcript size Width Motion Voice Language Style Speed from 191707.png",
-        "File Edit View Go Help menu bar",
-        "User menu nishadislamutso@gmail.com Settings etc from 191608.png",
-        "Apps and extensions modal from 191636.png",
-        "Project dropdown Sonnet 5.5 Medium Manual functionality",
-        "Artifact runner",
-        "File upload, image upload",
-        "Thinking display",
-        "Capsule drag-drop inject",
-        "Quillbot inline suggestions (requires extension integration)"
+        "Artifact runner (port from apps/02 ArtifactPanel + Workbench) — P3",
+        "File upload, image upload (qwen3-vl:4b vision), thinking display — P5",
+        "Project dropdown, Medium/Manual selectors (static labels), Projects and Groups data model",
+        "Settings sections other than General; Voice output; Light palette tuning",
+        "Capsule library drag-drop, blacklist manager, Open Loops, Current Snapshot, Cook This Prompt — P7",
+        "Today view, journal, follow-ups — P8",
+        "Electron/Windows installer and native title bar/menu — P9",
+        "Real browser visual comparison against screenshots (no browser in sandbox)",
+        "Real qwen2.5:3b reply test and Windows test by user"
       ],
       "known_bugs": [
-        "Potential Tic Tac Toe loop if systemPrompt includes game example - FIXED by simple prompt in Center.jsx but need clear localStorage if looped",
-        "Ollama CORS if OLLAMA_ORIGINS not *",
-        "Vite rollup win32 optional dep may fail - fixed by bat installing @rollup/rollup-win32-x64-msvc"
+        "Tic Tac Toe loop: fixed in prompt (short system prompt); if old localStorage still loops, clear claude_exact_messages",
+        "Ollama CORS: no longer needed (Vite proxy strips Origin); direct use of 11434 from browser is no longer done",
+        "Vite rollup win32: optional dep @rollup/rollup-win32-x64-msvc in package.json",
+        "Window caption buttons are decorative in the browser",
+        "Back/forward and code view icons are visual only"
       ],
       "build_cmd": "npm install && npm run dev:server & npm run dev",
-      "zip": "archive_zips/AI_ASSistant_Exact_Claude_Clone.zip 13K"
+      "zip": "archive_zips/AI_ASSistant_Exact_Claude_Clone.zip is older (13K); rebuild needed if the user wants a zip"
     },
     "02_electron-claude-clone-v6": {
       "path": "apps/02_electron-claude-clone-v6",
@@ -108,8 +115,13 @@
   ],
   "last_session": {
     "date": "2026-10-10",
-    "what_done": "Built exact pixel-perfect Claude clone from 6 screenshots, created start-app.bat handling existing Ollama, direct qwen2.5:3b streaming, vault driver, zipped to AI_ASSistant_Exact_Claude_Clone.zip 13K",
-    "user_request": "give me one zip with all we did so far, requirement list updated every time, repo as memory/handover for other AIs, structure suits AIs best",
-    "action_now": "Creating master github repo AI-ASSistant-Github-Repo with living docs"
+    "session": 2,
+    "what_done": "Measured colours/layout from the six key screenshots; rebuilt apps/01 UI (sidebar, centre, composer, user menu, apps modal, settings modal, menu bar, context menu); per-chat transcripts; Ollama model picker; browser calls moved to Vite proxy; vault path fix; start-app.bat reordered. Verified by vite build, curl proxy tests and jsdom smoke test 25/25 vs mock Ollama.",
+    "user_request": "Continue from the GitHub repo and make the Claude app an exact clone (read NEW_SESSION_HANDOVER and AGENT_INSTRUCTIONS).",
+    "action_now": "User tests start-app.bat on Windows and compares against screenshots; next is P3 artifact runner, then P5 uploads/thinking.",
+    "corrections_to_handover": [
+      "UserMenu.jsx, AppsExtensionsModal.jsx, SettingsModal.jsx did not exist in the repo despite earlier ✅ marks; now created",
+      "Colours #1a1a1a/#202020/#242424 were estimates; measured values are #151515/#111111/#20201f"
+    ]
   }
 }

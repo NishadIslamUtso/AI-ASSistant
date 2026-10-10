@@ -99,6 +99,19 @@
 - Transfer attachments: carry files you uploaded/generated across tools, not just text
 - Prompt enhancer: "Cook This Prompt" — enhance current prompt with relevant vault context
 
+## 3.4 Browser → Local Services (Proxy, session 2, 2026-10-10)
+
+```
+Browser (any origin, incl. Arena preview)
+  fetch('/api/ollama/api/chat')  ──►  Vite dev server :5173  ──proxy──►  Ollama   127.0.0.1:11434/api/chat
+  fetch('/api/vault/context?q=') ──►  Vite dev server :5173  ──proxy──►  Vault API 127.0.0.1:8765/context
+```
+- Browser code never names 127.0.0.1 or localhost. Constants live in src/lib/constants.js (OLLAMA_PROXY, VAULT_PROXY).
+- vite.config.js proxy also strips the Origin header on the Ollama hop, so no OLLAMA_ORIGINS setting is needed.
+- Dev host: 127.0.0.1 by default (AI_ASSISTANT_HOST overrides). Preview runs use 0.0.0.0 with allowedHosts .e2b.app.
+- Streaming: NDJSON from /api/chat, parsed line by line with a buffer (src/lib/ollama.js).
+- Storage (localStorage): claude_exact_chats (list), claude_exact_messages (map chatId → messages), claude_exact_settings, claude_exact_model.
+
 ## 4. API Spec (Local Loopback 8765)
 
 ### POST /capture

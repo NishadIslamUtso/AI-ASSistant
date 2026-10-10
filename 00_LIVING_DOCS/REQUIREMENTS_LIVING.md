@@ -1,6 +1,6 @@
 # REQUIREMENTS_LIVING.md — Single Source of Truth (Living)
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-10 (session 2, after 19:20) Asia/Dhaka
 **Version:** 1.0.0-master
 **Rule:** UPDATE THIS FILE EVERY TIME SOMETHING CHANGES. This repo is memory for AIs. If you don't update, next session loses context.
 
@@ -22,26 +22,35 @@ A native Windows app named AI ASSistant that looks exactly like Claude desktop f
 
 **Source:** spec/screenshots/ 191547.png to 191707.png — these ARE spec, not inspiration.
 
-### 2.1 Main Window (191547.png)
-- [x] Sidebar left 260px #202020: top Search field + "+ New chat" button, sections Projects, Artifacts (2), Customize, Oct 8 group, Older group
-- [x] Sidebar chat list: "Refining a 5-day workout cycle..." (Oct 8), "Identifying charisma type", "Realme 6i - realme... fix", "Fix AI generated Facebook picture", "PSY 101-01W | Unit 1 | Quiz Review", "STA201 - Elements of Statistics", "PHY-112, Principles of Physics II", "CSE220 MID - Data Structure and Algorithms", "Function: Manage memories of personal information" etc — from screenshots, use as default history
-- [x] Context menu on chat item (191646.png): Open in new window, Pin chat, Rename, Add to project, Move to group, Delete — position absolute, dark #2a2a2a, rounded
-- [x] Center #1a1a1a: greeting "Evening, Utso." serif 3xl with orange asterisk *, sub "How can I help you today?" composer #242424 rounded-xl, placeholder "How can I help you today?"
-- [x] Composer: textarea auto-grow, bottom row Project dropdown + "Sonnet 5.5 Medium Manual" model selector, send button white circle with arrow
-- [x] Top bar: "Free plan • Upgrade" right side
-- [x] Bottom left: avatar NU + "Utso" + "Free"
-- [ ] Settings modal (191707.png): Left nav General Account Privacy Billing Capabilities Memory Reflect Time and focus Claude Code System Extensions Developer Skills Connectors, right Appearance Theme options system/sun/moon, Chat font Anthropic Serif, Transcript size Small/Medium/Large, Width Narrow/Medium/Wide, Motion System/Reduced, Voice Language English, Style Buttery, Speed Normal
-- [ ] Menu bar (191558.png): File Edit View Go Help — Electron menu
-- [ ] User menu (191608.png): nishadislamutso@gmail.com, Settings, Language, Get help, Upgrade plan, Get apps and extensions, Learn more, Get API keys, Log out
-- [ ] Apps and extensions modal (191636.png): Do more with Claude everywhere you work, Claude Code Terminal VSCode etc, Microsoft 365, Chrome extension
+### 2.1 Main Window (191547.png) — status after session 2 (2026-10-10)
+Status legend: in source = code exists · compiled = vite build passes · smoke-tested = jsdom run against mock Ollama · user-confirmed = user saw it on Windows (none yet).
+- [x] Sidebar 384px #111111: toolbar (menu, sidebar toggle, back/forward, chat/code switch), Search, New, Projects, Artifacts, Customize, date groups Pinned/Today/Oct 8-style/Older — in source · compiled · smoke-tested
+- [x] Chat rows 34px, ⋯ button on hover, right-click context menu: Open in new window, Pin (P), Rename (R), Add to project, Move to group, Delete (D) — Pin/Rename/Delete/Open in new window work; Add to project / Move to group disabled (not built) — smoke-tested
+- [x] Centre #151515: Free plan · Upgrade pill, time-based greeting "<Morning|Afternoon|Evening|Late night>, Utso" with orange asterisk in serif — in source · compiled
+- [x] Composer #20201f, placeholder "How can I help you today?", + on left, mic and waveform on right (send button appears when typing), Project / model / Medium / Manual row — Medium and Manual are labels only — in source · smoke-tested (send, stop, Enter)
+- [x] Model picker lists models from Ollama /api/tags, selection saved (claude_exact_model) — smoke-tested with mock Ollama
+- [x] Bottom-left footer: NU avatar, "Utso · Free", chevron — opens user menu — smoke-tested
+- [x] Per-chat transcripts, streaming replies, Thinking indicator, stop button — smoke-tested with mock Ollama (not with real qwen2.5:3b)
+- [ ] File menu bar (191558.png): File Edit View Go Help with flyouts — built (hamburger menu), items not all active — in source · smoke-tested
+- [ ] Window caption buttons (ghost, minimise, maximise, close) — shown; decorative in the browser, live in the Electron/Windows build (not built)
 
-### 2.2 Colors (Extracted)
-- Sidebar: #202020
-- Main: #1a1a1a
-- Composer: #242424
-- Border: #2a2a2a / #333
-- Text: #e0e0e0 primary, #888 secondary
-- Accent: white send button, orange asterisk
+### 2.1b Settings modal (191707.png) — in source · compiled · smoke-tested
+- [x] Left nav: General, Account, Privacy, Billing, Capabilities, Memory, Reflect, Time and focus, Claude Code / System, Extensions, Developer / Skills, Connectors (only General is built; others show "not built yet")
+- [x] Appearance: Theme system/light/dark (dark default), Chat font Anthropic Serif/Sans, Transcript text size Small/Medium/Large, Transcript width Narrow/Medium/Wide (applies live), Motion System/Reduced
+- [x] Voice: Language, Style, Speed shown from settings — stored only, voice output not built
+- [x] Stored in localStorage claude_exact_settings
+- [ ] Light theme palette is approximate (not in screenshots)
+
+### 2.1c User menu (191608.png) — in source · smoke-tested
+- [x] Email header, Settings (Ctrl+,), Language, Get help, Upgrade plan, Get apps and extensions, Learn more, Get API keys, Log out. Items not built are dimmed.
+
+### 2.1d Apps and extensions (191636.png) — in source · smoke-tested
+- [x] Header and title, Claude Code card (layout only), Microsoft 365 card (layout only), AI ASSistant browser extension card with setup steps (replaces the Claude Chrome card)
+
+### 2.2 Colours — MEASURED (session 2). Old hex values were estimates and are replaced.
+- Sidebar #111111 · Main #151515 · Composer / menus #20201f · Search #1d1d1d · Active #343434
+- Text #f0efec · Body #b8b8ad · Muted #898781 · Accent (asterisk) #d97757 · Link #4099ec · Avatar #292929
+- Full table and layout measurements: spec/CLAUDE_SPEC_FROM_SCREENSHOTS.md "MEASURED VALUES"
 
 ### 2.3 Behavior
 - Dark by default, visible persistent light/dark switch, remembers choice
@@ -311,6 +320,13 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - Added hardware constraints TUF A15 8GB RAM 4GB VRAM
 - Added qwen2.5:3b direct use, no download, bat handling already-running Ollama
 - Created AI-optimized repo structure .ai/ + 00_LIVING_DOCS/
+
+### [2026-10-10 session 2] Exact clone UI rebuilt from measured screenshots + working modals
+- Colours and layout measured from the PNG pixels (old hex values were guesses)
+- Sidebar, centre, composer, user menu, apps modal, settings modal, menu bar, context menu built and wired
+- Browser calls moved to same-origin proxies /api/ollama and /api/vault (preview-safe, no OLLAMA_ORIGINS needed)
+- Per-chat transcripts; model picker lists Ollama models; settings persisted and applied live
+- Evidence: vite build passes; jsdom smoke test 25/25 against mock Ollama and real vault API. Not browser-visually verified; not user-confirmed on Windows.
 
 ### [NEXT] Add when changed:
 - Use format: ### [YYYY-MM-DD HH:MM] Added/Changed/Fixed: description + why + who requested

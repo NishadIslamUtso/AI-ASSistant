@@ -5,6 +5,37 @@
 
 ## 2026-10-10
 
+## 2026-10-10 (session 2) — Claude exact clone: UI from measured screenshots + functional modals
+
+### Changed
+- **Colours and layout re-measured from pixels** of spec/screenshots 191547-191707 (decoded PNG with stdlib). Old values (#1a1a1a, #202020, #242424) were guesses and are replaced. Sidebar is #111111, main #151515, composer #20201f, text #f0efec, accent #d97757, link #4099ec. Sidebar 384px at 1:1 native pixels.
+- **Sidebar rebuilt:** toolbar (menu, sidebar toggle, back/forward, chat/code switch), Search, New (+), Projects, Artifacts, Customize, date groups (Pinned, Today, Oct 8-style, Older), per-row ⋯ button, context menu with shortcuts P/R/D/Esc.
+- **Context menu works:** Pin/Unpin, Rename (inline), Delete (with confirm), Open in new window (?chat=id). Add to project / Move to group shown disabled (not built).
+- **Menu bar** from the hamburger: File, Edit, View, Go, Help with flyout submenus (only working items are enabled).
+- **Centre:** Free plan · Upgrade pill, time-based greeting with orange asterisk, composer (Enter sends, Shift+Enter newline, stop button while streaming, auto-grow), footer row Project / model picker / Medium / Manual, Windows-style caption buttons (decorative in the browser).
+- **User menu** (click NU Utso · Free): email, Settings (Ctrl+,), Language, Get help, Upgrade plan, Get apps and extensions, Learn more, Get API keys, Log out. Items not built are dimmed.
+- **Apps and extensions modal** following 191636: Claude Code / Microsoft 365 cards are layout-only; the Chrome card is the AI ASSistant browser extension with setup steps.
+- **Settings modal** following 191707: left nav with all 14 items (only General is built), Appearance = Theme (system/light/dark), Chat font, Transcript text size, Transcript width, Motion. Voice values are saved but not used. Persisted in localStorage claude_exact_settings and applied live.
+- **Model picker** lists models from Ollama (/api/tags). Selection saved in claude_exact_model. Default qwen2.5:3b.
+- **Per-chat transcripts** stored in claude_exact_messages. Before this, all chats shared one transcript.
+- **Proxy instead of direct 127.0.0.1 calls:** browser code calls /api/ollama and /api/vault. vite.config.js forwards them to 11434 and 8765 and strips the Origin header on the Ollama hop. No OLLAMA_ORIGINS setting needed. Works with the Arena preview.
+- **Streaming parser** buffers partial NDJSON lines (old one could drop tokens split across chunks).
+- **Short system prompt** (no game example, no artifact instruction). Fixes the Tic Tac Toe trigger from the handover.
+- **vault-api.cjs:** looks for the repo vault (vault/AI-Brain) and honours AI_BRAIN_PATH. Before, captures could create AI-Brain/ inside the app folder.
+- **start-app.bat:** starts Ollama first, then checks the model. A missing qwen2.5:3b is a warning, not an error. CRLF line endings.
+- **vite.config.js:** host from AI_ASSISTANT_HOST (default 127.0.0.1); allowedHosts includes .e2b.app for the preview.
+
+### Tested
+- Production build passes (vite build).
+- Dev server: proxy routes checked with curl against a mock Ollama (streamed chat, Origin stripped, system prompt received) and the real vault API on a temp folder (capture and context).
+- jsdom smoke test rendered the whole app and ran 25 checks (send and stream, per-chat storage, switch chat, pin, rename, user menu, apps modal, settings and persistence, model picker, menu bar). 25/25 passed.
+- NOT done: no real browser in the sandbox, so no pixel comparison against screenshots. NOT done: no real qwen2.5:3b reply, no Windows test.
+
+### Files
+- apps/01_claude-exact-pixel-clone/: src/App.jsx, src/main.jsx, src/index.css, src/components/{Sidebar,Center,UserMenu,SettingsModal,AppsExtensionsModal,Asterisk,VaultPanel}.jsx, src/lib/{constants,storage,ollama,vault,settings,chats}.js, vite.config.js, tailwind.config.js, index.html, server/vault-api.cjs, start-app.bat
+- spec/CLAUDE_SPEC_FROM_SCREENSHOTS.md (measured values section added)
+- 00_LIVING_DOCS/*, .ai/STATE.json, ai/STATE.json, memory/sessions/2026-10-10-session.md, TESTING_CHECKLIST.md, NEW_SESSION_HANDOVER.md
+
 ### 19:20 — Created Master Github Repo as AI Memory (Current Session)
 - **What:** Created AI-ASSistant-Github-Repo with AI-optimized structure: .ai/ (AGENT_INSTRUCTIONS, CONTEXT.json, STATE.json, INDEX.json), 00_LIVING_DOCS/ (REQUIREMENTS_LIVING, HANDOVER_LIVING, ARCHITECTURE_LIVING, DECISIONS_LOG, CHANGELOG, TODO_NEXT), apps/01_claude-exact-pixel-clone + 02_electron-claude-clone-v6, extension/, vault/AI-Brain/, spec/screenshots/, archive_zips/, docs/originals/, memory/sessions/
 - **Why:** User requested "give me one zip file with all we did so far. also that zip file will have the requirement list which will be updated by you every time something changes. basically the repo will also work as a memory and a handover file for other AI/agents/sessions too, i will be one seeing it, s n need to make it lok like human made, make the structure that suits you and ais best for the purpose i'm making it"

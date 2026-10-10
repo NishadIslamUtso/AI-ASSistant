@@ -5,6 +5,45 @@
 
 ## 2026-10-10 Decisions
 
+## 2026-10-10 (session 2) Decisions
+
+### [2026-10-10 session 2] Use Measured Colours From Screenshots, Not Guessed Values
+- **What:** Colours sampled from the PNG pixels: sidebar #111111, main #151515, composer/menus #20201f, hover/active #242423/#343434, text #f0efec, body #b8b8ad, muted #898781, accent #d97757, link #4099ec. Stored as CSS variables so a light theme can swap them.
+- **Why:** The handover and spec values (#1a1a1a, #202020, #242424) were estimates. The user asked for an exact clone, not a loose inspiration.
+- **Who:** Utso (asked for exact clone), agent measured.
+- **Alternative:** Keep the handover hex values. Rejected: they do not match the screenshots.
+- **Implementation:** index.css :root and html[data-theme=light]; tailwind.config.js colours ui.*. Light palette is an approximation (not in screenshots).
+
+### [2026-10-10 session 2] Browser Calls Go Through Vite Proxy, Not Directly to 127.0.0.1
+- **What:** Browser code calls /api/ollama/* and /api/vault/*. vite.config.js forwards to 11434 and 8765 and strips Origin on the Ollama hop.
+- **Why:** System rules: browser code must not call localhost or 127.0.0.1 (the user's browser is not the sandbox, and the preview would break). Also removes the need for OLLAMA_ORIGINS on Windows.
+- **Who:** Agent (per platform rules), user constraint "bat handles already-running Ollama".
+- **Alternative:** Keep direct fetch plus setx OLLAMA_ORIGINS. Rejected: fragile, and the handover flagged it as a known bug.
+- **Implementation:** vite.config.js proxy + preview.proxy; src/lib/constants.js OLLAMA_PROXY, VAULT_PROXY.
+
+### [2026-10-10 session 2] Model Picker Shows the Real Model, Not "Sonnet 5.5"
+- **What:** The composer footer shows the selected Ollama model (default qwen2.5:3b) and lists /api/tags. Medium and Manual stay as visual labels, not wired.
+- **Why:** Handover P4 asks for a real model selector. Showing "Sonnet 5.5" with a local model would be misleading.
+- **Who:** Handover (P4), agent.
+- **Alternative:** Keep the static Claude label. Rejected: misleading.
+
+### [2026-10-10 session 2] Dark Is the Default Even Though the Screenshot Shows "System" Selected
+- **What:** Settings > Theme defaults to dark (the user's constraint). The screenshot shows System selected; the user's machine is presumably dark.
+- **Why:** CONTEXT and handover say dark default. Can be changed in Settings.
+- **Who:** Handover constraint.
+
+### [2026-10-10 session 2] Chrome Card in Apps Modal Describes This App's Extension
+- **What:** Screenshot 191636 shows Claude's Chrome extension card. Replaced with "AI ASSistant browser extension" (local only, no account) and setup steps. Claude Code / Microsoft 365 cards kept for layout with a "not available" note.
+- **Why:** Handover: "Chrome extension AI ASSistant local-only". Claude's own integrations do not apply here.
+
+### [2026-10-10 session 2] Per-Chat Message Storage
+- **What:** Transcripts saved per chat id in claude_exact_messages. Chats are created on the first message, not when "New" is clicked.
+- **Why:** The old single shared transcript showed the same messages in every chat.
+
+### [2026-10-10 session 2] Vault Path Search Includes the Repo Vault
+- **What:** vault-api.cjs looks for vault/AI-Brain in the repo first, honours AI_BRAIN_PATH, and no longer falls back to creating AI-Brain/ inside apps/01.
+- **Why:** Captures from the app would otherwise create a stray folder inside the app.
+
 ### [2026-10-10 19:20] Create Master Github Repo as AI Memory
 - **What:** Create AI-ASSistant-Github-Repo with .ai/ + 00_LIVING_DOCS/ structure optimized for AI handover, not human aesthetics, single zip with all work + living requirements
 - **Why:** User requested "give me one zip file with all we did so far. also that zip file will have the requirement list which will be updated by you every time something changes. basically the repo will also work as a memory and a handover file for other AI/agents/sessions too, i will be one seeing it, s n need to make it lok like human made, make the structure that suits you and ais best for the purpose i'm making it"

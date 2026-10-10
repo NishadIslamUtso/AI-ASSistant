@@ -1,7 +1,9 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
+import { applySettings, loadSettings } from './lib/settings.js'
 import './index.css'
-if (!localStorage.getItem('selected_provider')) localStorage.setItem('selected_provider','ollama')
-if (!localStorage.getItem('selected_model')) localStorage.setItem('selected_model','qwen2.5:3b')
+
+// Apply the saved theme before the first paint so a light theme does not flash dark.
+applySettings(loadSettings())
 ReactDOM.createRoot(document.getElementById('root')).render(<App />)
