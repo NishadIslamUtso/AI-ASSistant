@@ -20,7 +20,7 @@ Read `NEW_SESSION_HANDOVER.md`, `.ai/AGENT_INSTRUCTIONS.md`, `.ai/STATE.json`, a
 
 ## Current evidence
 
-**Production build, 41 Node/API tests and 21 mocked-browser tests pass.** Final home/account/settings/apps visuals reviewed at1280×680CSS/DPR1.5 →1920×1020, zero page errors. This does **not** establish real Ollama quality, cmd.exe behavior, user-confirmed exact Windows fonts/DPI, universal extension capture or an installer. See `TESTING_CHECKLIST.md` and `BRANCH_TESTING.md`.
+**Production build, 42 Node/API tests and 22 mocked-browser tests pass.** Final home/account/settings/apps visuals reviewed at1280×680CSS/DPR1.5 →1920×1020, zero page errors. This does **not** establish real Ollama quality, cmd.exe behavior, user-confirmed exact Windows fonts/DPI, universal extension capture or an installer. See `TESTING_CHECKLIST.md` and `BRANCH_TESTING.md`.
 
 Implemented: per-chat streamed history/reload/Stop; installed-local tags/show model selection (cloud disabled), verified file/image/thinking controls; explicit isolated HTML/SVG Preview/Code/local versions; immutable canonical original capture/deny/retrieval; capsule exact preview/drop/local Cook; stored appearance/transcript/projects. Actual model name replaces fake Sonnet claims. Screenshot titles are empty UI placeholders, not imported private history.
 

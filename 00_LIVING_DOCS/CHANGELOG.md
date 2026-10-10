@@ -23,7 +23,7 @@
 - Fresh width **Narrow588** (actual selected reference), Medium768/Wide960. Older approximate Medium assumption corrected. Georgia/system font fallback and native title/menu/user exact pixels remain unconfirmed.
 
 ### Verification
-- **41/41 Node/API tests and21/21 Playwright tests pass**, Vite production build1752modules (JS397.87kB/gzip122.80; CSS34.20kB/gzip7.73).
+- **42/42 Node/API tests and22/22 Playwright tests pass**, Vite production build1752modules (JS398.63kB/gzip123.06; CSS34.20kB/gzip7.73).
 - Final four screenshot captures reviewed, zero page errors. Chromium153 ran with web security/site isolation intact; mocked Ollama + disposable API18765/Vite5174/temporary vaults.
 - Clean source ZIP/extraction results recorded in BRANCH_TESTING when completed; not an installer/real-model/Windows claim.
 
@@ -31,6 +31,11 @@
 - Added missing NEW_SESSION_HANDOVER and target README; corrected living requirement checkbox overclaims/status/architecture/testing/todo/agent/state/index/context and visible ai mirror. Session history retained.
 - Local canonical blacklist/activity/revision edits found during preview, initiating action unconfirmed; retained outside source staging/export. New runtime vault data ignored; tracked template edits still need selective staging. No remote push/merge.
 - Extension Chrome E2E/deny-before-observation/non-2xx queue, full Capsule branches/rollback/attachments/working memory, Today/journals/follow-ups/monthly audit and native Windows menus/title/installer remain open. Electron reference/extension code not changed.
+
+### Final safety edges
+- External anchors have a local-only href until approved; normal/middle-click open destination preview, native context-menu/new-tab cannot auto-send the URL.
+- HTTP200 alone is not a saved source: validated ok/source and blacklist acknowledgements, explicit skipped/malformed failure, local original retained/retry. Added unit/browser coverage; test-helper saved-success expectation and failure-label mismatch corrected.
+- Latest42 Node +22 browser cases/build supersede prior41+21; clean ZIP verification repeated after these source changes.
 
 ## Earlier timeline (preserved historical snapshot, superseded status)
 

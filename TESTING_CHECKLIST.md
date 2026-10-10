@@ -4,9 +4,9 @@
 
 ## Verified in this sandbox
 
-- [x] `npm ci` dependencies installed; production `npm run build` passes (Vite5.4.21,1752modules; JS397.87kB/gzip122.80, CSS34.20kB/gzip7.73).
-- [x] **41/41 Node tests pass**: arbitrary NDJSON/UTF8/CRLF/errors/oversized records; metadata capability/cloud detection; requested-only HTML/SVG/CSP; storage migration/recovery; attachments/context; local proxy endpoints/origin/JSON/loopback gates; vault paths/Dhaka rollover/symlink/traversal refusal; originals/dedup/revisions; long sources; visit distinction; two-location inaccessible logs; patterns/revocation/YAML/frontmatter/archive; capsules/latest archived version; attachment originals and browser origins.
-- [x] **21/21 Playwright tests pass** with mocked local Ollama and disposable API18765/Vite5174: geometry/dialogs/focus/preferences; per-chat send/history/reload; all chat actions/projects; requested interactive HTML and source versions; unsolicited-game rejection; text/vision payload and reload; thinking separation; text-only refusal; Stop; capsule preview/drop/send and Cook cancellation; DOM/fetch/foreign-frame and same-origin API navigation isolation; offline and oversized drafts preserved; background navigation; Markdown outbound gate; cloud-alias block; blacklist UI/capture skip/revocation.
+- [x] `npm ci` dependencies installed; production `npm run build` passes (Vite5.4.21,1752modules; JS398.63kB/gzip123.06, CSS34.20kB/gzip7.73).
+- [x] **42/42 Node tests pass**: arbitrary NDJSON/UTF8/CRLF/errors/oversized records; metadata capability/cloud detection; requested-only HTML/SVG/CSP; storage migration/recovery; attachments/context; local proxy endpoints/origin/JSON/loopback gates; vault paths/Dhaka rollover/symlink/traversal refusal; originals/dedup/revisions; long sources; visit distinction; two-location inaccessible logs; patterns/revocation/YAML/frontmatter/archive; capsules/latest archived version; attachment originals and browser origins.
+- [x] **22/22 Playwright tests pass** with mocked local Ollama and disposable API18765/Vite5174: geometry/dialogs/focus/preferences; per-chat send/history/reload; all chat actions/projects; requested interactive HTML and source versions; unsolicited-game rejection; text/vision payload and reload; thinking separation; text-only refusal; Stop; capsule preview/drop/send and Cook cancellation; DOM/fetch/foreign-frame and same-origin API navigation isolation; offline and oversized drafts preserved; background navigation; Markdown outbound gate; cloud-alias block; blacklist UI/capture skip/revocation.
 - [x] Complete post-fix browser suite, not just the old13/14+targeted result.
 - [x] Final Home/User menu/Settings/Apps screenshots recaptured/reviewed, **zero page errors**; native1920×1020 output at1280×680CSS/DPR1.5. All six reference PNG dimensions independently checked. **This is not an automated exact-pixel diff or laptop DPI confirmation.**
 - [x] Server/helper syntax checked; exact source ZIP/fresh-extraction results in `BRANCH_TESTING.md`.
@@ -63,3 +63,5 @@ Give one step and wait; do not have the beginner execute this entire list at onc
 ## Data boundary
 
 Tests use temporary vaults; mocked model replies do not establish real quality. Canonical local blacklist/activity/revision edits found while preview ran have an unconfirmed initiating action, were retained, and are **not staged or exported**. Do not revert/delete/upload them automatically. Existing tracked vault files can still change despite ignore rules; use selective source staging.
+
+- Final edge checks: Markdown normal/middle click gated and external href absent; malformed HTTP200 capture acknowledgement shows failure/retry and preserves local original. No cross-window live-merge verification.

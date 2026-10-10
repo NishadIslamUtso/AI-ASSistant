@@ -38,7 +38,7 @@ Update REQUIREMENTS_LIVING, CHANGELOG, HANDOVER_LIVING, `.ai/STATE.json`, `memor
 
 ## What is actually tested / next
 
-Latest build + **41 Node/API tests + 21 mocked-browser tests pass**. Real laptop Ollama/Windows/BAT/vision/performance, extension E2E, user exact-pixel approval, full Capsule/working memory, Today/journals/follow-ups/monthly audit, and native installer remain pending. Read TODO_NEXT, not old checked boxes or v6 feature lists.
+Latest build + **42 Node/API tests + 22 mocked-browser tests pass**. Real laptop Ollama/Windows/BAT/vision/performance, extension E2E, user exact-pixel approval, full Capsule/working memory, Today/journals/follow-ups/monthly audit, and native installer remain pending. Read TODO_NEXT, not old checked boxes or v6 feature lists.
 
 Do not clear localStorage/chat_history/vault to fix an old game loop. Simple no-game prompt + explicit-current-request artifact gate is implemented. Start a new chat if old context is unhelpful while retaining originals. Storage recovery copies exist; latest capture-status guard prevents older responses overriding newer status.
 

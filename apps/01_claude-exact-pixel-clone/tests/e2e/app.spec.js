@@ -289,6 +289,11 @@ test('Markdown images never auto-fetch and external links require exact URL prev
   await expect(page.getByRole('heading', { name: 'Open external link?' })).toBeVisible()
   await expect(page.locator('.context-preview pre')).toHaveText('https://blocked.example/article?private=data')
   await page.getByRole('button', { name: 'Cancel', exact: true }).click()
+  // No external href exists for native context-menu/new-tab navigation.
+  await expect(page.getByRole('link', { name: 'Read more' })).toHaveAttribute('href', '#external-link')
+  await page.getByRole('link', { name: 'Read more' }).click({ button: 'middle' })
+  await expect(page.getByRole('heading', { name: 'Open external link?' })).toBeVisible()
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click()
   expect(external).toBe(0); expect(requests).toHaveLength(1)
 })
 test('Ollama cloud aliases are blocked before a user message leaves the composer', async ({ page }) => {
@@ -344,4 +349,15 @@ test('artifact navigation cannot read a same-origin vault API endpoint', async (
   await expect(page.locator('iframe')).toBeVisible()
   await page.waitForTimeout(250)
   expect(reachedApi).toBe(0)
+})
+
+test('malformed HTTP200 vault acknowledgement shows failure and keeps the local original', async ({ page }) => {
+  await open(page)
+  await page.route('**/api/vault/capture', route => route.fulfill({ json: { ok: true } }))
+  await page.getByRole('textbox', { name: 'Message', exact: true }).fill('Keep this original despite a broken vault acknowledgement')
+  await page.getByRole('button', { name: 'Send message', exact: true }).click()
+  await expect(page.getByText('Local chat kept · vault capture failed', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible()
+  await expect(page.getByRole('article', { name: 'Your message' })).toContainText('Keep this original despite a broken vault acknowledgement')
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('claude_exact_chats'))[0].vaultStatus)).toBe('error')
 })

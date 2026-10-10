@@ -25,7 +25,7 @@ The exporter refuses uncommitted source, excludes uncommitted runtime files thro
 ## Current evidence
 
 - [x] Active production build passes.
-- [x] **41 Node/API tests + 21 mocked-browser tests pass.** Browser isolation tests run with web security intact.
+- [x] **42 Node/API tests + 22 mocked-browser tests pass.** Browser isolation tests run with web security intact.
 - [x] Home/menu/settings/apps visually reviewed at native1920×1020 via1280×680CSS/DPR1.5, zero page errors. Actual Windows font/DPI and exact-pixel approval remain unverified.
 - [ ] Source ZIP integrity/file completeness and clean-extraction `npm ci`/build/tests — verification result appended below when complete.
 - [ ] Real Windows BAT/existing Ollama/real replies/capability/Obsidian/extension E2E/user screenshot confirmation.

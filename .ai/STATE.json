@@ -18,7 +18,8 @@
         "Canonical vault API8765 immutable sources/dedup/Dhaka/source-scope/errors/path/realpath/origin validation, capsule/entity keyword index and latest archived version filtering",
         "Initial capsule library/typed drop/exact preview/explicit send/local Cook; revocable vault deny editor with synchronized YAML/frontmatter/revision originals",
         "Markdown remote images blocked; exact HTTP(S) destination/path/query preview before navigation",
-        "Windows existing-service/dependency/readiness scripts and web build; runtime unverified"
+        "Windows existing-service/dependency/readiness scripts and web build; runtime unverified",
+        "HTTP200 is not Saved without valid ok/source acknowledgement; failed/skipped/malformed writes retain local original/retry. Markdown links expose no external href before approval, including middle/native-context navigation."
       ],
       "features_missing": [
         "User-confirmed exact Windows pixels/fonts/DPI and real qwen2.5:3b/runtime performance",
@@ -33,18 +34,18 @@
         "build": {
           "passed": true,
           "modules": 1752,
-          "js_kb": 397.87,
-          "js_gzip_kb": 122.8,
+          "js_kb": 398.63,
+          "js_gzip_kb": 123.06,
           "css_kb": 34.2,
           "css_gzip_kb": 7.73
         },
         "node_tests": {
-          "passed": 41,
-          "total": 41
+          "passed": 42,
+          "total": 42
         },
         "browser_tests": {
-          "passed": 21,
-          "total": 21,
+          "passed": 22,
+          "total": 22,
           "ollama": "mocked",
           "api_port": 18765,
           "vite_port": 5174,
@@ -88,7 +89,8 @@
         "Artifact edited/imported versions and project grouping remain browser-local",
         "API deny is not proof of browser never-check before DOM/history observation",
         "Downloaded artifact originals are not sandboxed outside app",
-        "Hosted preview cannot reach user laptop Ollama"
+        "Hosted preview cannot reach user laptop Ollama",
+        "Cross-window live state merge synchronization is not implemented/tested"
       ]
     },
     "02_electron-claude-clone-v6": {
@@ -161,14 +163,14 @@
     "date": "2026-10-10",
     "user_request": "Continue canonical GitHub source, read NEW_SESSION_HANDOVER and .ai instructions; make exact Claude app clone",
     "scope": "Foundation, screenshot dialogs/geometry, isolated HTML/SVG artifacts, local installed model selector/uploads/thinking, initial capsule/vault controls; not full P3-P9 completion",
-    "verification": "41 Node/API +21 mocked-browser tests, production build, final DPR-aware visual review pass; no real Windows/model/extension or user pixel confirmation",
+    "verification": "42 Node/API +22 mocked-browser cases, production build, final DPR-aware visual review; no real Windows/model/extension or user pixel confirmation. See BRANCH_TESTING for current clean ZIP.",
     "next": "Source ZIP/laptop checks, P6 extension safety/reliability E2E, full P7, P8, P9; one beginner step at a time"
   },
-  "updated_at": "2026-10-10T22:22:40+06:00",
+  "updated_at": "2026-10-10T22:42:02+06:00",
   "working_branch": "arena/01199af1-ai-assistant",
   "starting_commit": "547b4d81401a9e56232234fb96649386e89f362a",
   "git_delivery": {
-    "local_source_commit": "allowed; review/selective staging",
+    "local_source_commit": "b2700dc initial source; final safety/source evidence commits local-only",
     "pushed": false,
     "merged": false,
     "remote_policy": "Exact content/destination preview and approval required. Never automatically push private vault data."
@@ -176,7 +178,7 @@
   "source_bundle": {
     "exporter": "scripts/package-source.cjs",
     "path": "deliverables/AI-ASSistant-branch-source.zip",
-    "status": "pending clean-extraction verification; see BRANCH_TESTING",
+    "status": "Latest source preflight verification pending after final safety edges; earlier251file/62check preflight passed.",
     "contents": "reviewed committed runnable repository + unchanged starter templates, no uncommitted runtime vault data",
     "windows_installer": false,
     "external_send": false

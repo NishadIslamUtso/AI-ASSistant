@@ -12,14 +12,14 @@ Active work is **`apps/01_claude-exact-pixel-clone/`**. The Electron v6 app is *
 
 | Layer | Evidence | Not implied |
 |---|---|---|
-| Source/build | Vite production build passes; 1752 modules; JS397.87kB (gzip122.80), CSS34.20kB (gzip7.73) | Windows BAT execution, installer, real model performance |
-| Unit/API | **41/41 Node tests pass** | Universal extension access or real user's source capture |
-| Browser | **21/21 Playwright tests pass**, Chromium153, mocked Ollama, disposable API18765/Vite5174 | Real qwen2.5:3b/vision/thinking behavior |
+| Source/build | Vite production build passes; 1752 modules; JS398.63kB (gzip123.06), CSS34.20kB (gzip7.73) | Windows BAT execution, installer, real model performance |
+| Unit/API | **42/42 Node tests pass** | Universal extension access or real user's source capture |
+| Browser | **22/22 Playwright tests pass**, Chromium153, mocked Ollama, disposable API18765/Vite5174 | Real qwen2.5:3b/vision/thinking behavior |
 | Visual | Final Home/User menu/Settings/Apps captures reviewed; zero page errors | User-confirmed exact pixels or confirmed laptop DPI/fonts |
 | ZIP | Source packaging/fresh-extraction checks are recorded in `BRANCH_TESTING.md` | A Windows installer or a private-data backup |
 | User/laptop | **Not verified** | Do not mark user-confirmed/native parity |
 
-Earlier 13/14 run and targeted Pin fix are superseded by the complete passing 21-test run. Browser security/site isolation was not disabled. Tests use temporary vaults and synthetic fixtures. Canonical vault policy edits found during preview are separate, initiating action unconfirmed, and are retained/uncommitted/unshared.
+Earlier 13/14 run and targeted Pin fix are superseded by the complete passing 22-test run. Browser security/site isolation was not disabled. Tests use temporary vaults and synthetic fixtures. Canonical vault policy edits found during preview are separate, initiating action unconfirmed, and are retained/uncommitted/unshared.
 
 ## 3. Current implemented behavior
 
@@ -56,3 +56,6 @@ Do not enable dangerous same-origin raw SVG/HTML, remote image fetching, shell r
 `NEW_SESSION_HANDOVER.md` now exists. Living requirements/status/log/testing docs and `.ai`/visible `ai` must stay synchronized every change. Local source commits are allowed. **No push/merge** without destination/content approval; stay on the fixed Arena branch.
 
 Current canonical vault contains local blacklist/activity/revision edits found while preview ran. Origin of the edits was not confirmed. They are intentionally **not reverted, staged, packaged or uploaded**. New runtime vault files are ignored by default; existing tracked templates still require selective staging. Source exporter packages a reviewed local HEAD only and refuses a HEAD that differs from approved starter vault. Its ZIP is runnable source plus committed starter templates, not a private-vault backup.
+
+### Final-review edge fixes
+Middle-click/context-menu/new-tab cannot bypass external-link preview because no external href is exposed before approval. HTTP200 lacking a genuine saved-source acknowledgement is a capture failure, not Saved; the local original/retry remains.42 Node/API and22 browser cases include these checks. Cross-window live state synchronization is not implemented/tested; do not claim live multi-window merge parity.

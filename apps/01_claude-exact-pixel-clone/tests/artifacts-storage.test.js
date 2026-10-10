@@ -72,3 +72,17 @@ test('capsule drops are explicit typed data, parsed and size checked', () => {
   assert.throws(() => parseCapsuleDrop(transfer('{broken')), /Invalid/)
   assert.throws(() => parseCapsuleDrop(transfer(JSON.stringify({ title: 'Large', content: 'x'.repeat(12001) }))), /oversized/)
 })
+
+test('HTTP200 without a genuine vault source acknowledgement is not a saved write', async t => {
+  const { vaultPost } = await import('../src/lib/vault.js')
+  let data = { ok: true }
+  t.mock.method(globalThis, 'fetch', async () => new Response(JSON.stringify(data), { headers: { 'Content-Type': 'application/json' } }))
+  await assert.rejects(vaultPost('/capture', {}), /no saved source path/)
+  data = { ok: false, error: 'Explicit failed save' }
+  await assert.rejects(vaultPost('/capture', {}), /Explicit failed save/)
+  data = { ok: true, skipped: true, reason: 'never-check blacklist' }
+  await assert.rejects(vaultPost('/capture', {}), /skipped/)
+  data = { ok: true, source: '02 Sources/test.md' }
+  assert.equal((await vaultPost('/capture', {})).source, data.source)
+  await assert.rejects(vaultPost('/blacklist', {}), /invalid blacklist acknowledgement/)
+})

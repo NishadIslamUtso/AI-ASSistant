@@ -10,7 +10,7 @@
 - [x] P4 bounded isolated HTML/SVG runner, Preview/Code/local versions/download/import/library. React bundling/shell/remote publish are not enabled.
 - [x] P5 installed local model selector, metadata verification, cloud block, verified text/image upload and real thinking separation; no downloads/auto-switch/fake thinking.
 - [x] Initial P7 capsule reading/drop/preview/local Cook/deny editor. **Not full P7.**
-- [x] 41 Node/API tests + 21 mocked-browser tests pass, final production build, DPR-aware visual captures reviewed.
+- [x] 42 Node/API tests + 22 mocked-browser tests pass, final production build, DPR-aware visual captures reviewed.
 - [x] Update living/testing/state/mirror/session docs; source ZIP verification outcomes recorded in BRANCH_TESTING.
 
 ## Immediate next steps

@@ -1,8 +1,14 @@
 import { apiJson } from './ollama.js'
 export const vaultGet = (path, signal) => apiJson(`/api/vault${path}`, { signal })
-export const vaultPost = (path, payload) => apiJson(`/api/vault${path}`, {
-  method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
-})
+export async function vaultPost(path, payload) {
+  const data = await apiJson(`/api/vault${path}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+  })
+  if (data?.ok !== true) throw new Error(data?.error || 'The vault did not acknowledge this write. Nothing is reported as saved.')
+  if (path === '/capture' && (data.skipped || typeof data.source !== 'string' || !data.source)) throw new Error(data.skipped ? `Vault capture was skipped: ${data.reason || 'source scope denied'}. The local original is kept.` : 'The vault returned no saved source path. Check the local API and retry; the local original is kept.')
+  if (path === '/blacklist' && !Array.isArray(data.excluded_patterns)) throw new Error('The vault returned an invalid blacklist acknowledgement. Refresh and retry; no successful change is assumed.')
+  return data
+}
 export function capsuleText(capsule) {
   return capsule.content || [
     `# ${capsule.title}`, capsule.goals?.length ? `## Goals\n${capsule.goals.map(goal => `- ${goal}`).join('\n')}` : '',

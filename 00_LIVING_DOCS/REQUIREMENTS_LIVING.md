@@ -6,7 +6,7 @@
 
 ## Current evidence notice (2026-10-10 continuation)
 
-The accepted product requirements below remain in force. Old checkmarks in sections2–12 describe the earlier requirement/UI inventory, **not proof of shipped or user-confirmed behavior**. Section13 is now the honest implementation/evidence checklist. Active target is apps/01_claude-exact-pixel-clone v0.2.0, not the native Electron reference. Source/build, 41 Node tests and 21 mocked-browser tests pass; real Windows/Ollama/extension and exact-pixel confirmation remain open.
+The accepted product requirements below remain in force. Old checkmarks in sections2–12 describe the earlier requirement/UI inventory, **not proof of shipped or user-confirmed behavior**. Section13 is now the honest implementation/evidence checklist. Active target is apps/01_claude-exact-pixel-clone v0.2.0, not the native Electron reference. Source/build, 42 Node tests and 22 mocked-browser tests pass; real Windows/Ollama/extension and exact-pixel confirmation remain open.
 
 References are native **1920×1020**. Our comparison uses1280×680CSS/DPR1.5; actual laptop DPI/fonts are unknown. Fresh width is **Narrow588**, not older approximate Medium; Medium768/Wide960. Dark main#1a1a1a/sidebar260px#202020/composer#242424 remains mandatory. Actual local model name is shown, not a fake Sonnet label; screenshot titles are empty UI placeholders, not imported evidence.
 
@@ -292,7 +292,7 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - [x] Local appearance/transcript/motion/project/chat controls wired; billing/voice/official integrations unavailable, not fake services.
 - [x] Model-authored remote Markdown images blocked; external links show exact URL/path/query and require navigation approval. No cloud AI provider enabled.
 - [x] Windows scripts in source with existing-service/readiness/dependency probes and no model downloads/native compiler/wildcard settings. **Not cmd.exe/laptop tested.**
-- [x] 41 Node/API tests and21 mocked-browser tests pass; production build and final DPR-aware visuals reviewed.
+- [x] 42 Node/API tests and22 mocked-browser tests pass; production build and final DPR-aware visuals reviewed.
 - [ ] User's real qwen2.5:3b tags/show/replies/speed/RAM and Windows BAT execution confirmed.
 - [ ] Extension default check-all/all-AIs after one-time permission verified; never-check scope enforced before URL/history/DOM access, offline queue reliable on non-2xx/malformed responses.
 - [ ] Extension→app API→real Obsidian E2E capture, original attachments and inaccessible logging; no universal access claim.
@@ -341,3 +341,8 @@ This file IS the memory. Keep it updated.
 - Correct old checkbox overclaims: native installer, extension E2E, full Capsule/Quillbot, Today/journals/follow-ups/monthly audit and comprehensive capture-safety audit are unfinished.
 - New source tests/build/visual evidence; source ZIP exporter refuses private committed vault changes, does not overwrite archives or send externally. Windows runtime and real model checks pending.
 - Found local canonical-vault blacklist/activity/revision edits during preview (initiating action unconfirmed); retained, not reverted/staged/exported/pushed.
+
+### [2026-10-10 final safety review] Approval and save acknowledgement edges
+- Markdown exposes no external href before approval; middle-click/context-menu/new-tab cannot bypass exact destination preview. Normal/middle activation tested with no outbound request.
+- Vault HTTP200 is not automatically success: require genuine ok/source or valid blacklist acknowledgement; skipped/failed/malformed writes show failure and keep the local original with retry. Current-driver proof added, extension failed-response queue remains pending.
+- Final source build398.63kB JS/gzip123.06,34.20kB CSS/gzip7.73;42 Node/API +22 browser cases. ZIP preflight earlier62 checks superseded by latest64-check validation.
