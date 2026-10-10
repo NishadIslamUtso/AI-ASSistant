@@ -302,6 +302,8 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 
 ## 14. Changelog of Requirements
 
+- 2026-10-10 20:30 — Claude clone checklist: User menu (191608), Apps and extensions (191636), Settings Appearance/Voice (191707) implemented in source, build-verified. Status: source/compiled, not user-tested. Settings not yet applied to transcript styling.
+
 ### [2026-10-10 19:20] Initial living version created
 - Consolidated from REQUIREMENTS.md, HANDOVER.md, Master Plan, Blueprint, Extension Spec, 6 screenshots
 - Added exact pixel spec from screenshots 191547-191707

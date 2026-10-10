@@ -1,6 +1,8 @@
 import { useState } from 'react'
-export default function Sidebar({ chats, currentChat, setCurrentChat, setChats }) {
+import UserMenu from './UserMenu.jsx'
+export default function Sidebar({ chats, currentChat, setCurrentChat, setChats, userEmail, onOpenSettings, onOpenApps }) {
   const [search, setSearch] = useState("")
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [contextMenu, setContextMenu] = useState(null)
   const filtered = chats.filter(c => c.title.toLowerCase().includes(search.toLowerCase()))
   const oct8 = filtered.filter(c => c.date === 'Oct 8')
@@ -27,8 +29,9 @@ export default function Sidebar({ chats, currentChat, setCurrentChat, setChats }
         <div className="flex justify-between px-2 py-2 text-xs text-[#666]"><span>Older ⌄</span><span>↗</span></div>
         <div className="space-y-0.5">{older.map(c=><div key={c.id} onClick={()=>setCurrentChat(c.id)} onContextMenu={e=>{e.preventDefault(); setContextMenu({x:e.clientX, y:e.clientY, chat:c})}} className={`px-2 py-2 rounded-lg text-sm truncate cursor-pointer hover:bg-[#2a2a2a] ${currentChat===c.id?'bg-[#2a2a2a] text-white':'text-[#aaa]'}`}>{c.title}</div>)}</div>
       </div>
-      <div className="border-t border-[#2a2a2a] p-3 flex items-center justify-between">
-        <div className="flex items-center gap-2"><div className="w-6 h-6 rounded-full bg-[#c4a484] flex items-center justify-center text-xs text-black font-bold">NU</div><div className="text-sm">Utso · Free</div><span className="text-[10px]">⌄</span></div>
+      <div className="relative border-t border-[#2a2a2a] p-3 flex items-center justify-between">
+        {userMenuOpen && <UserMenu email={userEmail} onClose={()=>setUserMenuOpen(false)} onOpenSettings={()=>onOpenSettings && onOpenSettings()} onOpenApps={()=>onOpenApps && onOpenApps()} />}
+        <button onClick={()=>setUserMenuOpen(o=>!o)} aria-label="Account menu" className="flex items-center gap-2 px-1 py-1 rounded-lg hover:bg-[#2a2a2a]"><div className="w-6 h-6 rounded-full bg-[#c4a484] flex items-center justify-center text-xs text-black font-bold">NU</div><div className="text-sm">Utso · Free</div><span className="text-[10px]">⌄</span></button>
         <div className="text-[#666]">◫◫</div>
       </div>
       {contextMenu && <div className="fixed inset-0 z-50" onClick={()=>setContextMenu(null)}><div style={{left:contextMenu.x, top:contextMenu.y}} className="absolute bg-[#2a2a2a] border border-[#333] rounded-lg py-1 w-52 text-sm shadow-xl"><div className="px-3 py-2 hover:bg-[#333]">↗ Open in new window</div><div className="px-3 py-2 hover:bg-[#333]">📌 Pin</div><div className="px-3 py-2 hover:bg-[#333]">✎ Rename</div><div className="px-3 py-2 hover:bg-[#333] flex justify-between"><span>📁 Add to project</span><span>›</span></div><div className="px-3 py-2 hover:bg-[#333] flex justify-between"><span>👥 Move to group</span><span>›</span></div><div className="px-3 py-2 hover:bg-[#333] text-red-400">🗑 Delete</div></div></div>}

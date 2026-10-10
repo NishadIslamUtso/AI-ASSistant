@@ -5,7 +5,7 @@
   "apps": {
     "01_claude-exact-pixel-clone": {
       "path": "apps/01_claude-exact-pixel-clone",
-      "status": "built-not-tested-on-windows",
+      "status": "source-built-not-tested-on-windows",
       "tech": "Vite 5 + React 18 + Tailwind + Express vault API",
       "features_implemented": [
         "Sidebar 260px #202020 Search +New Projects Artifacts Customize Oct8 Older groups",
@@ -17,13 +17,14 @@
         "Vault driver http://127.0.0.1:8765/context + /capture",
         "localStorage claude_exact_chats with defaults Refining 5-day workout cycle etc from screenshots",
         "start-app.bat handles already-running Ollama, installs @rollup/rollup-win32-x64-msvc",
-        "build-windows.bat"
+        "build-windows.bat",
+        "UserMenu from 191608 (avatar opens it; Settings, Get apps and extensions wired; others disabled)",
+        "AppsExtensionsModal from 191636",
+        "SettingsModal from 191707 (General Appearance + Voice, saved to localStorage claude_exact_settings; Ctrl+, opens it)"
       ],
       "features_missing": [
-        "Settings modal Appearance Theme Chat font Transcript size Width Motion Voice Language Style Speed from 191707.png",
+        "Settings values not yet applied to transcript (font/size/width) or light theme styling",
         "File Edit View Go Help menu bar",
-        "User menu nishadislamutso@gmail.com Settings etc from 191608.png",
-        "Apps and extensions modal from 191636.png",
         "Project dropdown Sonnet 5.5 Medium Manual functionality",
         "Artifact runner",
         "File upload, image upload",
@@ -107,9 +108,7 @@
     "Ollama CORS fix needs documentation in bat"
   ],
   "last_session": {
-    "date": "2026-10-10",
-    "what_done": "Built exact pixel-perfect Claude clone from 6 screenshots, created start-app.bat handling existing Ollama, direct qwen2.5:3b streaming, vault driver, zipped to AI_ASSistant_Exact_Claude_Clone.zip 13K",
-    "user_request": "give me one zip with all we did so far, requirement list updated every time, repo as memory/handover for other AIs, structure suits AIs best",
-    "action_now": "Creating master github repo AI-ASSistant-Github-Repo with living docs"
+    "date": "2026-10-10 20:30 Asia/Dhaka",
+    "summary": "Added user menu, apps modal, settings modal from screenshots 191608/191636/191707 to apps/01_claude-exact-pixel-clone. Build passes."
   }
 }

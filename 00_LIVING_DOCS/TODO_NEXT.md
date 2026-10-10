@@ -28,6 +28,7 @@
 ## Priority 2 — Add Missing Modals From Screenshots
 
 ### 2.1 Settings Modal (191707.png) — High Priority
+- [x] Built (source + build verified 2026-10-10 20:30). Still to do: apply theme/font/transcript size/width to transcript; light theme styling
 - [ ] Create src/components/SettingsModal.jsx
 - Left nav: General, Account, Privacy, Billing, Capabilities, Memory, Reflect, Time and focus, Claude Code, System, Extensions, Developer, Skills, Connectors
 - Right Appearance:
@@ -41,12 +42,14 @@
 - Store settings in localStorage claude_exact_settings
 
 ### 2.2 User Menu (191608.png)
+- [x] Built (2026-10-10 20:30); Log out/Upgrade/Help etc disabled by design
 - [ ] Create src/components/UserMenu.jsx
 - Content: nishadislamutso@gmail.com, Settings, Language, Get help, Upgrade plan, Get apps and extensions, Learn more, Get API keys, Log out
 - Trigger: click avatar NU bottom left
 - Position: above avatar, dark #2a2a2a rounded
 
 ### 2.3 Apps and Extensions Modal (191636.png)
+- [x] Built (2026-10-10 20:30)
 - [ ] Create src/components/AppsExtensionsModal.jsx
 - Content: Do more with Claude everywhere you work, Claude Code Terminal VSCode etc, Microsoft 365, Chrome extension
 - Trigger: Settings -> Extensions or top bar?

@@ -5,6 +5,13 @@
 
 ## 2026-10-10
 
+### 20:30 — Claude clone: User menu, Apps & extensions modal, Settings modal (P2)
+- **What:** Added `UserMenu.jsx` (screenshot 191608, opens from NU avatar), `AppsExtensionsModal.jsx` (191636), `SettingsModal.jsx` (191707, General = Appearance + Voice, left nav), shared `Modal.jsx` (Escape + backdrop close), `src/lib/settings.js` (localStorage `claude_exact_settings`). Ctrl+, opens Settings. Sidebar footer avatar is now a button.
+- **Why:** P2 items in TODO_NEXT.md; spec said these were missing. User asked for exact clone of screenshots.
+- **Status:** source written, `vite build` passes in sandbox. NOT yet tested on Windows or in a browser.
+- **Honest gaps:** Settings values are stored but only Theme/Font/Transcript size/Width are NOT yet applied to the transcript (light theme styling not built). Menu items Get help, Upgrade plan, Learn more, Get API keys, Log out, Language are shown but disabled (no account/backend). Other Settings nav sections show a "not built" placeholder.
+- **Note:** The handover text claimed UserMenu/SettingsModal/AppsExtensionsModal already existed and that Sidebar/Center were fuller; the repo did not have them. This entry corrects that.
+
 ### 19:20 — Created Master Github Repo as AI Memory (Current Session)
 - **What:** Created AI-ASSistant-Github-Repo with AI-optimized structure: .ai/ (AGENT_INSTRUCTIONS, CONTEXT.json, STATE.json, INDEX.json), 00_LIVING_DOCS/ (REQUIREMENTS_LIVING, HANDOVER_LIVING, ARCHITECTURE_LIVING, DECISIONS_LOG, CHANGELOG, TODO_NEXT), apps/01_claude-exact-pixel-clone + 02_electron-claude-clone-v6, extension/, vault/AI-Brain/, spec/screenshots/, archive_zips/, docs/originals/, memory/sessions/
 - **Why:** User requested "give me one zip file with all we did so far. also that zip file will have the requirement list which will be updated by you every time something changes. basically the repo will also work as a memory and a handover file for other AI/agents/sessions too, i will be one seeing it, s n need to make it lok like human made, make the structure that suits you and ais best for the purpose i'm making it"
