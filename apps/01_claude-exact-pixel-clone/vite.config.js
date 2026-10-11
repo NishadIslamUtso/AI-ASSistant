@@ -41,8 +41,13 @@ const proxy = {
 // Inline srcdoc still works with frame-src 'none'; ALL frame navigations,
 // including same-origin API URLs and blob escapes, are denied.
 const headers = { 'Content-Security-Policy': "frame-src 'none'; object-src 'none'; base-uri 'self'" }
+// Behind the HTTPS preview proxy the browser must reach the HMR socket on 443,
+// not on the dev port; otherwise the client cannot connect. Only applied when
+// previewing from another host, so a normal local run is untouched.
+const hmr = process.env.ALLOW_PREVIEW_ORIGINS === '1' ? { clientPort: 443 } : undefined
+
 export default defineConfig({
   plugins: [localApiBoundary, react()],
-  server: { host: '0.0.0.0', port: 5173, strictPort: true, allowedHosts: ['.e2b.app', 'localhost', '127.0.0.1'], proxy, headers },
+  server: { host: '0.0.0.0', port: 5173, strictPort: true, allowedHosts: ['.e2b.app', 'localhost', '127.0.0.1'], proxy, headers, hmr },
   preview: { host: '0.0.0.0', port: 5173, strictPort: true, allowedHosts: ['.e2b.app', 'localhost', '127.0.0.1'], proxy, headers },
 })
