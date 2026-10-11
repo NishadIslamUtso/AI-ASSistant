@@ -4,7 +4,7 @@
   "timezone": "Asia/Dhaka",
   "repo_version": "1.3.0-local-first-port",
   "canonical_repo": "https://github.com/NishadIslamUtso/AI-ASSistant",
-  "note_for_next_ai": "Current Arena work must remain on arena/b485c0f2-ai-assistant. PR #4 is open from e770526. The user-designated arena/3c06e1bf-ai-assistant was fetched read-only (head 871e857); selected UI/server/docs were ported here without checkout/merge or vault fixture data. Current implementation is sandbox-built/tested, not user-confirmed on Windows or live Ollama.",
+  "note_for_next_ai": "Current Arena work remains on arena/b485c0f2-ai-assistant. PR #4 is open; current head 3cae481 was pushed after porting selected changes from read-only ref arena/3c06e1bf-ai-assistant (head 871e857). Current implementation is sandbox-built/tested, not user-confirmed on Windows or live Ollama.",
   "apps": {
     "01_claude-exact-pixel-clone": {
       "path": "apps/01_claude-exact-pixel-clone",
@@ -127,7 +127,7 @@
     "No native installer; no automatic journal generation or rebuildable semantic index",
     "No remote MCP, cloud fallback, sub-agent orchestration, or hosted artifact deployment by design"
   ],
-  "last_session": "2026-10-12 — reconciled PR #4 base e770526; read arena/3c06e1bf-ai-assistant at 871e857 without switching; ported selected UI/server/docs; added inline previews, exact draft-only pinning, local prefix branches, explicit artifact-to-vault review; built static preview hardened; 55 Node and 7 optional jsdom tests pass, both Vite builds clean, production audit 0; live preview uses mock Ollama and throwaway vault. Windows, real Ollama, real Obsidian, and Playwright remain unverified.",
+  "last_session": "2026-10-12 — reconciled PR #4 base e770526; read arena/3c06e1bf-ai-assistant at 871e857 without switching; ported selected UI/server/docs; added inline previews, exact draft-only pinning, local prefix branches, explicit artifact-to-vault review; hardened static preview. Committed/pushed 3cae481 to PR #4. 55 Node and 7 optional jsdom tests pass, both Vite builds clean, production audit 0; live preview uses mock Ollama and throwaway vault. Windows, real Ollama, real Obsidian, and Playwright remain unverified.",
   "palette_ruling": {
     "authoritative": "user-supplied; never override with screenshot sampling",
     "shipped": {

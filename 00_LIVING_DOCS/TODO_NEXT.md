@@ -22,7 +22,7 @@ Do not set `OLLAMA_ORIGINS=*`. If Ollama is unavailable, diagnose with `check-ol
 
 - [ ] Optional Playwright browser suite (`tests/app.spec.js`) updated for inline preview, draft-only pin, branching, and explicit vault artifact save; install runner/browser only if a real E2E pass is needed.
 - [ ] Validate on Windows Node/Ollama/Obsidian; actual vision behavior requires an already-installed local model with verified `vision` metadata.
-- [ ] Re-check `git status`, `git diff`, and PR #4 before pushing. Work only on `arena/b485c0f2-ai-assistant`.
+- [x] Re-checked `git status`, `git diff`, and PR #4; commit `3cae481` is pushed and PR #4 remains open. Work only on `arena/b485c0f2-ai-assistant`.
 
 ## Priority 3 — Keep app + Obsidian behavior honest
 

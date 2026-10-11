@@ -11,7 +11,7 @@
 - **Preview security:** the static preview server now applies the shared API allowlist/origin/method/content-type policy, drops cookies/authorization, rejects encoded path traversal, adds response safety headers, and defaults to `127.0.0.1`. `start-app.bat` no longer persists `OLLAMA_ORIGINS=*`; the built app uses a loopback proxy too.
 - **Device fit:** sub-agents, MCP servers, cloud fallback, and remote hosting remain disabled/deferred; no remote service is enabled or contacted. The model remains local and no automatic model pull was added.
 - **Validation:** `npm test` 55/55; optional jsdom `npm run test:ui` 7/7 (including exact existing-draft whitespace preservation); `npm run build` and `npm run build:preview` clean; production-only `npm audit` reports 0 vulnerabilities. Live built preview serves the UI using the clearly labeled synthetic Ollama stub and a disposable `/tmp` vault: app/model-list/vault-status 200, model-pull and hostile-origin checks 403. No Windows/TUF or real Ollama/Obsidian test. Playwright `app.spec.js` was updated but not run (optional runner/browser absent).
-- **PR:** #4 remains OPEN; future commits go to `arena/b485c0f2-ai-assistant`.
+- **PR:** #4 remains OPEN at `3cae481`; the commit is pushed to `arena/b485c0f2-ai-assistant`.
 
 ## 2026-10-11 (22:55) — Fix: preview host was blocked by the origin allowlists
 
