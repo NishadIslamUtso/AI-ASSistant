@@ -1,52 +1,48 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import proxyPolicy from './server/proxy-policy.cjs'
+const localApiBoundary = {
+  name: 'local-api-boundary',
+  configureServer(server) { server.middlewares.use(proxyPolicy.protectLocalApi) },
+  configurePreviewServer(server) { server.middlewares.use(proxyPolicy.protectLocalApi) },
+}
 
-/**
- * Dev server config.
- *
- * Two things matter here:
- *
- * 1. host 0.0.0.0 + allowedHosts — so the app also works when it is opened
- *    through a forwarded/proxied hostname, not only 127.0.0.1.
- *    start-app.bat still passes --host 127.0.0.1 for the local Windows run.
- *
- * 2. /ollama + /vault proxies — this is what kills the Ollama CORS problem.
- *    The browser calls same-origin /ollama/api/chat, Vite forwards it to
- *    127.0.0.1:11434 server-side, so OLLAMA_ORIGINS no longer matters.
- *    The app auto-detects the proxy via /__ai_proxy_ping and falls back to a
- *    direct connection when it is not available (e.g. a static build).
- */
-const proxyPing = {
-  name: 'ai-assistant-proxy-ping',
-  configureServer(server) {
-    server.middlewares.use('/__ai_proxy_ping', (req, res) => {
-      res.setHeader('Content-Type', 'application/json')
-      res.end(JSON.stringify({ ok: true, proxy: true }))
-    })
+// The browser always uses this origin. This also works behind Arena's HTTPS
+// preview; 127.0.0.1 below refers to the machine running Vite, never the browser.
+const proxy = {
+  '/api/ollama': {
+    target: proxyPolicy.localTarget(process.env.OLLAMA_API_URL || 'http://127.0.0.1:11434', 'OLLAMA_API_URL'),
+    changeOrigin: true,
+    rewrite: path => path.replace(/^\/api\/ollama/, '/api'),
+    configure(proxy) {
+      proxy.on('proxyReq', request => {
+        // This is a server-to-server local request, not a browser CORS request.
+        request.removeHeader('origin'); request.removeHeader('cookie'); request.removeHeader('authorization')
+      })
+      proxy.on('error', (_error, _request, response) => {
+        if (response && !response.headersSent && response.writeHead) {
+          response.writeHead(503, { 'Content-Type': 'application/json' })
+          response.end(JSON.stringify({ error: 'Ollama is not reachable on this machine at port 11434. Start the existing Ollama installation; no model download is needed.' }))
+        }
+      })
+    },
+  },
+  '/api/vault': {
+    target: proxyPolicy.localTarget(process.env.VAULT_API_URL || 'http://127.0.0.1:8765', 'VAULT_API_URL'),
+    changeOrigin: true,
+    rewrite: path => path.replace(/^\/api\/vault/, '') || '/',
+    configure(proxy) {
+      proxy.on('proxyReq', request => { request.removeHeader('cookie'); request.removeHeader('authorization') })
+    },
   },
 }
 
+// A sandboxed artifact cannot navigate its frame to an external site either.
+// Inline srcdoc still works with frame-src 'none'; ALL frame navigations,
+// including same-origin API URLs and blob escapes, are denied.
+const headers = { 'Content-Security-Policy': "frame-src 'none'; object-src 'none'; base-uri 'self'" }
 export default defineConfig({
-  plugins: [react(), proxyPing],
-  server: {
-    host: '0.0.0.0',
-    port: 5173,
-    allowedHosts: true,
-    proxy: {
-      '/ollama': {
-        target: 'http://127.0.0.1:11434',
-        changeOrigin: true,
-        rewrite: (p) => p.replace(/^\/ollama/, ''),
-      },
-      '/vault': {
-        target: 'http://127.0.0.1:8765',
-        changeOrigin: true,
-        rewrite: (p) => p.replace(/^\/vault/, ''),
-      },
-    },
-  },
-  build: {
-    outDir: 'dist',
-    chunkSizeWarningLimit: 1200,
-  },
+  plugins: [localApiBoundary, react()],
+  server: { host: '0.0.0.0', port: 5173, strictPort: true, allowedHosts: ['.e2b.app', 'localhost', '127.0.0.1'], proxy, headers },
+  preview: { host: '0.0.0.0', port: 5173, strictPort: true, allowedHosts: ['.e2b.app', 'localhost', '127.0.0.1'], proxy, headers },
 })

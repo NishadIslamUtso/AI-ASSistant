@@ -1,931 +1,179 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { SettingsProvider, useSettings } from './context/SettingsContext.jsx'
-import { KEYS, load, save, wipeAll } from './lib/storage.js'
-import { chatStream, listModels, ping, splitThinking, modelSupportsImages } from './lib/ollama.js'
-import { vault, setVaultUrl, capsuleToPromptText } from './lib/vault.js'
-import {
-  artifactsFromReply,
-  artifactFromCode,
-  artifactInstruction,
-  wantsArtifact,
-  makeId,
-} from './lib/artifacts.js'
-import { demoStream } from './lib/demo.js'
-
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { FolderClosed, Plus, X, ArrowLeft } from 'lucide-react'
 import Sidebar from './components/Sidebar.jsx'
 import Center from './components/Center.jsx'
 import VaultPanel from './components/VaultPanel.jsx'
-import ArtifactPanel from './components/ArtifactPanel.jsx'
 import SettingsModal from './components/SettingsModal.jsx'
 import AppsExtensionsModal from './components/AppsExtensionsModal.jsx'
-import UserMenu from './components/UserMenu.jsx'
+import ArtifactPanel from './components/ArtifactPanel.jsx'
+import ArtifactsLibrary from './components/ArtifactsLibrary.jsx'
 import TitleBar from './components/TitleBar.jsx'
 import TodayView from './components/TodayView.jsx'
+import Dialog from './components/Dialog.jsx'
+import usePersistentState from './hooks/usePersistentState.js'
+import useModels from './hooks/useModels.js'
+import useChat from './hooks/useChat.js'
+import { DEFAULT_CHATS, DEFAULT_MODEL, DEFAULT_SETTINGS, newId, normalizeChats, normalizeSettings } from './lib/storage.js'
+import { capsuleText, vaultGet } from './lib/vault.js'
 
-/* ────────────────────────────────────────────────────────────────
-   Defaults — the chat titles come straight out of screenshot 191547.png
-   so a fresh install looks like the spec on first run.
-   ──────────────────────────────────────────────────────────────── */
-const DAY = 86400000
-function defaultChats() {
-  const now = Date.now()
-  const oct8 = new Date('2026-10-08T20:00:00').getTime()
-  const mk = (title, group, ts, i) => ({
-    id: `seed-${i}`,
-    title,
-    group,
-    pinned: false,
-    projectId: '',
-    createdAt: ts,
-    updatedAt: ts,
-    messages: [],
-    artifacts: [],
-  })
-  return [
-    mk('Refining a 5-day workout cycle', 'Oct 8', oct8, 1),
-    mk('Identifying charisma type', 'Older', now - 30 * DAY, 2),
-    mk('Realme 6i - realme... fix', 'Older', now - 31 * DAY, 3),
-    mk('Fix AI generated Facebook picture', 'Older', now - 32 * DAY, 4),
-    mk('PSY 101-01W | Unit 1 | Quiz Review', 'Older', now - 33 * DAY, 5),
-    mk('STA201 - Elements of Statistics', 'Older', now - 34 * DAY, 6),
-    mk('PHY-112, Principles of Physics II', 'Older', now - 35 * DAY, 7),
-    mk('CSE220 MID - Data Structure and Algorithms', 'Older', now - 36 * DAY, 8),
-    mk('Function: Manage memories...', 'Older', now - 37 * DAY, 9),
-  ]
+function ProjectsView({ projects, chats, onCreate, onOpen, focused, onBack, onChat, onNew }) {
+  if (focused) return <main className="library-view"><button className="back-button" onClick={onBack}><ArrowLeft size={14} />Projects</button><header><h1>{focused.name}</h1><button className="secondary-button" onClick={() => onNew(focused.id)}><Plus size={15} />New chat</button></header><div className="project-chat-list">{chats.filter(chat => chat.projectId === focused.id).map(chat => <button key={chat.id} onClick={() => onChat(chat.id)}>{chat.title}</button>)}</div>{!chats.some(chat => chat.projectId === focused.id) && <p className="library-description">No chats in this project yet.</p>}</main>
+  return <main className="library-view"><header><div><FolderClosed size={27} /><h1>Projects</h1></div><button className="secondary-button" onClick={onCreate}><Plus size={15} />New project</button></header><p className="library-description">Organize local chats by project. Project grouping is local; no cloud workspace is created.</p><div className="project-grid">{projects.map(project => <button key={project.id} onClick={() => onOpen(project.id)}><FolderClosed size={24} /><strong>{project.name}</strong><small>{chats.filter(chat => chat.projectId === project.id).length} chats</small></button>)}</div>{!projects.length && <div className="library-empty"><FolderClosed size={36} /><h2>A place for your projects</h2><p>Create a project, then add chats from their context menu or the composer.</p></div>}</main>
 }
-
-const DEFAULT_PROJECTS = [
-  { id: 'proj-personal', name: 'Personal' },
-  { id: 'proj-uni', name: 'University' },
-]
-
-/**
- * Simple, boring system prompt on purpose.
- *
- * The old build seeded a Flappy-Bird example here and qwen2.5:3b latched onto
- * it — every single reply came back as a game (the "Tic Tac Toe loop").
- * No examples, no "you are an expert game developer", nothing to latch onto.
- */
-function systemPrompt(userName) {
-  return [
-    'You are AI ASSistant, a helpful local assistant running on the user\u2019s own machine.',
-    `The user's name is ${userName}.`,
-    'Answer the question that was actually asked. Be direct and concrete.',
-    'Use Markdown (short paragraphs, bullet lists, fenced code blocks with a language tag) when it helps.',
-    'Only produce code or build an app when the user explicitly asks for it.',
-    'If you do not know something, say so plainly instead of guessing.',
-  ].join(' ')
+function ActionDialog({ action, projects, onClose, onApply }) {
+  const [name, setName] = useState(action.chat?.title || '')
+  const titles = { rename: 'Rename chat', delete: 'Delete chat?', project: 'Add to project', group: 'Move to group', createProject: 'New project' }
+  return <Dialog title={titles[action.type]} onClose={onClose} className="small-dialog" labelledBy="action-title"><div className="action-dialog-body">
+    {['rename', 'createProject'].includes(action.type) && <form onSubmit={event => { event.preventDefault(); if (name.trim()) onApply(name.trim()) }}><label>{action.type === 'rename' ? 'Chat name' : 'Project name'}<input aria-label={action.type === 'rename' ? 'Chat name' : 'Project name'} value={name} maxLength={100} onChange={event => setName(event.target.value)} /></label><footer><button type="button" className="secondary-button" onClick={onClose}>Cancel</button><button className="white-button" disabled={!name.trim()}>Save</button></footer></form>}
+    {action.type === 'delete' && <><p>This removes the chat from this browser only. Original vault sources and their attachments are kept; deleting those requires a separate action.</p><footer><button className="secondary-button" onClick={onClose}>Cancel</button><button className="danger-button" onClick={() => onApply()}>Delete local chat</button></footer></>}
+    {action.type === 'project' && <div className="action-options"><button onClick={() => onApply(null)}>No project</button>{projects.map(project => <button key={project.id} onClick={() => onApply(project.id)}>{project.name}</button>)}{!projects.length && <p>Create a project from Projects in the sidebar first.</p>}</div>}
+    {action.type === 'group' && <div className="action-options">{['Today', 'Oct 8', 'Older'].map(group => <button key={group} onClick={() => onApply(group)}>{group}</button>)}</div>}
+  </div></Dialog>
 }
-
-/** Effort -> Ollama generation options. Keeps a 3B model on an 8GB box snappy. */
-const EFFORT_OPTIONS = {
-  Low: { num_predict: 512, temperature: 0.6 },
-  Medium: { num_predict: 1024, temperature: 0.7 },
-  High: { num_predict: 2048, temperature: 0.8 },
-}
-
-function titleFrom(text = '', attachments = []) {
-  const t = String(text).replace(/\s+/g, ' ').trim()
-  if (t) return t.length > 60 ? t.slice(0, 59).trimEnd() + '…' : t
-  const a = attachments[0]
-  return a ? `Attachment: ${a.name}` : 'New chat'
-}
-
-function friendlyError(err) {
-  const msg = String(err?.message || err || '')
-  if (/Failed to fetch|NetworkError|ERR_NETWORK|Load failed/i.test(msg)) {
-    return 'Could not reach Ollama at 127.0.0.1:11434.'
-  }
-  if (/aborted/i.test(msg)) return 'Stopped.'
-  return msg || 'Something went wrong.'
-}
-
-const CORS_HINT =
-  'If Ollama is running and this still fails, it is the browser origin check. In a terminal run:  setx OLLAMA_ORIGINS "*"  then restart Ollama (taskkill /F /IM ollama.exe, then ollama serve). start-app.bat sets this for you.'
-
 export default function App() {
-  return (
-    <SettingsProvider>
-      <Shell />
-    </SettingsProvider>
-  )
-}
-
-function Shell() {
-  const { settings, update, reset, transcriptClass, fontClass, widthClass } = useSettings()
-
-  const [chats, setChats] = useState(() => load(KEYS.chats, defaultChats()))
-  const [projects, setProjects] = useState(() => load(KEYS.projects, DEFAULT_PROJECTS))
-  const [currentChatId, setCurrentChatId] = useState(null)
-
-  const [models, setModels] = useState([])
-  const [ollamaOk, setOllamaOk] = useState(null)
-  const [vaultOk, setVaultOk] = useState(null)
-
-  const [input, setInput] = useState('')
-  const [attachments, setAttachments] = useState([])
-  const [injected, setInjected] = useState([])
-  const [vaultHits, setVaultHits] = useState([])
-  const [artifactMode, setArtifactMode] = useState(false)
-  const [cooking, setCooking] = useState(false)
-
-  const [stream, setStream] = useState(null) // { chatId, messageId }
-  const [activeArtifactId, setActiveArtifactId] = useState(null)
-  const [ui, setUi] = useState({
-    vault: false,
-    settings: false,
-    apps: false,
-    userMenu: false,
-    artifacts: false,
-    today: false,
-    sidebarCollapsed: false,
-    settingsTab: 'general',
-  })
-  const [searchFocus, setSearchFocus] = useState(0)
-  const [proxyBase, setProxyBase] = useState(null)
-  const bootRef = useRef(false)
-
-  /**
-   * The Vite dev server proxies /ollama -> 127.0.0.1:11434 and
-   * /vault -> 127.0.0.1:8765. When those are available we use them: the browser
-   * then talks same-origin and Ollama's OLLAMA_ORIGINS/CORS check never applies.
-   * Otherwise we fall back to a direct connection.
-   */
+  const [notice, setNotice] = useState('')
+  const notify = useCallback(message => setNotice(message), [])
+  const [chats, setChats] = usePersistentState('claude_exact_chats', DEFAULT_CHATS, normalizeChats, notify)
+  const [settings, setSettings] = usePersistentState('claude_exact_settings', DEFAULT_SETTINGS, normalizeSettings, notify)
+  const [model, setModel] = usePersistentState('claude_exact_model', DEFAULT_MODEL, value => typeof value === 'string' ? value : DEFAULT_MODEL, notify)
+  const [projects, setProjects] = usePersistentState('claude_exact_projects', [], value => Array.isArray(value) ? value.filter(project => typeof project?.id === 'string' && typeof project?.name === 'string') : [], notify)
+  const [imports, setImports] = usePersistentState('claude_exact_artifacts', [], value => Array.isArray(value) ? value.filter(artifact => typeof artifact?.id === 'string' && Array.isArray(artifact.versions) && artifact.versions.length) : [], notify)
+  const [currentChat, setCurrentChat] = useState(() => new URLSearchParams(window.location.search).get('chat'))
+  const [view, setView] = useState('chat')
+  const [rightPanel, setRightPanel] = useState(null)
+  const [activeArtifact, setActiveArtifact] = useState(null)
+  const [modal, setModal] = useState(null)
+  const [action, setAction] = useState(null)
+  const [collapsed, setCollapsed] = useState(false)
+  const [projectId, setProjectId] = useState(null)
+  const [focusedProject, setFocusedProject] = useState(null)
+  const [draftNonce, setDraftNonce] = useState(0)
+  const [contextBundle, setContextBundle] = useState(null)
+  const [previewContext, setPreviewContext] = useState(null)
+  const [today, setToday] = useState(false)
+  const [seed, setSeed] = useState({ text: '', n: 0 })
+  const [vaultOk, setVaultOk] = useState(false)
+  const [vaultPath, setVaultPath] = useState('')
+  const [externalLink, setExternalLink] = useState(null)
+  const models = useModels(model, setModel)
+  const chat = chats.find(item => item.id === currentChat)
+  const navigate = useCallback(id => {
+    const url = new URL(window.location.href)
+    if (id) url.searchParams.set('chat', id); else url.searchParams.delete('chat')
+    window.history.pushState({}, '', url)
+    setCurrentChat(id); setView('chat'); setContextBundle(null); setProjectId(null)
+  }, [])
+  const chatRuntime = useChat({ chats, setChats, currentChat, navigate, models, notify })
+  const artifacts = useMemo(() => [...imports, ...chats.flatMap(chat => chat.messages.flatMap(message => message.artifacts || []))], [imports, chats])
+  const artifact = artifacts.find(item => item.id === activeArtifact)
   useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      try {
-        const r = await fetch('/__ai_proxy_ping', { cache: 'no-store' })
-        const j = await r.json()
-        if (!cancelled && j?.proxy) setProxyBase('/ollama')
-      } catch (e) {
-        /* static build, or no dev server — direct URLs are used instead */
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
+    const onPop = () => { setCurrentChat(new URLSearchParams(window.location.search).get('chat')); setView('chat'); setContextBundle(null) }
+    window.addEventListener('popstate', onPop)
+    const onKey = event => { if ((event.ctrlKey || event.metaKey) && event.key === ',' && !document.querySelector('[role="dialog"]')) { event.preventDefault(); setModal('settings') } }
+    window.addEventListener('keydown', onKey)
+    return () => { window.removeEventListener('popstate', onPop); window.removeEventListener('keydown', onKey) }
   }, [])
-
-  const ollamaBase = proxyBase ? '/ollama' : settings.ollamaUrl
-  const vaultBase = proxyBase ? '/vault' : settings.vaultUrl
-
-  // ?demo=1 — switched on ONLY when Ollama is genuinely unreachable, so a link
-  // opened on a machine that does have Ollama always uses the real model.
-  const demoRequestedRef = useRef(false)
-  const demoAppliedRef = useRef(false)
-  try {
-    demoRequestedRef.current = new URLSearchParams(window.location.search).get('demo') === '1'
-  } catch (e) {
-    /* ignore */
-  }
-
-  const abortRef = useRef(null)
-  const projectRef = useRef('')
-  const inputRef = useRef('')
-  inputRef.current = input
-
-  /* ── persistence ─────────────────────────────────────── */
-  useEffect(() => save(KEYS.chats, chats), [chats])
-  useEffect(() => save(KEYS.projects, projects), [projects])
-  useEffect(() => setVaultUrl(vaultBase), [vaultBase])
-
-  /* ── service discovery ───────────────────────────────── */
-  const refreshServices = useCallback(async () => {
-    const p = await ping(ollamaBase)
-    setOllamaOk(Boolean(p.ok))
-    if (!p.ok && demoRequestedRef.current && !demoAppliedRef.current) {
-      demoAppliedRef.current = true
-      update({ demoMode: true })
-    }
-    if (p.ok) {
-      try {
-        const list = await listModels(ollamaBase)
-        setModels(list)
-      } catch (e) {
-        /* keep whatever we had */
-      }
-    }
-    const vs = await vault.status()
-    setVaultOk(Boolean(vs))
-  }, [ollamaBase, update])
-
   useEffect(() => {
-    refreshServices()
-  }, [refreshServices])
-
-  // re-check every 20s so a service that comes up later is picked up
+    const root = document.documentElement
+    const media = window.matchMedia('(prefers-color-scheme: dark)')
+    const apply = () => { root.dataset.theme = settings.theme === 'system' ? media.matches ? 'dark' : 'light' : settings.theme }
+    apply(); media.addEventListener('change', apply)
+    root.dataset.motion = settings.motion.toLowerCase()
+    root.style.setProperty('--transcript-font', settings.chatFont === 'System' ? '"Segoe UI", Arial, sans-serif' : settings.chatFont === 'Monospace' ? 'Consolas, monospace' : 'Georgia, "Times New Roman", serif')
+    root.style.setProperty('--transcript-size', `${({ Small: 14, Medium: 16, Large: 18 })[settings.transcriptSize]}px`)
+    root.style.setProperty('--transcript-width', `${({ Narrow: 588, Medium: 768, Wide: 960 })[settings.transcriptWidth]}px`)
+    return () => media.removeEventListener('change', apply)
+  }, [settings])
+  useEffect(() => { if (!notice) return; const timer = setTimeout(() => setNotice(''), 15_000); return () => clearTimeout(timer) }, [notice])
   useEffect(() => {
-    const id = setInterval(refreshServices, 20000)
-    return () => clearInterval(id)
-  }, [refreshServices])
-
-  /* ── chat helpers ────────────────────────────────────── */
-  const chat = chats.find((c) => c.id === currentChatId) || null
-  const messages = chat?.messages ?? []
-  const artifacts = chat?.artifacts ?? []
-  const artifactCount = chats.reduce((n, c) => n + (c.artifacts?.length || 0), 0)
-  const isStreaming = Boolean(stream && stream.chatId === currentChatId)
-
-  const patchMessage = useCallback((chatId, msgId, patch) => {
-    setChats((prev) =>
-      prev.map((c) =>
-        c.id === chatId
-          ? { ...c, messages: c.messages.map((m) => (m.id === msgId ? { ...m, ...patch } : m)) }
-          : c,
-      ),
-    )
+    let alive = true
+    const check = () => vaultGet('/status').then(data => {
+      if (!alive) return
+      setVaultOk(data?.ok === true)
+      if (typeof data?.vault === 'string') setVaultPath(data.vault)
+    }).catch(() => { if (alive) { setVaultOk(false); setVaultPath('') } })
+    check()
+    const timer = setInterval(check, 15_000)
+    return () => { alive = false; clearInterval(timer) }
   }, [])
-
-  const updateChat = useCallback((chatId, mutator) => {
-    setChats((prev) => prev.map((c) => (c.id === chatId ? mutator(c) : c)))
-  }, [])
-
-  /* ── sending ─────────────────────────────────────────── */
-  const runSend = useCallback(
-    async ({ chatId, history, text, atts, caps, modelOverride }) => {
-      const model = modelOverride || settings.model
-      const requested = artifactMode || wantsArtifact(text)
-      const assistantId = makeId()
-      const userMsg = {
-        id: makeId(),
-        role: 'user',
-        content: text,
-        attachments: atts,
-        createdAt: Date.now(),
-      }
-      const assistantMsg = {
-        id: assistantId,
-        role: 'assistant',
-        content: '',
-        thinking: '',
-        model,
-        streaming: true,
-        createdAt: Date.now(),
-      }
-
-      // 1. optimistic transcript
-      setChats((prev) => {
-        const idx = prev.findIndex((c) => c.id === chatId)
-        const nextMessages = [...history, userMsg, assistantMsg]
-        if (idx === -1) {
-          return [
-            {
-              id: chatId,
-              title: titleFrom(text, atts),
-              group: 'Today',
-              pinned: false,
-              projectId: projectRef.current || '',
-              createdAt: Date.now(),
-              updatedAt: Date.now(),
-              messages: nextMessages,
-              artifacts: [],
-            },
-            ...prev,
-          ]
-        }
-        const copy = [...prev]
-        copy[idx] = {
-          ...copy[idx],
-          messages: nextMessages,
-          updatedAt: Date.now(),
-          title: copy[idx].title === 'New chat' ? titleFrom(text, atts) : copy[idx].title,
-        }
-        return copy
-      })
-
-      // 2. capture the turn into the vault (silent, fire-and-forget)
-      vault.capture({
-        type: 'conversation',
-        provider: 'AI ASSistant',
-        conversation_id: chatId,
-        title: titleFrom(text, atts),
-        url: '',
-        captured_at: new Date().toISOString(),
-        completeness: 'full',
-        messages: [{ role: 'user', text, timestamp: new Date().toISOString() }],
-      })
-
-      // 3. build the request
-      const sys =
-        systemPrompt(settings.userName) + (requested ? artifactInstruction() : '')
-
-      const historyMessages = []
-      for (const m of history) {
-        if (m.error) continue
-        let content = m.content || ''
-        for (const a of m.attachments || []) {
-          if (a.kind !== 'image' && a.text) {
-            content += `\n\n[Attached file: ${a.name}]\n${a.text.slice(0, 20000)}`
-          }
-        }
-        if (content.trim()) historyMessages.push({ role: m.role, content })
-      }
-
-      let userContent = text
-      if (caps?.length) {
-        userContent =
-          'Relevant memory from my vault:\n\n' +
-          caps.map((c) => capsuleToPromptText(c)).join('\n\n---\n\n') +
-          '\n\n---\n\n' +
-          text
-      }
-      for (const a of atts) {
-        if (a.kind !== 'image' && a.text) {
-          userContent += `\n\n[Attached file: ${a.name}]\n${a.text.slice(0, 20000)}`
-        }
-      }
-
-      const newUser = { role: 'user', content: userContent }
-      const images = atts.filter((a) => a.kind === 'image' && a.data)
-      let skippedImages = 0
-      if (images.length) {
-        if (modelSupportsImages(model)) {
-          newUser.images = images.map((a) => String(a.data).replace(/^data:[^,]+,/, ''))
-        } else {
-          skippedImages = images.length
-        }
-      }
-
-      const apiMessages = [{ role: 'system', content: sys }, ...historyMessages, newUser]
-
-      // 4. stream (real model, or the offline demo responder)
-      setStream({ chatId, messageId: assistantId })
-      abortRef.current = new AbortController()
-      let raw = ''
-
-      const useDemo = settings.demoMode && !ollamaOk
-      const streamer = useDemo
-        ? ({ onToken, signal }) =>
-            demoStream({ prompt: text, userName: settings.userName, onToken, signal })
-        : ({ onToken, signal }) =>
-            chatStream({
-              baseUrl: ollamaBase,
-              model,
-              messages: apiMessages,
-              options: EFFORT_OPTIONS[settings.effort] || EFFORT_OPTIONS.Medium,
-              signal,
-              onToken,
-            })
-
-      try {
-        await streamer({
-          signal: abortRef.current.signal,
-          onToken: (t) => {
-            raw += t
-            const { thinking, answer } = splitThinking(raw)
-            patchMessage(chatId, assistantId, {
-              content: answer,
-              thinking: settings.thinking === 'Off' ? '' : thinking,
-            })
-          },
-        })
-
-        const { thinking, answer } = splitThinking(raw)
-        patchMessage(chatId, assistantId, {
-          content: answer,
-          thinking: settings.thinking === 'Off' ? '' : thinking,
-          streaming: false,
-          finishedAt: Date.now(),
-        })
-
-        if (skippedImages > 0) {
-          patchMessage(chatId, assistantId, {
-            content:
-              answer +
-              `\n\n_${skippedImages} image${skippedImages > 1 ? 's were' : ' was'} not sent: **${model}** does not accept images. Pick a vision model (for example \`qwen3-vl:4b\` or \`llava\`) in the composer._`,
-          })
-        }
-
-        // 5. artifacts — ONLY when the user asked, or the reply is a complete document
-        const found = artifactsFromReply(answer, requested)
-        if (found.length) {
-          setChats((prev) =>
-            prev.map((c) =>
-              c.id === chatId ? { ...c, artifacts: [...(c.artifacts || []), ...found] } : c,
-            ),
-          )
-          setActiveArtifactId(found[found.length - 1].id)
-          setUi((u) => ({ ...u, artifacts: true }))
-        }
-      } catch (e) {
-        const { thinking, answer } = splitThinking(raw)
-        if (e?.name === 'AbortError') {
-          patchMessage(chatId, assistantId, {
-            content: (answer || '') + (answer ? '\n\n' : '') + '_Stopped._',
-            thinking: settings.thinking === 'Off' ? '' : thinking,
-            streaming: false,
-          })
-        } else {
-          patchMessage(chatId, assistantId, {
-            content: friendlyError(e),
-            hint: CORS_HINT,
-            error: true,
-            streaming: false,
-          })
-        }
-      } finally {
-        setStream(null)
-        abortRef.current = null
-      }
-    },
-    [
-      artifactMode,
-      ollamaBase,
-      ollamaOk,
-      patchMessage,
-      settings.demoMode,
-      settings.effort,
-      settings.model,
-      settings.thinking,
-      settings.userName,
-    ],
-  )
-
-  const send = useCallback(() => {
-    const text = input.trim()
-    if (isStreaming) return
-    if (!text && attachments.length === 0) return
-
-    const atts = attachments
-    const caps = injected
-    const chatId = currentChatId || makeId()
-    const history = currentChatId ? (chats.find((c) => c.id === currentChatId)?.messages ?? []) : []
-
-    if (!currentChatId) setCurrentChatId(chatId)
-
-    setInput('')
-    setAttachments([])
-    setInjected([])
-    setVaultHits([])
-    setArtifactMode(false) // explicit-only: never let artifact mode leak into the next turn
-
-    runSend({ chatId, history, text, atts, caps })
-  }, [attachments, chats, currentChatId, injected, input, isStreaming, runSend])
-
-  const stop = useCallback(() => {
-    abortRef.current?.abort()
-  }, [])
-
-  const regenerate = useCallback(() => {
-    if (!chat || isStreaming) return
-    const msgs = chat.messages
-    const lastAssistant = [...msgs].reverse().find((m) => m.role === 'assistant')
-    const trimmed = lastAssistant ? msgs.filter((m) => m.id !== lastAssistant.id) : msgs
-    const lastUser = [...trimmed].reverse().find((m) => m.role === 'user')
-    if (!lastUser) return
-    updateChat(chat.id, (c) => ({ ...c, messages: trimmed }))
-    runSend({
-      chatId: chat.id,
-      // drop the old user turn from `history` — runSend re-adds it, so passing
-      // it here would show the same message twice
-      history: trimmed.filter((m) => m.id !== lastUser.id),
-      text: lastUser.content,
-      atts: lastUser.attachments || [],
-      caps: [],
-    })
-  }, [chat, isStreaming, runSend, updateChat])
-
-  /* ── attachments ─────────────────────────────────────── */
-  const pickFiles = useCallback(async (files, kind) => {
-    const out = []
-    for (const f of files) {
-      const isImage = kind === 'image' || /^image\//.test(f.type)
-      const item = { name: f.name, size: f.size, kind: isImage ? 'image' : 'file' }
-      try {
-        if (isImage) {
-          item.data = await readAsDataURL(f)
-          item.preview = item.data
-        } else {
-          item.text = await readAsText(f)
-          if (item.text == null) continue
-        }
-      } catch (e) {
-        item.error = 'could not read file'
-      }
-      out.push(item)
-    }
-    setAttachments((prev) => [...prev, ...out])
-  }, [])
-
-  /* ── vault context suggestions (opt-in, never silent) ── */
   useEffect(() => {
-    const text = input.trim()
-    if (text.length < 4 || !vaultOk) {
-      setVaultHits([])
-      return
-    }
-    const t = setTimeout(async () => {
-      const res = await vault.context(text.slice(0, 120), 4)
-      setVaultHits(res?.capsules || [])
-    }, 600)
-    return () => clearTimeout(t)
-  }, [input, vaultOk])
-
-  const addHit = useCallback((capsule) => {
-    setInjected((prev) => (prev.some((c) => c.id === capsule.id) ? prev : [...prev, capsule]))
-    setVaultHits([])
-  }, [])
-
-  const dropCapsule = useCallback((capsule) => {
-    setInjected((prev) => (prev.some((c) => c.id === capsule.id) ? prev : [...prev, capsule]))
-  }, [])
-
-  /* ── Cook This Prompt (Capsule Hub style) ────────────── */
-  const cookPrompt = useCallback(async () => {
-    const text = input.trim()
-    if (!text || cooking) return
-    setCooking(true)
-    try {
-      const ctx = await vault.context(text.slice(0, 160), 4)
-      const blocks = (ctx?.capsules || []).map(capsuleToPromptText).join('\n\n---\n\n')
-      let out = ''
-      await chatStream({
-        baseUrl: settings.ollamaUrl,
-        model: settings.model,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are a prompt engineer. Rewrite the user\u2019s prompt so it is clearer, more specific and more likely to get a useful answer. Use the vault context only where it is relevant. Reply with the improved prompt ONLY — no preamble, no explanation, no quotes around it.',
-          },
-          {
-            role: 'user',
-            content: `Vault context:\n${blocks || '(none)'}\n\nPrompt to improve:\n${text}`,
-          },
-        ],
-        options: { num_predict: 400, temperature: 0.5 },
-        onToken: (t) => {
-          out += t
-        },
-      })
-      const cleaned = out.trim().replace(/^["'\u201c\u2018]|["'\u201d\u2019]$/g, '')
-      if (cleaned) setInput(cleaned)
-    } catch (e) {
-      /* cooking is a nicety — failing quietly is fine */
-    } finally {
-      setCooking(false)
-    }
-  }, [cooking, input, settings.model, settings.ollamaUrl])
-
-  /* ── chat list actions ───────────────────────────────── */
-  const newChat = useCallback(() => {
-    const id = makeId()
-    setChats((prev) => [
-      {
-        id,
-        title: 'New chat',
-        group: 'Today',
-        pinned: false,
-        projectId: projectRef.current || '',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        messages: [],
-        artifacts: [],
-      },
-      ...prev,
-    ])
-    setCurrentChatId(id)
-    setInput('')
-    setAttachments([])
-    setInjected([])
-  }, [])
-
-  const renameChat = useCallback((id, title) => updateChat(id, (c) => ({ ...c, title })), [updateChat])
-  const deleteChat = useCallback(
-    (id) => {
-      setChats((prev) => prev.filter((c) => c.id !== id))
-      if (currentChatId === id) setCurrentChatId(null)
-    },
-    [currentChatId],
-  )
-  const togglePin = useCallback((id) => updateChat(id, (c) => ({ ...c, pinned: !c.pinned })), [updateChat])
-  const moveGroup = useCallback((id, group) => updateChat(id, (c) => ({ ...c, group })), [updateChat])
-  const addToProject = useCallback(
-    (id, name) => {
-      let pid = projects.find((p) => p.name.toLowerCase() === name.toLowerCase())?.id
-      if (!pid) {
-        pid = makeId()
-        setProjects((prev) => [...prev, { id: pid, name }])
-      }
-      updateChat(id, (c) => ({ ...c, projectId: pid }))
-    },
-    [projects, updateChat],
-  )
-
-  /* ── artifacts ───────────────────────────────────────── */
-  const openArtifactFromCode = useCallback(
-    (code, lang) => {
-      if (!currentChatId) return
-      const art = artifactFromCode(code, lang)
-      setChats((prev) =>
-        prev.map((c) => (c.id === currentChatId ? { ...c, artifacts: [...(c.artifacts || []), art] } : c)),
-      )
-      setActiveArtifactId(art.id)
-      setUi((u) => ({ ...u, artifacts: true }))
-    },
-    [currentChatId],
-  )
-
-  const updateArtifact = useCallback(
-    (id, content) => {
-      if (!currentChatId) return
-      updateChat(currentChatId, (c) => ({
-        ...c,
-        artifacts: (c.artifacts || []).map((a) =>
-          a.id === id ? { ...a, content, version: (a.version || 1) + 1, updatedAt: new Date().toISOString() } : a,
-        ),
-      }))
-    },
-    [currentChatId, updateChat],
-  )
-
-  const deleteArtifact = useCallback(
-    (id) => {
-      if (!currentChatId) return
-      updateChat(currentChatId, (c) => ({ ...c, artifacts: (c.artifacts || []).filter((a) => a.id !== id) }))
-    },
-    [currentChatId, updateChat],
-  )
-
-  /* ── title bar actions ───────────────────────────────── */
-  const titleAction = useCallback(
-    (id) => {
-      switch (id) {
-        case 'new-chat':
-          newChat()
-          break
-        case 'new-project': {
-          const name = window.prompt('New project name:')
-          if (name?.trim()) setProjects((p) => [...p, { id: makeId(), name: name.trim() }])
-          break
-        }
-        case 'clear-chat':
-          if (currentChatId && window.confirm('Clear this chat?')) {
-            updateChat(currentChatId, (c) => ({ ...c, messages: [], artifacts: [] }))
-          }
-          break
-        case 'toggle-sidebar':
-          setUi((u) => ({ ...u, sidebarCollapsed: !u.sidebarCollapsed }))
-          break
-        case 'toggle-vault':
-          setUi((u) => ({ ...u, vault: !u.vault }))
-          break
-        case 'toggle-artifacts':
-          setUi((u) => ({ ...u, artifacts: !u.artifacts }))
-          break
-        case 'reload':
-          window.location.reload()
-          break
-        case 'search-chats':
-          setUi((u) => ({ ...u, sidebarCollapsed: false }))
-          setSearchFocus((n) => n + 1)
-          break
-        case 'latest':
-          window.scrollTo({ top: document.body.scrollHeight })
-          break
-        case 'today':
-          setUi((u) => ({ ...u, today: true }))
-          break
-        case 'save-artifact': {
-          const art = artifacts.find((a) => a.id === activeArtifactId) || artifacts[artifacts.length - 1]
-          if (art) vault.saveArtifact(art).then((r) => window.alert(r?.ok ? 'Saved to vault.' : 'Vault API offline — cannot save.'))
-          else window.alert('No artifact in this chat.')
-          break
-        }
-        case 'open-vault':
-          vault.status().then((s) => window.alert(s?.vault ? `Vault path:\n${s.vault}` : 'Vault API offline.'))
-          break
-        case 'ollama-status':
-          window.alert(
-            ollamaOk
-              ? `Ollama reachable at ${settings.ollamaUrl}\nModels: ${models.map((m) => m.name).join(', ')}`
-              : `Ollama not reachable at ${settings.ollamaUrl}.\nStart it with: ollama serve\n${CORS_HINT}`,
-          )
-          break
-        case 'vault-status':
-          window.alert(
-            vaultOk
-              ? `Vault API running at ${settings.vaultUrl}`
-              : `Vault API offline. Start it with:\nnode server\\vault-api.cjs`,
-          )
-          break
-        case 'docs':
-          window.alert('Living docs: 00_LIVING_DOCS/ in the repo — REQUIREMENTS_LIVING.md, HANDOVER_LIVING.md, TODO_NEXT.md, CHANGELOG.md')
-          break
-        case 'about':
-          window.alert(
-            'AI ASSistant — local Claude-style desktop app.\nRuns qwen2.5:3b (or any Ollama model) on your own machine, uses an Obsidian vault as memory, no account, nothing leaves the computer.',
-          )
-          break
-        default:
-          break
-      }
-    },
-    [activeArtifactId, artifacts, currentChatId, models, newChat, ollamaOk, settings.ollamaUrl, settings.vaultUrl, updateChat, vaultOk],
-  )
-
-  /* ── keyboard shortcuts ──────────────────────────────── */
-  useEffect(() => {
-    const onKey = (e) => {
-      const mod = e.ctrlKey || e.metaKey
-      if (!mod) return
-      const k = e.key.toLowerCase()
-      if (k === 'b') {
-        e.preventDefault()
-        setUi((u) => ({ ...u, sidebarCollapsed: !u.sidebarCollapsed }))
-      } else if (k === 'j') {
-        e.preventDefault()
-        setUi((u) => ({ ...u, vault: !u.vault }))
-      } else if (k === 'n') {
-        e.preventDefault()
-        newChat()
-      } else if (k === 'a' && e.shiftKey) {
-        e.preventDefault()
-        setUi((u) => ({ ...u, artifacts: !u.artifacts }))
-      }
-      if (e.altKey && k === 't') {
-        e.preventDefault()
-        setUi((u) => ({ ...u, today: !u.today }))
-      }
+    const onKey = event => {
+      if (event.altKey && (event.key === 't' || event.key === 'T')) { event.preventDefault(); setToday(value => !value) }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [newChat])
-
-  /* ── reset ───────────────────────────────────────────── */
-  const resetData = useCallback(() => {
-    if (!window.confirm('Delete all local chats, artifacts and settings from this browser?')) return
-    wipeAll()
-    window.location.reload()
   }, [])
-
-  const user = {
-    name: settings.userName,
-    email: settings.userEmail,
-    initials: settings.userInitials,
-    plan: settings.plan,
+  function titleAction(id) {
+    switch (id) {
+      case 'new-chat': newChat(); break
+      case 'new-project': setAction({ type: 'createProject' }); break
+      case 'today': setToday(true); break
+      case 'toggle-sidebar': setCollapsed(!collapsed); break
+      case 'toggle-artifacts': setView(view === 'artifacts' ? 'chat' : 'artifacts'); break
+      case 'toggle-vault': setRightPanel(rightPanel === 'vault' ? null : 'vault'); break
+      case 'search-chats': notify('Use the search field at the top of the sidebar to filter your chats.'); break
+      case 'save-artifact': if (rightPanel === 'artifact' && artifact) notify('Use Save in the artifact panel to store a new version locally.'); else notify('No artifact is open. Open one from the Artifacts view first.'); break
+      case 'open-vault': notify(vaultPath ? `Vault folder: ${vaultPath}` : 'The vault API is offline, so the vault path is unavailable.'); break
+      case 'clear-chat': if (chat) chatAction('delete', chat); else notify('No chat is open.'); break
+      case 'reload': window.location.reload(); break
+      case 'close': window.close(); break
+      case 'docs': setModal('apps'); break
+      case 'ollama-status': models.refresh(); notify(models.status === 'online' ? 'Ollama is reachable on 127.0.0.1:11434.' : 'Ollama is not reachable. Start the existing Ollama installation; no model download is needed.'); break
+      case 'vault-status': notify(vaultOk ? `Vault API is online${vaultPath ? ` at ${vaultPath}` : ''}.` : 'Vault API is offline on 127.0.0.1:8765.'); break
+      case 'about': notify('AI ASSistant — local Ollama model, canonical Markdown vault, no cloud calls.'); break
+      default: break // Undo/redo/cut/copy/paste/back/forward/latest are shown disabled in the menu
+    }
   }
-
-  return (
-    <div className="h-full w-full flex flex-col bg-[var(--bg-main)] text-[var(--ink)] overflow-hidden">
-      {settings.showMenuBar ? (
-        <TitleBar onAction={titleAction} ollamaOk={ollamaOk} vaultOk={vaultOk} />
-      ) : null}
-
-      <div className="flex-1 flex min-h-0">
-        <Sidebar
-          chats={chats}
-          currentChatId={currentChatId}
-          onSelectChat={setCurrentChatId}
-          onNewChat={newChat}
-          onRenameChat={renameChat}
-          onDeleteChat={deleteChat}
-          onTogglePin={togglePin}
-          onMoveGroup={moveGroup}
-          onAddToProject={addToProject}
-          projects={projects}
-          artifactCount={artifactCount}
-          onOpenArtifacts={() => setUi((u) => ({ ...u, artifacts: !u.artifacts }))}
-          onOpenProjects={() => setUi((u) => ({ ...u, settings: true, settingsTab: 'general' }))}
-          onOpenCustomize={() => setUi((u) => ({ ...u, settings: true, settingsTab: 'general' }))}
-          onOpenUserMenu={() => setUi((u) => ({ ...u, userMenu: !u.userMenu }))}
-          userMenuOpen={ui.userMenu}
-          collapsed={ui.sidebarCollapsed}
-          onToggleCollapse={() => setUi((u) => ({ ...u, sidebarCollapsed: !u.sidebarCollapsed }))}
-          user={user}
-          searchFocusToken={searchFocus}
-        />
-
-        <Center
-          chat={chat}
-          messages={messages}
-          isStreaming={isStreaming}
-          streamingId={stream?.messageId}
-          transcriptClass={transcriptClass}
-          fontClass={fontClass}
-          widthClass={widthClass}
-          input={input}
-          setInput={setInput}
-          onSend={send}
-          onStop={stop}
-          attachments={attachments}
-          onPickFiles={pickFiles}
-          onRemoveAttachment={(i) => setAttachments((p) => p.filter((_, idx) => idx !== i))}
-          injected={injected}
-          onRemoveInjected={(id) => setInjected((p) => p.filter((c) => c.id !== id))}
-          onDropCapsule={dropCapsule}
-          onCookPrompt={cookPrompt}
-          cooking={cooking}
-          model={settings.model}
-          models={models}
-          onModelChange={(m) => update({ model: m })}
-          effort={settings.effort}
-          onEffortChange={(v) => update({ effort: v })}
-          thinking={settings.thinking}
-          onThinkingChange={(v) => update({ thinking: v })}
-          project={chat?.projectId || ''}
-          projects={projects}
-          onProjectChange={(pid) =>
-            currentChatId ? updateChat(currentChatId, (c) => ({ ...c, projectId: pid })) : (projectRef.current = pid)
-          }
-          onOpenVault={() => setUi((u) => ({ ...u, vault: !u.vault }))}
-          onOpenArtifact={openArtifactFromCode}
-          onRegenerate={regenerate}
-          ollamaOk={ollamaOk}
-          onOpenUpgrade={() => setUi((u) => ({ ...u, settings: true, settingsTab: 'account' }))}
-          settings={settings}
-          artifactMode={artifactMode}
-          onToggleArtifactMode={setArtifactMode}
-          vaultHits={vaultHits}
-          onAddHit={addHit}
-        />
-
-        {ui.vault ? (
-          <VaultPanel
-            onClose={() => setUi((u) => ({ ...u, vault: false }))}
-            onInsertCapsule={addHit}
-            onOpenToday={() => setUi((u) => ({ ...u, today: true }))}
-          />
-        ) : null}
-
-        {ui.artifacts ? (
-          <ArtifactPanel
-            artifacts={artifacts}
-            activeId={activeArtifactId}
-            onSelect={setActiveArtifactId}
-            onClose={() => setUi((u) => ({ ...u, artifacts: false }))}
-            onUpdate={updateArtifact}
-            onDelete={deleteArtifact}
-          />
-        ) : null}
-      </div>
-
-      {ui.userMenu ? (
-        <UserMenu
-          email={settings.userEmail}
-          plan={settings.plan}
-          onClose={() => setUi((u) => ({ ...u, userMenu: false }))}
-          onNavigate={(id) => {
-            if (id === 'settings') setUi((u) => ({ ...u, settings: true, settingsTab: 'general' }))
-            else if (id === 'apps') setUi((u) => ({ ...u, apps: true }))
-            else if (id === 'upgrade') setUi((u) => ({ ...u, settings: true, settingsTab: 'account' }))
-            else if (id === 'language') setUi((u) => ({ ...u, settings: true, settingsTab: 'general' }))
-            else if (id === 'keys')
-              window.alert('No API keys in the local build — the app talks to your own Ollama server and keeps everything on the machine.')
-            else if (id === 'learn')
-              window.alert('Living docs: 00_LIVING_DOCS/REQUIREMENTS_LIVING.md and HANDOVER_LIVING.md in the repo.')
-            else if (id === 'help')
-              window.alert(
-                'Ollama: ' +
-                  (ollamaOk ? 'connected' : 'offline — run "ollama serve"') +
-                  '\nVault API: ' +
-                  (vaultOk ? 'connected' : 'offline — run node server\\vault-api.cjs'),
-              )
-            else if (id === 'logout') window.alert('Local build: there is no account to log out of.')
-          }}
-        />
-      ) : null}
-
-      {ui.settings ? (
-        <SettingsModal
-          initialTab={ui.settingsTab}
-          onClose={() => setUi((u) => ({ ...u, settings: false }))}
-          onOpenAppsExtensions={() => setUi((u) => ({ ...u, apps: true }))}
-          onOpenVault={() => setUi((u) => ({ ...u, vault: true, settings: false }))}
-          onResetData={resetData}
-        />
-      ) : null}
-
-      {ui.apps ? <AppsExtensionsModal onClose={() => setUi((u) => ({ ...u, apps: false }))} /> : null}
-
-      {ui.today ? (
-        <TodayView
-          onClose={() => setUi((u) => ({ ...u, today: false }))}
-          onAsk={(topic) => {
-            setInput(topic)
-            setUi((u) => ({ ...u, today: false }))
-          }}
-        />
-      ) : null}
+  function newChat(project = null) { navigate(null); setProjectId(project); setDraftNonce(value => value + 1) }
+  function openArtifact(id) { setActiveArtifact(id); setRightPanel('artifact') }
+  function chatAction(type, item) {
+    if (type === 'open') { const url = new URL(window.location.href); url.searchParams.set('chat', item.id); window.open(url, '_blank', 'noopener,noreferrer'); return }
+    if (type === 'pin') { setChats(previous => previous.map(chat => chat.id === item.id ? { ...chat, pinned: !chat.pinned } : chat)); return }
+    setAction({ type, chat: item })
+  }
+  function applyAction(value) {
+    if (action.type === 'createProject') setProjects(previous => [...previous, { id: newId(), name: value }])
+    else if (action.type === 'delete') { setChats(previous => previous.filter(chat => chat.id !== action.chat.id)); if (currentChat === action.chat.id) newChat() }
+    else setChats(previous => previous.map(chat => chat.id !== action.chat.id ? chat : { ...chat, ...(action.type === 'rename' ? { title: value } : action.type === 'project' ? { projectId: value } : { date: value }) }))
+    setAction(null)
+  }
+  function selectProject(id) {
+    setProjectId(id)
+    if (chat) setChats(previous => previous.map(item => item.id === chat.id ? { ...item, projectId: id } : item))
+  }
+  function previewCapsule(capsule) {
+    const content = capsuleText(capsule)
+    if (!content.trim() || content.length > 12_000) { notify('This capsule is empty or exceeds 12,000 characters. Choose a smaller context bundle; nothing has been injected.'); return }
+    setPreviewContext({ ...capsule, content })
+  }
+  async function cook(prompt) {
+    try {
+      const data = await vaultGet(`/context?q=${encodeURIComponent(prompt.slice(-400))}`)
+      const items = [...(data.capsules || []), ...(data.entities || [])]
+      if (!items.length) { notify('No relevant local vault context found. Your prompt is unchanged.'); return }
+      previewCapsule({ title: 'Cook This Prompt', content: items.map(item => `${capsuleText(item)}\nSource: ${item.source || item.id}`).join('\n\n---\n\n') })
+    } catch (error) { notify(`Could not retrieve local context: ${error.message}. Your prompt is unchanged.`) }
+  }
+  function saveArtifact(id, content) {
+    const append = item => item.id === id ? { ...item, versions: [...item.versions, { content, savedAt: new Date().toISOString(), edited: true }] } : item
+    if (imports.some(item => item.id === id)) setImports(previous => previous.map(append))
+    else setChats(previous => previous.map(chat => ({ ...chat, messages: chat.messages.map(message => message.artifacts ? { ...message, artifacts: message.artifacts.map(append) } : message) })))
+  }
+  return <>
+    <TitleBar onAction={titleAction} ollamaOk={models.status === 'online'} vaultOk={vaultOk} title={chat?.title || 'AI ASSistant'} />
+    <div className="app-shell">
+      <Sidebar chats={chats} currentChat={currentChat} navigate={navigate} view={view} onView={setView} onNew={() => newChat()} onAction={chatAction} onSettings={() => setModal('settings')} onApps={() => setModal('apps')} onVault={() => setRightPanel(rightPanel === 'vault' ? null : 'vault')} collapsed={collapsed} onCollapse={() => setCollapsed(!collapsed)} busyChatId={chatRuntime.busyChatId} notify={notify} artifactCount={artifacts.length} onToday={() => setToday(true)} />
+      {view === 'artifacts' ? <ArtifactsLibrary artifacts={artifacts} onOpen={openArtifact} onImport={item => { setImports(previous => [item, ...previous]); notify('Artifact imported locally. Open its card to run the isolated preview.') }} notify={notify} /> : view === 'projects' ? <ProjectsView projects={projects} chats={chats} onCreate={() => setAction({ type: 'createProject' })} focused={projects.find(item => item.id === focusedProject)} onOpen={setFocusedProject} onBack={() => setFocusedProject(null)} onChat={navigate} onNew={newChat} /> : <Center key={currentChat || `new-${draftNonce}`} chat={chat} models={models} onArtifact={openArtifact} onRetryCapture={chatRuntime.retryCapture} settings={settings} notify={notify} busyChatId={chatRuntime.busyChatId} onSend={chatRuntime.send} onStop={chatRuntime.stop} projects={projects} projectId={projectId} setProjectId={selectProject} onVault={() => setRightPanel('vault')} onContextPreview={previewCapsule} contextBundle={contextBundle} clearContext={() => setContextBundle(null)} onCook={cook} onExternalLink={setExternalLink} seed={seed} />}
+      {rightPanel === 'vault' && <VaultPanel onClose={() => setRightPanel(null)} onPreview={previewCapsule} />}
+      {rightPanel === 'artifact' && artifact && <ArtifactPanel key={artifact.id} artifact={artifact} onClose={() => setRightPanel(null)} onSave={saveArtifact} notify={notify} />}
     </div>
-  )
-}
-
-/* ── file readers ───────────────────────────────────────── */
-function readAsText(file) {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader()
-    r.onload = () => resolve(String(r.result))
-    r.onerror = () => reject(r.error)
-    r.readAsText(file)
-  })
-}
-function readAsDataURL(file) {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader()
-    r.onload = () => resolve(String(r.result))
-    r.onerror = () => reject(r.error)
-    r.readAsDataURL(file)
-  })
+    {today && <TodayView onClose={() => setToday(false)} onAsk={topic => { setToday(false); setView('chat'); setSeed(previous => ({ text: topic, n: previous.n + 1 })) }} />}
+    {modal === 'settings' && <SettingsModal settings={settings} setSettings={setSettings} onClose={() => setModal(null)} onApps={() => setModal('apps')} onVault={() => setRightPanel('vault')} models={models} />}
+    {modal === 'apps' && <AppsExtensionsModal onClose={() => setModal(null)} notify={notify} />}
+    {action && <ActionDialog action={action} projects={projects} onClose={() => setAction(null)} onApply={applyAction} />}
+    {previewContext && <Dialog title="Preview vault context" onClose={() => setPreviewContext(null)} className="context-dialog" labelledBy="context-title"><div className="context-preview"><h3>{previewContext.title}</h3><p>Exact excerpt for the local model <strong>{model}</strong>. Adding it does not send your message or contact an external AI.</p><pre>{previewContext.content}</pre><footer><button className="secondary-button" onClick={() => setPreviewContext(null)}>Cancel</button><button className="white-button" onClick={() => { setContextBundle(previewContext); setPreviewContext(null); setView('chat') }}>Add to composer</button></footer></div></Dialog>}
+    {externalLink && <Dialog title="Open external link?" onClose={() => setExternalLink(null)} className="context-dialog" labelledBy="external-title"><div className="context-preview"><p>The external site will receive this exact URL, including its path and query. No chat, files or extra vault context will be attached by the app. Review the destination before allowing this one navigation.</p><pre>{externalLink}</pre><footer><button className="secondary-button" onClick={() => setExternalLink(null)}>Cancel</button><button className="white-button" onClick={() => { window.open(externalLink, '_blank', 'noopener,noreferrer'); setExternalLink(null) }}>Open this link</button></footer></div></Dialog>}
+    {notice && createPortal(<div className="notice" role="status"><span>{notice}</span><button className="icon-button" onClick={() => setNotice('')} aria-label="Dismiss notice"><X size={16} /></button></div>, document.body)}
+  </>
 }

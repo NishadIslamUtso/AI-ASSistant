@@ -1,6 +1,6 @@
 # TODO_NEXT.md — Immediate Next Actions (Living)
 
-**Last Updated:** 2026-10-11 21:50 Asia/Dhaka
+**Last Updated:** 2026-10-11 22:10 Asia/Dhaka
 **Rule:** Update after each session, priority order, check off when done.
 
 ---
@@ -25,7 +25,17 @@ Nothing below matters until the app has actually run on the TUF A15.
 
 **If replies are stuck in a loop:** Settings → System → **Reset local data**.
 
-## Priority 2 — Closed 2026-10-11 21:20 (advisor best-of cherry-picks, nothing merged)
+## Priority 2 — Closed 2026-10-11 22:10 (UI/UX adopted from 01199af1)
+
+- [x] Whole UI layer replaced with the 01199af1 implementation, at the user's request
+- [x] Their palette is the user's own spec — no measured-vs-stated conflict
+- [x] Kept the Windows title bar (File/Edit/View/Go/Help) — that branch had none
+- [x] Kept the Today view (`Alt+T`) and added it to the sidebar nav
+- [x] Adopted their vault API and ported back `/today`, `/status`, `artifact`, `journal`
+- [x] 48 + 5 tests passing; mock Ollama now answers `/api/show` so previews can send
+- [x] **No branch merged. PR #8 open.**
+
+## Priority 2a — Closed 2026-10-11 21:20 (advisor best-of cherry-picks, nothing merged)
 
 - [x] **Palette is the user's spec (authoritative)** — main `#1a1a1a`, sidebar `#202020` 260px,
       composer `#242424`, hover `#2a2a2a`, active `#303030`, text `#e0e0e0`, accent `#ff8c00`.

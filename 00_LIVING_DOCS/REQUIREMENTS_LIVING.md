@@ -1,6 +1,6 @@
 # REQUIREMENTS_LIVING.md — Single Source of Truth (Living)
 
-**Last Updated:** 2026-10-11 21:50 Asia/Dhaka
+**Last Updated:** 2026-10-11 22:10 Asia/Dhaka
 **Version:** 1.0.0-master
 **Rule:** UPDATE THIS FILE EVERY TIME SOMETHING CHANGES. This repo is memory for AIs. If you don't update, next session loses context.
 
@@ -287,6 +287,9 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - [x] (2026-10-11) Artifact preview is sandboxed with a strict CSP (no network, forms, frames, external scripts) and the CSP is emitted before untrusted content
 - [x] (2026-10-11) Artifact intent detection also matches NEGATIVE intent — "explain how to build an HTML app" and "don't create" do not produce artifacts
 - [x] (2026-10-11) Modals are accessible: portal, focus trap, Escape, inert background
+- [x] (2026-10-11) The browser can reach **only** the local endpoints the UI needs — proxy policy refuses model pull/delete, arbitrary vault paths, cross-origin calls and browser-form writes
+- [x] (2026-10-11) Captures refuse path traversal and symlink escape; never-check patterns match by host (`bank.com.evil.org` does not match `bank.com/*`)
+- [x] (2026-10-11) Vault writes acknowledge honestly — no success is reported unless the write landed; previous system documents are archived before a blacklist change
 - [x] (2026-10-11) Regression tests exist: 20 unit + vault-integration tests on node --test, 4 jsdom UI smoke tests, no new runtime dependencies
 - [ ] Obsidian genuinely integrated as canonical vault, SQLite only rebuildable index under .brain/
 - [x] App is driver of vault + extension, vault organizes, extension collects + suggests contexts/prompts/files
@@ -369,6 +372,20 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - **Why:** advisor deep-judge recommended taking the best parts of the other
   branches; user asked for best parts + preview + docs, and no merging.
 - **Verified:** clean build, 24 automated checks, measurements re-derived.
+
+### [2026-10-11 22:10] UI/UX adopted wholesale from the 01199af1 branch
+- **Changed:** at the user's request the entire UI layer was replaced with the
+  01199af1 implementation — components, hooks, 38 KB stylesheet, vite proxy
+  config and proxy policy. Their palette is the user's own spec
+  (`#1a1a1a` / `#202020` 260px / `#242424` / `#d48264`), so no conflict.
+- **Kept:** the Windows title bar and the Today view, which that branch lacked.
+- **Changed:** the vault API was adopted from that branch as well. It adds path
+  traversal and symlink refusal, host-correct never-check matching, Asia/Dhaka
+  dates, revision archiving, and no-false-success write acknowledgements.
+  `/today`, `/status`, `artifact` and `journal` captures were ported back in.
+- **Why:** the user compared the branches and preferred that one's look and feel.
+- **Verified:** 48 unit/integration tests, 5 jsdom UI tests, clean build, all
+  endpoints checked live through the preview proxy.
 
 ### [NEXT] Add when changed:
 - Use format: ### [YYYY-MM-DD HH:MM] Added/Changed/Fixed: description + why + who requested

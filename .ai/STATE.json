@@ -140,7 +140,7 @@
     "No installer",
     "Quillbot inline suggestions live only in the extension, cannot be wired into the desktop app"
   ],
-  "last_session": "2026-10-11 \u2014 best-of cherry-picks applied, then the user overruled the measured palette; user's colours restored, all functions kept (24/24 tests pass)",
+  "last_session": "2026-10-11 \u2014 UI/UX adopted wholesale from arena/01199af1 at the user's request; title bar + Today view kept; vault API adopted with /today,/status,artifact,journal ported back; 48+5 tests pass; no branch merged",
   "palette_ruling": {
     "authoritative": "user-supplied",
     "shipped": {
@@ -174,5 +174,40 @@
       "grouped settings nav"
     ],
     "rule": "Where a pixel measurement disagrees with a value the user stated, use the user's value and flag the difference \u2014 never silently override."
+  },
+  "ui_lineage": {
+    "adopted_from": "arena/01199af1-ai-assistant (de6ddc9)",
+    "adopted": [
+      "all components",
+      "hooks (useChat/useModels/useDismiss/usePersistentState)",
+      "index.css (38 KB)",
+      "vite.config.js /api/ollama + /api/vault",
+      "server/vault-api.cjs",
+      "server/proxy-policy.cjs"
+    ],
+    "kept_from_this_branch": [
+      "TitleBar.jsx (Windows title bar \u2014 required, absent in 01199af1)",
+      "TodayView.jsx (Alt+T, P8)",
+      "server/mock-ollama.cjs"
+    ],
+    "ported_back_into_adopted_server": [
+      "GET /today",
+      "GET /status",
+      "capture type: artifact",
+      "capture type: journal"
+    ],
+    "palette": {
+      "main": "#1a1a1a",
+      "sidebar": "#202020",
+      "sidebar_width": "260px",
+      "composer": "#242424",
+      "accent": "#d48264"
+    },
+    "tests": {
+      "unit_integration": 48,
+      "ui_jsdom": 5
+    },
+    "merged": false,
+    "pr": "#8 open"
   }
 }

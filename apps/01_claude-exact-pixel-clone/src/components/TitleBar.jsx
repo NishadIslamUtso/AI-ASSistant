@@ -1,3 +1,4 @@
+import ClaudeMark from './ClaudeMark.jsx'
 import { useEffect, useRef, useState } from 'react'
 
 /**
@@ -89,9 +90,9 @@ export default function TitleBar({ onAction, ollamaOk, vaultOk, title = 'AI ASSi
   return (
     <div
       ref={ref}
-      className="h-[30px] shrink-0 flex items-center px-2 select-none bg-[var(--bg-side)] border-b border-[var(--line)] text-[12px]"
+      className="title-bar"
     >
-      <span className="text-[var(--accent)] text-[13px] mr-2 pl-1">✳</span>
+      <ClaudeMark size={13} className="mr-2 pl-1 text-[var(--accent)]" />
 
       {MENUS.map((m) => (
         <div key={m.label} className="relative">

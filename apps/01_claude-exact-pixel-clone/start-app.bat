@@ -20,7 +20,7 @@ if errorlevel 1 (
 )
 
 REM ── 2. Let the browser talk to Ollama ────────────────────────────
-REM The Vite dev server proxies /ollama so this is normally not needed,
+REM The Vite dev server proxies /api/ollama so this is normally not needed,
 REM but set it anyway so the direct connection works too.
 setx OLLAMA_ORIGINS "*" >nul 2>&1
 
@@ -79,7 +79,7 @@ REM ── 8. Dev server (stays in this window) ──────────�
 echo.
 echo ============================================================
 echo   Keep this window open. Close it to stop the app.
-echo   Ctrl+B sidebar   Ctrl+J AI-Brain panel   Ctrl+N new chat
+echo   Alt+T today   Ctrl+comma settings   Ctrl+B collapse sidebar
 echo ============================================================
 echo.
 call npx vite --host 127.0.0.1 --port 5173

@@ -1,6 +1,6 @@
 # HANDOVER_LIVING.md — Current State + Gaps (Living)
 
-**Last Updated:** 2026-10-11 21:50 Asia/Dhaka
+**Last Updated:** 2026-10-11 22:10 Asia/Dhaka
 **Purpose:** Give any AI/developer enough context to continue without relying on previous AI memory. Update every session.
 
 ## 1. Executive Summary
@@ -56,6 +56,15 @@ User Utso wants AI ASSistant native Windows app that looks exactly like Claude d
 - [x] TodayView with follow-up answer/skip/snooze/stop (from `brain01`)
 - [x] `server/mock-ollama.cjs` for previews — never started by `start-app.bat`
 - [x] 20 unit tests + 4 jsdom UI smoke tests
+
+**Closed 2026-10-11 22:10 (UI/UX adopted from 01199af1, nothing merged):**
+- [x] Whole UI layer replaced with the 01199af1 implementation at the user's request
+- [x] Windows title bar and Today view kept on top of it
+- [x] Vault API adopted from that branch: traversal/symlink refusal, host-correct
+      never-check matching, Asia/Dhaka dates, revision archiving, honest write
+      acknowledgements. `/today`, `/status`, `artifact`, `journal` ported back.
+- [x] 48 unit/integration tests + 5 jsdom UI tests, all passing
+- [x] **No branch merged. PR #8 open.**
 
 **Still open:**
 - [ ] **Not tested on the user's Windows machine** — this is the single most important open item

@@ -3,6 +3,60 @@
 **Last Updated:** 2026-10-11 21:20 Asia/Dhaka
 **Rule:** Log every change with date, what, why. This is memory for next AI.
 
+## 2026-10-11 (session 4 — 22:10) — UI/UX adopted from the 01199af1 branch
+
+The user looked at the branches and said: *"tbh
+[arena/01199af1-ai-assistant] looks better and like i want it to be … take this
+branch for the ui/ux"*.
+
+**Their palette is the one already specified** — main `#1a1a1a`, sidebar
+`#202020` (260px), composer `#242424`, accent `#d48264` — so the
+measured-pixel conflict from earlier in the day does not come up. The app now
+uses it, and the previous round of measured colours stays reverted.
+
+### What was adopted
+
+The whole UI layer: `App.jsx` (15 KB vs 34 KB before — far better factored),
+`Sidebar`, `Center`, `Composer`, `SettingsModal`, `UserMenu`, `VaultPanel`,
+`ArtifactPanel`, `Dialog`, `ThinkingDisplay`, plus components this branch never
+had — `ArtifactsLibrary`, `BlacklistManager`, `ModelSelector`, `ClaudeMark`,
+`IntegrationIcons`, `Markdown` — and the hooks `useChat`, `useModels`,
+`useDismiss`, `usePersistentState`. Also `vite.config.js` (proxies moved to
+`/api/ollama` + `/api/vault`) and `server/proxy-policy.cjs`.
+
+### What was kept, because they are stated requirements that branch lacked
+
+| Kept | Why |
+|---|---|
+| `TitleBar.jsx` | File/Edit/View/Go/Help **Windows title bar**; the adopted UI had none |
+| `TodayView.jsx` (`Alt+T`) | P8 Today view; also added to the sidebar nav |
+
+Both are pointed at the adopted palette through a short compatibility block in
+`index.css`, so they follow the theme rather than carrying their own colours.
+
+### The server was adopted too, and gained real security properties
+
+`server/vault-api.cjs` from 01199af1 refuses path traversal and symlink escape,
+matches never-check patterns by host (so `bank.com.evil.org` no longer matches
+`bank.com/*`), writes Asia/Dhaka dates, archives the previous system document
+before changing the blacklist, and never reports success it did not achieve.
+It did **not** have `/today` or `/status`, and it did **not** accept `artifact`
+or `journal` captures — all four were ported back in.
+
+### Tests
+
+`npm test` **48/48**; `npm run test:ui` **5/5**. New: proxy-policy (5),
+vault behaviour (in-process, ~20), artifacts+storage, ollama. Our old
+vault-API test was rewritten against the new contract — files are located from
+the API's own `source` response, because immutable sources carry a content hash.
+
+### Also fixed for the preview
+
+`server/mock-ollama.cjs` now answers `/api/show`. Without it the app refuses to
+send, because it verifies the model is local first.
+
+**No branch merged. PR #8 still open.**
+
 ## 2026-10-11 (session 3 — later) — Palette Restored To The User's Spec
 
 **The user overruled the measurements.** I had shipped the measured palette

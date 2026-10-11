@@ -5,6 +5,7 @@
  * It exists so the UI can be exercised on a machine that has no Ollama and no
  * GPU. It implements just enough of the Ollama HTTP API:
  *   GET  /api/tags
+ *   POST /api/show  (model verification — the app requires it before sending)
  *   POST /api/chat   (NDJSON streaming)
  *
  * It is NEVER started by start-app.bat, and it never touches the vault.
@@ -95,6 +96,24 @@ const server = http.createServer((req, res) => {
   if (req.url.startsWith('/api/tags')) {
     res.writeHead(200, { 'Content-Type': 'application/json' })
     return res.end(JSON.stringify({ models: MODELS }))
+  }
+
+  // POST /api/show — the app verifies the selected model is local before it
+  // will send. Without this the preview cannot send at all.
+  if (req.url.startsWith('/api/show')) {
+    let body = ''
+    req.on('data', (c) => (body += c))
+    req.on('end', () => {
+      let name = ''
+      try { name = JSON.parse(body || '{}').model || '' } catch (e) { /* ignore */ }
+      const known = MODELS.find((m) => m.name === name)
+      res.writeHead(known ? 200 : 404, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify(known ? {
+        details: { family: known.details.family, parameter_size: known.details.parameter_size, quantization_level: 'Q4_K_M' },
+        capabilities: /vl|vision/i.test(name) ? ['completion', 'vision'] : ['completion'],
+      } : { error: `model '${name}' not found (mock)` }))
+    })
+    return
   }
 
   if (req.url.startsWith('/api/chat')) {

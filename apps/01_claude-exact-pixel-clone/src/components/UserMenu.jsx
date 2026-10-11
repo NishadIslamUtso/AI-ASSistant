@@ -1,85 +1,24 @@
-import { useEffect, useRef } from 'react'
-import {
-  Settings,
-  Globe,
-  HelpCircle,
-  Sparkles,
-  LayoutGrid,
-  Info,
-  Key,
-  LogOut,
-} from 'lucide-react'
-
-/**
- * UserMenu — exact content of screenshot 191608.png
- *   nishadislamutso@gmail.com
- *   Settings / Language / Get help / Upgrade plan /
- *   Get apps and extensions / Learn more / Get API keys / Log out
- *
- * Rendered ABOVE the avatar (bottom-left), ~244px wide, #2a2a2a, rounded.
- */
-
-export default function UserMenu({ anchor = 'bottom-left', onClose, onNavigate, email, plan }) {
+import { useRef, useState } from 'react'
+import { Settings, Globe, HelpCircle, ArrowUpCircle, Blocks, Info, KeyRound, LogOut, ChevronRight, ExternalLink, Check } from 'lucide-react'
+import useDismiss from '../hooks/useDismiss.js'
+export default function UserMenu({ onClose, onSettings, onApps, notify }) {
   const ref = useRef(null)
-
-  useEffect(() => {
-    const onDown = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) onClose()
-    }
-    const onKey = (e) => e.key === 'Escape' && onClose()
-    const t = setTimeout(() => document.addEventListener('mousedown', onDown), 0)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      clearTimeout(t)
-      document.removeEventListener('mousedown', onDown)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [onClose])
-
-  const items = [
-    { id: 'settings', icon: Settings, label: 'Settings' },
-    { id: 'language', icon: Globe, label: 'Language' },
-    { id: 'help', icon: HelpCircle, label: 'Get help' },
-    { id: 'upgrade', icon: Sparkles, label: 'Upgrade plan' },
-    { id: 'apps', icon: LayoutGrid, label: 'Get apps and extensions' },
-    { id: 'learn', icon: Info, label: 'Learn more' },
-    { id: 'keys', icon: Key, label: 'Get API keys' },
-    { id: 'logout', icon: LogOut, label: 'Log out' },
-  ]
-
-  return (
-    <div
-      ref={ref}
-      style={anchor === 'bottom-left' ? { left: 12, bottom: 52 } : { left: 12, bottom: 52 }}
-      className="fixed z-[70] w-[244px] bg-[var(--bg-elev)] border border-[var(--border-strong)] rounded-xl py-1 shadow-pop animate-in-fast overflow-hidden"
-      role="menu"
-    >
-      <div className="px-3 py-2 text-[13px] text-[var(--text-2)] truncate border-b border-[var(--border)] mb-1">
-        {email}
-      </div>
-      {items.map((it, i) => {
-        const Icon = it.icon
-        const showSep = i === 3 || i === 4 || i === 6
-        return (
-          <div key={it.id}>
-            {showSep ? <div className="my-1 h-px bg-[var(--border)]" /> : null}
-            <button
-              role="menuitem"
-              onClick={() => {
-                onNavigate?.(it.id)
-                onClose()
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-[7px] text-[13px] text-[var(--text)] hover:bg-[var(--bg-hover)] text-left"
-            >
-              <Icon size={15} className="text-[var(--text-2)] shrink-0" />
-              <span className="truncate">{it.label}</span>
-              {it.id === 'upgrade' && plan ? (
-                <span className="ml-auto text-[11px] text-[var(--text-3)]">{plan}</span>
-              ) : null}
-            </button>
-          </div>
-        )
-      })}
-    </div>
-  )
+  const [language, setLanguage] = useState(false)
+  useDismiss(ref, onClose)
+  function action(callback) { onClose(); callback() }
+  return <div ref={ref} className="user-menu popup" role="menu" aria-label="Account menu">
+    <div className="menu-email">nishadislamutso@gmail.com</div>
+    <button role="menuitem" autoFocus onClick={() => action(onSettings)}><Settings size={15} /><span>Settings</span><kbd>Ctrl+,</kbd></button>
+    <button role="menuitem" onClick={() => setLanguage(!language)}><Globe size={15} /><span>Language</span><small>English</small></button>
+    {language && <div className="language-option"><Check size={13} /> English <small>Local interface</small></div>}
+    <button role="menuitem" onClick={() => action(() => notify('Run start-app.bat on your Windows laptop. Ollama uses the existing qwen2.5:3b model; the vault is vault/AI-Brain. See the app README for troubleshooting.'))}><HelpCircle size={15} /><span>Get help</span></button>
+    <div className="menu-separator" />
+    <button role="menuitem" onClick={() => action(() => notify('Local mode is free. This app is not connected to Claude billing and does not use a Claude subscription.'))}><ArrowUpCircle size={15} /><span>Upgrade plan</span></button>
+    <button role="menuitem" onClick={() => action(onApps)}><Blocks size={15} /><span>Get apps and extensions</span></button>
+    <button role="menuitem" onClick={() => action(() => notify('AI ASSistant is a local Ollama chat app with a screenshot-led Claude interface. The Markdown Obsidian vault is canonical memory; UI similarity does not mean Claude-level model intelligence.'))}><Info size={15} /><span>Learn more</span><ChevronRight size={14} /></button>
+    <div className="menu-separator" />
+    <button role="menuitem" onClick={() => action(() => notify('No API key is needed for local Ollama. Cloud providers and Claude API keys are not connected in this build.'))}><KeyRound size={15} /><span>Get API keys</span><ExternalLink size={14} /></button>
+    <div className="menu-separator" />
+    <button role="menuitem" onClick={() => action(() => notify('There is no external account to log out of. Your local chats and original vault sources have been kept.'))}><LogOut size={15} /><span>Log out</span></button>
+  </div>
 }
