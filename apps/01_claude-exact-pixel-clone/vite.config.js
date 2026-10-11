@@ -55,6 +55,10 @@ const headers = { 'Content-Security-Policy': "frame-src 'none'; object-src 'none
 const hmr = process.env.ALLOW_PREVIEW_ORIGINS === '1' ? { clientPort: 443 } : undefined
 
 export default defineConfig({
+  // Relative asset URLs, so the built app also works when it is served from a
+  // path prefix rather than a domain root. With absolute /assets/... a preview
+  // served under a subpath 404s every asset and shows a blank white page.
+  base: './',
   plugins: [localApiBoundary, stripCrossorigin, react()],
   server: { host: '0.0.0.0', port: 5173, strictPort: true, allowedHosts: ['.e2b.app', 'localhost', '127.0.0.1'], proxy, headers, hmr },
   preview: { host: '0.0.0.0', port: 5173, strictPort: true, allowedHosts: ['.e2b.app', 'localhost', '127.0.0.1'], proxy, headers },

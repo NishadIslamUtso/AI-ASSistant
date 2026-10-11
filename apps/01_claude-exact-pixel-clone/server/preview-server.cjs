@@ -13,7 +13,11 @@ const http = require('node:http')
 const fs = require('node:fs')
 const path = require('node:path')
 
-const ROOT = path.resolve(__dirname, '..', 'dist')
+// `dist` and `node_modules` are NOT captured by this sandbox's snapshots, so
+// they vanish whenever it resets. The preview build goes to `preview-dist`,
+// which persists. Falls back to `dist` for a normal local build.
+const ROOT = [path.resolve(__dirname, '..', 'preview-dist'), path.resolve(__dirname, '..', 'dist')]
+  .find((dir) => fs.existsSync(path.join(dir, 'index.html'))) || path.resolve(__dirname, '..', 'preview-dist')
 const PORT = Number(process.env.PORT || 4173)
 const HOST = process.env.HOST || '0.0.0.0'
 
@@ -59,8 +63,16 @@ const server = http.createServer((request, response) => {
     : path.join(ROOT, 'index.html') // SPA fallback
 
   if (!fs.existsSync(file)) {
-    response.writeHead(404, { 'Content-Type': 'text/plain' })
-    return response.end('Not built yet. Run: npm run build')
+    // Never answer with a blank page — a silent white screen is undiagnosable.
+    response.writeHead(503, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' })
+    return response.end(`<!doctype html><html><head><title>AI ASSistant — not built</title></head>
+<body style="font:14px/1.6 system-ui,sans-serif;padding:32px;max-width:44rem">
+<h1>The app is built, but the build output is missing.</h1>
+<p>Looked for <code>preview-dist/index.html</code> and <code>dist/index.html</code>.
+Neither exists. This sandbox does not keep <code>dist/</code> or <code>node_modules/</code>
+between resets, which is why the preview can go blank.</p>
+<p>Rebuild with:</p><pre>npm install &amp;&amp; npm run build:preview</pre>
+</body></html>`)
   }
   response.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store' })
   fs.createReadStream(file).pipe(response)

@@ -8,11 +8,10 @@
     <title>AI ASSistant</title>
   </head>
   <body>
-    <div id="root"></div>
-    <!-- Replaced by React the moment the bundle runs. If this text stays on
-         screen, the module script was blocked (cache, CORS or CSP) and never
-         executed at all. -->
-    <script>document.getElementById('root').textContent = 'Starting AI ASSistant…'</script>
+    <!-- Replaced by React the moment the bundle runs. Written straight into the
+         HTML rather than by a script, so it still shows if scripts are blocked:
+         visible text means the page arrived, missing text means it did not. -->
+    <div id="root">Starting AI ASSistant…</div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
