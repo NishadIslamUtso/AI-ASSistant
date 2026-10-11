@@ -1,6 +1,6 @@
 # REQUIREMENTS_LIVING.md — Single Source of Truth (Living)
 
-**Last Updated:** 2026-10-11 21:20 Asia/Dhaka
+**Last Updated:** 2026-10-11 21:50 Asia/Dhaka
 **Version:** 1.0.0-master
 **Rule:** UPDATE THIS FILE EVERY TIME SOMETHING CHANGES. This repo is memory for AIs. If you don't update, next session loses context.
 
@@ -283,7 +283,7 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - [x] Never-check blacklist manager in the app (AI-Brain panel > Never-check), writes 00 System/Privacy & Access.md + 00 System/Connectors/Source Scope.md, logged to 09 Activity & Undo
 - [x] Sidebar context menu (191646.png) is functional: open in new window, pin/unpin, inline rename, add to project, move to group, delete
 - [x] Ollama CORS solved at the source: the Vite dev server proxies /ollama and /vault, so the browser stays same-origin and OLLAMA_ORIGINS no longer matters (the app auto-detects the proxy and falls back to direct URLs)
-- [x] (2026-10-11) UI matches the MEASURED pixels, not estimates — sidebar 384px #111111, main #151515, composer #20201f, active row #343434, text #f0efec, accent #d97757, link #4099ec, composer radius 18px, transcript width Narrow default, grouped settings nav. See spec/MEASURED_PIXELS.md.
+- [x] (2026-10-11) **Palette is the user's, and is authoritative:** main `#1a1a1a`, sidebar `#202020` (260px), composer `#242424`, hover `#2a2a2a`, active `#303030`, text `#e0e0e0`, accent `#ff8c00` (Claude orange). Geometry the user did NOT specify still follows the measured screenshots: toolbar 48px, composer radius 18px, greeting 44px, transcript widths, grouped settings nav. **Rule: a measurement never silently overrides a value the user stated.** See spec/MEASURED_PIXELS.md.
 - [x] (2026-10-11) Artifact preview is sandboxed with a strict CSP (no network, forms, frames, external scripts) and the CSP is emitted before untrusted content
 - [x] (2026-10-11) Artifact intent detection also matches NEGATIVE intent — "explain how to build an HTML app" and "don't create" do not produce artifacts
 - [x] (2026-10-11) Modals are accessible: portal, focus trap, Escape, inert background
@@ -340,12 +340,25 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - **Why:** user instruction "task is making Claude app exact clone"; the handover listed these as the open P2-P7 items
 - **Verified:** production build clean; 4 headless jsdom smoke suites (render, artifact gating, model selector, sidebar context menu) all pass with zero console errors. NOT yet run on the user's Windows machine.
 
-### [2026-10-11 21:20] Best-of cherry-picks applied; pixel spec corrected
-- **Changed:** the UI now uses values MEASURED from the screenshots, not the earlier
-  estimates. Old estimates (sidebar 260px #202020, main #1a1a1a, composer #242424,
-  accent #ff8c00, transcript width Medium) were wrong; measured values are sidebar
-  384px #111111, main #151515, composer #20201f, accent #d97757, width Narrow.
-  Verified independently with tools/pngread.py and recorded in spec/MEASURED_PIXELS.md.
+### [2026-10-11 21:50] Palette restored to the user's spec — measurements demoted to reference
+- **Changed:** measured colours reverted. Shipped for a few hours, then the user
+  ruled: "didn't make it look like how I said … take the looks like I said. don't
+  argue. but keep the functions." Main #1a1a1a, sidebar #202020 260px, composer
+  #242424, hover #2a2a2a, active #303030, text #e0e0e0, accent #ff8c00.
+- **Kept:** every function from the cherry-picks — Spark, TodayView, Dialog focus
+  trap, artifact CSP, negative intent, grouped nav, 24 tests. Spark inherits
+  var(--accent) so it is orange now.
+- **Kept from measurement:** geometry the user never specified — toolbar 48px,
+  composer radius 18px, greeting 44px, transcript widths, settings-nav grouping.
+- **Why:** the user asked for pixel-exactness to the screenshots AND gave their own
+  palette. Those two conflict. The user's stated values win; measurements stay as
+  reference and still govern anything they did not specify.
+- **Verified:** clean build, palette confirmed in the shipped CSS, 20/20 + 4/4.
+
+### [2026-10-11 21:20] Best-of cherry-picks applied; measurements recorded
+- **Recorded:** values measured from the screenshots (sidebar 384px #111111, main
+  #151515, composer #20201f, accent #d97757). Verified with tools/pngread.py,
+  recorded in spec/MEASURED_PIXELS.md — then **reverted, see 21:50 above**.
 - **Changed:** the settings left nav is grouped ("Settings", "This computer",
   "Customize") as it appears in 191707; the flat 14-item list was a guess.
 - **Added:** TodayView (P8) — snapshot, open loops, due follow-ups with

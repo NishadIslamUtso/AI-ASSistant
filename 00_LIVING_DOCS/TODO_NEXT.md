@@ -1,6 +1,6 @@
 # TODO_NEXT.md — Immediate Next Actions (Living)
 
-**Last Updated:** 2026-10-11 21:20 Asia/Dhaka
+**Last Updated:** 2026-10-11 21:50 Asia/Dhaka
 **Rule:** Update after each session, priority order, check off when done.
 
 ---
@@ -27,10 +27,13 @@ Nothing below matters until the app has actually run on the TUF A15.
 
 ## Priority 2 — Closed 2026-10-11 21:20 (advisor best-of cherry-picks, nothing merged)
 
-- [x] **Pixel spec corrected from real measurements** — sidebar 384px `#111111`, main `#151515`,
-      composer `#20201f`, active row `#343434`, text `#f0efec`, accent `#d97757`, link `#4099ec`,
-      composer radius 18px, transcript width **Narrow**. Independently re-verified with
-      `tools/pngread.py`; recorded in `spec/MEASURED_PIXELS.md`.
+- [x] **Palette is the user's spec (authoritative)** — main `#1a1a1a`, sidebar `#202020` 260px,
+      composer `#242424`, hover `#2a2a2a`, active `#303030`, text `#e0e0e0`, accent `#ff8c00`.
+      Measured colours were tried and **reverted on the user's instruction**; measurements stay
+      as reference in `spec/MEASURED_PIXELS.md` and still govern geometry the user did not
+      specify (toolbar 48px, composer radius 18px, greeting 44px, transcript widths).
+- [x] Geometry the user did NOT specify follows the measured screenshots — toolbar 48px,
+      top bar 52px, composer radius 18px, greeting 44px, grouped settings nav
 - [x] Settings nav grouped (Settings / This computer / Customize) as in 191707
 - [x] `Spark.jsx` Claude starburst (from `abc0197f`)
 - [x] `Dialog.jsx` accessible modal: portal, focus trap, inert background, Escape (from `01199af1`)

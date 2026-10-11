@@ -1,7 +1,7 @@
 /**
  * Spark — the Claude starburst, used for the greeting and the assistant avatar.
  * Ported from the abc0197f branch (best of the per-branch cherry-picks).
- * Eight strokes at 45° increments, in the measured accent #d97757.
+ * Eight strokes at 45° increments, coloured with var(--accent) — the user palette.
  */
 export default function Spark({ size = 32, color = 'var(--accent)', className = '' }) {
   return (

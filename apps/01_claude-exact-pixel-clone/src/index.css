@@ -5,12 +5,13 @@
 /* ============================================================
    AI ASSistant — theme tokens
 
-   SOURCE: measured directly from spec/screenshots/*.png by decoding the PNGs
-   and sampling pixels (see spec/MEASURED_PIXELS.md). These supersede the
-   earlier estimates of "#202020 sidebar / #1a1a1a main / #242424 composer /
-   260px sidebar", which were guesses and are wrong.
+   PALETTE: supplied by the user and authoritative —
+     main #1a1a1a · sidebar #202020 · composer #242424 · 260px sidebar.
+   When this disagrees with a pixel measurement taken from the screenshots
+   (spec/MEASURED_PIXELS.md), THE USER'S VALUES WIN.
 
-   Screenshots are 1920x1020 native, treated as CSS px at 1:1 (100% scaling).
+   Geometry that the user did not specify (toolbar height, composer radius,
+   transcript widths, greeting size) still follows the measured screenshots.
    ============================================================ */
 
 :root {
@@ -19,8 +20,8 @@
   --font-serif: "Anthropic Serif", ui-serif, Georgia, Cambria, "Times New Roman", serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  /* measured geometry */
-  --sidebar-w: 384px;
+  /* geometry — sidebar width is the user's spec; the rest is measured */
+  --sidebar-w: 260px;
   --toolbar-h: 48px;
   --composer-radius: 18px;
   --w-narrow: 880px;
@@ -29,23 +30,23 @@
 }
 
 :root[data-theme="dark"] {
-  --bg-main: #151515; /* centre column                        */
-  --bg-side: #111111; /* sidebar, Free-plan pill              */
-  --bg-elev: #20201f; /* composer, menus, user menu, cards    */
-  --bg-hover: #1d1d1d; /* search field, hover rows            */
-  --bg-active: #343434; /* New row, selected chat, selected nav */
-  --border: #292929;
-  --border-strong: #373736;
-  --text: #f0efec; /* greeting, headings                   */
-  --text-2: #b8b8ad; /* chat titles, nav                     */
-  --text-3: #898781; /* section labels, placeholder, Medium  */
-  --accent: #d97757; /* Claude asterisk / spark              */
-  --link: #4099ec; /* Upgrade                              */
-  --avatar: #292929; /* NU circle                           */
-  --btn: #f0efec;
-  --btn-fg: #151515;
-  --bubble-user: #20201f;
-  --code-bg: #1d1d1d;
+  --bg-main: #1a1a1a; /* centre column                          */
+  --bg-side: #202020; /* sidebar                                */
+  --bg-elev: #242424; /* composer, menus, user menu, cards      */
+  --bg-hover: #2a2a2a; /* search field, hover rows              */
+  --bg-active: #303030; /* New row, selected chat, selected nav */
+  --border: #2a2a2a;
+  --border-strong: #383838;
+  --text: #e0e0e0; /* greeting, headings                      */
+  --text-2: #8a8a8a; /* chat titles, nav                       */
+  --text-3: #666666; /* section labels, placeholder            */
+  --accent: #ff8c00; /* Claude orange asterisk / spark         */
+  --link: #4099ec; /* Upgrade                                  */
+  --avatar: #292929; /* NU circle                              */
+  --btn: #ffffff;
+  --btn-fg: #000000;
+  --bubble-user: #2a2a2a;
+  --code-bg: #141414;
   --danger: #e5484d;
   --shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
 }
@@ -55,14 +56,14 @@
   --bg-main: #ffffff;
   --bg-side: #f5f5f4;
   --bg-elev: #ffffff;
-  --bg-hover: #eeeeec;
-  --bg-active: #dededc;
+  --bg-hover: #ececeb;
+  --bg-active: #e3e3e2;
   --border: #e6e6e5;
   --border-strong: #d6d6d5;
   --text: #1a1a1a;
-  --text-2: #57564f;
-  --text-3: #898781;
-  --accent: #d97757;
+  --text-2: #6b6b6b;
+  --text-3: #8f8f8f;
+  --accent: #ff8c00;
   --link: #1f6feb;
   --avatar: #dededc;
   --btn: #1a1a1a;

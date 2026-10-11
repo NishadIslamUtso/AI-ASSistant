@@ -1,6 +1,6 @@
 # HANDOVER_LIVING.md — Current State + Gaps (Living)
 
-**Last Updated:** 2026-10-11 21:20 Asia/Dhaka
+**Last Updated:** 2026-10-11 21:50 Asia/Dhaka
 **Purpose:** Give any AI/developer enough context to continue without relying on previous AI memory. Update every session.
 
 ## 1. Executive Summary
@@ -46,9 +46,11 @@ User Utso wants AI ASSistant native Windows app that looks exactly like Claude d
 - [x] Ollama CORS — removed as a problem by the /ollama and /vault dev proxies
 
 **Closed 2026-10-11 (best-of cherry-picks, no branch merged):**
-- [x] UI now uses **measured** pixels, not estimates — sidebar 384px `#111111`, main `#151515`,
-      composer `#20201f`, active `#343434`, text `#f0efec`, accent `#d97757`, radius 18px,
-      transcript width Narrow, grouped settings nav. `spec/MEASURED_PIXELS.md` + `tools/pngread.py`.
+- [x] **Palette is the user's:** main `#1a1a1a`, sidebar `#202020` (260px), composer `#242424`,
+      hover `#2a2a2a`, active `#303030`, text `#e0e0e0`, accent `#ff8c00`. Measurements were
+      shipped briefly and then **reverted on the user's instruction**; they are now reference
+      only and govern geometry the user never specified (toolbar 48px, radius 18px, greeting
+      44px, transcript widths, grouped settings nav). `spec/MEASURED_PIXELS.md`, `tools/pngread.py`.
 - [x] Claude Spark starburst SVG (from `abc0197f`)
 - [x] Accessible `Dialog` primitive, artifact-preview CSP, negative-intent detection (from `01199af1`)
 - [x] TodayView with follow-up answer/skip/snooze/stop (from `brain01`)

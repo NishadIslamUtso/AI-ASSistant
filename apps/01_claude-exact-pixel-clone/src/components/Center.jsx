@@ -98,7 +98,7 @@ export default function Center({
         {empty ? (
           <div className="h-full flex flex-col items-center justify-center px-6 pb-10">
             <div className={`w-full ${widthClass}`}>
-              {/* measured: greeting serif ~44px, spark ~46px, accent #d97757 */}
+              {/* measured: greeting serif ~44px, spark ~46px; accent follows the user palette */}
               <div className="flex items-baseline gap-2 mb-6">
                 <h1 className="text-[44px] leading-[52px] font-serif-claude text-[var(--ink)]">
                   {greeting()}, {settings.userName}.

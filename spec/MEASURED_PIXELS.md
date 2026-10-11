@@ -4,11 +4,34 @@
 **Source:** `spec/screenshots/*.png`, decoded with a plain-Python PNG reader
 (no image libraries available), pixels sampled directly.
 
+> ## ⚠ RULING — 2026-10-11, later the same day
+>
+> **The user's palette wins. The measured colours below are NOT used.**
+>
+> Measured values were shipped for a few hours, then the user ruled:
+> *"didn't make it look like how I said … take the looks like I said"*.
+> The app now uses the palette they specified:
+>
+> | Role | Measured (NOT used) | **User's value (shipped)** |
+> |---|---|---|
+> | Main | `#151515` | **`#1a1a1a`** |
+> | Sidebar | `#111111` 384px | **`#202020` 260px** |
+> | Composer | `#20201f` | **`#242424`** |
+> | Accent | `#d97757` | **`#ff8c00`** |
+>
+> The measurements below are kept **as reference only**. They still govern
+> geometry the user never specified — toolbar height, composer radius,
+> transcript widths, greeting size, settings-nav grouping — because the user
+> also asked for pixel-exactness to these screenshots.
+>
+> Rule for future work: **when a measurement disagrees with a value the user
+> stated, use the user's value and say so. Don't silently override them.**
+
 **Why this file exists:** the original `CLAUDE_SPEC_FROM_SCREENSHOTS.md` listed
 *estimates* — "sidebar 260px #202020", "main #1a1a1a", "composer #242424".
-The `c4f75cce` branch sampled the real pixels and got different numbers.
-This session re-verified those numbers independently: **they are correct and the
-old ones are wrong.** These values are now what the app uses.
+Those estimates are what the user had specified, so they are **authoritative**
+even though they differ from the pixels. Measurements are recorded here so the
+difference is documented rather than argued about again.
 
 ## Method
 

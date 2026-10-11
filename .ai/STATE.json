@@ -4,7 +4,7 @@
   "timezone": "Asia/Dhaka",
   "repo_version": "1.2.0-best-of",
   "canonical_repo": "https://github.com/NishadIslamUtso/AI-ASSistant",
-  "note_for_next_ai": "The repo is the source of truth, not any handover text. A previous handover claimed UserMenu/SettingsModal/AppsExtensionsModal existed — they did not. They were built on 2026-10-10 22:40. Verify file existence before trusting a status list.",
+  "note_for_next_ai": "The repo is the source of truth, not any handover text. A previous handover claimed UserMenu/SettingsModal/AppsExtensionsModal existed \u2014 they did not. They were built on 2026-10-10 22:40. Verify file existence before trusting a status list.",
   "apps": {
     "01_claude-exact-pixel-clone": {
       "path": "apps/01_claude-exact-pixel-clone",
@@ -51,7 +51,7 @@
         "Cook This Prompt (Capsule Hub style prompt enhancer)",
         "Direct Ollama streaming with abort; vault capture of every turn",
         "Vite proxies /ollama and /vault -> Ollama CORS no longer required",
-        "Light/dark/system theme, reduced motion, transcript size, width, chat font — all really applied",
+        "Light/dark/system theme, reduced motion, transcript size, width, chat font \u2014 all really applied",
         "Keyboard: Ctrl+B sidebar, Ctrl+J AI-Brain, Ctrl+Shift+A artifacts, Ctrl+N new chat",
         "Measured theme: sidebar 384px #111111, main #151515, composer #20201f, active row #343434, text #f0efec, accent #d97757, link #4099ec (replaces the wrong estimates)",
         "Spark.jsx - real Claude starburst SVG (ported from abc0197f) used for greeting + assistant avatar",
@@ -140,11 +140,39 @@
     "No installer",
     "Quillbot inline suggestions live only in the extension, cannot be wired into the desktop app"
   ],
-  "last_session": {
-    "date": "2026-10-11",
-    "time": "21:20 Asia/Dhaka",
-    "what_done": "Applied the advisor's best-of cherry-pick plan without merging: adopted the measured pixel palette (sidebar 384px #111111 etc, replacing wrong estimates), Spark starburst (abc0197f), accessible Dialog + CSP-locked artifact preview + negative-intent detection (01199af1), TodayView + mock Ollama server (brain01), and added 20 unit tests + 4 jsdom UI smoke tests. Preview running with the labelled mock model.",
-    "user_request": "see advisor deep-judge report, take the best parts, give a preview, update all md files about progression, do not merge",
-    "action_now": "User reviews the preview and tests start-app.bat on the TUF A15; PR #8 stays open and unmerged"
+  "last_session": "2026-10-11 \u2014 best-of cherry-picks applied, then the user overruled the measured palette; user's colours restored, all functions kept (24/24 tests pass)",
+  "palette_ruling": {
+    "authoritative": "user-supplied",
+    "shipped": {
+      "bg_main": "#1a1a1a",
+      "bg_side": "#202020",
+      "sidebar_width": "260px",
+      "bg_elev": "#242424",
+      "bg_hover": "#2a2a2a",
+      "bg_active": "#303030",
+      "text": "#e0e0e0",
+      "accent": "#ff8c00",
+      "btn": "#ffffff",
+      "code_bg": "#141414"
+    },
+    "measured_but_reverted": {
+      "bg_main": "#151515",
+      "bg_side": "#111111",
+      "sidebar_width": "384px",
+      "bg_elev": "#20201f",
+      "bg_hover": "#1d1d1d",
+      "bg_active": "#343434",
+      "text": "#f0efec",
+      "accent": "#d97757"
+    },
+    "geometry_still_from_measurement": [
+      "toolbar 48px",
+      "top bar 52px",
+      "composer radius 18px",
+      "greeting 44px",
+      "transcript widths 880/1040/1200",
+      "grouped settings nav"
+    ],
+    "rule": "Where a pixel measurement disagrees with a value the user stated, use the user's value and flag the difference \u2014 never silently override."
   }
 }

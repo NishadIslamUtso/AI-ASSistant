@@ -3,6 +3,37 @@
 **Last Updated:** 2026-10-11 21:20 Asia/Dhaka
 **Rule:** Log every change with date, what, why. This is memory for next AI.
 
+## 2026-10-11 (session 3 — later) — Palette Restored To The User's Spec
+
+**The user overruled the measurements.** I had shipped the measured palette
+(`#151515` / `#111111` / `#20201f`, 384px sidebar) and flagged the conflict with
+the values they had specified. Their answer: *"didn't make it look like how I
+said … take the looks like I said. don't argue. but keep the functions."*
+
+So the palette is theirs again, and **every function added earlier stays**:
+
+| Role | Measured (reverted) | **Now shipped** |
+|---|---|---|
+| Main | `#151515` | **`#1a1a1a`** |
+| Sidebar | `#111111` 384px | **`#202020` 260px** |
+| Composer | `#20201f` | **`#242424`** |
+| Hover / active | `#1d1d1d` / `#343434` | **`#2a2a2a` / `#303030`** |
+| Text | `#f0efec` | **`#e0e0e0`** |
+| Accent | `#d97757` | **`#ff8c00`** |
+| Button / code bg | `#f0efec` / `#1d1d1d` | **`#ffffff` / `#141414`** |
+
+Kept: Spark starburst (inherits `var(--accent)`, so it is orange now),
+TodayView, Dialog focus trap, artifact CSP, negative-intent detection,
+grouped settings nav, measured geometry (toolbar 48px, composer radius 18px,
+greeting 44px, transcript widths), all 24 tests, mock Ollama.
+
+The rule is now written into `src/index.css` and `spec/MEASURED_PIXELS.md`:
+**where a measurement disagrees with a value the user stated, the user's value
+wins and gets flagged — never silently overridden.**
+
+Verified: clean build, palette confirmed present in the shipped CSS,
+20/20 unit tests, 4/4 UI smoke tests.
+
 ## 2026-10-11 (session 3 — 21:20 Asia/Dhaka) — Best-Of Cherry-Picks Applied
 
 **Context:** the user's advisor AI ran a "deep judge" pass over every branch and
