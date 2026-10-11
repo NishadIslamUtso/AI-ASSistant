@@ -9,6 +9,10 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Replaced by React the moment the bundle runs. If this text stays on
+         screen, the module script was blocked (cache, CORS or CSP) and never
+         executed at all. -->
+    <script>document.getElementById('root').textContent = 'Starting AI ASSistant…'</script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
