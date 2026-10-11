@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
-import { Code2, FileText, Image, RefreshCw } from 'lucide-react'
+import { Code2, Download, FileText, Image, RefreshCw } from 'lucide-react'
 import ClaudeMark from './ClaudeMark.jsx'
+import { chatToMarkdown, downloadText, exportFileName } from '../lib/export.js'
 import Composer from './Composer.jsx'
 import Markdown from './Markdown.jsx'
 import ThinkingDisplay from './ThinkingDisplay.jsx'
@@ -19,7 +20,7 @@ export default function Center({ seed, chat, onArtifact, onRetryCapture, setting
   return <main className={`center ${hasMessages ? 'has-messages' : 'home'}`} data-model-ready={composerProps.models.available}>
     {!hasMessages && <div className="free-plan"><span>Free plan</span><span>·</span><button onClick={() => notify('This is a free local Ollama app. Claude plans and billing are not connected.')}>Upgrade</button></div>}
     {hasMessages ? <>
-      <header className="chat-header"><h1>{chat.title}</h1><small>Local · {composerProps.models.model}</small></header>
+      <header className="chat-header"><h1>{chat.title}</h1><small>Local · {composerProps.models.model}</small><button className="chat-export" onClick={() => { downloadText(exportFileName(chat), chatToMarkdown(chat)); notify('Conversation exported as Markdown.') }} title="Download this conversation as Markdown"><Download size={13} />Export</button></header>
       <div className="transcript-scroll" ref={transcript}><div className="transcript" key={chat.id}>
         {messages.map(message => <article key={message.id} className={`message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`} aria-label={message.role === 'user' ? 'Your message' : 'Assistant response'}>
           {message.role === 'assistant' && <ClaudeMark size={23} />}

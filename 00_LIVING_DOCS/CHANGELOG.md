@@ -1,8 +1,45 @@
 # CHANGELOG.md — What Changed Each Session (Living)
 
-**Last Updated:** 2026-10-10 (evening, Asia/Dhaka)
+**Last Updated:** 2026-10-12 (Asia/Dhaka)
 **Last Updated:** 2026-10-11 21:20 Asia/Dhaka
 **Rule:** Log every change with date, what, why. This is memory for next AI.
+
+## 2026-10-12 (Dhaka) — Winner branch adopted as the base, plus inline charts and export
+
+The user asked to copy `arena/3c06e1bf-ai-assistant` into this session, keep the
+existing work, take the best ideas from the curated report, and make the app
+functional. The report itself was not in the workspace, so its rankings were not
+used; the choices below come from reading the winner's code and running it.
+
+### What was done
+
+- **Adopted the winner's app tree** (`871e857`) as `apps/01_claude-exact-pixel-clone/`
+  via a real git merge (commit `59d9f60`). Its tests pass on the merged tree: build
+  ok, 48/48 unit and integration, 5/5 UI smoke.
+- **Dropped five unused files from the earlier screenshot pass** (`AppMenu.jsx`,
+  `menu.jsx`, `lib/api.js`, `lib/config.js`, `lib/greeting.js`). Nothing imports
+  them. They stay in `0029d06` history.
+- **Inline charts:** a fenced ```chart JSON block (bar or line) renders as SVG in
+  the reply. Invalid specs stay as plain code. The system prompt asks for this only
+  when the user requests a chart or graph. Pure logic lives in `src/lib/chart.js`.
+- **Export chat as Markdown:** an Export button in the chat header downloads the
+  visible turns. Thinking traces and vault context are left out (`src/lib/export.js`).
+- Mock Ollama returns a sample chart for chart prompts, so the preview shows the feature.
+
+### Verified
+
+- `npm test`: 56/56 (48 from the winner plus 8 new: chart parsing, geometry,
+  system prompt, export).
+- `npm run test:ui`: 5/5.
+- Browser (headless Chromium, Vite on 5173, mock Ollama, vault copy in `/tmp`):
+  chart request renders 1 SVG with 3 bars, no raw code block left, Export downloads
+  a `.md` with the chart block and user text, no console errors.
+
+### Not done
+
+- Vision/image upload, Windows installer, and an artifact ZIP export are not
+  implemented in this pass. They are unverified and remain open in TODO_NEXT.
+- The Windows test (P1) is a user action.
 
 ## 2026-10-11 (22:55) — Fix: preview host was blocked by the origin allowlists
 

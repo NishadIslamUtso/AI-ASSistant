@@ -76,6 +76,14 @@ const w=win();s.textContent=w?t[w[0]]+' wins!':t.every(Boolean)?"It's a draw":'T
 draw();
 </script></div></body></html>`
 
+const CHART_REPLY = `Here is the bar chart from your numbers:
+
+\`\`\`chart
+{"type":"bar","title":"Sample sales","labels":["Mon","Tue","Wed"],"values":[4,9,6]}
+\`\`\`
+
+This is a fixed sample from the mock: the chart is rendered inline from its JSON block. A real model writes its own numbers.`
+
 const ARTIFACT_REPLY = `Here you go — a runnable artifact:
 
 \`\`\`html
@@ -128,9 +136,11 @@ const server = http.createServer((req, res) => {
       }
       const msgs = payload.messages || []
       const prompt = (msgs.find((m) => m.role === 'user') || {}).content || ''
-      const text = /\b(tic|tac|toe|game|snake|flappy|build me|make me)\b/i.test(prompt)
-        ? ARTIFACT_REPLY
-        : replyFor(prompt)
+      const text = /\b(chart|graph)\b/i.test(prompt)
+        ? CHART_REPLY
+        : /\b(tic|tac|toe|game|snake|flappy|build me|make me)\b/i.test(prompt)
+          ? ARTIFACT_REPLY
+          : replyFor(prompt)
 
       res.writeHead(200, { 'Content-Type': 'application/x-ndjson' })
       const chunks = text.match(/[\s\S]{1,7}/g) || []

@@ -306,3 +306,16 @@ h1, h2, h3, h4, p { margin: 0; }
   border-bottom: 1px solid var(--subtle-border);
 }
 .app-shell { height: calc(100dvh - 30px); }
+
+/* Inline chart (```chart block) and chat export button */
+.inline-chart { margin: 14px 0; padding: 12px 14px 8px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); max-width: 560px; }
+.inline-chart figcaption { font: 600 13px/1.3 system-ui, sans-serif; color: var(--text); margin-bottom: 6px; }
+.inline-chart svg { width: 100%; height: auto; display: block; }
+.inline-chart-axis { stroke: var(--border); stroke-width: 1; }
+.inline-chart-bar { fill: var(--accent); }
+.inline-chart-line { stroke: var(--accent); stroke-width: 2.5; }
+.inline-chart-dot { fill: var(--accent); }
+.inline-chart-label { fill: var(--muted); font: 11px system-ui, sans-serif; }
+.inline-chart-value { fill: var(--text); font: 600 11px system-ui, sans-serif; }
+.chat-export { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; padding: 4px 9px; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--muted); font-size: 12px; cursor: pointer; flex-shrink: 0; }
+.chat-export:hover { background: var(--hover); color: var(--text); }
