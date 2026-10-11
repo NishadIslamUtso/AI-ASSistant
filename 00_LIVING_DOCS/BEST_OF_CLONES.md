@@ -62,5 +62,5 @@ vault. Where a project's *idea* was adopted, the row says so; where only its
 | Vision bridge | unit tests (bridge only when needed, never the answering model, capped description, labelled block) + UI test (attach → chip names the describer → transcript reports the hop) + live test against the real vision route |
 | Policy unchanged | live test asserts `POST /api/ollama/pull` → 403 and an encoded vault traversal → 403 |
 
-**Totals (offline):** `npm test` 69 pass, `npm run test:ui` 9 pass.
+**Totals (offline):** `npm test` 70 pass, `npm run test:ui` 9 pass.
 **Live (needs the dev server up):** `npm run test:live` 7 pass.

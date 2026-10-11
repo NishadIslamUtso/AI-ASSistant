@@ -134,7 +134,7 @@ requirements that branch did not have:
 ## Tests
 
 ```
-npm test            # 69 tests: artifacts + storage, streaming artifacts, the ZIP
+npm test            # 70 tests: artifacts + storage, streaming artifacts, the ZIP
                     #           writer, the vision bridge, region rewriting,
                     #           the budget guard, ollama, proxy policy, vault API
 npm i -D jsdom      # jsdom ships in dependencies here; only needed for the UI test

@@ -4,7 +4,7 @@
   "timezone": "Asia/Dhaka",
   "repo_version": "1.3.0-best-of-built",
   "canonical_repo": "https://github.com/NishadIslamUtso/AI-ASSistant",
-  "note_for_next_ai": "The repo is the source of truth, not any handover text. 2026-10-11 23:40: the curated best-of list was implemented in apps/01_claude-exact-pixel-clone (live streaming artifacts + inline canvas charts, comment-mode region rewrite, sub agents, branching, deployable ZIP export, vision bridge, live service status). Tests: npm test 69, npm run test:ui 9, npm run test:live 7 (needs npm run dev + dev:mock). MCP one-click was NOT implemented on purpose — see 00_LIVING_DOCS/BEST_OF_CLONES.md section 3. Nothing has been verified against a real Ollama yet; the mock is labelled as a mock everywhere.",
+  "note_for_next_ai": "The repo is the source of truth, not any handover text. 2026-10-11 23:40: the curated best-of list was implemented in apps/01_claude-exact-pixel-clone (live streaming artifacts + inline canvas charts, comment-mode region rewrite, sub agents, branching, deployable ZIP export, vision bridge, live service status). Tests: npm test 70, npm run test:ui 9, npm run test:live 7 (needs npm run dev + dev:mock). MCP one-click was NOT implemented on purpose — see 00_LIVING_DOCS/BEST_OF_CLONES.md section 3. Nothing has been verified against a real Ollama yet; the mock is labelled as a mock everywhere.",
   "apps": {
     "01_claude-exact-pixel-clone": {
       "path": "apps/01_claude-exact-pixel-clone",

@@ -45,7 +45,7 @@ in `00_LIVING_DOCS/BEST_OF_CLONES.md`.
 - `server/mock-ollama.cjs` — routes for the bridge, the region rewriter, the chart
   dashboard, and sub-agent tasks, so every new flow is demonstrable in a preview.
 
-**Tests:** `npm test` 48 → 69, `npm run test:ui` 5 → 9, plus a new
+**Tests:** `npm test` 48 → 70, `npm run test:ui` 5 → 9, plus a new
 `npm run test:live` (7 tests) that drives the real libs through the real proxy.
 
 **Honest gaps:** MCP one-click was **not** implemented (see BEST_OF_CLONES.md §3).
