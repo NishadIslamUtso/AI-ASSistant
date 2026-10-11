@@ -34,6 +34,20 @@ requests and browser-form writes are refused with 403/415. The proxy target is
 validated to be an unauthenticated loopback service, so no remote AI or vault
 destination can be substituted.
 
+**On your own machine nothing extra is needed** — the browser origin is
+`127.0.0.1` or `localhost`, which is allowed by default.
+
+If you serve the dev server through a forwarded/preview hostname, both layers
+need to be told:
+
+```
+ALLOW_PREVIEW_ORIGINS=1 node server/vault-api.cjs
+ALLOW_PREVIEW_ORIGINS=1 npx vite --host 0.0.0.0 --port 5173
+```
+
+That permits `*.e2b.app` origins only. **Do not set it for a normal local run** —
+it exists solely so the app can be previewed from another host.
+
 ## UI lineage
 
 The interface was adopted wholesale from the `arena/01199af1-ai-assistant` branch

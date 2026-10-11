@@ -3,6 +3,38 @@
 **Last Updated:** 2026-10-11 21:20 Asia/Dhaka
 **Rule:** Log every change with date, what, why. This is memory for next AI.
 
+## 2026-10-11 (22:55) — Fix: preview host was blocked by the origin allowlists
+
+The user reported "preview isn't working". Both layers adopted from 01199af1
+refuse requests whose `Origin` is not a loopback host:
+
+- `server/vault-api.cjs` → "Origin is not authorized for this local vault API."
+- `server/proxy-policy.cjs` → "Cross-origin API requests are not authorized."
+
+On the user's own machine this is correct and needs nothing. Behind a forwarded
+preview hostname the browser's origin is the public host, so every vault and
+Ollama call returned 403 while the page itself still loaded — which is exactly
+what "isn't working" looked like.
+
+Fixes:
+
+- The vault API already had an `ALLOW_PREVIEW_ORIGINS=1` escape hatch for
+  `*.e2b.app`; it simply was not set. It is now.
+- `server/proxy-policy.cjs` had no such hatch, and its strict
+  `origin.host === host` check also fails when the proxy does not forward the
+  public host. It now accepts `*.e2b.app` origins under the same env var,
+  defaulting to the strict same-origin comparison.
+
+Both are off by default; a non-preview origin is still refused.
+
+**Why I missed it:** I verified the endpoints with `curl` and no `Origin`
+header. A browser always sends one on these calls, so my checks passed while
+the real thing failed. Testing without the header the client actually sends is
+not a test of the policy.
+
+Verified: all endpoints through the preview proxy, with **and** without
+`X-Forwarded-Host`; `https://evil.example.com` still denied; 48 + 5 tests pass.
+
 ## 2026-10-11 (session 4 — 22:10) — UI/UX adopted from the 01199af1 branch
 
 The user looked at the branches and said: *"tbh
