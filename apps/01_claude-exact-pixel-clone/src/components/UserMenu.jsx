@@ -1,47 +1,24 @@
-import { ArrowUpCircle, Globe, HelpCircle, Info, Key, LayoutGrid, LogOut, Settings } from 'lucide-react'
-import { USER_EMAIL } from '../lib/constants.js'
-
-// Items marked soon are shown exactly as in the screenshot but are not built yet.
-export default function UserMenu({ onSettings, onApps, onClose }) {
-  const items = [
-    { label: 'Settings', icon: Settings, kbd: 'Ctrl+,', run: onSettings },
-    { label: 'Language', icon: Globe, soon: true },
-    { label: 'Get help', icon: HelpCircle, soon: true },
-    'sep',
-    { label: 'Upgrade plan', icon: ArrowUpCircle, soon: true },
-    { label: 'Get apps and extensions', icon: LayoutGrid, run: onApps },
-    { label: 'Learn more', icon: Info, chevron: true, soon: true },
-    'sep',
-    { label: 'Get API keys', icon: Key, soon: true },
-    'sep',
-    { label: 'Log out', icon: LogOut, soon: true },
-  ]
-  return (
-    <>
-      <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className="absolute bottom-full left-[12px] z-50 mb-1 w-[371px] rounded-xl border border-ui-line bg-ui-menu p-2 text-[15px] shadow-2xl">
-        <div className="truncate px-3 pb-2 pt-1.5 text-[14px] text-ui-muted">{USER_EMAIL}</div>
-        {items.map((it, i) =>
-          it === 'sep' ? (
-            <div key={`sep-${i}`} className="my-1.5 h-px bg-ui-line" />
-          ) : (
-            <button
-              key={it.label}
-              title={it.soon ? 'Not built yet' : undefined}
-              onClick={() => {
-                onClose()
-                it.run?.()
-              }}
-              className={`flex h-[33px] w-full items-center gap-3 rounded-md px-3 text-left text-ui-body hover:bg-ui-hover ${it.soon ? 'opacity-60' : ''}`}
-            >
-              <it.icon size={16} className="shrink-0 text-ui-muted" />
-              <span className="flex-1">{it.label}</span>
-              {it.kbd && <span className="text-xs text-ui-muted">{it.kbd}</span>}
-              {it.chevron && <span className="text-ui-muted">›</span>}
-            </button>
-          ),
-        )}
-      </div>
-    </>
-  )
+import { useRef, useState } from 'react'
+import { Settings, Globe, HelpCircle, ArrowUpCircle, Blocks, Info, KeyRound, LogOut, ChevronRight, ExternalLink, Check } from 'lucide-react'
+import useDismiss from '../hooks/useDismiss.js'
+export default function UserMenu({ onClose, onSettings, onApps, notify }) {
+  const ref = useRef(null)
+  const [language, setLanguage] = useState(false)
+  useDismiss(ref, onClose)
+  function action(callback) { onClose(); callback() }
+  return <div ref={ref} className="user-menu popup" role="menu" aria-label="Account menu">
+    <div className="menu-email">nishadislamutso@gmail.com</div>
+    <button role="menuitem" autoFocus onClick={() => action(onSettings)}><Settings size={15} /><span>Settings</span><kbd>Ctrl+,</kbd></button>
+    <button role="menuitem" onClick={() => setLanguage(!language)}><Globe size={15} /><span>Language</span><small>English</small></button>
+    {language && <div className="language-option"><Check size={13} /> English <small>Local interface</small></div>}
+    <button role="menuitem" onClick={() => action(() => notify('Run start-app.bat on your Windows laptop. Ollama uses the existing qwen2.5:3b model; the vault is vault/AI-Brain. See the app README for troubleshooting.'))}><HelpCircle size={15} /><span>Get help</span></button>
+    <div className="menu-separator" />
+    <button role="menuitem" onClick={() => action(() => notify('Local mode is free. This app is not connected to Claude billing and does not use a Claude subscription.'))}><ArrowUpCircle size={15} /><span>Upgrade plan</span></button>
+    <button role="menuitem" onClick={() => action(onApps)}><Blocks size={15} /><span>Get apps and extensions</span></button>
+    <button role="menuitem" onClick={() => action(() => notify('AI ASSistant is a local Ollama chat app with a screenshot-led Claude interface. The Markdown Obsidian vault is canonical memory; UI similarity does not mean Claude-level model intelligence.'))}><Info size={15} /><span>Learn more</span><ChevronRight size={14} /></button>
+    <div className="menu-separator" />
+    <button role="menuitem" onClick={() => action(() => notify('No API key is needed for local Ollama. Cloud providers and Claude API keys are not connected in this build.'))}><KeyRound size={15} /><span>Get API keys</span><ExternalLink size={14} /></button>
+    <div className="menu-separator" />
+    <button role="menuitem" onClick={() => action(() => notify('There is no external account to log out of. Your local chats and original vault sources have been kept.'))}><LogOut size={15} /><span>Log out</span></button>
+  </div>
 }

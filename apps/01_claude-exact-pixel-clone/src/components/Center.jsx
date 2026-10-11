@@ -1,259 +1,68 @@
-import { useEffect, useRef, useState } from 'react'
-import { ArrowUp, AudioLines, Check, ChevronDown, Ghost, Mic, Minus, PanelLeft, Plus, Square, X } from 'lucide-react'
-import Asterisk from './Asterisk.jsx'
-import { USER_NAME } from '../lib/constants.js'
-import { greetingFor } from '../lib/chats.js'
-import { vaultContext } from '../lib/vault.js'
+import { useEffect, useMemo, useRef } from 'react'
+import { Code2, FileText, GitBranch, Image, RefreshCw } from 'lucide-react'
+import ClaudeMark from './ClaudeMark.jsx'
+import Composer from './Composer.jsx'
+import Markdown from './Markdown.jsx'
+import ThinkingDisplay from './ThinkingDisplay.jsx'
 
-function WinBtn({ children, title, danger, onClick }) {
-  return (
-    <button
-      type="button"
-      title={title}
-      onClick={onClick}
-      className={`flex h-12 w-[63px] items-center justify-center text-ui-body ${danger ? 'hover:bg-[#c42b1c] hover:text-white' : 'hover:bg-ui-hover'}`}
-    >
-      {children}
-    </button>
-  )
+/** Pull the first fenced ```svg block out of a reply so it can render inline. */
+export function extractSvgBlock(text = '') {
+  const match = /```svg\s*\n([\s\S]*?)```/i.exec(text)
+  if (!match) return ''
+  const svg = match[1].trim()
+  return /^<svg[\s>]/i.test(svg) ? svg : ''
+}
+export function getGreeting(date = new Date()) {
+  const hour = Number(new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Dhaka', hour: 'numeric', hourCycle: 'h23' }).format(date))
+  return hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening'
+}
+export default function Center({ seed, chat, onArtifact, onRetryCapture, settings, notify, onExternalLink, onBranch, onNavigateBranch, ...composerProps }) {
+  const transcript = useRef(null)
+  const messages = chat?.messages || []
+  const branches = chat?.branches || []
+  useEffect(() => {
+    const element = transcript.current
+    if (element && element.scrollHeight - element.scrollTop - element.clientHeight < 260) element.scrollTo({ top: element.scrollHeight, behavior: settings.motion === 'Reduced' ? 'instant' : 'smooth' })
+  }, [messages, settings.motion])
+  const hasMessages = messages.length > 0
+  return <main className={`center ${hasMessages ? 'has-messages' : 'home'}`} data-model-ready={composerProps.models.available}>
+    {!hasMessages && <div className="free-plan"><span>Free plan</span><span>·</span><button onClick={() => notify('This is a free local Ollama app. Claude plans and billing are not connected.')}>Upgrade</button></div>}
+    {hasMessages ? <>
+      <header className="chat-header"><h1>{chat.title}</h1><small>Local · {composerProps.models.model}</small>
+        {branches.length > 1 && <label className="branch-picker" title="Switch between branches of this conversation">
+          <GitBranch size={12} />
+          <select value={chat.id} onChange={event => event.target.value !== chat.id && onNavigateBranch(event.target.value)}>
+            {branches.map(branch => <option key={branch.id} value={branch.id}>{branch.label}</option>)}
+          </select>
+        </label>}
+      </header>
+      <div className="transcript-scroll" ref={transcript}><div className="transcript" key={chat.id}>
+        {messages.map(message => <article key={message.id} className={`message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`} aria-label={message.role === 'user' ? 'Your message' : 'Assistant response'}>
+          {message.role === 'assistant' && <ClaudeMark size={23} />}
+          <div className="message-body"><ThinkingDisplay thinking={message.thinking} streaming={message.status === 'streaming'} />
+            {message.role === 'user' ? <div className="user-text">{message.content}</div> : <Markdown onExternalLink={onExternalLink}>{message.content}</Markdown>}
+            {message.attachments?.length > 0 && <div className="sent-attachments">{message.attachments.map(file => <span key={file.id}>{file.kind === 'image' ? <Image size={13} /> : <FileText size={13} />}{file.name}</span>)}</div>}
+            {message.context && <details className="sent-context"><summary>Included vault context</summary><pre>{message.context}</pre></details>}
+            {message.status === 'streaming' && !message.content && !message.thinking && <p className="generating">Responding locally…</p>}
+            {message.error && <p className={message.status === 'error' ? 'error-text response-error' : 'muted'} role={message.status === 'error' ? 'alert' : undefined}>{message.error}</p>}
+            {message.artifacts?.map(artifact => <button key={artifact.id} className="artifact-message-card" onClick={() => onArtifact(artifact.id)}><Code2 size={20} /><span><strong>{artifact.title}</strong><small>{artifact.type === 'html' ? 'HTML Application' : 'SVG Image'} · Open preview</small></span></button>)}
+            {message.role === 'assistant' && message.status === 'done' && <InlineSvg text={message.content} />}
+            {message.visionBridged && <p className="bridge-note"><Image size={11} />Answered by {message.model}{message.requestedModel ? ` · vision bridge from ${message.requestedModel}` : ''}</p>}
+            {message.citations?.length > 0 && <ul className="citations">{message.citations.map(source => <li key={source.id}><button onClick={() => onExternalLink?.(source.url)}>{source.label || source.url}</button></li>)}</ul>}
+            {message.role === 'assistant' && message.status === 'done' && <div className="message-actions"><button onClick={() => onBranch(message.id)} title="Branch a new conversation from this reply"><GitBranch size={12} />Branch off here</button></div>}
+          </div>
+        </article>)}
+      </div></div>
+      <div className="reply-composer"><Composer chat={chat} notify={notify} seed={seed} {...composerProps} />
+        <div className="chat-save-status">{chat.vaultStatus === 'saved' ? 'Saved in local chat history and AI-Brain' : chat.vaultStatus === 'saving' ? 'Saving to AI-Brain…' : chat.vaultStatus === 'error' ? <><span title={chat.vaultError}>Local chat kept · vault capture failed</span><button onClick={() => onRetryCapture(chat)}><RefreshCw size={11} />Retry</button></> : 'Local chat history · check important answers'}</div>
+      </div>
+    </> : <div className="home-content"><div className="greeting"><ClaudeMark size={28} /><h1>{getGreeting()}, Utso</h1></div><Composer chat={chat} notify={notify} seed={seed} {...composerProps} /></div>}
+  </main>
 }
 
-// Lists models from the local Ollama (via /api/ollama/api/tags). The selection is saved in App.
-function ModelPicker({ model, models, error, onChange, onRefresh }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => {
-          if (!open) onRefresh()
-          setOpen((o) => !o)
-        }}
-        title="Choose a local Ollama model"
-        className="flex items-center gap-1 text-ui-body hover:text-ui-text"
-      >
-        {model}
-        <ChevronDown size={14} className="text-ui-muted" />
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute bottom-full right-0 z-50 mb-2 w-[300px] rounded-xl border border-ui-line bg-ui-menu p-1.5 text-[14px] shadow-2xl">
-            <div className="px-2.5 pb-1 pt-1.5 text-[12px] text-ui-muted">Local models (Ollama)</div>
-            {models.map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => {
-                  onChange(m)
-                  setOpen(false)
-                }}
-                className="flex h-8 w-full items-center justify-between rounded-md px-2.5 text-left text-ui-body hover:bg-ui-hover"
-              >
-                <span className="truncate">{m}</span>
-                {m === model && <Check size={14} className="text-ui-text" />}
-              </button>
-            ))}
-            {error && <div className="px-2.5 py-2 text-[12px] leading-5 text-ui-muted">{error}</div>}
-          </div>
-        </>
-      )}
-    </div>
-  )
-}
-
-export default function Center({
-  messages,
-  isLoading,
-  onSend,
-  onStop,
-  model,
-  models,
-  modelsError,
-  onModelChange,
-  onRefreshModels,
-  sidebarOpen,
-  onExpandSidebar,
-}) {
-  const [input, setInput] = useState('')
-  const [hits, setHits] = useState([])
-  const taRef = useRef(null)
-  const bottomRef = useRef(null)
-  const empty = messages.length === 0
-  const lastId = messages[messages.length - 1]?.id
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ block: 'end' })
-  }, [messages])
-
-  useEffect(() => {
-    const ta = taRef.current
-    if (ta) {
-      ta.style.height = 'auto'
-      ta.style.height = `${Math.min(ta.scrollHeight, 200)}px`
-    }
-  }, [input])
-
-  // Vault lookup while typing (debounced). Matches are shown under the composer and sent as context.
-  useEffect(() => {
-    const q = input.trim()
-    if (q.length < 3) {
-      setHits([])
-      return undefined
-    }
-    const ac = new AbortController()
-    const t = setTimeout(() => {
-      vaultContext(q.slice(-80), ac.signal)
-        .then((caps) => setHits(caps.slice(0, 3)))
-        .catch(() => setHits([]))
-    }, 400)
-    return () => {
-      clearTimeout(t)
-      ac.abort()
-    }
-  }, [input])
-
-  const submit = () => {
-    const text = input.trim()
-    if (!text || isLoading) return
-    onSend(text, hits)
-    setInput('')
-    setHits([])
-  }
-
-  const onKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
-      e.preventDefault()
-      submit()
-    }
-  }
-
-  const composer = (
-    <div className="mx-auto w-full max-w-[var(--col-w)]">
-      <div className="rounded-[18px] bg-ui-composer px-[22px] pb-[20px] pt-[20px]">
-        <textarea
-          ref={taRef}
-          rows={1}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={onKeyDown}
-          placeholder="How can I help you today?"
-          className="block max-h-[200px] min-h-[28px] w-full resize-none bg-transparent text-[17px] leading-7 text-ui-text outline-none placeholder:text-ui-muted"
-        />
-        <div className="mt-3 flex items-center justify-between">
-          <button type="button" title="Attach (not built yet)" className="flex h-7 w-7 items-center justify-center rounded-full text-ui-body hover:bg-ui-hover">
-            <Plus size={20} />
-          </button>
-          <div className="flex items-center gap-3 text-ui-body">
-            {isLoading ? (
-              <button type="button" onClick={onStop} title="Stop generating" className="flex h-8 w-8 items-center justify-center rounded-full bg-ui-text text-ui-main">
-                <Square size={12} fill="currentColor" />
-              </button>
-            ) : input.trim() ? (
-              <button type="button" onClick={submit} title="Send (Enter)" className="flex h-8 w-8 items-center justify-center rounded-full bg-ui-text text-ui-main">
-                <ArrowUp size={18} />
-              </button>
-            ) : (
-              <>
-                <button type="button" title="Voice input (not built yet)" className="flex h-7 w-7 items-center justify-center text-ui-muted">
-                  <Mic size={20} />
-                </button>
-                <button type="button" title="Voice mode (not built yet)" className="flex h-7 items-center gap-1 text-ui-body">
-                  <AudioLines size={20} />
-                  <ChevronDown size={14} className="text-ui-muted" />
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="mt-[20px] flex items-center justify-between px-[21px] text-[15px]">
-        <button type="button" title="Projects (not built yet)" className="flex items-center gap-1.5 text-ui-body">
-          Project
-          <ChevronDown size={14} className="text-ui-muted" />
-        </button>
-        <div className="flex items-center gap-4">
-          <ModelPicker model={model} models={models} error={modelsError} onChange={onModelChange} onRefresh={onRefreshModels} />
-          <span title="Not wired yet" className="text-ui-muted">Medium</span>
-          <span title="Not wired yet" className="text-ui-body">Manual</span>
-        </div>
-      </div>
-      {hits.length > 0 && (
-        <div className="mt-2 px-[21px] text-[12px] text-ui-muted">Vault match: {hits.map((h) => h.title).join(' · ')}</div>
-      )}
-    </div>
-  )
-
-  return (
-    <main className="relative flex min-w-0 flex-1 flex-col bg-ui-main">
-      <div className="absolute inset-x-0 top-0 z-10 flex h-12 items-center justify-between">
-        <div className="pl-3">
-          {!sidebarOpen && (
-            <button type="button" title="Show sidebar" onClick={onExpandSidebar} className="flex h-7 w-7 items-center justify-center rounded-md text-ui-body hover:bg-ui-hover">
-              <PanelLeft size={18} />
-            </button>
-          )}
-        </div>
-        <div className="flex h-full items-center">
-          <WinBtn title="Temporary chat (not built yet)">
-            <Ghost size={17} />
-          </WinBtn>
-          <WinBtn title="Window controls are active in the Windows app build">
-            <Minus size={17} />
-          </WinBtn>
-          <WinBtn title="Window controls are active in the Windows app build">
-            <Square size={13} />
-          </WinBtn>
-          <WinBtn danger title="Window controls are active in the Windows app build">
-            <X size={17} />
-          </WinBtn>
-        </div>
-      </div>
-
-      {empty ? (
-        <div className="relative flex flex-1 flex-col items-center justify-center px-6 pb-10 pt-12">
-          <div className="absolute left-1/2 top-[118px] -translate-x-1/2 rounded-full bg-ui-pill px-5 py-2 text-[15px]">
-            <span className="text-ui-muted">Free plan</span>
-            <span className="mx-2 text-ui-muted">·</span>
-            <button type="button" title="Not built yet" className="text-ui-link hover:underline">
-              Upgrade
-            </button>
-          </div>
-          <div className="mb-[38px] -mt-8 flex items-center gap-[14px]">
-            <Asterisk className="h-11 w-11 text-ui-accent" />
-            <h1 className="font-serif text-[44px] leading-none text-ui-text">
-              {greetingFor()}, {USER_NAME}
-            </h1>
-          </div>
-          <div className="w-full px-0">{composer}</div>
-        </div>
-      ) : (
-        <>
-          <div className="flex-1 overflow-y-auto pt-16">
-            <div className="mx-auto w-full max-w-[var(--col-w)] space-y-7 px-6 pb-6">
-              {messages.map((m) =>
-                m.role === 'user' ? (
-                  <div key={m.id} className="flex justify-end">
-                    <div className="transcript-text max-w-[80%] whitespace-pre-wrap rounded-[18px] bg-ui-composer px-4 py-2.5 text-ui-text">{m.content}</div>
-                  </div>
-                ) : (
-                  <div key={m.id} className={`transcript-text whitespace-pre-wrap ${m.error ? 'text-ui-muted' : 'text-ui-text'}`}>
-                    {m.content}
-                    {!m.content && !m.error && m.id === lastId && isLoading && (
-                      <span className="inline-flex items-center gap-2 text-ui-muted">
-                        <Asterisk className="h-4 w-4 animate-ai-spin text-ui-accent" />
-                        Thinking…
-                      </span>
-                    )}
-                  </div>
-                ),
-              )}
-              <div ref={bottomRef} />
-            </div>
-          </div>
-          <div className="px-6 pb-5 pt-2">{composer}</div>
-        </>
-      )}
-    </main>
-  )
+/** Render a fenced SVG reply directly in the transcript — no download step. */
+function InlineSvg({ text }) {
+  const svg = useMemo(() => extractSvgBlock(text), [text])
+  if (!svg) return null
+  return <figure className="inline-svg"><img src={`data:image/svg+xml;utf8,${encodeURIComponent(svg)}`} alt="Generated graphic" /></figure>
 }

@@ -1,241 +1,56 @@
-import { useEffect, useState } from 'react'
-import { Blocks, Bell, Briefcase, ChevronDown, Clock, Code2, CreditCard, History, Lock, Monitor, Moon, Plug, Puzzle, Search, Settings, Sun, UserRound, Wrench, X } from 'lucide-react'
-import { TRANSCRIPT_SIZES, TRANSCRIPT_WIDTHS } from '../lib/settings.js'
-
-// Left nav exactly as in screenshot 191707. Only General (Appearance + Voice) is built.
-const NAV = [
-  {
-    group: 'Settings',
-    items: [
-      ['general', 'General', Settings],
-      ['account', 'Account', UserRound],
-      ['privacy', 'Privacy', Lock],
-      ['billing', 'Billing', CreditCard],
-      ['capabilities', 'Capabilities', Briefcase],
-      ['memory', 'Memory', History],
-      ['reflect', 'Reflect', Bell],
-      ['time', 'Time and focus', Clock],
-      ['claude-code', 'Claude Code', Code2],
-    ],
-  },
-  {
-    group: 'This computer',
-    items: [
-      ['system', 'System', Monitor],
-      ['extensions', 'Extensions', Plug],
-      ['developer', 'Developer', Wrench],
-    ],
-  },
-  {
-    group: 'Customize',
-    items: [
-      ['skills', 'Skills', Blocks],
-      ['connectors', 'Connectors', Puzzle],
-    ],
-  },
+import { useState } from 'react'
+import { Settings, CircleUserRound, Shield, CreditCard, Briefcase, History, Bell, MoonStar, Code2, Monitor, Plug, Wrench, ScrollText, Blocks, Search, X, Sun, Moon } from 'lucide-react'
+import Dialog from './Dialog.jsx'
+import BlacklistManager from './BlacklistManager.jsx'
+const navigation = [
+  ['Settings', [['General', Settings], ['Account', CircleUserRound], ['Privacy', Shield], ['Billing', CreditCard], ['Capabilities', Briefcase], ['Memory', History], ['Reflect', Bell], ['Time and focus', MoonStar], ['Claude Code', Code2]]],
+  ['This computer', [['System', Monitor], ['Extensions', Plug], ['Developer', Wrench]]],
+  ['Customize', [['Skills', ScrollText], ['Connectors', Blocks]]],
 ]
-
-const CHAT_FONTS = [
-  { value: 'serif', label: 'Anthropic Serif' },
-  { value: 'sans', label: 'Anthropic Sans' },
-]
-
-function Row({ title, desc, children }) {
-  return (
-    <div className="flex items-center justify-between gap-10 py-[22px]">
-      <div className="min-w-0">
-        <div className="text-[16px] text-ui-text">{title}</div>
-        {desc && <div className="mt-1 text-[14px] leading-5 text-ui-muted">{desc}</div>}
-      </div>
-      <div className="shrink-0">{children}</div>
-    </div>
-  )
+function Segments({ label, options, value, onChange, icons }) {
+  return <div className="segmented" role="group" aria-label={label}>{options.map((option, index) => <button key={option} aria-label={option} aria-pressed={value === option} className={value === option ? 'selected' : ''} onClick={() => onChange(option)}>{icons ? icons[index] : option}</button>)}</div>
 }
-
-function Segmented({ value, options, onChange }) {
-  return (
-    <div className="flex rounded-lg bg-ui-seg p-[3px]">
-      {options.map((o) => (
-        <button
-          key={o.value}
-          type="button"
-          title={o.title}
-          onClick={() => onChange(o.value)}
-          className={`flex h-8 min-w-[44px] items-center justify-center rounded-md px-3.5 text-[15px] ${value === o.value ? 'bg-ui-active text-ui-text' : 'text-ui-muted hover:text-ui-body'}`}
-        >
-          {o.icon ? <o.icon size={17} /> : o.label}
-        </button>
-      ))}
-    </div>
-  )
+function Row({ label, description, children }) {
+  return <div className={`settings-row ${description ? 'with-description' : ''}`}><div><div>{label}</div>{description && <p>{description}</p>}</div>{children}</div>
 }
-
-function Select({ value, options, onChange }) {
-  const [open, setOpen] = useState(false)
-  const current = options.find((o) => o.value === value)
-  return (
-    <div className="relative">
-      <button type="button" onClick={() => setOpen((o) => !o)} className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-[15px] text-ui-text hover:bg-ui-hover">
-        {current?.label}
-        <ChevronDown size={15} className="text-ui-muted" />
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full z-50 mt-1 w-56 rounded-xl border border-ui-line bg-ui-menu p-1.5 shadow-2xl">
-            {options.map((o) => (
-              <button
-                key={o.value}
-                type="button"
-                onClick={() => {
-                  onChange(o.value)
-                  setOpen(false)
-                }}
-                className="flex h-9 w-full items-center rounded-md px-2.5 text-left text-[15px] text-ui-body hover:bg-ui-hover"
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  )
+function Select({ label, value, options, onChange }) {
+  return <select aria-label={label} value={value} onChange={event => onChange(event.target.value)}>{options.map(option => <option key={option}>{option}</option>)}</select>
 }
-
-function Appearance({ settings, onChange }) {
-  return (
-    <>
-      <h2 className="text-[22px] font-semibold text-ui-text">Appearance</h2>
-      <div className="mt-2">
-        <Row title="Theme">
-          <Segmented
-            value={settings.theme}
-            onChange={(v) => onChange({ theme: v })}
-            options={[
-              { value: 'system', icon: Monitor, title: 'System' },
-              { value: 'light', icon: Sun, title: 'Light' },
-              { value: 'dark', icon: Moon, title: 'Dark' },
-            ]}
-          />
-        </Row>
-        <Row title="Chat font">
-          <Select value={settings.chatFont} options={CHAT_FONTS} onChange={(v) => onChange({ chatFont: v })} />
-        </Row>
-        <Row title="Transcript text size" desc="Size of the conversation transcript text.">
-          <Segmented
-            value={settings.transcriptSize}
-            onChange={(v) => onChange({ transcriptSize: v })}
-            options={Object.entries(TRANSCRIPT_SIZES).map(([value, o]) => ({ value, label: o.label }))}
-          />
-        </Row>
-        <Row title="Transcript width" desc="Maximum width of the transcript and composer columns.">
-          <Segmented
-            value={settings.transcriptWidth}
-            onChange={(v) => onChange({ transcriptWidth: v })}
-            options={Object.entries(TRANSCRIPT_WIDTHS).map(([value, o]) => ({ value, label: o.label }))}
-          />
-        </Row>
-        <Row title="Motion" desc="Reduce animation in streaming responses and other interface elements.">
-          <Segmented
-            value={settings.motion}
-            onChange={(v) => onChange({ motion: v })}
-            options={[
-              { value: 'system', label: 'System' },
-              { value: 'reduced', label: 'Reduced' },
-            ]}
-          />
-        </Row>
-      </div>
-
-      <h2 className="mt-10 text-[22px] font-semibold text-ui-text">Voice</h2>
-      <p className="mt-1 text-[14px] text-ui-muted">Preferences are saved. Voice output is not built yet.</p>
-      <div className="mt-2">
-        {[
-          ['Language', settings.voiceLanguage],
-          ['Style', settings.voiceStyle],
-          ['Speed', settings.voiceSpeed],
-        ].map(([label, value]) => (
-          <div key={label} className="flex items-center justify-between py-[22px]">
-            <div className="text-[16px] text-ui-text">{label}</div>
-            <div className="flex items-center gap-1.5 text-[15px] text-ui-text">
-              {value}
-              <ChevronDown size={15} className="text-ui-muted" />
-            </div>
-          </div>
-        ))}
-      </div>
-    </>
-  )
-}
-
-export default function SettingsModal({ settings, onChange, onClose }) {
-  const [section, setSection] = useState('general')
-  const [query, setQuery] = useState('')
-
-  useEffect(() => {
-    const onKey = (e) => e.key === 'Escape' && onClose()
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
-
-  const q = query.trim().toLowerCase()
-  const label = NAV.flatMap((g) => g.items).find(([id]) => id === section)?.[1] || ''
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ui-overlay"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose()
-      }}
-    >
-      <div role="dialog" aria-modal="true" aria-label="Settings" className="relative flex h-[min(920px,calc(100vh-100px))] w-[min(1757px,calc(100vw-164px))] overflow-hidden rounded-2xl border border-ui-line bg-ui-main shadow-2xl">
-        <aside className="flex w-[263px] shrink-0 flex-col px-[16px] pt-[16px]">
-          <label className="relative block">
-            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ui-muted" />
-            <input
-              autoFocus
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search"
-              className="h-9 w-full rounded-lg border border-ui-line bg-ui-main pl-9 pr-3 text-[15px] text-ui-text outline-none placeholder:text-ui-muted"
-            />
-          </label>
-          <div className="mt-5 min-h-0 flex-1 overflow-y-auto pr-1">
-            {NAV.map((g) => (
-              <div key={g.group} className="mb-4">
-                <div className="px-2 pb-1.5 text-[14px] text-ui-muted">{g.group}</div>
-                {g.items
-                  .filter(([, name]) => !q || name.toLowerCase().includes(q))
-                  .map(([id, name, Icon]) => (
-                    <button
-                      key={id}
-                      type="button"
-                      onClick={() => setSection(id)}
-                      className={`mb-px flex h-10 w-full items-center gap-3 rounded-lg px-3 text-left text-[15px] ${section === id ? 'bg-ui-active text-ui-text' : 'text-ui-body hover:bg-ui-hover'}`}
-                    >
-                      <Icon size={17} className="shrink-0" />
-                      {name}
-                    </button>
-                  ))}
-              </div>
-            ))}
-          </div>
-        </aside>
-
-        <section className="relative flex-1 overflow-y-auto bg-ui-panel px-12 pb-12 pt-[52px]">
-          <button type="button" onClick={onClose} title="Close (Esc)" className="absolute right-6 top-6 flex h-8 w-8 items-center justify-center rounded-md text-ui-body hover:bg-ui-hover">
-            <X size={18} />
-          </button>
-          {section === 'general' ? (
-            <div className="max-w-[1000px]">
-              <Appearance settings={settings} onChange={onChange} />
-            </div>
-          ) : (
-            <div className="text-[15px] text-ui-muted">{label} is not built in AI ASSistant yet.</div>
-          )}
-        </section>
-      </div>
+export default function SettingsModal({ settings, setSettings, onClose, onApps, onVault, models }) {
+  const [active, setActive] = useState('General')
+  const [search, setSearch] = useState('')
+  const update = (key, value) => setSettings(previous => ({ ...previous, [key]: value }))
+  return <Dialog onClose={onClose} className="settings-dialog" labelledBy="settings-title">
+    <aside className="settings-nav">
+      <label className="settings-search"><Search size={17} /><input aria-label="Search settings" placeholder="Search" value={search} onChange={event => setSearch(event.target.value)} /></label>
+      <nav aria-label="Settings sections">{navigation.map(([heading, items]) => <div key={heading}><p>{heading}</p>{items.filter(([name]) => name.toLowerCase().includes(search.toLowerCase())).map(([name, Icon]) => <button key={name} onClick={() => setActive(name)} className={active === name ? 'selected' : ''} aria-current={active === name ? 'page' : undefined}><Icon size={18} />{name}</button>)}</div>)}</nav>
+    </aside>
+    <div className="settings-main">
+      <button className="icon-button settings-close" aria-label="Close settings" onClick={onClose}><X size={19} /></button>
+      {active === 'General' ? <>
+        <h2 id="settings-title">Appearance</h2>
+        <Row label="Theme"><Segments label="Theme" options={['system', 'light', 'dark']} icons={[<Monitor key="system" size={19} />, <Sun key="light" size={19} />, <Moon key="dark" size={19} />]} value={settings.theme} onChange={value => update('theme', value)} /></Row>
+        <Row label="Chat font"><Select label="Chat font" options={['Anthropic Serif', 'System', 'Monospace']} value={settings.chatFont} onChange={value => update('chatFont', value)} /></Row>
+        <Row label="Transcript text size" description="Size of the conversation transcript text."><Segments label="Transcript text size" options={['Small', 'Medium', 'Large']} value={settings.transcriptSize} onChange={value => update('transcriptSize', value)} /></Row>
+        <Row label="Transcript width" description="Maximum width of the transcript and composer columns."><Segments label="Transcript width" options={['Narrow', 'Medium', 'Wide']} value={settings.transcriptWidth} onChange={value => update('transcriptWidth', value)} /></Row>
+        <Row label="Motion" description="Reduce animation in streaming responses and other interface elements."><Segments label="Motion" options={['System', 'Reduced']} value={settings.motion} onChange={value => update('motion', value)} /></Row>
+        <h2 className="voice-heading">Voice</h2>
+        <Row label="Language"><Select label="Voice language" options={['English', 'Bengali']} value={settings.voiceLanguage} onChange={value => update('voiceLanguage', value)} /></Row>
+        <Row label="Style"><Select label="Voice style" options={['Buttery', 'Calm']} value={settings.voiceStyle} onChange={value => update('voiceStyle', value)} /></Row>
+        <Row label="Speed"><Select label="Voice speed" options={['Slow', 'Normal', 'Fast']} value={settings.voiceSpeed} onChange={value => update('voiceSpeed', value)} /></Row>
+        <p className="settings-footnote">Voice preferences are saved locally. A speech engine is not connected in this build.</p>
+      </> : <>
+        <h2 id="settings-title">{active}</h2>
+        {active === 'Account' && <div className="settings-copy"><h3>Utso</h3><p>nishadislamutso@gmail.com</p><p>This is the profile from your screenshot, not an authenticated Claude account. No external sign-in is used.</p></div>}
+        {active === 'Privacy' && <><p className="settings-copy">Local-first. Excluded sources are denied at the vault API. Passwords, cookies, tokens, payment fields and unsent drafts must never be captured. Browser-side scope sync still needs end-to-end verification.</p><BlacklistManager /></>}
+        {active === 'Billing' && <p className="settings-copy">Local mode is free. There is no Claude subscription, billing connection or upgrade in this app.</p>}
+        {active === 'Capabilities' && <div className="settings-copy"><p>Selected model: <strong>{models.model}</strong></p><p>Text chat and text/code attachments run locally.</p><p>Vision: {models.capabilities.vision ? 'verified by Ollama /api/show' : 'unavailable or not verified'}</p><p>Thinking: {models.capabilities.thinking ? 'verified by Ollama /api/show' : 'unavailable or not verified'}</p><p>Model capabilities are not inferred from names. This UI does not make qwen2.5:3b as capable as Claude.</p></div>}
+        {active === 'Memory' && <div className="settings-copy"><p>Canonical memory: the Markdown files in vault/AI-Brain. The app does not create a second authoritative database.</p><button className="secondary-button" onClick={() => { onClose(); onVault() }}>Open AI-Brain vault</button></div>}
+        {active === 'System' && <div className="settings-copy"><p>AI ASSistant 0.2.0 · Vite web build</p><p>Ollama: 127.0.0.1:11434</p><p>Vault driver: 127.0.0.1:8765</p><p>Browser requests are proxied through this app. A native Windows title bar and menu will require the pending Electron wrapper.</p></div>}
+        {active === 'Extensions' && <div className="settings-copy"><p>The local MV3 collector lives in the repository’s extension folder. Chrome installation and capture still require Windows/Chrome testing.</p><button className="secondary-button" onClick={onApps}>Apps and extensions</button></div>}
+        {active === 'Developer' && <div className="settings-copy"><p>npm test · npm run build · npm run test:e2e</p><p>No native build tools or model downloads are needed. If Ollama is offline, run your existing Ollama installation and refresh the model list.</p></div>}
+        {!['Account', 'Privacy', 'Billing', 'Capabilities', 'Memory', 'System', 'Extensions', 'Developer'].includes(active) && <p className="settings-copy">{active} is a screenshot-matched navigation entry. Its runtime integration is not implemented yet; no background action is enabled.</p>}
+      </>}
     </div>
-  )
+  </Dialog>
 }
