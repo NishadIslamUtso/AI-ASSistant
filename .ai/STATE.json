@@ -1,10 +1,10 @@
 {
   "date": "2026-10-10",
-  "time_updated": "2026-10-11 21:20 Asia/Dhaka",
+  "time_updated": "2026-10-11 23:40 Asia/Dhaka",
   "timezone": "Asia/Dhaka",
-  "repo_version": "1.2.0-best-of",
+  "repo_version": "1.3.0-best-of-built",
   "canonical_repo": "https://github.com/NishadIslamUtso/AI-ASSistant",
-  "note_for_next_ai": "The repo is the source of truth, not any handover text. A previous handover claimed UserMenu/SettingsModal/AppsExtensionsModal existed \u2014 they did not. They were built on 2026-10-10 22:40. Verify file existence before trusting a status list.",
+  "note_for_next_ai": "The repo is the source of truth, not any handover text. 2026-10-11 23:40: the curated best-of list was implemented in apps/01_claude-exact-pixel-clone (live streaming artifacts + inline canvas charts, comment-mode region rewrite, sub agents, branching, deployable ZIP export, vision bridge, live service status). Tests: npm test 69, npm run test:ui 9, npm run test:live 7 (needs npm run dev + dev:mock). MCP one-click was NOT implemented on purpose — see 00_LIVING_DOCS/BEST_OF_CLONES.md section 3. Nothing has been verified against a real Ollama yet; the mock is labelled as a mock everywhere.",
   "apps": {
     "01_claude-exact-pixel-clone": {
       "path": "apps/01_claude-exact-pixel-clone",
@@ -51,7 +51,7 @@
         "Cook This Prompt (Capsule Hub style prompt enhancer)",
         "Direct Ollama streaming with abort; vault capture of every turn",
         "Vite proxies /ollama and /vault -> Ollama CORS no longer required",
-        "Light/dark/system theme, reduced motion, transcript size, width, chat font \u2014 all really applied",
+        "Light/dark/system theme, reduced motion, transcript size, width, chat font — all really applied",
         "Keyboard: Ctrl+B sidebar, Ctrl+J AI-Brain, Ctrl+Shift+A artifacts, Ctrl+N new chat",
         "Measured theme: sidebar 384px #111111, main #151515, composer #20201f, active row #343434, text #f0efec, accent #d97757, link #4099ec (replaces the wrong estimates)",
         "Spark.jsx - real Claude starburst SVG (ported from abc0197f) used for greeting + assistant avatar",
@@ -140,7 +140,7 @@
     "No installer",
     "Quillbot inline suggestions live only in the extension, cannot be wired into the desktop app"
   ],
-  "last_session": "2026-10-11 \u2014 UI/UX adopted wholesale from arena/01199af1 at the user's request; title bar + Today view kept; vault API adopted with /today,/status,artifact,journal ported back; 48+5 tests pass; no branch merged",
+  "last_session": "2026-10-11 — UI/UX adopted wholesale from arena/01199af1 at the user's request; title bar + Today view kept; vault API adopted with /today,/status,artifact,journal ported back; 48+5 tests pass; no branch merged",
   "palette_ruling": {
     "authoritative": "user-supplied",
     "shipped": {
@@ -173,7 +173,7 @@
       "transcript widths 880/1040/1200",
       "grouped settings nav"
     ],
-    "rule": "Where a pixel measurement disagrees with a value the user stated, use the user's value and flag the difference \u2014 never silently override."
+    "rule": "Where a pixel measurement disagrees with a value the user stated, use the user's value and flag the difference — never silently override."
   },
   "ui_lineage": {
     "adopted_from": "arena/01199af1-ai-assistant (de6ddc9)",
@@ -186,7 +186,7 @@
       "server/proxy-policy.cjs"
     ],
     "kept_from_this_branch": [
-      "TitleBar.jsx (Windows title bar \u2014 required, absent in 01199af1)",
+      "TitleBar.jsx (Windows title bar — required, absent in 01199af1)",
       "TodayView.jsx (Alt+T, P8)",
       "server/mock-ollama.cjs"
     ],

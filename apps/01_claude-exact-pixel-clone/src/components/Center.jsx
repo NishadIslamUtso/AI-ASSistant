@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Code2, FileText, Image, RefreshCw } from 'lucide-react'
+import { Code2, FileText, Image, RefreshCw, GitBranch, Copy, Loader2, Eye } from 'lucide-react'
 import ClaudeMark from './ClaudeMark.jsx'
 import Composer from './Composer.jsx'
 import Markdown from './Markdown.jsx'
@@ -8,28 +8,46 @@ export function getGreeting(date = new Date()) {
   const hour = Number(new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Dhaka', hour: 'numeric', hourCycle: 'h23' }).format(date))
   return hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening'
 }
-export default function Center({ seed, chat, onArtifact, onRetryCapture, settings, notify, onExternalLink, ...composerProps }) {
+function LiveArtifactCard({ artifact, onArtifact }) {
+  return <button className="artifact-message-card live" onClick={() => onArtifact(artifact.id)}>
+    <Loader2 size={19} className="spin" />
+    <span><strong>{artifact.title}</strong><small>{artifact.partial ? 'Building — open the live preview' : 'HTML Application · open preview'}</small></span>
+    <Eye size={14} />
+  </button>
+}
+export default function Center({ seed, chat, onArtifact, onRetryCapture, settings, notify, onExternalLink, onBranch, liveArtifacts = [], ...composerProps }) {
   const transcript = useRef(null)
   const messages = chat?.messages || []
   useEffect(() => {
     const element = transcript.current
     if (element && element.scrollHeight - element.scrollTop - element.clientHeight < 260) element.scrollTo({ top: element.scrollHeight, behavior: settings.motion === 'Reduced' ? 'instant' : 'smooth' })
-  }, [messages, settings.motion])
+  }, [messages, settings.motion, liveArtifacts])
   const hasMessages = messages.length > 0
+  const liveFor = messageId => liveArtifacts.filter(artifact => artifact.messageId === messageId)
+  async function copyMessage(message) {
+    try { await navigator.clipboard.writeText(message.content); notify('Message copied.') } catch { notify('Clipboard permission is unavailable. Select the text and copy it instead.') }
+  }
   return <main className={`center ${hasMessages ? 'has-messages' : 'home'}`} data-model-ready={composerProps.models.available}>
     {!hasMessages && <div className="free-plan"><span>Free plan</span><span>·</span><button onClick={() => notify('This is a free local Ollama app. Claude plans and billing are not connected.')}>Upgrade</button></div>}
     {hasMessages ? <>
-      <header className="chat-header"><h1>{chat.title}</h1><small>Local · {composerProps.models.model}</small></header>
+      <header className="chat-header"><h1>{chat.title}</h1><small>{chat.branchedFrom ? 'Branch · ' : 'Local · '}{composerProps.models.model}{composerProps.models.capabilities.vision ? ' · vision' : ''}</small></header>
       <div className="transcript-scroll" ref={transcript}><div className="transcript" key={chat.id}>
         {messages.map(message => <article key={message.id} className={`message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`} aria-label={message.role === 'user' ? 'Your message' : 'Assistant response'}>
           {message.role === 'assistant' && <ClaudeMark size={23} />}
           <div className="message-body"><ThinkingDisplay thinking={message.thinking} streaming={message.status === 'streaming'} />
+            {message.stage && <p className="message-stage"><Loader2 size={12} className="spin" />{message.stage}</p>}
             {message.role === 'user' ? <div className="user-text">{message.content}</div> : <Markdown onExternalLink={onExternalLink}>{message.content}</Markdown>}
-            {message.attachments?.length > 0 && <div className="sent-attachments">{message.attachments.map(file => <span key={file.id}>{file.kind === 'image' ? <Image size={13} /> : <FileText size={13} />}{file.name}</span>)}</div>}
+            {message.role === 'assistant' && message.status !== 'streaming' && message.content && <div className="message-actions">
+              <button onClick={() => copyMessage(message)} title="Copy this response"><Copy size={12} />Copy</button>
+              <button onClick={() => onBranch?.(message.id)} title="Start a new chat from this point; the original stays as it is"><GitBranch size={12} />Branch from here</button>
+            </div>}
+            {message.bridge && <details className="sent-context vision-bridge"><summary>Image described by {message.bridge.model} for {message.model}</summary><p>{message.bridge.description}</p><small>{message.model} never received the picture itself, only this description.</small></details>}
+            {message.attachments?.length > 0 && <div className="sent-attachments">{message.attachments.map(file => <span key={file.id}>{file.kind === 'image' ? <Image size={13} /> : <FileText size={13} />}{file.name}{file.seenBy === 'direct' ? '' : file.kind === 'image' && file.seenBy ? ` · via ${file.seenBy}` : ''}</span>)}</div>}
             {message.context && <details className="sent-context"><summary>Included vault context</summary><pre>{message.context}</pre></details>}
-            {message.status === 'streaming' && !message.content && !message.thinking && <p className="generating">Responding locally…</p>}
+            {message.status === 'streaming' && !message.content && !message.thinking && !message.stage && <p className="generating">Responding locally…</p>}
             {message.error && <p className={message.status === 'error' ? 'error-text response-error' : 'muted'} role={message.status === 'error' ? 'alert' : undefined}>{message.error}</p>}
-            {message.artifacts?.map(artifact => <button key={artifact.id} className="artifact-message-card" onClick={() => onArtifact(artifact.id)}><Code2 size={20} /><span><strong>{artifact.title}</strong><small>{artifact.type === 'html' ? 'HTML Application' : 'SVG Image'} · Open preview</small></span></button>)}
+            {liveFor(message.id).map(artifact => <LiveArtifactCard key={artifact.id} artifact={artifact} onArtifact={onArtifact} />)}
+            {message.artifacts?.map(artifact => <button key={artifact.id} className="artifact-message-card" onClick={() => onArtifact(artifact.id)}><Code2 size={20} /><span><strong>{artifact.title}</strong><small>{artifact.type === 'html' ? 'HTML Application' : 'SVG Image'} · {artifact.versions.length} version{artifact.versions.length === 1 ? '' : 's'}</small></span></button>)}
           </div>
         </article>)}
       </div></div>

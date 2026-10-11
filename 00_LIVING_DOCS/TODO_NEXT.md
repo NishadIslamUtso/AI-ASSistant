@@ -1,6 +1,6 @@
 # TODO_NEXT.md — Immediate Next Actions (Living)
 
-**Last Updated:** 2026-10-11 22:10 Asia/Dhaka
+**Last Updated:** 2026-10-11 23:40 Asia/Dhaka
 **Rule:** Update after each session, priority order, check off when done.
 
 ---
@@ -24,6 +24,40 @@ Nothing below matters until the app has actually run on the TUF A15.
 `OLLAMA_ORIGINS` should no longer be needed — `start-app.bat` still sets it as a belt-and-braces.
 
 **If replies are stuck in a loop:** Settings → System → **Reset local data**.
+
+## Priority 1b — The Best-Of Build (2026-10-11 23:40) ⬅ NEW WORK, ALSO UNTESTED ON WINDOWS
+
+Seven features from the curated list are in the app now (`BEST_OF_CLONES.md`).
+Try these on the TUF A15, in this order — each one is meant to be obvious when it
+works and equally obvious when it does not:
+
+- [ ] "make me a tic tac toe game" → the artifact panel **opens by itself** while
+      the reply is still streaming; a `Live` badge is visible; the game is playable
+      when the reply finishes
+- [ ] "build me a chart dashboard" → three charts draw themselves from inline JSON
+      (bar, line, doughnut) with no network access and no downloaded library
+- [ ] In the preview, press the ✛ (comment) button → click a button in the game →
+      type "make this blue" → **Rewrite this region** → only that element changes,
+      shown as source you can save as a new version
+- [ ] Attach a screenshot while `qwen2.5:3b` is selected → the chip says
+      `screenshot.png · qwen3-vl:4b looks` → the reply is informed by the image and
+      the transcript shows "Image described by qwen3-vl:4b"
+      (**needs `ollama pull qwen3-vl:4b`; without it the app says so instead of failing silently**)
+- [ ] Settings → This computer → **Vision** → the bridge model list and the
+      re-check button behave (this is where a wrong `/api/show` result shows up)
+- [ ] `Ctrl+Shift+G` → **New sub agent** → task "list the open questions in the
+      workout plan" → Run → the result stays in the panel, and **Insert** puts it in
+      the composer without sending
+- [ ] Hover a reply → **Branch from here** → a `(branch)` chat opens with the
+      history up to that message; the original is untouched
+- [ ] In the artifact panel press the package icon → a ZIP downloads → unzip it and
+      open `index.html` (it must work offline, from the file system)
+- [ ] The model picker must still only show local models; `ollama pull`/`rm` must
+      still be impossible from the UI
+- [ ] Report back: what worked, what looked wrong, and any red text in the terminal
+
+**If the bridge never offers a vision model:** `ollama list` must show one that
+reports `vision` through `/api/show`. The app never guesses from a model's name.
 
 ## Priority 2 — Closed 2026-10-11 22:10 (UI/UX adopted from 01199af1)
 

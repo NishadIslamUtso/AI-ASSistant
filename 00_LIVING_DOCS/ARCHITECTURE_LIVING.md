@@ -1,6 +1,6 @@
 # ARCHITECTURE_LIVING.md — Driver / Vault / Extension
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-11 23:40 Asia/Dhaka
 
 ## 1. One-Line Architecture
 
@@ -219,3 +219,54 @@ Updates 00 System/Privacy & Access.md + 00 System/Connectors/Source Scope.md + c
 9. Latest capture policy: "by default check everything, if unaccessible, just say wasn't accessible, no need to ask unless i give instructions to collect something (like a option where i put in a url and it won't check any data from that url ever again)." + "Extension should provide contexts like Capsule Hub by Tilantra or Quillbot test suggestions"
 
 This architecture satisfies all evolution steps.
+
+
+---
+
+## 9. Added 2026-10-11 23:40 — the four new local flows
+
+All four stay inside the existing rule: **the browser only ever calls its own
+origin**, and the Vite proxy (in dev) or `preview-server.cjs` (built) forwards to
+loopback. No new endpoint was added to the policy.
+
+```
+1. A chat turn
+   browser ──POST /api/ollama/chat──> proxy ──> Ollama :11434 /api/chat
+                                              (NDJSON stream back)
+     while it streams:  artifactsIn(content, includePartial)  → live artifact
+                        throttled to 500 ms, never saved to history
+     when it ends:      extractArtifacts(content) → the same artifact id,
+                        now with a real version, saved to chat history
+
+2. The vision bridge (only when images meet a model with no verified vision)
+   useVisionBridge: GET /api/ollama/show per installed model → cached
+        selected model sees?  → images go to it directly
+        another model sees?   → POST /api/ollama/chat to the VISION model with
+                                the images → description (≤1600 chars)
+                                → <vision_bridge described_by=…> in the text
+                                  model's user turn; both the description and the
+                                  model name are stored on the message and in the
+                                  vault capture
+        nobody sees?          → a plain refusal, nothing downloaded
+
+3. A sub-agent task
+   useSubAgents.run() → (optional) GET /api/vault/context?q=…  → source-data block
+                      → POST /api/ollama/chat with its OWN message list
+                      → result stored on the agent only
+                      → the chat transcript is untouched until "insert"
+   one job at a time (jobRef) so two generations never share the GPU
+
+4. A comment-mode region rewrite
+   preview iframe ──postMessage ai-assistant-pick──> ArtifactPanel
+   ArtifactPanel  → rewritePrompt(source, picked element, comment)
+                  → POST /api/ollama/chat (system = "precise HTML editor")
+                  → the model returns ONE element
+                  → applyElementRewrite: DOMParser, child-index path, replaceWith
+                  → a draft version the user saves explicitly
+```
+
+**Why the artifact panel can render a document that is not finished yet:** the
+preview template carries its own CSP, so nothing untrusted can run outside the
+iframe; re-sending `srcdoc` on a timer is therefore cheap and safe. Charts are
+drawn by the template's own code from `data-chart` JSON, which is why the
+`connect-src 'none'` policy has not been loosened for any of this.

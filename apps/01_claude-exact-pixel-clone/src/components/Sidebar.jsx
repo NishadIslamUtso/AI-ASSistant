@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { CalendarDays } from 'lucide-react'
-import { PanelLeft, ArrowLeft, ArrowRight, MessagesSquare, Code2, Search, Plus, FolderClosed, Shapes, Briefcase, ChevronDown, SlidersHorizontal, ArrowUpRight, Blocks, MoreVertical, Pin, Pencil, Trash2, PanelsTopLeft, ChevronRight } from 'lucide-react'
+import { PanelLeft, ArrowLeft, ArrowRight, MessagesSquare, Code2, Search, Plus, FolderClosed, Shapes, Briefcase, ChevronDown, SlidersHorizontal, ArrowUpRight, Blocks, MoreVertical, Pin, Pencil, Trash2, PanelsTopLeft, ChevronRight, Bot } from 'lucide-react'
 import UserMenu from './UserMenu.jsx'
 import useDismiss from '../hooks/useDismiss.js'
 
@@ -21,7 +21,7 @@ function ChatMenu({ menu, close, action, busy }) {
     </div>)}
   </div>
 }
-export default function Sidebar({ chats, currentChat, navigate, view, onView, onNew, onAction, onSettings, onApps, onVault, collapsed, onCollapse, busyChatId, notify, artifactCount, onToday }) {
+export default function Sidebar({ chats, currentChat, navigate, view, onView, onNew, onAction, onSettings, onApps, onVault, onAgents, agentsActive, collapsed, onCollapse, busyChatId, notify, artifactCount, onToday }) {
   const [search, setSearch] = useState('')
   const [menu, setMenu] = useState(null)
   const [userMenu, setUserMenu] = useState(false)
@@ -46,6 +46,7 @@ export default function Sidebar({ chats, currentChat, navigate, view, onView, on
       <nav className="sidebar-nav" aria-label="Library">
         <button onClick={() => onView('projects')} className={view === 'projects' ? 'active' : ''}><FolderClosed size={15} />Projects</button>
         <button onClick={() => onView('artifacts')} className={view === 'artifacts' ? 'active' : ''}><Shapes size={15} />Artifacts{artifactCount > 0 && <span className="nav-count">{artifactCount}</span>}</button>
+        <button onClick={onAgents} className={agentsActive ? 'active' : ''} title="Sub agents — isolated context (Ctrl+Shift+G)"><Bot size={15} />Sub agents</button>
         <button onClick={onToday} title="Today view (Alt+T)"><CalendarDays size={15} />Today</button>
         <button onClick={onSettings}><Briefcase size={15} />Customize</button>
       </nav>

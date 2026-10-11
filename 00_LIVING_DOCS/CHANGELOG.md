@@ -1,7 +1,55 @@
 # CHANGELOG.md — What Changed Each Session (Living)
 
-**Last Updated:** 2026-10-11 21:20 Asia/Dhaka
+**Last Updated:** 2026-10-11 23:40 Asia/Dhaka
 **Rule:** Log every change with date, what, why. This is memory for next AI.
+
+## 2026-10-11 (23:40) — "take the best from all of them and make my app functional"
+
+The curated list (Claude clones, Ollama frontends, plugin stores, features to
+steal) was turned into working code inside `apps/01_claude-exact-pixel-clone/`.
+Nothing was copied and no dependency was added. Full item-by-item mapping lives
+in `00_LIVING_DOCS/BEST_OF_CLONES.md`.
+
+**New modules**
+
+| File | Purpose |
+|---|---|
+| `src/lib/zip.js` | Dependency-free ZIP writer (stored entries, own CRC32) + `staticSiteEntries` for a deployable export |
+| `src/lib/vision.js` | Vision bridge: bridge prompt, description cleaning/capping, the labelled `vision_bridge` block |
+| `src/lib/ask.js` | One isolated local model call with the shared 12,000-character budget |
+| `src/hooks/useVisionBridge.js` | Probes `/api/show` per installed model (cached), decides direct / bridge / none |
+| `src/hooks/useSubAgents.js` | Isolated-context jobs, six roles, one at a time |
+| `src/components/SubAgentPanel.jsx` | The sub-agent panel (list, editor, result, insert-to-composer) |
+
+**Rewritten**
+
+- `src/lib/artifacts.js` — `artifactsIn`/`extractStreamingArtifacts` (a half-written
+  document is openable but never saved), the inline chart renderer, pick mode,
+  `parseElementPick`, `rewritePrompt`, `applyElementRewrite`, `sourceSignature`.
+- `src/components/ArtifactPanel.jsx` — live preview with a `Live` badge,
+  comment-mode pin card, region rewrite, "Export deployable site".
+- `src/components/Center.jsx` — live artifact cards, the bridge stage line,
+  `Copy` / `Branch from here`, the image-description disclosure.
+- `src/hooks/useChat.js` — vision bridge before the answering model, throttled
+  live-artifact sweep, `branch()`.
+
+**Wired**
+
+- `App.jsx`: `visionModel` preference, bridge + sub-agent hooks, live artifacts
+  merged into the library, auto-open of the panel, `Ctrl+Shift+G` (sub agents),
+  `Ctrl+Shift+A` (artifacts view), branch + insert handlers.
+- `Sidebar` (Sub agents entry), `TitleBar` (View ▸ sub agents), `SettingsModal`
+  (new Vision section), `Composer` (bridge notice + labelled chip),
+  `AppsExtensionsModal` (live service status).
+- `src/index.css` — styles for the new panels; no new colours, existing tokens only.
+- `server/mock-ollama.cjs` — routes for the bridge, the region rewriter, the chart
+  dashboard, and sub-agent tasks, so every new flow is demonstrable in a preview.
+
+**Tests:** `npm test` 48 → 69, `npm run test:ui` 5 → 9, plus a new
+`npm run test:live` (7 tests) that drives the real libs through the real proxy.
+
+**Honest gaps:** MCP one-click was **not** implemented (see BEST_OF_CLONES.md §3).
+No real-model run yet: everything here is proven against the mock and jsdom.
 
 ## 2026-10-11 (22:55) — Fix: preview host was blocked by the origin allowlists
 

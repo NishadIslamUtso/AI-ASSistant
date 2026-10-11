@@ -1,9 +1,9 @@
 {
   "name": "ai-assistant-claude-exact",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.3.0",
   "type": "module",
-  "description": "AI ASSistant - Exact pixel-perfect Claude desktop clone",
+  "description": "AI ASSistant \u2014 local Ollama Claude-style desktop app (artifacts, vision bridge, sub agents)",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5173",
     "dev:server": "node server/vault-api.cjs",
@@ -13,7 +13,8 @@
     "test": "node --test tests/*.test.js tests/*.test.cjs",
     "test:ui": "node --test tests/ui.smoke.cjs",
     "test:e2e": "playwright test",
-    "build:preview": "vite build --outDir preview-dist"
+    "build:preview": "vite build --outDir preview-dist",
+    "test:live": "node --test tests/live-stack.check.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

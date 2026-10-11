@@ -76,6 +76,65 @@ const w=win();s.textContent=w?t[w[0]]+' wins!':t.every(Boolean)?"It's a draw":'T
 draw();
 </script></div></body></html>`
 
+/**
+ * The Vision Bridge sends its instruction to a vision model. Nothing is really
+ * seen here — the mock has no eyes — so it answers with a description that says
+ * so, in the same shape a real qwen3-vl reply would have.
+ */
+const VISION_REPLY =
+  '**(mock description — no image was analysed in this sandbox; a real one runs on your machine)**\n' +
+  'A screenshot of a dark application window. Top bar with a small orange starburst mark on the left. ' +
+  'A left sidebar about a quarter of the width holds a search field, a row of buttons, and a list of ' +
+  'sixteen chat titles grouped under "Oct 8" and "Older". The centre column shows a large serif greeting ' +
+  'and a rounded input box with three small controls along its bottom edge. On the right, a narrow panel ' +
+  'shows a preview of a small grid-based game with nine square cells and a status line reading "Turn: X".\n' +
+  'Text readable in the header: "AI ASSistant", "Ollama", "Vault". Colours: near-black backgrounds, ' +
+  'warm orange accent, off-white body text. No people are visible. The lower right corner is slightly ' +
+  'blurred and the cell borders there are unreadable.'
+
+/** Region rewrite: the app asks for exactly one element back. */
+function rewriteFor(text) {
+  const element = text.split('Current element:').pop().split('The rest of')[0].trim()
+  const opening = element.match(/^<([a-z0-9-]+)([^>]*)>/i)
+  if (!opening) return '<p>**(mock rewrite)** the mock could not find an element in the request.</p>'
+  const [tag, attributes] = [opening[1], opening[2]]
+  const styled = /style\s*=\s*"/.test(attributes)
+    ? attributes.replace(/style\s*=\s*"/, 'style="outline:2px solid #d48264;')
+    : `${attributes} style="outline:2px solid #d48264"`
+  const closing = `</${tag}>`
+  const inner = element.slice(opening[0].length, element.endsWith(closing) ? element.length - closing.length : undefined)
+  return `<${tag}${styled}>${inner}${closing}`
+}
+
+/** The inline visualizer: a chart the app renders itself, with no CDN. */
+const CHART_REPLY = `Here is a dashboard that renders itself while I write it — the chart is drawn by the panel's own canvas renderer, not by a downloaded library:
+
+\`\`\`html
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Study hours dashboard</title>
+<style>
+body{font-family:system-ui;margin:0;padding:22px;background:#faf9f7;color:#171717}
+h1{font-size:18px;margin:0 0 4px}p.sub{margin:0 0 18px;color:#666;font-size:13px}
+.card{background:#fff;border:1px solid #e6e2dc;border-radius:12px;padding:16px;margin-bottom:16px}
+.stat{display:flex;gap:26px;margin-bottom:16px}
+.stat div{flex:1}.stat b{display:block;font-size:22px}.stat span{font-size:12px;color:#777}
+</style></head><body>
+<h1>Study hours dashboard</h1><p class="sub">Midterm week · data is inline, nothing is fetched</p>
+<div class="stat"><div><b>17.5</b><span>hours this week</span></div><div><b>3</b><span>subjects</span></div><div><b>62%</b><span>of plan</span></div></div>
+<div class="card"><canvas data-chart='{"type":"bar","title":"Hours per day","labels":["Sat","Sun","Mon","Tue","Wed","Thu","Fri"],"data":[1.5,2,3,2.5,4,3,1.5]}'></canvas></div>
+<div class="card"><canvas data-chart='{"type":"line","title":"Focus score","labels":["W1","W2","W3","W4"],"series":[{"name":"Focus","data":[62,70,66,81]}]}'></canvas></div>
+<div class="card"><canvas data-chart='{"type":"doughnut","title":"Split by subject","labels":["CSE","PSY","STA"],"data":[9,5,3.5]}'></canvas></div>
+<script>
+document.querySelectorAll('canvas[data-chart]').forEach(function (node) {
+  node.style.height = '200px';
+});
+AIAssistant.renderCharts();
+</script>
+</body></html>
+\`\`\`
+
+Every chart is a canvas the panel fills from the JSON in its data-chart attribute, so it draws itself as the reply streams in.`
+
 const ARTIFACT_REPLY = `Here you go — a runnable artifact:
 
 \`\`\`html
@@ -127,10 +186,27 @@ const server = http.createServer((req, res) => {
         /* ignore */
       }
       const msgs = payload.messages || []
+      const system = (msgs.find((m) => m.role === 'system') || {}).content || ''
       const prompt = (msgs.find((m) => m.role === 'user') || {}).content || ''
-      const text = /\b(tic|tac|toe|game|snake|flappy|build me|make me)\b/i.test(prompt)
-        ? ARTIFACT_REPLY
-        : replyFor(prompt)
+      const images = (msgs.find((m) => m.images) || {}).images || []
+      let text
+      if (/precise HTML editor/i.test(system)) text = rewriteFor(prompt)
+      else if (/image describer/i.test(prompt)) text = VISION_REPLY
+      else if (images.length) text = VISION_REPLY
+      else if (/\b(tic|tac|toe|game|snake|flappy)\b/i.test(prompt)) text = ARTIFACT_REPLY
+      else if (/\b(chart|dashboard|graph|visuali[sz]er|plot)\b/i.test(prompt) && /\b(build|make|create|draw|show)\b/i.test(prompt)) text = CHART_REPLY
+      else if (/sub-agent/i.test(system)) text = [
+        '**(mock sub-agent result — no model is loaded in this sandbox)**',
+        '',
+        'The task would be answered here in its own isolated context, so it never appears in the chat transcript.',
+        '',
+        '- Isolated message list: yes',
+        `- Vault context attached by the app: ${/<vault_context/.test(prompt) ? 'yes' : 'no matches found'}`,
+        `- Task received: ${prompt.replace(/^Task:\s*/i, '').split('\n')[0].slice(0, 120)}`,
+        '',
+        'On your machine the same panel runs this against the real model, and the result is inserted into the composer only when you press the insert button.',
+      ].join('\n')
+      else text = replyFor(prompt)
 
       res.writeHead(200, { 'Content-Type': 'application/x-ndjson' })
       const chunks = text.match(/[\s\S]{1,7}/g) || []
