@@ -155,9 +155,13 @@ export default function useChat({ chats, setChats, currentChat, navigate, models
       final.stage = ''
     } finally {
       clearTimeout(timer)
-      // Keep whatever was built before a stop: a half-written app is still useful.
+      // Stopping mid-build must not throw the work away: on a 3B model a
+      // four-second stop can be the difference between a usable draft and
+      // starting over. The partial document is kept as a draft version.
       if (!final.artifacts && requested && final.content) {
-        final.artifacts = extractArtifacts(final.content, { requested, messageId: assistant.id, chatId: chat.id, title: userMessage.content })
+        final.artifacts = final.status === 'complete'
+          ? extractArtifacts(final.content, { requested, messageId: assistant.id, chatId: chat.id, title: userMessage.content })
+          : extractStreamingArtifacts(final.content, { requested, messageId: assistant.id, chatId: chat.id, title: userMessage.content })
       }
       patch(chat.id, assistant.id, final)
       jobRef.current = null; setBusyChatId(null); clearLive()

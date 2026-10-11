@@ -117,6 +117,15 @@ test('an unfenced document streams live too, and no artifact appears when none w
   assert.equal(extractStreamingArtifacts(HALF, { requested: false, messageId: 'm' }).length, 0)
 })
 
+test('stopping mid-build keeps the half-written document instead of discarding it', () => {
+  // useChat keeps the draft on a stop; this is the rule it applies.
+  const stopped = extractStreamingArtifacts(HALF, { requested: true, messageId: 'm', chatId: 'c', title: 'Counter' })
+  assert.equal(stopped.length, 1)
+  assert.equal(stopped[0].partial, true)
+  assert.equal(stopped[0].versions[0].draft, true)
+  assert.match(stopped[0].versions[0].content, /<b>1<\/b>/, 'the work done so far must survive the stop')
+})
+
 test('the live reload only redraws when the document actually changed', () => {
   assert.equal(sourceSignature('abc'), sourceSignature('abc'))
   assert.notEqual(sourceSignature('abc'), sourceSignature('abd'))
