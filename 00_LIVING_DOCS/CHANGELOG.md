@@ -1,7 +1,79 @@
 # CHANGELOG.md — What Changed Each Session (Living)
 
-**Last Updated:** 2026-10-10 22:40 Asia/Dhaka
+**Last Updated:** 2026-10-11 21:20 Asia/Dhaka
 **Rule:** Log every change with date, what, why. This is memory for next AI.
+
+## 2026-10-11 (session 3 — 21:20 Asia/Dhaka) — Best-Of Cherry-Picks Applied
+
+**Context:** the user's advisor AI ran a "deep judge" pass over every branch and
+scored this one 68/70, then recommended a 6-step cherry-pick plan. The user asked
+for the best parts, a preview, full doc updates, and **no merging**.
+
+### The finding that mattered most: the pixel spec was wrong
+
+The old `CLAUDE_SPEC_FROM_SCREENSHOTS.md` listed estimates — sidebar 260px
+`#202020`, main `#1a1a1a`, composer `#242424`. The `c4f75cce` branch had sampled
+the real PNGs and got different numbers. **I re-verified them independently** by
+writing `tools/pngread.py`, a dependency-free PNG decoder, and sampling
+191547.png myself. They are right and the old values are wrong:
+
+| Role | Old estimate | Measured |
+|---|---|---|
+| Sidebar | 260px `#202020` | **384px `#111111`** |
+| Main | `#1a1a1a` | **`#151515`** |
+| Composer | `#242424` | **`#20201f`** |
+| Active row | `#2a2a2a` | **`#343434`** |
+| Text | `#e0e0e0` | **`#f0efec`** |
+| Accent | `#ff8c00` | **`#d97757`** |
+| Composer radius | 12px | **≈18px** |
+| Transcript width default | Medium | **Narrow** (the composer measures 878px) |
+
+Also read off 191707: the settings nav is **grouped** ("Settings",
+"This computer", "Customize") — the flat 14-item list was a guess.
+
+The app now uses the measured values. Recorded in the new
+`spec/MEASURED_PIXELS.md`, with `tools/pngread.py` checked in so anyone can
+re-verify.
+
+### Cherry-picks adopted
+
+| From | What | Why |
+|---|---|---|
+| `c4f75cce` + `cb0eb781` | measured colours/geometry | corrects the spec; re-verified by me |
+| `abc0197f` | `Spark.jsx` — real Claude starburst SVG | pixel accuracy; replaces a `✳` text glyph |
+| `01199af1` | `Dialog.jsx` (focus trap, inert root, portal) | accessible modals; the hand-rolled ones had none of this |
+| `01199af1` | `buildPreviewHtml` — strict CSP on artifact preview | blocks network/forms/frames/external scripts; CSP is emitted before untrusted content |
+| `01199af1` | `wantsArtifact` — negative intent checks | "explain how to build an HTML app" and "don't create" no longer count as build requests |
+| `01199af1` | the *idea* of real regression tests | see below |
+| `brain01` | `TodayView.jsx` | the only branch that built the P8 Today view; fills a real gap |
+| `brain01` | `server/mock-ollama.cjs` | makes the sandbox preview actually chat; never started by `start-app.bat`, labels every reply as a mock |
+
+**Not adopted, and why:** `00aa9faf`'s context-menu submenus + hash deep-links
+(needs a router; the six items already work), and `1e3d04e4`'s vite host fix
+(this branch already set `host: 0.0.0.0` + `allowedHosts: true`).
+
+### Tests added (zero new runtime dependencies)
+
+- `npm test` → **20/20 pass**, using `node --test`:
+  - `tests/artifacts.test.js` — intent gating both ways, extraction, CSP contents
+  - `tests/ollama.test.js` — `<think>` splitting, vision detection, label helpers
+  - `tests/vault-api.test.cjs` — spins the real server against a temp vault and
+    asserts captures, blacklist round-trip, follow-up parsing and
+    "wasn't accessible" logging actually land on disk
+- `npm run test:ui` → **4/4 pass** in jsdom (render, artifact gating,
+  settings/user menu, sidebar context menu). jsdom is deliberately **not** a
+  declared dependency — the target machine has a slow connection — so the file
+  skips cleanly unless you run `npm i -D jsdom`.
+
+### Also
+
+- `/today` now returns parsed follow-ups, today's journal and the vault path.
+- `Alt+T` opens the Today view; also under View and Help, and from the AI-Brain
+  panel's Today tab.
+- **No branch was merged. PR #8 remains open.**
+
+**Verified:** clean `vite build`, 20 unit tests, 4 UI smoke tests, measurements
+re-derived from the PNGs. **Still not run on the user's Windows machine.**
 
 ## 2026-10-10 (session 2 — 22:40 Asia/Dhaka) — Exact Clone Completed To The Screenshots
 

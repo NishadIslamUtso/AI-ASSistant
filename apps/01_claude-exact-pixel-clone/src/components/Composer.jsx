@@ -113,8 +113,8 @@ export default function Composer({
           /* ignore malformed capsule */
         }
       }}
-      className={`bg-[var(--bg-elev)] border rounded-xl px-3 pt-3 pb-2.5 transition-colors ${
-        dragOver ? 'border-[var(--accent)]' : 'border-[var(--border-strong)]'
+      className={`bg-[var(--bg-elev)] border px-4 pt-3.5 pb-3 transition-colors ${
+        dragOver ? 'border-[var(--accent)] rounded-[18px]' : 'border-[var(--border-strong)] rounded-[18px]'
       }`}
     >
       {/* chips: attachments + injected capsules */}

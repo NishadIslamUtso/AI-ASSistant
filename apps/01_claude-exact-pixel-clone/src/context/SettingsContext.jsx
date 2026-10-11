@@ -15,7 +15,7 @@ export const DEFAULT_SETTINGS = {
   theme: 'dark', // 'system' | 'light' | 'dark'
   chatFont: 'Anthropic Serif', // 'Default' | 'Anthropic Serif' | 'Monospace'
   transcriptSize: 'medium', // 'small' | 'medium' | 'large'
-  width: 'medium', // 'narrow' | 'medium' | 'wide'
+  width: 'narrow', // measured: 191707 shows Narrow selected, 191547's composer is 878px wide
   motion: 'system', // 'system' | 'reduced'
   voiceLanguage: 'English',
   voiceStyle: 'Buttery',
@@ -120,7 +120,11 @@ export function SettingsProvider({ children }) {
       reset: () => setSettings({ ...DEFAULT_SETTINGS }),
       resolvedTheme: resolveTheme(settings.theme),
       widthClass:
-        settings.width === 'narrow' ? 'max-w-[640px]' : settings.width === 'wide' ? 'max-w-[880px]' : 'max-w-[768px]',
+        settings.width === 'narrow'
+          ? 'max-w-[var(--w-narrow)]'
+          : settings.width === 'wide'
+            ? 'max-w-[var(--w-wide)]'
+            : 'max-w-[var(--w-medium)]',
       transcriptClass:
         settings.transcriptSize === 'small' ? 'ts-small' : settings.transcriptSize === 'large' ? 'ts-large' : 'ts-medium',
       fontClass:

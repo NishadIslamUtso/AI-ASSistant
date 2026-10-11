@@ -1,6 +1,6 @@
 # REQUIREMENTS_LIVING.md — Single Source of Truth (Living)
 
-**Last Updated:** 2026-10-10 22:40 Asia/Dhaka
+**Last Updated:** 2026-10-11 21:20 Asia/Dhaka
 **Version:** 1.0.0-master
 **Rule:** UPDATE THIS FILE EVERY TIME SOMETHING CHANGES. This repo is memory for AIs. If you don't update, next session loses context.
 
@@ -283,6 +283,11 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - [x] Never-check blacklist manager in the app (AI-Brain panel > Never-check), writes 00 System/Privacy & Access.md + 00 System/Connectors/Source Scope.md, logged to 09 Activity & Undo
 - [x] Sidebar context menu (191646.png) is functional: open in new window, pin/unpin, inline rename, add to project, move to group, delete
 - [x] Ollama CORS solved at the source: the Vite dev server proxies /ollama and /vault, so the browser stays same-origin and OLLAMA_ORIGINS no longer matters (the app auto-detects the proxy and falls back to direct URLs)
+- [x] (2026-10-11) UI matches the MEASURED pixels, not estimates — sidebar 384px #111111, main #151515, composer #20201f, active row #343434, text #f0efec, accent #d97757, link #4099ec, composer radius 18px, transcript width Narrow default, grouped settings nav. See spec/MEASURED_PIXELS.md.
+- [x] (2026-10-11) Artifact preview is sandboxed with a strict CSP (no network, forms, frames, external scripts) and the CSP is emitted before untrusted content
+- [x] (2026-10-11) Artifact intent detection also matches NEGATIVE intent — "explain how to build an HTML app" and "don't create" do not produce artifacts
+- [x] (2026-10-11) Modals are accessible: portal, focus trap, Escape, inert background
+- [x] (2026-10-11) Regression tests exist: 20 unit + vault-integration tests on node --test, 4 jsdom UI smoke tests, no new runtime dependencies
 - [ ] Obsidian genuinely integrated as canonical vault, SQLite only rebuildable index under .brain/
 - [x] App is driver of vault + extension, vault organizes, extension collects + suggests contexts/prompts/files
 - [x] Browser extension default = check everything, if inaccessible log "wasn't accessible" without asking
@@ -299,7 +304,7 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - [x] Sensitive external sharing requires exact-content/destination preview + per-send approval, no blanket approval
 - [x] Original sources preserved until you choose deletion; archive, expire, forget-derived, delete-source remain distinct
 - [x] Journals dated Asia/Dhaka, event time vs capture time separated, source-linked, never invents offline events/feelings
-- [~] Today view surfaces Current Snapshot, today's journal draft, due follow-ups, one next action — PARTIAL: AI-Brain panel > Today tab shows Current Snapshot + Open Loops + the day's journal path, read live from 04 Working Memory/. Still missing: journal draft generation and follow-up answer/skip/snooze controls.
+- [~] Today view surfaces Current Snapshot, today's journal draft, due follow-ups, one next action — MOSTLY DONE 2026-10-11: full TodayView modal (Alt+T, View menu, Help menu) with Current Snapshot, Open Loops, parsed due follow-ups with answer/skip/snooze/stop, and today's journal read from 08 Journal/. Still missing: journal draft *generation*.
 - [x] End-of-day prompts opt-in, offer answer/skip/snooze/stop, silence not resolution, user chooses cadence for sensitive topics
 - [x] Monthly cross-check user-triggered only, last 60 days + relevant linked older, dry-run, apply nothing until approved
 - [x] Cleanup never deletes original transcript because old or rarely retrieved; shows counts, sizes, reasons, links, batch decide
@@ -334,6 +339,23 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - **Changed:** vault API extended with /status, /capsules, /today, GET+POST /blacklist, artifact + journal capture types
 - **Why:** user instruction "task is making Claude app exact clone"; the handover listed these as the open P2-P7 items
 - **Verified:** production build clean; 4 headless jsdom smoke suites (render, artifact gating, model selector, sidebar context menu) all pass with zero console errors. NOT yet run on the user's Windows machine.
+
+### [2026-10-11 21:20] Best-of cherry-picks applied; pixel spec corrected
+- **Changed:** the UI now uses values MEASURED from the screenshots, not the earlier
+  estimates. Old estimates (sidebar 260px #202020, main #1a1a1a, composer #242424,
+  accent #ff8c00, transcript width Medium) were wrong; measured values are sidebar
+  384px #111111, main #151515, composer #20201f, accent #d97757, width Narrow.
+  Verified independently with tools/pngread.py and recorded in spec/MEASURED_PIXELS.md.
+- **Changed:** the settings left nav is grouped ("Settings", "This computer",
+  "Customize") as it appears in 191707; the flat 14-item list was a guess.
+- **Added:** TodayView (P8) — snapshot, open loops, due follow-ups with
+  answer/skip/snooze/stop, journal.
+- **Added:** artifact preview CSP, negative-intent detection, accessible Dialog,
+  Claude Spark mark, mock Ollama server for previews (never used by start-app.bat).
+- **Added:** tests — 20 on node --test, 4 jsdom UI smoke.
+- **Why:** advisor deep-judge recommended taking the best parts of the other
+  branches; user asked for best parts + preview + docs, and no merging.
+- **Verified:** clean build, 24 automated checks, measurements re-derived.
 
 ### [NEXT] Add when changed:
 - Use format: ### [YYYY-MM-DD HH:MM] Added/Changed/Fixed: description + why + who requested

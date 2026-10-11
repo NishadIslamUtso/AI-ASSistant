@@ -40,6 +40,7 @@ const MENUS = [
       { id: 'toggle-sidebar', label: 'Toggle sidebar', accel: 'Ctrl+B' },
       { id: 'toggle-vault', label: 'Toggle AI-Brain panel', accel: 'Ctrl+J' },
       { id: 'toggle-artifacts', label: 'Toggle artifacts panel', accel: 'Ctrl+Shift+A' },
+      { id: 'today', label: 'Today view', accel: 'Alt+T' },
       { sep: true },
       { id: 'reload', label: 'Reload', accel: 'Ctrl+R' },
     ],
@@ -57,6 +58,7 @@ const MENUS = [
   {
     label: 'Help',
     items: [
+      { id: 'today', label: 'Today view' },
       { id: 'ollama-status', label: 'Ollama status' },
       { id: 'vault-status', label: 'Vault status' },
       { sep: true },

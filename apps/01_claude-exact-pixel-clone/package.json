@@ -5,10 +5,13 @@
   "type": "module",
   "description": "AI ASSistant - Exact pixel-perfect Claude desktop clone",
   "scripts": {
-    "dev": "vite --host 127.0.0.1 --port 5173",
+    "dev": "vite --host 0.0.0.0 --port 5173",
     "dev:server": "node server/vault-api.cjs",
+    "dev:mock": "node server/mock-ollama.cjs",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview --host 0.0.0.0 --port 5173",
+    "test": "node --test tests/*.test.js tests/*.test.cjs",
+    "test:ui": "node --test tests/ui.smoke.cjs"
   },
   "dependencies": {
     "react": "^18.2.0",

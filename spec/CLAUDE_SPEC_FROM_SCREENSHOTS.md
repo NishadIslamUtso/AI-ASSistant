@@ -4,6 +4,15 @@
 **Date:** 2026-10-10
 **Purpose:** Exact pixel measurements, colors, layout for apps/01_claude-exact-pixel-clone
 
+> ## ⚠️ READ `spec/MEASURED_PIXELS.md` FIRST
+>
+> The colour and layout values below are **estimates** and several are wrong.
+> On 2026-10-11 the PNGs were decoded and sampled directly; the real values are
+> sidebar **#111111 / 384px**, main **#151515**, composer **#20201f**,
+> active row **#343434**, accent **#d97757**, text **#f0efec**.
+> `spec/MEASURED_PIXELS.md` is now authoritative and is what the app uses.
+> This file is kept for the structural description of each screenshot.
+
 ## Screenshot 191547.png — Main Window
 
 ### Layout

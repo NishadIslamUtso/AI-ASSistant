@@ -1,14 +1,14 @@
 {
   "date": "2026-10-10",
-  "time_updated": "22:40 Asia/Dhaka",
+  "time_updated": "2026-10-11 21:20 Asia/Dhaka",
   "timezone": "Asia/Dhaka",
-  "repo_version": "1.1.0-exact-clone",
+  "repo_version": "1.2.0-best-of",
   "canonical_repo": "https://github.com/NishadIslamUtso/AI-ASSistant",
   "note_for_next_ai": "The repo is the source of truth, not any handover text. A previous handover claimed UserMenu/SettingsModal/AppsExtensionsModal existed — they did not. They were built on 2026-10-10 22:40. Verify file existence before trusting a status list.",
   "apps": {
     "01_claude-exact-pixel-clone": {
       "path": "apps/01_claude-exact-pixel-clone",
-      "status": "built-compiled-headless-tested-NOT-tested-on-user-windows",
+      "status": "built-compiled-tested-by-24-automated-checks-NOT-tested-on-user-windows",
       "tech": "Vite 5 + React 18 + Tailwind + Express vault API, direct Ollama",
       "files": [
         "src/App.jsx (state, sending, streaming, artifacts, shortcuts)",
@@ -52,13 +52,20 @@
         "Direct Ollama streaming with abort; vault capture of every turn",
         "Vite proxies /ollama and /vault -> Ollama CORS no longer required",
         "Light/dark/system theme, reduced motion, transcript size, width, chat font — all really applied",
-        "Keyboard: Ctrl+B sidebar, Ctrl+J AI-Brain, Ctrl+Shift+A artifacts, Ctrl+N new chat"
+        "Keyboard: Ctrl+B sidebar, Ctrl+J AI-Brain, Ctrl+Shift+A artifacts, Ctrl+N new chat",
+        "Measured theme: sidebar 384px #111111, main #151515, composer #20201f, active row #343434, text #f0efec, accent #d97757, link #4099ec (replaces the wrong estimates)",
+        "Spark.jsx - real Claude starburst SVG (ported from abc0197f) used for greeting + assistant avatar",
+        "Dialog.jsx - accessible modal primitive with focus trap, inert root, portal (ported from 01199af1)",
+        "buildPreviewHtml - artifact preview wrapped in a strict CSP: no network, forms, frames or external scripts",
+        "wantsArtifact - intent detection that also matches NEGATIVE intent (explain how to build..., do not create...)",
+        "TodayView - Current Snapshot, Open Loops, due follow-ups with answer/skip/snooze/stop, journal draft (ported from brain01)",
+        "server/mock-ollama.cjs - Ollama-compatible stub for sandbox previews; never started by start-app.bat, labels every reply as a mock",
+        "vault API /today now returns parsed follow-ups, today's journal and the vault path",
+        "20 unit + vault-integration tests (node --test, no new dependencies) and 4 jsdom UI smoke tests behind npm run test:ui"
       ],
       "features_missing": [
         "End-to-end test on the user's Windows machine (top priority)",
-        "Journal auto-generation",
-        "Follow-ups with answer/skip/snooze/stop",
-        "Monthly audit",
+        "Journal auto-generation from captured sources",
         "Windows installer (Electron/Tauri)",
         "Full Claude feature-parity audit in 00 System/Claude Feature Audit.md"
       ],
@@ -66,12 +73,22 @@
         "None currently reproducible. The Tic Tac Toe loop is fixed structurally: plain system prompt with no code example + artifacts only on explicit request; Settings > System > Reset local data clears any old looped chat."
       ],
       "verified": {
-        "vite_build": "clean — 269 kB JS / 81 kB gzip, 20 kB CSS",
-        "headless_smoke": "4 jsdom suites pass with 0 console errors: full render, artifact gating, model selector + attach menu, sidebar context menu",
+        "vite_build": "clean",
+        "unit_tests": "20/20 pass (node --test tests/*.test.js tests/*.test.cjs)",
+        "ui_smoke": "4/4 pass in jsdom (npm run test:ui, needs jsdom installed)",
+        "pixel_measurements": "re-verified against the PNGs with tools/pngread.py",
         "user_windows_test": "NOT DONE"
       },
       "build_cmd": "npm install && npm run dev:server & npm run dev",
-      "run_cmd_windows": "start-app.bat"
+      "run_cmd_windows": "start-app.bat",
+      "best_of_cherry_picks": {
+        "c4f75cce + cb0eb781": "measured pixel colours/geometry - adopted and re-verified, now in spec/MEASURED_PIXELS.md",
+        "abc0197f": "Spark.jsx Claude starburst - adopted",
+        "01199af1": "Dialog.jsx focus-trap modal, buildPreviewHtml CSP, wantsArtifact negative intent, regression-test idea - adopted",
+        "brain01": "TodayView.jsx, server/mock-ollama.cjs - adopted",
+        "1e3d04e4": "vite preview host - already covered by host 0.0.0.0 + allowedHosts:true",
+        "00aa9faf": "context-menu submenus + hash deep-links - NOT adopted (needs a router; the six menu items already work)"
+      }
     },
     "02_electron-claude-clone-v6": {
       "path": "apps/02_electron-claude-clone-v6",
@@ -124,10 +141,10 @@
     "Quillbot inline suggestions live only in the extension, cannot be wired into the desktop app"
   ],
   "last_session": {
-    "date": "2026-10-10",
-    "time": "22:40 Asia/Dhaka",
-    "what_done": "Completed the exact clone to the 6 screenshots: Settings (191707), User menu (191608), Apps & extensions (191636), menu bar (191558), functional model selector, artifact runner with strict explicit-request rule, file+image upload with model-aware vision, thinking display, AI-Brain panel (capsules drag-drop, blacklist manager, Today tab), Cook This Prompt, /ollama + /vault CORS-free proxies, extended vault API, rewritten start-app.bat + check-ollama.bat. Clean production build and 4 headless jsdom smoke suites with 0 errors.",
-    "user_request": "Continue from the GitHub repo and make the Claude app exact clone",
-    "action_now": "User runs start-app.bat on the TUF A15 and reports; then Today view/journal/follow-ups, then extension end-to-end, then installer"
+    "date": "2026-10-11",
+    "time": "21:20 Asia/Dhaka",
+    "what_done": "Applied the advisor's best-of cherry-pick plan without merging: adopted the measured pixel palette (sidebar 384px #111111 etc, replacing wrong estimates), Spark starburst (abc0197f), accessible Dialog + CSP-locked artifact preview + negative-intent detection (01199af1), TodayView + mock Ollama server (brain01), and added 20 unit tests + 4 jsdom UI smoke tests. Preview running with the labelled mock model.",
+    "user_request": "see advisor deep-judge report, take the best parts, give a preview, update all md files about progression, do not merge",
+    "action_now": "User reviews the preview and tests start-app.bat on the TUF A15; PR #8 stays open and unmerged"
   }
 }

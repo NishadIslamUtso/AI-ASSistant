@@ -268,6 +268,29 @@ app.get('/capsules', (req, res) => {
   res.json({ items: items.slice(0, limit), total: items.length })
 })
 
+/** Read `- [ ] Follow-up: [[x]] - next check YYYY-MM-DD` lines out of Open Loops. */
+function parseFollowups(md) {
+  const out = []
+  for (const line of String(md || '').split(/\r?\n/)) {
+    const m = line.match(/^\s*[-*+]\s*\[( |x|X)\]\s*(.*)$/)
+    if (!m || m[1] !== ' ') continue
+    const text = m[2]
+    const next = text.match(/next[ _]?check\s+([0-9]{4}-[0-9]{2}-[0-9]{2})/i)
+    const last = text.match(/last[ _]?update\s+([0-9]{4}-[0-9]{2}-[0-9]{2})/i)
+    out.push({
+      topic: text
+        .replace(/\[\[|\]\]/g, '')
+        .replace(/\s*-\s*next[ _]?check.*$/i, '')
+        .replace(/\s*-\s*last[ _]?update.*$/i, '')
+        .trim(),
+      next_check: next ? next[1] : '',
+      last_update: last ? last[1] : '',
+      raw: text,
+    })
+  }
+  return out
+}
+
 /* ── today: snapshot, open loops, journal ─────────────────────── */
 app.get('/today', (req, res) => {
   const { year, iso } = nowParts()
@@ -276,11 +299,15 @@ app.get('/today', (req, res) => {
     if (raw == null) return null
     return parseFrontmatter(raw).body.trim()
   }
+  const journalPath = `08 Journal/${year}/${iso}.md`
   res.json({
     date: iso,
     snapshot: read('04 Working Memory/Current Snapshot.md'),
     openLoops: read('04 Working Memory/Open Loops.md'),
-    journalPath: `08 Journal/${year}/${iso}.md`,
+    followups: parseFollowups(read('04 Working Memory/Open Loops.md')),
+    journal: read(journalPath),
+    journalPath,
+    vault: VAULT_PATH,
   })
 })
 

@@ -5,8 +5,9 @@ import { chatStream, listModels, ping, splitThinking, modelSupportsImages } from
 import { vault, setVaultUrl, capsuleToPromptText } from './lib/vault.js'
 import {
   artifactsFromReply,
+  artifactFromCode,
   artifactInstruction,
-  explicitlyAsked,
+  wantsArtifact,
   makeId,
 } from './lib/artifacts.js'
 import { demoStream } from './lib/demo.js'
@@ -19,6 +20,7 @@ import SettingsModal from './components/SettingsModal.jsx'
 import AppsExtensionsModal from './components/AppsExtensionsModal.jsx'
 import UserMenu from './components/UserMenu.jsx'
 import TitleBar from './components/TitleBar.jsx'
+import TodayView from './components/TodayView.jsx'
 
 /* ────────────────────────────────────────────────────────────────
    Defaults — the chat titles come straight out of screenshot 191547.png
@@ -135,6 +137,7 @@ function Shell() {
     apps: false,
     userMenu: false,
     artifacts: false,
+    today: false,
     sidebarCollapsed: false,
     settingsTab: 'general',
   })
@@ -242,7 +245,7 @@ function Shell() {
   const runSend = useCallback(
     async ({ chatId, history, text, atts, caps, modelOverride }) => {
       const model = modelOverride || settings.model
-      const requested = artifactMode || explicitlyAsked(text)
+      const requested = artifactMode || wantsArtifact(text)
       const assistantId = makeId()
       const userMsg = {
         id: makeId(),
@@ -614,20 +617,7 @@ function Shell() {
   const openArtifactFromCode = useCallback(
     (code, lang) => {
       if (!currentChatId) return
-      const type = ['svg', 'xml'].includes(lang) ? 'svg' : ['react', 'jsx'].includes(lang) ? 'react' : 'html'
-      const title =
-        code.match(/<title>([^<]{1,120})<\/title>/i)?.[1]?.trim() ||
-        (type === 'svg' ? 'SVG artifact' : 'HTML artifact')
-      const art = {
-        id: makeId(),
-        title,
-        type,
-        lang,
-        content: code,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        version: 1,
-      }
+      const art = artifactFromCode(code, lang)
       setChats((prev) =>
         prev.map((c) => (c.id === currentChatId ? { ...c, artifacts: [...(c.artifacts || []), art] } : c)),
       )
@@ -694,6 +684,9 @@ function Shell() {
         case 'latest':
           window.scrollTo({ top: document.body.scrollHeight })
           break
+        case 'today':
+          setUi((u) => ({ ...u, today: true }))
+          break
         case 'save-artifact': {
           const art = artifacts.find((a) => a.id === activeArtifactId) || artifacts[artifacts.length - 1]
           if (art) vault.saveArtifact(art).then((r) => window.alert(r?.ok ? 'Saved to vault.' : 'Vault API offline — cannot save.'))
@@ -750,6 +743,10 @@ function Shell() {
       } else if (k === 'a' && e.shiftKey) {
         e.preventDefault()
         setUi((u) => ({ ...u, artifacts: !u.artifacts }))
+      }
+      if (e.altKey && k === 't') {
+        e.preventDefault()
+        setUi((u) => ({ ...u, today: !u.today }))
       }
     }
     window.addEventListener('keydown', onKey)
@@ -845,7 +842,11 @@ function Shell() {
         />
 
         {ui.vault ? (
-          <VaultPanel onClose={() => setUi((u) => ({ ...u, vault: false }))} onInsertCapsule={addHit} />
+          <VaultPanel
+            onClose={() => setUi((u) => ({ ...u, vault: false }))}
+            onInsertCapsule={addHit}
+            onOpenToday={() => setUi((u) => ({ ...u, today: true }))}
+          />
         ) : null}
 
         {ui.artifacts ? (
@@ -897,6 +898,16 @@ function Shell() {
       ) : null}
 
       {ui.apps ? <AppsExtensionsModal onClose={() => setUi((u) => ({ ...u, apps: false }))} /> : null}
+
+      {ui.today ? (
+        <TodayView
+          onClose={() => setUi((u) => ({ ...u, today: false }))}
+          onAsk={(topic) => {
+            setInput(topic)
+            setUi((u) => ({ ...u, today: false }))
+          }}
+        />
+      ) : null}
     </div>
   )
 }

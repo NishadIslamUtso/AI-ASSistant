@@ -47,6 +47,7 @@ falls back to the direct URLs in Settings → System.
 
 | File | Purpose |
 |---|---|
+|---|---|
 | `src/App.jsx` | State, sending, streaming, artifacts, shortcuts |
 | `src/context/SettingsContext.jsx` | Settings (191707) + theme/motion/font applied to `<html>` |
 | `src/lib/ollama.js` | Ollama client: ping, list models, streaming chat, `<think>` split |
@@ -64,8 +65,43 @@ falls back to the direct URLs in Settings → System.
 | `src/components/VaultPanel.jsx` | Capsules, never-check blacklist, Today |
 | `src/components/TitleBar.jsx` | File Edit View Go Help (191558) |
 | `server/vault-api.cjs` | The only thing that writes to the vault |
+| `server/mock-ollama.cjs` | Ollama-compatible stub for previews only — never started by `start-app.bat` |
+| `tools/pngread.py` | Dependency-free PNG decoder used to verify the pixel spec (repo root) |
+
+## Pixel spec
+
+The layout is built from **measured** values, not estimates. `spec/MEASURED_PIXELS.md`
+records them; `tools/pngread.py` (repo root) can re-derive them from the PNGs with
+no third-party libraries:
+
+```python
+import pngread
+img = pngread.read_png('spec/screenshots/Screenshot 2026-10-10 191547.png')
+pngread.hexof(img['px'](200, 600))   # '#111111' — the sidebar
+```
+
+The earlier spec's estimates (sidebar 260px `#202020`, main `#1a1a1a`,
+composer `#242424`) were wrong.
+
+## Tests
+
+```
+npm test           # 20 unit + vault-integration tests, node --test, no new deps
+npm i -D jsdom     # only needed for the UI smoke test
+npm run test:ui    # 4 jsdom tests: render, artifact gating, settings, context menu
+```
+
+jsdom is deliberately **not** a declared dependency — the target machine has a
+slow connection — so `test:ui` skips cleanly when jsdom is absent.
 
 ## Keys
 
 `Ctrl+B` sidebar · `Ctrl+J` AI-Brain panel · `Ctrl+Shift+A` artifacts · `Ctrl+N` new chat ·
-`Enter` send · `Shift+Enter` newline.
+`Alt+T` Today view · `Enter` send · `Shift+Enter` newline.
+
+## Preview without a GPU
+
+This sandbox has no Ollama, so previews run `server/mock-ollama.cjs`. It speaks
+enough of the Ollama API to exercise streaming and artifacts, and **labels every
+reply as a mock**. `start-app.bat` never starts it — the real build always talks
+to the real Ollama on `127.0.0.1:11434`.

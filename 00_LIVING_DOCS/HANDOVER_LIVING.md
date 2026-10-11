@@ -1,6 +1,6 @@
 # HANDOVER_LIVING.md — Current State + Gaps (Living)
 
-**Last Updated:** 2026-10-10 22:40 Asia/Dhaka
+**Last Updated:** 2026-10-11 21:20 Asia/Dhaka
 **Purpose:** Give any AI/developer enough context to continue without relying on previous AI memory. Update every session.
 
 ## 1. Executive Summary
@@ -45,9 +45,19 @@ User Utso wants AI ASSistant native Windows app that looks exactly like Claude d
 - [x] Capsule drag-drop inject + blacklist manager + Today tab in the AI-Brain panel
 - [x] Ollama CORS — removed as a problem by the /ollama and /vault dev proxies
 
+**Closed 2026-10-11 (best-of cherry-picks, no branch merged):**
+- [x] UI now uses **measured** pixels, not estimates — sidebar 384px `#111111`, main `#151515`,
+      composer `#20201f`, active `#343434`, text `#f0efec`, accent `#d97757`, radius 18px,
+      transcript width Narrow, grouped settings nav. `spec/MEASURED_PIXELS.md` + `tools/pngread.py`.
+- [x] Claude Spark starburst SVG (from `abc0197f`)
+- [x] Accessible `Dialog` primitive, artifact-preview CSP, negative-intent detection (from `01199af1`)
+- [x] TodayView with follow-up answer/skip/snooze/stop (from `brain01`)
+- [x] `server/mock-ollama.cjs` for previews — never started by `start-app.bat`
+- [x] 20 unit tests + 4 jsdom UI smoke tests
+
 **Still open:**
 - [ ] **Not tested on the user's Windows machine** — this is the single most important open item
-- [ ] Today view is partial: Snapshot + Open Loops + journal path are shown; journal draft generation and follow-up answer/skip/snooze controls are not built
+- [ ] Journal draft *generation* (the Today view reads a draft if one exists but does not write one)
 - [ ] Journal auto-generation from captured sources
 - [ ] Monthly audit
 - [ ] Windows installer (Electron wrapper or Tauri) — only bat dev scripts exist

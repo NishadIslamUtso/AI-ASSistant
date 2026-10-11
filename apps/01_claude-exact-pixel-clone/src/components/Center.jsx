@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import Composer from './Composer.jsx'
 import Message from './Message.jsx'
+import Spark from './Spark.jsx'
 
 /**
  * Center — #1a1a1a main column from screenshot 191547.png.
@@ -80,7 +81,7 @@ export default function Center({
   return (
     <div className="flex-1 flex flex-col h-full min-w-0 bg-[var(--bg-main)]">
       {/* ── top bar: Free plan · Upgrade ──────────────────── */}
-      <div className="h-11 shrink-0 flex items-center justify-end px-4">
+      <div className="h-[52px] shrink-0 flex items-center justify-end px-4">
         <button
           onClick={onOpenUpgrade}
           className="flex items-center gap-1.5 text-[12px] px-2.5 py-1 rounded-full bg-[var(--bg-hover)] hover:bg-[var(--bg-active)] transition-colors"
@@ -97,13 +98,12 @@ export default function Center({
         {empty ? (
           <div className="h-full flex flex-col items-center justify-center px-6 pb-10">
             <div className={`w-full ${widthClass}`}>
-              <div className="flex items-baseline gap-1.5 mb-6">
-                <h1 className="text-[30px] leading-9 font-serif-claude text-[var(--ink)]">
+              {/* measured: greeting serif ~44px, spark ~46px, accent #d97757 */}
+              <div className="flex items-baseline gap-2 mb-6">
+                <h1 className="text-[44px] leading-[52px] font-serif-claude text-[var(--ink)]">
                   {greeting()}, {settings.userName}.
                 </h1>
-                <span className="text-[var(--accent)] text-[18px] leading-none translate-y-[-10px]">
-                  ✳
-                </span>
+                <Spark size={46} className="translate-y-[-6px]" />
               </div>
 
               <Composer

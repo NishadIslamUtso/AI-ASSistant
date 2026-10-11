@@ -17,6 +17,7 @@ import {
   PanelLeftOpen,
 } from 'lucide-react'
 import ContextMenu from './ContextMenu.jsx'
+import Spark from './Spark.jsx'
 
 /**
  * Sidebar — 260px, #202020, from screenshot 191547.png
@@ -184,11 +185,11 @@ export default function Sidebar({
   }
 
   return (
-    <div className="w-[260px] bg-[var(--bg-side)] border-r border-[var(--line)] flex flex-col h-full shrink-0">
+    <div className="w-[var(--sidebar-w)] bg-[var(--bg-side)] border-r border-[var(--line)] flex flex-col h-full shrink-0">
       {/* ── top row: brand + collapse ───────────────────────── */}
-      <div className="h-11 flex items-center justify-between px-3 shrink-0">
+      <div className="h-[var(--toolbar-h)] flex items-center justify-between px-3.5 shrink-0">
         <div className="flex items-center gap-2">
-          <span className="text-[var(--accent)] text-[17px] leading-none select-none">✳</span>
+          <Spark size={17} />
           <span className="text-[13px] text-[var(--ink2)] select-none">AI ASSistant</span>
         </div>
         <button
@@ -201,7 +202,7 @@ export default function Sidebar({
       </div>
 
       {/* ── search ──────────────────────────────────────────── */}
-      <div className="px-3 pb-2 shrink-0">
+      <div className="px-3.5 pb-2 shrink-0">
         <div className="relative">
           <Search
             size={14}
@@ -212,13 +213,13 @@ export default function Sidebar({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search"
-            className="w-full bg-[var(--bg-hover)] border border-transparent focus:border-[var(--border-strong)] rounded-lg pl-8 pr-2 py-[7px] text-[13px] text-[var(--ink)] placeholder-[var(--ink3)] outline-none"
+            className="w-full bg-[var(--bg-hover)] border border-[var(--border)] focus:border-[var(--border-strong)] rounded-lg pl-8 pr-2 py-[7px] text-[13px] text-[var(--ink)] placeholder-[var(--ink3)] outline-none"
           />
         </div>
 
         <button
           onClick={onNewChat}
-          className="mt-2 w-full flex items-center gap-2 bg-[var(--bg-hover)] hover:bg-[var(--bg-active)] rounded-lg py-[7px] px-2.5 text-[13px] text-[var(--ink)] transition-colors"
+          className="mt-2 w-full flex items-center gap-2 bg-[var(--bg-active)] hover:brightness-110 rounded-lg py-2 px-2.5 text-[13px] text-[var(--ink)] transition-colors"
         >
           <Plus size={15} className="text-[var(--ink2)]" />
           New chat
@@ -275,7 +276,7 @@ export default function Sidebar({
                     onClick={() => onSelectChat?.(c.id)}
                     onContextMenu={(e) => openMenu(e, c)}
                     title={c.title}
-                    className={`group flex items-center gap-1.5 px-2 py-[6px] rounded-lg text-[13px] cursor-pointer truncate transition-colors ${
+                    className={`group flex items-center gap-1.5 px-2 py-[7px] rounded-lg text-[13px] cursor-pointer truncate transition-colors ${
                       active
                         ? 'bg-[var(--bg-active)] text-[var(--ink)]'
                         : 'text-[var(--ink2)] hover:bg-[var(--bg-hover)] hover:text-[var(--ink)]'

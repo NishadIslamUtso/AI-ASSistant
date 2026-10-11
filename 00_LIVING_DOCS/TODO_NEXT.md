@@ -1,6 +1,6 @@
 # TODO_NEXT.md — Immediate Next Actions (Living)
 
-**Last Updated:** 2026-10-10 22:40 Asia/Dhaka
+**Last Updated:** 2026-10-11 21:20 Asia/Dhaka
 **Rule:** Update after each session, priority order, check off when done.
 
 ---
@@ -25,7 +25,26 @@ Nothing below matters until the app has actually run on the TUF A15.
 
 **If replies are stuck in a loop:** Settings → System → **Reset local data**.
 
-## Priority 2 — Closed This Session (2026-10-10 22:40)
+## Priority 2 — Closed 2026-10-11 21:20 (advisor best-of cherry-picks, nothing merged)
+
+- [x] **Pixel spec corrected from real measurements** — sidebar 384px `#111111`, main `#151515`,
+      composer `#20201f`, active row `#343434`, text `#f0efec`, accent `#d97757`, link `#4099ec`,
+      composer radius 18px, transcript width **Narrow**. Independently re-verified with
+      `tools/pngread.py`; recorded in `spec/MEASURED_PIXELS.md`.
+- [x] Settings nav grouped (Settings / This computer / Customize) as in 191707
+- [x] `Spark.jsx` Claude starburst (from `abc0197f`)
+- [x] `Dialog.jsx` accessible modal: portal, focus trap, inert background, Escape (from `01199af1`)
+- [x] Artifact preview locked down with a CSP emitted before untrusted content (from `01199af1`)
+- [x] `wantsArtifact` negative-intent checks: "explain how to build…", "don't create…" (from `01199af1`)
+- [x] `TodayView` — snapshot, open loops, due follow-ups with answer/skip/snooze/stop,
+      journal draft, `Alt+T` (from `brain01`)
+- [x] `server/mock-ollama.cjs` — labelled stub so previews can chat; never started by
+      `start-app.bat` (from `brain01`)
+- [x] Tests: `npm test` 20/20, `npm run test:ui` 4/4 (jsdom, optional dependency)
+- [x] Docs: `spec/MEASURED_PIXELS.md`, `tools/pngread.py`, all living docs updated
+- [x] **No branch merged.** PR #8 open, unmerged, as instructed.
+
+## Priority 2b — Closed 2026-10-10 22:40
 
 - [x] Settings modal (191707) — Appearance: Theme, Chat font, Transcript size, Width, Motion, Voice
 - [x] User menu (191608) — email, Settings … Log out
@@ -42,11 +61,13 @@ Nothing below matters until the app has actually run on the TUF A15.
 - [x] `check-ollama.bat`
 - [x] Headless verification: clean build + 4 jsdom smoke suites, 0 console errors
 
-## Priority 3 — Today View + Journal + Follow-ups (P8 from the old list)
+## Priority 3 — Finish Today View + Journal (P8)
 
+- [x] Today view modal: Current Snapshot, Open Loops, journal draft (`Alt+T`, View menu, Help menu)
+- [x] Due follow-ups parsed out of `04 Working Memory/Open Loops.md` with
+      answer / skip / snooze / stop
 - [ ] Journal auto-generation from captured/authorised sources, event time vs capture time separated, source-linked, never invents offline events or feelings
-- [ ] Follow-ups with topic, last_update, next_check, cadence, sensitivity, status and answer / skip / snooze / stop
-- [ ] One "next action" on the Today tab
+- [ ] One "next action" on the Today view
 - [ ] End-of-day prompts, opt-in
 
 ## Priority 4 — Extension End-To-End (P6)

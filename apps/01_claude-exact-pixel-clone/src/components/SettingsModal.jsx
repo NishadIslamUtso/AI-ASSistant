@@ -23,6 +23,7 @@ import {
   Database,
 } from 'lucide-react'
 import Dropdown from './Dropdown.jsx'
+import Dialog from './Dialog.jsx'
 import { useSettings } from '../context/SettingsContext.jsx'
 import { vault } from '../lib/vault.js'
 import { modelSupportsImages } from '../lib/ollama.js'
@@ -40,22 +41,44 @@ import { modelSupportsImages } from '../lib/ollama.js'
  * only sections say so honestly instead of faking controls.
  */
 
-const NAV = [
-  { id: 'general', label: 'General', icon: Sliders },
-  { id: 'account', label: 'Account', icon: User },
-  { id: 'privacy', label: 'Privacy', icon: Shield },
-  { id: 'billing', label: 'Billing', icon: CreditCard },
-  { id: 'capabilities', label: 'Capabilities', icon: Blocks },
-  { id: 'memory', label: 'Memory', icon: Brain },
-  { id: 'reflect', label: 'Reflect', icon: Compass },
-  { id: 'focus', label: 'Time and focus', icon: Clock },
-  { id: 'claude-code', label: 'Claude Code', icon: Terminal },
-  { id: 'system', label: 'System', icon: Cpu },
-  { id: 'extensions', label: 'Extensions', icon: Puzzle },
-  { id: 'developer', label: 'Developer', icon: Code2 },
-  { id: 'skills', label: 'Skills', icon: Wrench },
-  { id: 'connectors', label: 'Connectors', icon: Plug },
+/**
+ * Measured from 191707.png: the nav is grouped, 263px wide, items on a 44px
+ * pitch, and the group labels ("Settings", "This computer", "Customize") are
+ * shown. The earlier flat 14-item list was a guess.
+ */
+const NAV_GROUPS = [
+  {
+    group: 'Settings',
+    items: [
+      { id: 'general', label: 'General', icon: Sliders },
+      { id: 'account', label: 'Account', icon: User },
+      { id: 'privacy', label: 'Privacy', icon: Shield },
+      { id: 'billing', label: 'Billing', icon: CreditCard },
+      { id: 'capabilities', label: 'Capabilities', icon: Blocks },
+      { id: 'memory', label: 'Memory', icon: Brain },
+      { id: 'reflect', label: 'Reflect', icon: Compass },
+      { id: 'focus', label: 'Time and focus', icon: Clock },
+      { id: 'claude-code', label: 'Claude Code', icon: Terminal },
+    ],
+  },
+  {
+    group: 'This computer',
+    items: [
+      { id: 'system', label: 'System', icon: Cpu },
+      { id: 'extensions', label: 'Extensions', icon: Puzzle },
+      { id: 'developer', label: 'Developer', icon: Code2 },
+    ],
+  },
+  {
+    group: 'Customize',
+    items: [
+      { id: 'skills', label: 'Skills', icon: Wrench },
+      { id: 'connectors', label: 'Connectors', icon: Plug },
+    ],
+  },
 ]
+
+const NAV = NAV_GROUPS.flatMap((g) => g.items)
 
 export default function SettingsModal({
   onClose,
@@ -89,47 +112,44 @@ export default function SettingsModal({
   }, [onClose])
 
   return (
-    <div
-      className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4"
-      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+    <Dialog
+      title={labelFor(tab)}
+      onClose={onClose}
+      className="w-[1000px] max-w-[calc(100vw-32px)] h-[640px] max-h-[calc(100vh-32px)]"
     >
-      <div className="w-[860px] max-w-full h-[600px] max-h-full bg-[var(--bg-main)] border border-[var(--border-strong)] rounded-xl shadow-pop flex overflow-hidden animate-in-fast">
+      <div className="flex-1 flex min-h-0">
         {/* ── left nav ─────────────────────────────────────── */}
-        <div className="w-[208px] shrink-0 bg-[var(--bg-side)] border-r border-[var(--line)] overflow-y-auto py-2">
-          {NAV.map((n) => {
-            const Icon = n.icon
-            const active = tab === n.id
-            return (
-              <button
-                key={n.id}
-                onClick={() => setTab(n.id)}
-                className={`w-full flex items-center gap-2.5 px-3 py-[7px] mx-1 text-[13px] rounded-lg text-left ${
-                  active
-                    ? 'bg-[var(--bg-active)] text-[var(--ink)]'
-                    : 'text-[var(--ink2)] hover:bg-[var(--bg-hover)] hover:text-[var(--ink)]'
-                }`}
-                style={{ width: 'calc(100% - 8px)' }}
-              >
-                <Icon size={15} className="shrink-0 opacity-85" />
-                <span className="truncate">{n.label}</span>
-              </button>
-            )
-          })}
+        <div className="w-[263px] shrink-0 bg-[var(--bg-side)] border-r border-[var(--line)] overflow-y-auto py-3">
+          {NAV_GROUPS.map((g) => (
+            <div key={g.group} className="mb-2">
+              <div className="px-4 pb-1 text-[11px] uppercase tracking-wide text-[var(--ink3)]">
+                {g.group}
+              </div>
+              {g.items.map((n) => {
+                const Icon = n.icon
+                const active = tab === n.id
+                return (
+                  <button
+                    key={n.id}
+                    onClick={() => setTab(n.id)}
+                    className={`flex items-center gap-2.5 px-4 text-[13px] text-left ${
+                      active
+                        ? 'bg-[var(--bg-active)] text-[var(--ink)]'
+                        : 'text-[var(--ink2)] hover:bg-[var(--bg-hover)] hover:text-[var(--ink)]'
+                    }`}
+                    style={{ width: 'calc(100% - 16px)', height: 44, margin: '0 8px', borderRadius: 8 }}
+                  >
+                    <Icon size={15} className="shrink-0 opacity-85" />
+                    <span className="truncate">{n.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          ))}
         </div>
 
         {/* ── right content ────────────────────────────────── */}
         <div className="flex-1 flex flex-col min-w-0">
-          <div className="h-12 shrink-0 flex items-center justify-between px-5 border-b border-[var(--line)]">
-            <h2 className="text-[15px] font-medium text-[var(--ink)]">{labelFor(tab)}</h2>
-            <button
-              onClick={onClose}
-              className="w-7 h-7 rounded-md hover:bg-[var(--bg-hover)] flex items-center justify-center text-[var(--ink2)]"
-              title="Close"
-            >
-              <X size={16} />
-            </button>
-          </div>
-
           <div className="flex-1 overflow-y-auto px-5 py-5">
             {tab === 'general' ? <Appearance settings={settings} update={update} /> : null}
 
@@ -331,7 +351,7 @@ export default function SettingsModal({
           </div>
         </div>
       </div>
-    </div>
+    </Dialog>
   )
 }
 

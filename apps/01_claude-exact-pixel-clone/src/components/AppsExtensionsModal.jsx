@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { X, Terminal, Code2, Chrome, LayoutGrid, Puzzle, BookOpen, Check } from 'lucide-react'
+import { Terminal, Code2, Chrome, LayoutGrid, Puzzle, BookOpen, Check } from 'lucide-react'
+import Dialog from './Dialog.jsx'
 
 /**
  * AppsExtensionsModal — screenshot 191636.png
@@ -86,24 +87,12 @@ export default function AppsExtensionsModal({ onClose }) {
   }, [onClose])
 
   return (
-    <div
-      className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4"
-      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+    <Dialog
+      title="Do more with Claude everywhere you work"
+      onClose={onClose}
+      className="w-[640px] max-w-[calc(100vw-32px)] max-h-[80vh]"
     >
-      <div className="w-[640px] max-w-full max-h-[80vh] bg-[var(--bg-main)] border border-[var(--border-strong)] rounded-xl shadow-pop flex flex-col overflow-hidden animate-in-fast">
-        <div className="h-12 shrink-0 flex items-center justify-between px-5 border-b border-[var(--line)]">
-          <h2 className="text-[16px] font-medium text-[var(--ink)]">
-            Do more with Claude everywhere you work
-          </h2>
-          <button
-            onClick={onClose}
-            className="w-7 h-7 rounded-md hover:bg-[var(--bg-hover)] flex items-center justify-center text-[var(--ink2)]"
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-5 py-4">
+      <div className="flex-1 overflow-y-auto px-5 py-4">
           {GROUPS.map((g) => (
             <div key={g.title} className="mb-5">
               <div className="text-[11px] uppercase tracking-wide text-[var(--ink3)] mb-2 px-1">
@@ -152,8 +141,7 @@ export default function AppsExtensionsModal({ onClose }) {
               </div>
             </div>
           ))}
-        </div>
       </div>
-    </div>
+    </Dialog>
   )
 }

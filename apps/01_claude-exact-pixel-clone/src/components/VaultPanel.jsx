@@ -24,7 +24,7 @@ import { vault } from '../lib/vault.js'
  *              revocable. Stored in 00 System/Privacy & Access.md.
  *  Today     — Current Snapshot + Open Loops from 04 Working Memory.
  */
-export default function VaultPanel({ onClose, onInsertCapsule }) {
+export default function VaultPanel({ onClose, onInsertCapsule, onOpenToday }) {
   const [tab, setTab] = useState('capsules')
   const [status, setStatus] = useState(null)
   const [capsules, setCapsules] = useState([])
@@ -291,6 +291,13 @@ export default function VaultPanel({ onClose, onInsertCapsule }) {
                 <code className="font-mono text-[11px] text-[var(--ink2)]">{today.journalPath}</code>
               </Block>
             ) : null}
+
+            <button
+              onClick={onOpenToday}
+              className="w-full text-[12px] px-3 py-2 rounded-lg bg-[var(--bg-hover)] border border-[var(--border-strong)] text-[var(--ink)] hover:bg-[var(--bg-active)]"
+            >
+              Open full Today view
+            </button>
           </>
         ) : null}
       </div>

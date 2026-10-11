@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Copy, Check, FileText, Image as ImageIcon, Code2, Eye, AlertTriangle } from 'lucide-react'
 import { renderMarkdown } from '../lib/markdown.jsx'
 import ThinkingDisplay from './ThinkingDisplay.jsx'
+import Spark from './Spark.jsx'
 
 /**
  * Message — one turn in the transcript.
@@ -70,9 +71,7 @@ export default function Message({
       ) : null}
 
       <div className="flex gap-3">
-        <div className="w-[22px] h-[22px] rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-[11px] shrink-0 mt-0.5">
-          ✳
-        </div>
+        <Spark size={22} className="shrink-0 mt-0.5" />
         <div className={`min-w-0 flex-1 ${transcriptClass} ${fontClass}`}>
           {message.error ? (
             <div className="flex items-start gap-2 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-3 py-2.5 text-[13px] text-[var(--ink)]">
