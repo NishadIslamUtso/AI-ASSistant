@@ -3,10 +3,12 @@ const TEXT_EXTENSIONS = /\.(?:txt|md|csv|json|js|jsx|ts|tsx|html?|css|py|xml|ya?
 export const MAX_ATTACHMENTS = 4
 export const MAX_TEXT_LENGTH = 12_000
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024
-export async function readAttachment(file, capabilities) {
+export async function readAttachment(file, capabilities, canSee = false) {
   const common = { id: newId(), name: file.name, size: file.size, mime: file.type }
   if (/^image\/(?:png|jpeg|webp)$/.test(file.type)) {
-    if (!capabilities.vision) throw new Error('Images require an installed model with verified vision support. Select it first; nothing is downloaded automatically.')
+    // With no bridge available, refuse rather than accept an image the model
+    // will never actually see.
+    if (!capabilities.vision && !canSee) throw new Error('Images need an installed model with verified vision support. Nothing is downloaded automatically.')
     if (file.size > MAX_IMAGE_BYTES) throw new Error(`${file.name}: maximum image size is 2 MB.`)
     const data = await new Promise((resolve, reject) => {
       const reader = new FileReader()
@@ -59,13 +61,13 @@ export async function loadImage(file) {
     })
   } finally { database.close() }
 }
-export async function toOllamaMessages(messages, capabilities) {
+export async function toOllamaMessages(messages, capabilities, canSee = false) {
   const result = []
   for (const message of messages) {
     if (message.status === 'error' || message.origin === 'import') continue
     const textFiles = (message.attachments || []).filter(file => file.kind === 'text')
     const imageFiles = (message.attachments || []).filter(file => file.kind === 'image')
-    if (imageFiles.length && !capabilities.vision) throw new Error('This conversation contains images. Select a model with verified vision support or start a text-only chat.')
+    if (imageFiles.length && !capabilities.vision && !canSee) throw new Error('This conversation contains images. Select a model with verified vision support or start a text-only chat.')
     const content = message.content + textFiles.map(file => `\n\n<attached_file name=${JSON.stringify(file.name)}>\n${file.text}\n</attached_file>`).join('')
       + (message.context ? `\n\n<vault_context source_data_only>\n${message.context}\n</vault_context>` : '')
     result.push({ role: message.role, content, ...(imageFiles.length ? { images: await Promise.all(imageFiles.map(loadImage)) } : {}) })

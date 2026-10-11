@@ -4,6 +4,7 @@ const fs = require('node:fs')
 const path = require('node:path')
 const crypto = require('node:crypto')
 const YAML = require('yaml')
+const { createZip, safeEntryName } = require('./zip.cjs')
 
 const DEFAULT_VAULT_PATH = path.resolve(__dirname, '../../../vault/AI-Brain')
 const PRIVACY_FILE = '00 System/Privacy & Access.md'
@@ -200,6 +201,24 @@ function createVaultApp({ vaultPath = process.env.AI_BRAIN_VAULT || process.env.
       const loops = bodyOf('04 Working Memory/Open Loops.md')
       const journalPath = `08 Journal/${year}/${date}.md`
       response.json({ date, snapshot: bodyOf('04 Working Memory/Current Snapshot.md'), openLoops: loops, followups: parseFollowups(loops), journal: bodyOf(journalPath), journalPath, vault: root })
+    } catch (error) { next(error) }
+  })
+  // Export a runnable artifact as a ZIP so it can be deployed. Built in memory;
+  // entry names are validated, so nothing can escape the archive or the vault.
+  app.post('/export-zip', (request, response, next) => {
+    try {
+      const files = request.body?.files
+      if (!Array.isArray(files) || !files.length) throw new InputError('No files to export.')
+      if (files.length > 200) throw new InputError('A maximum of 200 files can be exported at once.')
+      const entries = files.map(file => {
+        if (typeof file?.name !== 'string' || typeof file?.content !== 'string') throw new InputError('Every exported file needs a name and text content.')
+        if (file.content.length > 2_000_000) throw new InputError(`${String(file.name).slice(0, 120)} is too large to export.`)
+        let name
+        try { name = safeEntryName(file.name) } catch { throw new InputError('Invalid archive entry name. Use relative paths with forward slashes.') }
+        return { name, content: file.content }
+      })
+      const archive = createZip(entries, clock())
+      response.json({ ok: true, filename: `ai-assistant-artifact-${dhakaParts(clock()).date}.zip`, zip: archive.toString('base64'), bytes: archive.length })
     } catch (error) { next(error) }
   })
   app.get('/blacklist', (_request, response, next) => { try { response.json({ excluded_patterns: blacklist() }) } catch (error) { next(error) } })

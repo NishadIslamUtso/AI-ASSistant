@@ -6,6 +6,10 @@ export default function useModels(model, setModel) {
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState('')
   const [capabilities, setCapabilities] = useState(unverified)
+  // Verified capabilities for EVERY installed model, not just the selected one.
+  // This is what makes the vision bridge possible: a text-only model can still
+  // accept an image and hand that one turn to a vision model that is installed.
+  const [capabilityMap, setCapabilityMap] = useState({})
   const [verification, setVerification] = useState({ name: '', local: false, error: '' })
   const refreshRef = useRef(null)
   const refresh = useCallback(async () => {
@@ -30,6 +34,26 @@ export default function useModels(model, setModel) {
   }, [])
   useEffect(() => { refresh(); return () => refreshRef.current?.abort() }, [refresh])
   useEffect(() => {
+    if (status !== 'online') return
+    let alive = true
+    const controller = new AbortController()
+    ;(async () => {
+      const found = {}
+      // Cap the fan-out: a large local library should not mean dozens of calls.
+      for (const item of models.slice(0, 12)) {
+        if (!alive) return
+        try {
+          const metadata = await showModel(item.name, controller.signal)
+          if (isRemoteModel(item.name, metadata)) continue
+          found[item.name] = getCapabilities(metadata)
+        } catch { /* Unverifiable models simply stay unverified. */ }
+      }
+      if (alive) setCapabilityMap(found)
+    })()
+    return () => { alive = false; controller.abort() }
+  }, [models, status])
+
+  useEffect(() => {
     setCapabilities(unverified)
     setVerification({ name: model, local: false, error: '' })
     if (status !== 'online' || !models.some(item => item.name === model)) return
@@ -47,6 +71,13 @@ export default function useModels(model, setModel) {
   }, [model, models, status])
   const installed = models.some(item => item.name === model)
   const localError = verification.name === model ? verification.error : ''
+  const visionModels = models.filter(item => capabilityMap[item.name]?.vision).map(item => item.name)
   return { model, select: setModel, models, status, error: error || localError || (status === 'online' && !installed ? `Selected model ${model} is not installed locally. Choose an installed model; nothing is downloaded or switched automatically.` : ''),
-    capabilities, refresh, available: status === 'online' && installed && verification.name === model && verification.local }
+    capabilities, refresh,
+    /** Installed models with VERIFIED vision, discovered without guessing from names. */
+    visionModels,
+    visionModel: visionModels.includes(model) ? model : visionModels[0] || '',
+    /** True when an image can be handled by bridging to another installed model. */
+    canSee: capabilities.vision || Boolean(visionModels.length),
+    available: status === 'online' && installed && verification.name === model && verification.local }
 }

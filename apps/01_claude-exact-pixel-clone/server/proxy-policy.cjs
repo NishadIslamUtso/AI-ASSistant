@@ -8,6 +8,7 @@ const routes = new Map([
   // Restored with this branch's Today view; read-only, same local vault.
   ['/api/vault/status', ['GET']], ['/api/vault/today', ['GET']],
   ['/api/vault/blacklist', ['GET', 'POST']], ['/api/vault/capture', ['POST']],
+  ['/api/vault/export-zip', ['POST']],
 ])
 function protectLocalApi(request, response, next) {
   const pathname = request.url.split('?')[0]

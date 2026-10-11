@@ -31,7 +31,7 @@ export default function Composer({ models, chat, busyChatId, onSend, onStop, pro
     setAddingFiles(true)
     try {
       const loaded = []
-      for (const file of files) loaded.push(await readAttachment(file, models.capabilities))
+      for (const file of files) loaded.push(await readAttachment(file, models.capabilities, models.canSee))
       setAttachments(previous => [...previous, ...loaded])
     } catch (error) { notify(error.message) }
     finally { setAddingFiles(false); if (fileInput.current) fileInput.current.value = '' }

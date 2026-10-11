@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { newId } from '../lib/storage.js'
 import { loadImage, persistAttachments, toOllamaMessages } from '../lib/attachments.js'
-import { splitThinking, streamChat, systemPrompt } from '../lib/ollama.js'
+import { chooseTurnModel, splitThinking, streamChat, systemPrompt } from '../lib/ollama.js'
 import { extractArtifacts, wantsArtifact } from '../lib/artifacts.js'
 import { vaultPost } from '../lib/vault.js'
 
@@ -46,14 +46,17 @@ export default function useChat({ chats, setChats, currentChat, navigate, models
       const history = [...(existing?.messages || []), userMessage]
       const requested = wantsArtifact(userMessage.content, artifactMode)
       const prompt = systemPrompt(requested)
-      const requestMessages = [{ role: 'system', content: prompt }, ...await toOllamaMessages(history, models.capabilities)]
+      const requestMessages = [{ role: 'system', content: prompt }, ...await toOllamaMessages(history, models.capabilities, models.canSee)]
+      // Vision bridge: a text-only model can still take an image and hand that
+      // one turn to an installed vision model. Never downloads anything.
+      const { model: turnModel, bridged } = chooseTurnModel({ model: models.model, capabilities: models.capabilities, visionModel: models.visionModel, attachments: userMessage.attachments })
       // Conservative character guard, NOT an exact token counter. Refuse instead
       // of silently dropping old turns from a small 4,096-token local context.
       if (requestMessages.reduce((size, message) => size + message.content.length, 0) > 12_000) {
         throw new Error('This chat and its files/context exceed the conservative 12,000-character budget for the 4,096-token local context. Start a new chat with a smaller capsule. The original transcript is kept.')
       }
       userMessage.attachments = await persistAttachments(attachments)
-      const assistant = { id: newId(), role: 'assistant', content: '', thinking: '', status: 'streaming', timestamp: new Date().toISOString(), model: models.model }
+      const assistant = { id: newId(), role: 'assistant', content: '', thinking: '', status: 'streaming', timestamp: new Date().toISOString(), model: turnModel, ...(bridged ? { visionBridged: true, requestedModel: models.model } : {}) }
       const chat = { ...(existing || { id: chatId, title: userMessage.content.slice(0, 55), date: 'Today', projectId }), messages: [...(existing?.messages || []), userMessage, assistant] }
       setChats(previous => existing ? previous.map(item => item.id === chatId ? chat : item) : [chat, ...previous])
       if (!existing) navigate(chatId)
@@ -73,7 +76,7 @@ export default function useChat({ chats, setChats, currentChat, navigate, models
     let final = { ...assistant }
     const timer = setTimeout(() => controller.abort('timeout'), 300_000)
     try {
-      await streamChat({ model: assistant.model, messages: requestMessages,
+      await streamChat({ model: turnModel, messages: requestMessages,
         ...(models.capabilities.thinking ? { think: Boolean(thinking) } : {}) }, controller.signal, record => {
         raw += record.message?.content || ''
         nativeThinking += record.message?.thinking || ''
@@ -82,6 +85,7 @@ export default function useChat({ chats, setChats, currentChat, navigate, models
       })
       final.status = 'complete'
       final.artifacts = extractArtifacts(final.content, { requested, messageId: assistant.id, chatId: chat.id, title: chat.messages.at(-2).content })
+      final.citations = extractCitations(final.content)
     } catch (error) {
       if (controller.signal.aborted) {
         final.status = 'stopped'

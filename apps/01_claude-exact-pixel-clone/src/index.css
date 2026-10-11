@@ -306,3 +306,19 @@ h1, h2, h3, h4, p { margin: 0; }
   border-bottom: 1px solid var(--subtle-border);
 }
 .app-shell { height: calc(100dvh - 30px); }
+/* Branching, inline previews, citations — additions for the merged feature set. */
+.branch-picker { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; color: var(--muted); font-size: 11px; }
+.branch-picker select { background: var(--composer); color: var(--text); border: 1px solid var(--border); border-radius: 6px; font: 11px 'Segoe UI', sans-serif; padding: 3px 6px; max-width: 210px; }
+.chat-header { display: flex; align-items: center; gap: 10px; }
+.inline-svg { margin: 12px 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: #fff; max-width: 420px; }
+.inline-svg img { display: block; width: 100%; height: auto; }
+.citations { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; padding: 0; }
+.citations li { margin: 0; }
+.citations button { font: 11px 'Segoe UI', sans-serif; color: var(--accent); background: var(--composer); border: 1px solid var(--border); border-radius: 999px; padding: 3px 9px; cursor: pointer; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.citations button:hover { background: var(--hover); }
+.bridge-note { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); margin: 8px 0 0; }
+.message-actions { display: flex; gap: 6px; margin-top: 8px; opacity: 0; transition: opacity .12s; }
+.assistant-message:hover .message-actions { opacity: 1; }
+.message-actions button { display: inline-flex; align-items: center; gap: 4px; font: 11px 'Segoe UI', sans-serif; color: var(--muted); background: transparent; border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; cursor: pointer; }
+.message-actions button:hover { background: var(--hover); color: var(--text); }
+@media (hover: none) { .message-actions { opacity: 1; } }
