@@ -1,6 +1,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import proxyPolicy from './server/proxy-policy.cjs'
+// Vite marks built assets `crossorigin`. Behind a forwarding preview proxy that
+// can fail CORS and leave a blank page. The assets are same-origin, so drop it.
+const stripCrossorigin = {
+  name: 'strip-crossorigin',
+  enforce: 'post',
+  transformIndexHtml: (html) => html.replace(/\s+crossorigin(?:="")?/g, ''),
+}
+
 const localApiBoundary = {
   name: 'local-api-boundary',
   configureServer(server) { server.middlewares.use(proxyPolicy.protectLocalApi) },
@@ -47,7 +55,7 @@ const headers = { 'Content-Security-Policy': "frame-src 'none'; object-src 'none
 const hmr = process.env.ALLOW_PREVIEW_ORIGINS === '1' ? { clientPort: 443 } : undefined
 
 export default defineConfig({
-  plugins: [localApiBoundary, react()],
+  plugins: [localApiBoundary, stripCrossorigin, react()],
   server: { host: '0.0.0.0', port: 5173, strictPort: true, allowedHosts: ['.e2b.app', 'localhost', '127.0.0.1'], proxy, headers, hmr },
   preview: { host: '0.0.0.0', port: 5173, strictPort: true, allowedHosts: ['.e2b.app', 'localhost', '127.0.0.1'], proxy, headers },
 })
