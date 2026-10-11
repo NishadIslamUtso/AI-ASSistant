@@ -1,38 +1,24 @@
-import {
-  Settings, Globe, HelpCircle, ArrowUpCircle, LayoutGrid, Info, KeyRound, LogOut,
-  ChevronRight, ExternalLink,
-} from 'lucide-react'
-
-// User menu from screenshot 191608.png — opens above the bottom-left avatar.
-export default function UserMenu({ onClose, onOpenSettings, onOpenApps }) {
-  return (
-    <>
-      <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className="absolute bottom-[52px] left-2 z-50 w-[290px] rounded-xl bg-[var(--bg-elup)] border border-[var(--bd2)] shadow-2xl py-1.5">
-        <div className="px-3.5 py-2 text-[13px] text-[var(--tx2)] truncate">nishadislamutso@gmail.com</div>
-        <Item icon={<Settings size={16} />} label="Settings" kbd="Ctrl+," onClick={onOpenSettings} />
-        <Item icon={<Globe size={16} />} label="Language" right={<span className="text-[13px] text-[var(--tx2)]">English</span>} onClick={onClose} />
-        <Item icon={<HelpCircle size={16} />} label="Get help" onClick={onClose} />
-        <div className="my-1 border-t border-[var(--bd2)]" />
-        <Item icon={<ArrowUpCircle size={16} />} label="Upgrade plan" onClick={onClose} />
-        <Item icon={<LayoutGrid size={16} />} label="Get apps and extensions" onClick={() => { onOpenApps && onOpenApps() }} />
-        <Item icon={<Info size={16} />} label="Learn more" right={<ChevronRight size={14} className="text-[var(--tx2)]" />} onClick={onClose} />
-        <div className="my-1 border-t border-[var(--bd2)]" />
-        <Item icon={<KeyRound size={16} />} label="Get API keys" right={<ExternalLink size={13} className="text-[var(--tx2)]" />} onClick={onClose} />
-        <div className="my-1 border-t border-[var(--bd2)]" />
-        <Item icon={<LogOut size={16} />} label="Log out" onClick={onClose} />
-      </div>
-    </>
-  )
-}
-
-function Item({ icon, label, kbd, right, onClick }) {
-  return (
-    <button onClick={onClick} className="w-full flex items-center gap-3 px-3.5 py-2 text-left text-[14px] text-[var(--tx)] hover:bg-[var(--bg-hover)]">
-      <span className="text-[var(--tx2)]">{icon}</span>
-      <span className="flex-1">{label}</span>
-      {kbd && <span className="text-[12px] text-[var(--tx3)]">{kbd}</span>}
-      {right}
-    </button>
-  )
+import { useRef, useState } from 'react'
+import { Settings, Globe, HelpCircle, ArrowUpCircle, Blocks, Info, KeyRound, LogOut, ChevronRight, ExternalLink, Check } from 'lucide-react'
+import useDismiss from '../hooks/useDismiss.js'
+export default function UserMenu({ onClose, onSettings, onApps, notify }) {
+  const ref = useRef(null)
+  const [language, setLanguage] = useState(false)
+  useDismiss(ref, onClose)
+  function action(callback) { onClose(); callback() }
+  return <div ref={ref} className="user-menu popup" role="menu" aria-label="Account menu">
+    <div className="menu-email">nishadislamutso@gmail.com</div>
+    <button role="menuitem" autoFocus onClick={() => action(onSettings)}><Settings size={15} /><span>Settings</span><kbd>Ctrl+,</kbd></button>
+    <button role="menuitem" onClick={() => setLanguage(!language)}><Globe size={15} /><span>Language</span><small>English</small></button>
+    {language && <div className="language-option"><Check size={13} /> English <small>Local interface</small></div>}
+    <button role="menuitem" onClick={() => action(() => notify('Run start-app.bat on your Windows laptop. Ollama uses the existing qwen2.5:3b model; the vault is vault/AI-Brain. See the app README for troubleshooting.'))}><HelpCircle size={15} /><span>Get help</span></button>
+    <div className="menu-separator" />
+    <button role="menuitem" onClick={() => action(() => notify('Local mode is free. This app is not connected to Claude billing and does not use a Claude subscription.'))}><ArrowUpCircle size={15} /><span>Upgrade plan</span></button>
+    <button role="menuitem" onClick={() => action(onApps)}><Blocks size={15} /><span>Get apps and extensions</span></button>
+    <button role="menuitem" onClick={() => action(() => notify('AI ASSistant is a local Ollama chat app with a screenshot-led Claude interface. The Markdown Obsidian vault is canonical memory; UI similarity does not mean Claude-level model intelligence.'))}><Info size={15} /><span>Learn more</span><ChevronRight size={14} /></button>
+    <div className="menu-separator" />
+    <button role="menuitem" onClick={() => action(() => notify('No API key is needed for local Ollama. Cloud providers and Claude API keys are not connected in this build.'))}><KeyRound size={15} /><span>Get API keys</span><ExternalLink size={14} /></button>
+    <div className="menu-separator" />
+    <button role="menuitem" onClick={() => action(() => notify('There is no external account to log out of. Your local chats and original vault sources have been kept.'))}><LogOut size={15} /><span>Log out</span></button>
+  </div>
 }

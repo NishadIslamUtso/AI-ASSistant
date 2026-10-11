@@ -4,6 +4,15 @@
 **Date:** 2026-10-10
 **Purpose:** Exact pixel measurements, colors, layout for apps/01_claude-exact-pixel-clone
 
+> ## ⚠️ READ `spec/MEASURED_PIXELS.md` FIRST
+>
+> The colour and layout values below are **estimates** and several are wrong.
+> On 2026-10-11 the PNGs were decoded and sampled directly; the real values are
+> sidebar **#111111 / 384px**, main **#151515**, composer **#20201f**,
+> active row **#343434**, accent **#d97757**, text **#f0efec**.
+> `spec/MEASURED_PIXELS.md` is now authoritative and is what the app uses.
+> This file is kept for the structural description of each screenshot.
+
 ## Screenshot 191547.png — Main Window
 
 ### Layout
@@ -119,23 +128,30 @@
 ## Implementation Checklist for Exact Clone
 
 ### Done (apps/01_claude-exact-pixel-clone)
-- [x] Sidebar 260px #202020, Search, +New chat, Projects Artifacts Customize, Oct8 Older groups, chat list from screenshots
-- [x] Context menu Open in new window Pin Rename Add to project Move to group Delete — UI implemented, functionality partial
-- [x] Center #1a1a1a Evening Utso greeting with orange asterisk, composer #242424 How can I help you today?
-- [x] Top Free plan Upgrade, bottom NU Utso Free avatar
-- [x] VaultPanel toggleable
-- [x] Direct Ollama streaming, vault API
+- [x] Sidebar 260px #202020, Search, New chat, Projects / Artifacts (n) / Customize, Pinned + Today + Oct 8 + Older groups, chat list seeded from the screenshots
+- [x] Context menu (191646) Open in new window / Pin / Rename / Add to project / Move to group / Delete — all six work (inline rename, confirm on delete)
+- [x] Center #1a1a1a: "Evening, Utso." greeting with the orange asterisk, composer #242424 "How can I help you today?"
+- [x] Top Free plan · Upgrade, bottom NU Utso Free avatar
+- [x] Direct Ollama streaming + vault API
+- [x] Settings modal (191707): left nav General→Connectors + Appearance (Theme System/Light/Dark, Chat font, Transcript size, Width, Motion, Voice Language/Style/Speed), persisted, really applied
+- [x] User menu (191608): email header + Settings, Language, Get help, Upgrade plan, Get apps and extensions, Learn more, Get API keys, Log out
+- [x] Apps and extensions modal (191636): Claude Code, Microsoft 365, AI ASSistant Chrome extension, Capsule Hub, inline suggestions
+- [x] File / Edit / View / Go / Help menu bar (191558), custom bar for the web build with live Ollama + Vault status dots
+- [x] Composer bottom row is real: attach (+), Project dropdown, **model selector listing Ollama models**, effort (Medium), thinking (Manual), send
+- [x] Artifact runner: HTML/SVG sandboxed preview + code tab + copy/download/save-to-vault. **Only created when explicitly asked** (the Tic Tac Toe loop fix)
+- [x] Search filters the chat list in real time
+- [x] Pin / Rename / Delete / Move to group / Add to project all functional
+- [x] Theme switcher: system / light / dark, remembers the choice, CSS-variable driven
+- [x] File + image upload; images only sent to vision-capable models
+- [x] Thinking display for `<think>` blocks
+- [x] Capsule drag-drop injection from the AI-Brain panel into the composer
+- [x] Never-check blacklist manager + Today (Current Snapshot / Open Loops / journal path)
 
-### Missing (Need to Implement) — updated 2026-10-10 Arena session
-- [x] Settings modal Appearance from 191707.png — SettingsModal.jsx, live settings
-- [x] User menu from 191608.png — UserMenu.jsx
-- [x] Apps and extensions modal from 191636.png — AppsExtensionsModal.jsx
-- [x] Model selector listing Ollama models — ModelSelector.jsx (Project dropdown itself still static)
-- [x] Artifact runner — ArtifactPanel.jsx Preview (sandboxed iframe) + Code tabs
-- [x] Search functionality — filters chat list (kept from v1)
-- [x] Pin Rename Delete functionality in context menu — plus Add-to-project / Move-to-group submenus, Open in new window
-- [x] Theme switcher — system/light/dark, remembered in claude_exact_settings
-- [ ] File Edit View Go Help menu bar — Electron menu, for web hide (P9)
+### Still Missing
+- [ ] Native Windows title bar + menu (Electron wrapper) — the web build uses a custom bar
+- [ ] Journal draft generation and follow-up controls on the Today tab
+- [ ] Windows installer
+- [ ] Confirmation from the user that it matches the screenshots on their actual screen
 
 ## Pixel Measurements (Approximate from Screenshots)
 

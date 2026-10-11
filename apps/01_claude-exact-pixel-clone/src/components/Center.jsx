@@ -1,62 +1,43 @@
-import { useState, useEffect, useRef } from 'react'
-import { Plus, Mic, ChevronDown, ArrowUp, Bell, Minus, Square, X, Package, Folder } from 'lucide-react'
-import ModelSelector from './ModelSelector.jsx'
-import { extractArtifacts } from '../lib/artifacts.js'
-import { getGreeting, todayLabel, TRANSCRIPT_SIZE, TRANSCRIPT_WIDTH } from '../lib/defaults.js'
-
-export function ClaudeLogo({ size = 20 }) {
-  const spokes = Array.from({ length: 12 }, (_, i) => i * 30)
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" className="shrink-0">
-      {spokes.map(a => (
-        <rect key={a} x="11.15" y="1.5" width="1.7" height="8.5" rx="0.85" fill="var(--accent)" transform={`rotate(${a} 12 12)`} />
-      ))}
-    </svg>
-  )
+import { useEffect, useRef } from 'react'
+import { Code2, FileText, Image, RefreshCw } from 'lucide-react'
+import ClaudeMark from './ClaudeMark.jsx'
+import Composer from './Composer.jsx'
+import Markdown from './Markdown.jsx'
+import ThinkingDisplay from './ThinkingDisplay.jsx'
+export function getGreeting(date = new Date()) {
+  const hour = Number(new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Dhaka', hour: 'numeric', hourCycle: 'h23' }).format(date))
+  return hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening'
 }
-
-function Waveform({ size = 16 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor">
-      <rect x="1" y="6" width="1.6" height="4" rx="0.8" />
-      <rect x="4" y="4" width="1.6" height="8" rx="0.8" />
-      <rect x="7" y="2" width="1.6" height="12" rx="0.8" />
-      <rect x="10" y="5" width="1.6" height="6" rx="0.8" />
-      <rect x="13" y="7" width="1.6" height="2" rx="0.8" />
-    </svg>
-  )
-}
-
-// Top-level so the textarea keeps focus across re-renders.
-function Composer({ input, setInput, send, widthCls, placeholder }) {
-  return (
-    <div className={`w-full ${widthCls} bg-[var(--bg-el)] border border-[var(--bd2)] rounded-2xl p-4 shadow-sm`}>
-      <textarea
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
-        placeholder={placeholder}
-        rows={Math.min(8, Math.max(1, input.split('\n').length))}
-        className="w-full bg-transparent resize-none outline-none text-[15px] leading-6 text-[var(--tx)] placeholder-[var(--tx3)]"
-      />
-      <div className="flex items-center justify-between mt-2">
-        <button className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--tx2)] hover:bg-[var(--bg-hover)]" title="Add files (P5 upload)">
-          <Plus size={18} />
-        </button>
-        <div className="flex items-center gap-2">
-          {input.trim() && (
-            <button onClick={send} className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center hover:bg-[#e6e6e6]" title="Send">
-              <ArrowUp size={17} />
-            </button>
-          )}
-          <button className="p-1.5 rounded-md text-[var(--tx2)] hover:text-[var(--tx)]" title="Voice (see Settings)"><Mic size={17} /></button>
-          <button className="p-1.5 rounded-md text-[var(--tx2)] hover:text-[var(--tx)] flex items-center gap-1" title="Voice mode">
-            <Waveform size={16} /> <ChevronDown size={13} />
-          </button>
-        </div>
+export default function Center({ seed, chat, onArtifact, onRetryCapture, settings, notify, onExternalLink, ...composerProps }) {
+  const transcript = useRef(null)
+  const messages = chat?.messages || []
+  useEffect(() => {
+    const element = transcript.current
+    if (element && element.scrollHeight - element.scrollTop - element.clientHeight < 260) element.scrollTo({ top: element.scrollHeight, behavior: settings.motion === 'Reduced' ? 'instant' : 'smooth' })
+  }, [messages, settings.motion])
+  const hasMessages = messages.length > 0
+  return <main className={`center ${hasMessages ? 'has-messages' : 'home'}`} data-model-ready={composerProps.models.available}>
+    {!hasMessages && <div className="free-plan"><span>Free plan</span><span>·</span><button onClick={() => notify('This is a free local Ollama app. Claude plans and billing are not connected.')}>Upgrade</button></div>}
+    {hasMessages ? <>
+      <header className="chat-header"><h1>{chat.title}</h1><small>Local · {composerProps.models.model}</small></header>
+      <div className="transcript-scroll" ref={transcript}><div className="transcript" key={chat.id}>
+        {messages.map(message => <article key={message.id} className={`message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`} aria-label={message.role === 'user' ? 'Your message' : 'Assistant response'}>
+          {message.role === 'assistant' && <ClaudeMark size={23} />}
+          <div className="message-body"><ThinkingDisplay thinking={message.thinking} streaming={message.status === 'streaming'} />
+            {message.role === 'user' ? <div className="user-text">{message.content}</div> : <Markdown onExternalLink={onExternalLink}>{message.content}</Markdown>}
+            {message.attachments?.length > 0 && <div className="sent-attachments">{message.attachments.map(file => <span key={file.id}>{file.kind === 'image' ? <Image size={13} /> : <FileText size={13} />}{file.name}</span>)}</div>}
+            {message.context && <details className="sent-context"><summary>Included vault context</summary><pre>{message.context}</pre></details>}
+            {message.status === 'streaming' && !message.content && !message.thinking && <p className="generating">Responding locally…</p>}
+            {message.error && <p className={message.status === 'error' ? 'error-text response-error' : 'muted'} role={message.status === 'error' ? 'alert' : undefined}>{message.error}</p>}
+            {message.artifacts?.map(artifact => <button key={artifact.id} className="artifact-message-card" onClick={() => onArtifact(artifact.id)}><Code2 size={20} /><span><strong>{artifact.title}</strong><small>{artifact.type === 'html' ? 'HTML Application' : 'SVG Image'} · Open preview</small></span></button>)}
+          </div>
+        </article>)}
+      </div></div>
+      <div className="reply-composer"><Composer chat={chat} notify={notify} seed={seed} {...composerProps} />
+        <div className="chat-save-status">{chat.vaultStatus === 'saved' ? 'Saved in local chat history and AI-Brain' : chat.vaultStatus === 'saving' ? 'Saving to AI-Brain…' : chat.vaultStatus === 'error' ? <><span title={chat.vaultError}>Local chat kept · vault capture failed</span><button onClick={() => onRetryCapture(chat)}><RefreshCw size={11} />Retry</button></> : 'Local chat history · check important answers'}</div>
       </div>
-    </div>
-  )
+    </> : <div className="home-content"><div className="greeting"><ClaudeMark size={28} /><h1>{getGreeting()}, Utso</h1></div><Composer chat={chat} notify={notify} seed={seed} {...composerProps} /></div>}
+  </main>
 }
 
 export default function Center({ settings, chats, setChats, currentChat, setCurrentChat, messages, updateMessages, onOpenArtifact, artifacts }) {

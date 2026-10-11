@@ -1,208 +1,56 @@
 import { useState } from 'react'
-import {
-  X, Search, Settings, UserRound, ShieldCheck, CreditCard, Briefcase, BrainCog,
-  Sunrise, MoonStar, TerminalSquare, Monitor, Plug, Wrench, Sparkles, Grid2x2,
-  Sun, Moon, ChevronDown, Check,
-} from 'lucide-react'
-
-// Settings modal from screenshot 191707.png.
-// Appearance controls are live: theme, chat font, transcript size, width, motion, voice.
-// Stored in localStorage key claude_exact_settings.
-
-const NAV = [
-  { section: 'Settings', items: [
-    { id: 'General', icon: Settings },
-    { id: 'Account', icon: UserRound },
-    { id: 'Privacy', icon: ShieldCheck },
-    { id: 'Billing', icon: CreditCard },
-    { id: 'Capabilities', icon: Briefcase },
-    { id: 'Memory', icon: BrainCog },
-    { id: 'Reflect', icon: Sunrise },
-    { id: 'Time and focus', icon: MoonStar },
-    { id: 'Claude Code', icon: TerminalSquare },
-  ]},
-  { section: 'This computer', items: [
-    { id: 'System', icon: Monitor },
-    { id: 'Extensions', icon: Plug },
-    { id: 'Developer', icon: Wrench },
-  ]},
-  { section: 'Customize', items: [
-    { id: 'Skills', icon: Sparkles },
-    { id: 'Connectors', icon: Grid2x2 },
-  ]},
+import { Settings, CircleUserRound, Shield, CreditCard, Briefcase, History, Bell, MoonStar, Code2, Monitor, Plug, Wrench, ScrollText, Blocks, Search, X, Sun, Moon } from 'lucide-react'
+import Dialog from './Dialog.jsx'
+import BlacklistManager from './BlacklistManager.jsx'
+const navigation = [
+  ['Settings', [['General', Settings], ['Account', CircleUserRound], ['Privacy', Shield], ['Billing', CreditCard], ['Capabilities', Briefcase], ['Memory', History], ['Reflect', Bell], ['Time and focus', MoonStar], ['Claude Code', Code2]]],
+  ['This computer', [['System', Monitor], ['Extensions', Plug], ['Developer', Wrench]]],
+  ['Customize', [['Skills', ScrollText], ['Connectors', Blocks]]],
 ]
-
-export default function SettingsModal({ settings, setSettings, onClose, onOpenApps }) {
-  const [tab, setTab] = useState('General')
-  const [query, setQuery] = useState('')
-
-  function set(patch) { setSettings(prev => ({ ...prev, ...patch })) }
-
-  return (
-    <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center" onClick={onClose}>
-      <div
-        className="w-[calc(100%-140px)] h-[calc(100%-96px)] max-w-[1500px] rounded-xl bg-[var(--bg-main)] border border-[var(--bd)] shadow-2xl flex overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* left nav */}
-        <div className="w-[240px] shrink-0 bg-[var(--bg-side)] border-r border-[var(--bd)] flex flex-col">
-          <div className="p-3">
-            <div className="relative">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tx3)]" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search"
-                className="w-full h-9 bg-[var(--bg-hover)] rounded-lg pl-9 pr-3 text-[14px] text-[var(--tx)] placeholder-[var(--tx3)] outline-none"
-              />
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto px-3 pb-4">
-            {NAV.map(sec => {
-              const items = sec.items.filter(i => i.id.toLowerCase().includes(query.toLowerCase()))
-              if (!items.length) return null
-              return (
-                <div key={sec.section} className="mb-3">
-                  <div className="px-2 pt-2 pb-1 text-[12px] text-[var(--tx2)]">{sec.section}</div>
-                  {items.map(i => (
-                    <button
-                      key={i.id}
-                      onClick={() => setTab(i.id)}
-                      className={`w-full flex items-center gap-2.5 px-2 py-[7px] rounded-lg text-[14px] ${tab === i.id ? 'bg-[var(--bg-hover)] text-[var(--tx)]' : 'text-[var(--tx)] hover:bg-[var(--bg-hover)]'}`}
-                    >
-                      <i.icon size={16} className="text-[var(--tx2)]" /> {i.id}
-                    </button>
-                  ))}
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* right content */}
-        <div className="flex-1 relative overflow-y-auto">
-          <button onClick={onClose} className="absolute right-5 top-5 p-1.5 rounded-md text-[var(--tx2)] hover:text-[var(--tx)] hover:bg-[var(--bg-hover)]" title="Close"><X size={18} /></button>
-          <div className="px-10 py-8 max-w-[1100px]">
-            {tab === 'General' && (
-              <>
-                <h2 className="text-[19px] font-semibold mb-6">Appearance</h2>
-
-                <Row label="Theme">
-                  <div className="flex items-center bg-[var(--bg-hover)] rounded-lg p-0.5">
-                    <ThemeBtn active={settings.theme === 'system'} onClick={() => set({ theme: 'system' })} title="System"><Monitor size={16} /></ThemeBtn>
-                    <ThemeBtn active={settings.theme === 'light'} onClick={() => set({ theme: 'light' })} title="Light"><Sun size={16} /></ThemeBtn>
-                    <ThemeBtn active={settings.theme === 'dark'} onClick={() => set({ theme: 'dark' })} title="Dark"><Moon size={16} /></ThemeBtn>
-                  </div>
-                </Row>
-
-                <Row label="Chat font">
-                  <Dropdown
-                    value={settings.chatFont}
-                    options={['Anthropic Serif', 'Sans']}
-                    onChange={(v) => set({ chatFont: v })}
-                    serif={settings.chatFont === 'Anthropic Serif'}
-                  />
-                </Row>
-
-                <Row label="Transcript text size" sub="Size of the conversation transcript text.">
-                  <Segmented value={settings.transcriptSize} options={['Small', 'Medium', 'Large']} onChange={(v) => set({ transcriptSize: v })} />
-                </Row>
-
-                <Row label="Transcript width" sub="Maximum width of the transcript and composer columns.">
-                  <Segmented value={settings.width} options={['Narrow', 'Medium', 'Wide']} onChange={(v) => set({ width: v })} />
-                </Row>
-
-                <Row label="Motion" sub="Reduce animation in streaming responses and other interface elements.">
-                  <Segmented value={settings.motion} options={['System', 'Reduced']} onChange={(v) => set({ motion: v })} />
-                </Row>
-
-                <h2 className="text-[19px] font-semibold mt-10 mb-4">Voice</h2>
-                <Row label="Language"><Dropdown value={settings.voiceLang} options={['English']} onChange={(v) => set({ voiceLang: v })} /></Row>
-                <Row label="Style"><Dropdown value={settings.voiceStyle} options={['Buttery', 'Friendly', 'Calm']} onChange={(v) => set({ voiceStyle: v })} /></Row>
-                <Row label="Speed"><Dropdown value={settings.voiceSpeed} options={['Slow', 'Normal', 'Fast']} onChange={(v) => set({ voiceSpeed: v })} /></Row>
-              </>
-            )}
-
-            {tab === 'Extensions' && (
-              <>
-                <h2 className="text-[19px] font-semibold mb-4">Extensions</h2>
-                <p className="text-[14px] text-[var(--tx2)] mb-4">Chrome extension (local-only collector + Capsule Hub + Quillbot) and vault driver integrations.</p>
-                <button onClick={() => { onClose(); onOpenApps && onOpenApps() }} className="bg-white text-black text-[14px] font-medium rounded-lg px-4 py-2">Open Apps and extensions</button>
-              </>
-            )}
-
-            {tab !== 'General' && tab !== 'Extensions' && (
-              <>
-                <h2 className="text-[19px] font-semibold mb-4">{tab}</h2>
-                <p className="text-[14px] text-[var(--tx2)]">The {tab} panel is part of the Claude layout spec. Local build: nothing to configure here yet — settings live in General, Extensions and the vault (00 System/).</p>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+function Segments({ label, options, value, onChange, icons }) {
+  return <div className="segmented" role="group" aria-label={label}>{options.map((option, index) => <button key={option} aria-label={option} aria-pressed={value === option} className={value === option ? 'selected' : ''} onClick={() => onChange(option)}>{icons ? icons[index] : option}</button>)}</div>
 }
-
-function Row({ label, sub, children }) {
-  return (
-    <div className="flex items-center justify-between gap-6 py-5 border-b border-[var(--bd)]">
-      <div>
-        <div className="text-[15px] text-[var(--tx)]">{label}</div>
-        {sub && <div className="text-[13px] text-[var(--tx2)] mt-1">{sub}</div>}
-      </div>
-      <div className="shrink-0">{children}</div>
-    </div>
-  )
+function Row({ label, description, children }) {
+  return <div className={`settings-row ${description ? 'with-description' : ''}`}><div><div>{label}</div>{description && <p>{description}</p>}</div>{children}</div>
 }
-
-function ThemeBtn({ active, onClick, title, children }) {
-  return (
-    <button
-      onClick={onClick}
-      title={title}
-      className={`w-10 h-8 flex items-center justify-center rounded-md ${active ? 'bg-[var(--bg-sel)] text-[var(--tx)]' : 'text-[var(--tx2)] hover:text-[var(--tx)]'}`}
-    >
-      {children}
-    </button>
-  )
+function Select({ label, value, options, onChange }) {
+  return <select aria-label={label} value={value} onChange={event => onChange(event.target.value)}>{options.map(option => <option key={option}>{option}</option>)}</select>
 }
-
-function Segmented({ value, options, onChange }) {
-  return (
-    <div className="flex items-center bg-[var(--bg-hover)] rounded-lg p-0.5">
-      {options.map(o => (
-        <button
-          key={o}
-          onClick={() => onChange(o)}
-          className={`px-4 h-8 rounded-md text-[14px] ${value === o ? 'bg-[var(--bg-sel)] text-[var(--tx)] border border-[var(--bd2)]' : 'text-[var(--tx2)] hover:text-[var(--tx)]'}`}
-        >
-          {o}
-        </button>
-      ))}
+export default function SettingsModal({ settings, setSettings, onClose, onApps, onVault, models }) {
+  const [active, setActive] = useState('General')
+  const [search, setSearch] = useState('')
+  const update = (key, value) => setSettings(previous => ({ ...previous, [key]: value }))
+  return <Dialog onClose={onClose} className="settings-dialog" labelledBy="settings-title">
+    <aside className="settings-nav">
+      <label className="settings-search"><Search size={17} /><input aria-label="Search settings" placeholder="Search" value={search} onChange={event => setSearch(event.target.value)} /></label>
+      <nav aria-label="Settings sections">{navigation.map(([heading, items]) => <div key={heading}><p>{heading}</p>{items.filter(([name]) => name.toLowerCase().includes(search.toLowerCase())).map(([name, Icon]) => <button key={name} onClick={() => setActive(name)} className={active === name ? 'selected' : ''} aria-current={active === name ? 'page' : undefined}><Icon size={18} />{name}</button>)}</div>)}</nav>
+    </aside>
+    <div className="settings-main">
+      <button className="icon-button settings-close" aria-label="Close settings" onClick={onClose}><X size={19} /></button>
+      {active === 'General' ? <>
+        <h2 id="settings-title">Appearance</h2>
+        <Row label="Theme"><Segments label="Theme" options={['system', 'light', 'dark']} icons={[<Monitor key="system" size={19} />, <Sun key="light" size={19} />, <Moon key="dark" size={19} />]} value={settings.theme} onChange={value => update('theme', value)} /></Row>
+        <Row label="Chat font"><Select label="Chat font" options={['Anthropic Serif', 'System', 'Monospace']} value={settings.chatFont} onChange={value => update('chatFont', value)} /></Row>
+        <Row label="Transcript text size" description="Size of the conversation transcript text."><Segments label="Transcript text size" options={['Small', 'Medium', 'Large']} value={settings.transcriptSize} onChange={value => update('transcriptSize', value)} /></Row>
+        <Row label="Transcript width" description="Maximum width of the transcript and composer columns."><Segments label="Transcript width" options={['Narrow', 'Medium', 'Wide']} value={settings.transcriptWidth} onChange={value => update('transcriptWidth', value)} /></Row>
+        <Row label="Motion" description="Reduce animation in streaming responses and other interface elements."><Segments label="Motion" options={['System', 'Reduced']} value={settings.motion} onChange={value => update('motion', value)} /></Row>
+        <h2 className="voice-heading">Voice</h2>
+        <Row label="Language"><Select label="Voice language" options={['English', 'Bengali']} value={settings.voiceLanguage} onChange={value => update('voiceLanguage', value)} /></Row>
+        <Row label="Style"><Select label="Voice style" options={['Buttery', 'Calm']} value={settings.voiceStyle} onChange={value => update('voiceStyle', value)} /></Row>
+        <Row label="Speed"><Select label="Voice speed" options={['Slow', 'Normal', 'Fast']} value={settings.voiceSpeed} onChange={value => update('voiceSpeed', value)} /></Row>
+        <p className="settings-footnote">Voice preferences are saved locally. A speech engine is not connected in this build.</p>
+      </> : <>
+        <h2 id="settings-title">{active}</h2>
+        {active === 'Account' && <div className="settings-copy"><h3>Utso</h3><p>nishadislamutso@gmail.com</p><p>This is the profile from your screenshot, not an authenticated Claude account. No external sign-in is used.</p></div>}
+        {active === 'Privacy' && <><p className="settings-copy">Local-first. Excluded sources are denied at the vault API. Passwords, cookies, tokens, payment fields and unsent drafts must never be captured. Browser-side scope sync still needs end-to-end verification.</p><BlacklistManager /></>}
+        {active === 'Billing' && <p className="settings-copy">Local mode is free. There is no Claude subscription, billing connection or upgrade in this app.</p>}
+        {active === 'Capabilities' && <div className="settings-copy"><p>Selected model: <strong>{models.model}</strong></p><p>Text chat and text/code attachments run locally.</p><p>Vision: {models.capabilities.vision ? 'verified by Ollama /api/show' : 'unavailable or not verified'}</p><p>Thinking: {models.capabilities.thinking ? 'verified by Ollama /api/show' : 'unavailable or not verified'}</p><p>Model capabilities are not inferred from names. This UI does not make qwen2.5:3b as capable as Claude.</p></div>}
+        {active === 'Memory' && <div className="settings-copy"><p>Canonical memory: the Markdown files in vault/AI-Brain. The app does not create a second authoritative database.</p><button className="secondary-button" onClick={() => { onClose(); onVault() }}>Open AI-Brain vault</button></div>}
+        {active === 'System' && <div className="settings-copy"><p>AI ASSistant 0.2.0 · Vite web build</p><p>Ollama: 127.0.0.1:11434</p><p>Vault driver: 127.0.0.1:8765</p><p>Browser requests are proxied through this app. A native Windows title bar and menu will require the pending Electron wrapper.</p></div>}
+        {active === 'Extensions' && <div className="settings-copy"><p>The local MV3 collector lives in the repository’s extension folder. Chrome installation and capture still require Windows/Chrome testing.</p><button className="secondary-button" onClick={onApps}>Apps and extensions</button></div>}
+        {active === 'Developer' && <div className="settings-copy"><p>npm test · npm run build · npm run test:e2e</p><p>No native build tools or model downloads are needed. If Ollama is offline, run your existing Ollama installation and refresh the model list.</p></div>}
+        {!['Account', 'Privacy', 'Billing', 'Capabilities', 'Memory', 'System', 'Extensions', 'Developer'].includes(active) && <p className="settings-copy">{active} is a screenshot-matched navigation entry. Its runtime integration is not implemented yet; no background action is enabled.</p>}
+      </>}
     </div>
-  )
-}
-
-function Dropdown({ value, options, onChange, serif }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <div className="relative">
-      <button onClick={() => setOpen(v => !v)} className={`flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[var(--bg-hover)] text-[15px] text-[var(--tx)] ${serif ? 'serif' : ''}`}>
-        {value} <ChevronDown size={15} className="text-[var(--tx2)]" />
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-9 z-20 w-44 rounded-xl bg-[var(--bg-elup)] border border-[var(--bd2)] shadow-2xl py-1.5">
-            {options.map(o => (
-              <button key={o} onClick={() => { onChange(o); setOpen(false) }} className={`w-full flex items-center justify-between px-3 py-1.5 text-left text-[14px] hover:bg-[var(--bg-hover)] ${o === value ? 'text-[var(--tx)]' : 'text-[var(--tx2)]'}`}>
-                {o} {o === value && <Check size={14} />}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  )
+  </Dialog>
 }

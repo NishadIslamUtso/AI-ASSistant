@@ -1,34 +1,46 @@
-import { useState } from 'react'
-import { X, Package, Code2, Eye } from 'lucide-react'
-
-// Artifact runner (TODO_NEXT P3, ported concept from 02_electron ArtifactPanel):
-// right-hand panel with Preview (sandboxed iframe) and Code tabs.
-export default function ArtifactPanel({ artifact, onClose }) {
-  const [tab, setTab] = useState('preview')
-  return (
-    <div className="w-[520px] max-w-[60vw] shrink-0 h-screen flex flex-col bg-[var(--bg-side)] border-l border-[var(--bd)]">
-      <div className="h-12 shrink-0 flex items-center gap-2 px-4 border-b border-[var(--bd)]">
-        <Package size={16} className="text-[var(--accent)]" />
-        <span className="text-[14px] font-medium text-[var(--tx)] truncate">{artifact.title}</span>
-        <span className="text-[11px] text-[var(--tx2)] border border-[var(--bd2)] rounded px-1.5 py-0.5">HTML Application</span>
-        <div className="flex-1" />
-        <div className="flex items-center bg-[var(--bg-hover)] rounded-lg p-0.5">
-          <button onClick={() => setTab('preview')} className={`flex items-center gap-1.5 px-3 h-7 rounded-md text-[12px] ${tab === 'preview' ? 'bg-[var(--bg-sel)] text-[var(--tx)]' : 'text-[var(--tx2)]'}`}>
-            <Eye size={13} /> Preview
-          </button>
-          <button onClick={() => setTab('code')} className={`flex items-center gap-1.5 px-3 h-7 rounded-md text-[12px] ${tab === 'code' ? 'bg-[var(--bg-sel)] text-[var(--tx)]' : 'text-[var(--tx2)]'}`}>
-            <Code2 size={13} /> Code
-          </button>
-        </div>
-        <button onClick={onClose} className="p-1.5 rounded-md text-[var(--tx2)] hover:text-[var(--tx)]" title="Close"><X size={16} /></button>
-      </div>
-      <div className="flex-1 min-h-0">
-        {tab === 'preview' ? (
-          <iframe title={artifact.title} sandbox="allow-scripts" srcDoc={artifact.content} className="w-full h-full bg-white border-0" />
-        ) : (
-          <pre className="w-full h-full overflow-auto p-4 text-[12px] leading-5 text-[var(--tx)] font-mono whitespace-pre-wrap">{artifact.content}</pre>
-        )}
-      </div>
-    </div>
-  )
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Code2, Eye, X, Copy, Download, RefreshCw, Save, FileCode2 } from 'lucide-react'
+import { artifactSource, buildPreviewHtml } from '../lib/artifacts.js'
+import { newId } from '../lib/storage.js'
+export default function ArtifactPanel({ artifact, onClose, onSave, notify }) {
+  const [view, setView] = useState('preview')
+  const [version, setVersion] = useState(artifact.versions.length - 1)
+  const [draft, setDraft] = useState(artifactSource(artifact))
+  const [reload, setReload] = useState(0)
+  const [error, setError] = useState('')
+  const frame = useRef(null)
+  const channel = useRef(newId())
+  const source = artifactSource(artifact, version)
+  const dirty = draft !== source
+  const html = useMemo(() => buildPreviewHtml(source, channel.current), [source])
+  useEffect(() => { setVersion(artifact.versions.length - 1) }, [artifact.versions.length])
+  useEffect(() => { setDraft(source); setError('') }, [source])
+  useEffect(() => {
+    const onMessage = event => {
+      if (event.source === frame.current?.contentWindow && event.data?.channel === channel.current && event.data?.type === 'ai-assistant-artifact-error' && typeof event.data.message === 'string') setError(event.data.message.slice(0, 500))
+    }
+    window.addEventListener('message', onMessage)
+    return () => window.removeEventListener('message', onMessage)
+  }, [])
+  async function copy() {
+    try { await navigator.clipboard.writeText(draft); notify('Artifact source copied.') } catch { notify('Clipboard permission is unavailable. Select and copy the source instead.') }
+  }
+  function download() {
+    const blob = new Blob([draft], { type: artifact.type === 'svg' ? 'image/svg+xml' : 'text/html' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url; link.download = `${artifact.title.replace(/[^a-z0-9_-]/gi, '-').slice(0, 60) || 'artifact'}.${artifact.type === 'svg' ? 'svg' : 'html'}`
+    link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000)
+    notify('Source downloaded. Review it before running outside the sandbox; the exported source is not network-isolated.')
+  }
+  return <aside className="artifact-panel side-panel" aria-label="Artifact workbench">
+    <header className="panel-header"><div><h2>{artifact.title}</h2><small>{artifact.type === 'html' ? 'HTML Application' : 'SVG Image'}</small></div><button className="icon-button" aria-label="Close artifact" onClick={onClose}><X size={17} /></button></header>
+    <div className="artifact-toolbar"><div className="panel-tabs"><button className={view === 'preview' ? 'selected' : ''} onClick={() => { if (dirty) { notify('Save your source as a new version before previewing changes.'); return } setView('preview') }}><Eye size={14} />Preview</button><button className={view === 'source' ? 'selected' : ''} onClick={() => setView('source')}><Code2 size={14} />Source</button></div><div><button className="icon-button" aria-label="Copy artifact source" onClick={copy}><Copy size={14} /></button><button className="icon-button" aria-label="Download artifact source" onClick={download}><Download size={14} /></button></div></div>
+    <div className="workbench-file"><FileCode2 size={14} /><span>{artifact.type === 'html' ? 'index.html' : 'image.svg'}</span><select aria-label="Artifact version" value={version} onChange={event => setVersion(Number(event.target.value))}>{artifact.versions.map((entry, index) => <option key={index} value={index}>Version {index + 1}{entry.edited ? ' · edited' : ''}</option>)}</select>{view === 'preview' && <button className="icon-button" aria-label="Refresh artifact preview" onClick={() => { setError(''); setReload(value => value + 1) }}><RefreshCw size={14} /></button>}</div>
+    {view === 'source' ? <><textarea className="source-editor" aria-label="Artifact source editor" spellCheck={false} value={draft} onChange={event => setDraft(event.target.value)} /><div className="source-actions"><small>{dirty ? 'Unsaved source changes' : 'Source kept in local chat history'}</small><button className="secondary-button" disabled={!dirty || !draft.trim() || draft.length > 200_000} onClick={() => onSave(artifact.id, draft)}><Save size={14} />Save version</button></div></> : <>
+      {error && <p className="preview-error" role="alert">Preview error: {error}</p>}
+      <iframe key={`${version}-${reload}`} ref={frame} title={`Artifact preview: ${artifact.title}`} srcDoc={html} sandbox="allow-scripts" referrerPolicy="no-referrer" />
+    </>}
+    <footer className="panel-footnote">Isolated preview · no network, vault access, forms or popups.<br />HTML/inline JS and SVG only. React/CDN and shell execution are not supported.</footer>
+  </aside>
 }

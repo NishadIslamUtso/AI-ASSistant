@@ -1,6 +1,6 @@
 # HANDOVER_LIVING.md — Current State + Gaps (Living)
 
-**Last Updated:** 2026-10-10 20:45 Asia/Dhaka
+**Last Updated:** 2026-10-11 22:10 Asia/Dhaka
 **Purpose:** Give any AI/developer enough context to continue without relying on previous AI memory. Update every session.
 
 ## 1. Executive Summary
@@ -17,6 +17,9 @@ User Utso wants AI ASSistant native Windows app that looks exactly like Claude d
 ## 2. What Works (Tested in Sandbox)
 
 - [x] Exact clone UI: Sidebar 260px #202020 Search +New Projects Artifacts Customize Oct8 Older, context menu, Center #1a1a1a Evening Utso + composer #242424, Free plan Upgrade, NU Utso Free bottom — matches screenshots
+- [x] (2026-10-10 22:40) Settings (191707), User menu (191608), Apps & extensions (191636), menu bar (191558) all built and working
+- [x] (2026-10-10 22:40) Model selector, artifact runner, uploads, thinking panel, capsule drag-drop, blacklist manager, Today tab
+- [x] (2026-10-10 22:40) `npx vite build` clean; 4 headless jsdom smoke suites pass with 0 console errors
 - [x] Direct Ollama fetch http://127.0.0.1:11434/api/chat qwen2.5:3b streaming (no download, uses existing)
 - [x] Vault API server/vault-api.cjs at 127.0.0.1:8765 with /context + /capture endpoints
 - [x] localStorage claude_exact_chats with defaults from screenshots
@@ -28,22 +31,52 @@ User Utso wants AI ASSistant native Windows app that looks exactly like Claude d
 
 ## 3. What Doesn't Work / Gaps
 
-### Exact Clone Gaps (apps/01_claude-exact-pixel-clone)
-- [x] Settings modal 191707.png — DONE 2026-10-10 (SettingsModal.jsx, live settings in claude_exact_settings)
-- [x] User menu 191608.png — DONE 2026-10-10 (UserMenu.jsx)
-- [x] Apps and extensions modal 191636.png — DONE 2026-10-10 (AppsExtensionsModal.jsx)
-- [x] Model selector — DONE 2026-10-10 (ModelSelector.jsx lists Ollama /api/tags, fallback qwen2.5:3b, localStorage selected_model); Project dropdown itself still static
-- [x] Artifact runner — DONE 2026-10-10 (ArtifactPanel.jsx preview+code, lib/artifacts.js extraction, sidebar count)
-- [x] Context menu functionality — DONE 2026-10-10 (pin/rename/delete/add-to-project/move-to-group/open-in-new-window)
-- [x] Per-chat message persistence — DONE 2026-10-10 (claude_exact_messages)
-- [ ] File Edit View Go Help menu bar — Electron menu needed, currently Vite web only
-- [ ] File upload, image upload — missing (P5)
-- [ ] Thinking display — missing (P5)
-- [ ] Capsule drag-drop inject + Quillbot inline suggestions — requires extension integration + VaultPanel enhancement (VaultPanel now lists capsules from /context with search; drag-drop/blacklist/Open Loops/Current Snapshot still P7)
-- [ ] Today view with Current Snapshot, journal draft, follow-ups — not implemented
-- [ ] Journal auto-generation — not implemented
-- [ ] Monthly audit — not implemented
-- [ ] Windows installer — only bat dev scripts
+### Exact Clone Gaps (apps/01_claude-exact-pixel-clone) — updated 2026-10-10 22:40
+
+**Closed this session (verified in a headless jsdom harness, NOT yet on the user's PC):**
+- [x] Settings modal Appearance from 191707.png (Theme, Chat font, Transcript size, Width, Motion, Voice) + left nav
+- [x] File Edit View Go Help menu bar (191558) — custom bar in the web build
+- [x] User menu (191608)
+- [x] Apps and extensions modal (191636)
+- [x] Model selector functional (Ollama /api/tags) + effort + thinking controls
+- [x] Artifact runner, strict "only when explicitly asked" rule
+- [x] File upload + image upload with model-aware vision handling
+- [x] Thinking display
+- [x] Capsule drag-drop inject + blacklist manager + Today tab in the AI-Brain panel
+- [x] Ollama CORS — removed as a problem by the /ollama and /vault dev proxies
+
+**Closed 2026-10-11 (best-of cherry-picks, no branch merged):**
+- [x] **Palette is the user's:** main `#1a1a1a`, sidebar `#202020` (260px), composer `#242424`,
+      hover `#2a2a2a`, active `#303030`, text `#e0e0e0`, accent `#ff8c00`. Measurements were
+      shipped briefly and then **reverted on the user's instruction**; they are now reference
+      only and govern geometry the user never specified (toolbar 48px, radius 18px, greeting
+      44px, transcript widths, grouped settings nav). `spec/MEASURED_PIXELS.md`, `tools/pngread.py`.
+- [x] Claude Spark starburst SVG (from `abc0197f`)
+- [x] Accessible `Dialog` primitive, artifact-preview CSP, negative-intent detection (from `01199af1`)
+- [x] TodayView with follow-up answer/skip/snooze/stop (from `brain01`)
+- [x] `server/mock-ollama.cjs` for previews — never started by `start-app.bat`
+- [x] 20 unit tests + 4 jsdom UI smoke tests
+
+**Closed 2026-10-11 22:10 (UI/UX adopted from 01199af1, nothing merged):**
+- [x] Whole UI layer replaced with the 01199af1 implementation at the user's request
+- [x] Windows title bar and Today view kept on top of it
+- [x] Vault API adopted from that branch: traversal/symlink refusal, host-correct
+      never-check matching, Asia/Dhaka dates, revision archiving, honest write
+      acknowledgements. `/today`, `/status`, `artifact`, `journal` ported back.
+- [x] 48 unit/integration tests + 5 jsdom UI tests, all passing
+- [x] **No branch merged. PR #8 open.**
+
+**Still open:**
+- [ ] **Not tested on the user's Windows machine** — this is the single most important open item
+- [ ] Journal draft *generation* (the Today view reads a draft if one exists but does not write one)
+- [ ] Journal auto-generation from captured sources
+- [ ] Monthly audit
+- [ ] Windows installer (Electron wrapper or Tauri) — only bat dev scripts exist
+- [ ] Quillbot-style inline suggestions live only in the extension content script, not wired into this app (it cannot be: the app is not a browser)
+- [ ] Extension -> vault API -> Obsidian files end-to-end test
+
+**Honest status marks:** everything above is *in source + compiled + exercised headlessly*.
+Nothing in this app is *user-confirmed on Windows* yet.
 
 ### Electron Clone Gaps (apps/02_electron-claude-clone-v6)
 - [ ] Not exact pixel match to latest 6 screenshots (older Claude UI)
