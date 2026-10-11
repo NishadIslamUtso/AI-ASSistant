@@ -3,9 +3,9 @@
 **THIS REPO IS MEMORY FOR AIS, NOT FOR HUMANS.** Human polish is secondary. Structure is optimized for LLM handover, continuity, and RAG.
 
 **Owner:** Utso (nishadislamutso@gmail.com) — Dhaka, BD — TUF A15 — 8GB RAM / 4GB VRAM / 500GB storage
-**Date:** 2026-10-10 Asia/Dhaka
+**Date:** 2026-10-12 Asia/Dhaka
 **App Name:** `AI ASSistant` (preserve casing double S)
-**Goal:** Native Windows Claude-exact clone that is DRIVER of Obsidian vault (vault is organizer, extension is collector+suggester). Local-first, qwen2.5:3b via Ollama at 127.0.0.1:11434, vault API at 127.0.0.1:8765.
+**Goal:** Local-first Claude-style Windows app that drives the Obsidian vault (vault is canonical Markdown memory; extension is collector+suggester). The current implementation is a local Vite/browser app, not yet a native Windows wrapper. Default model: qwen2.5:3b via local Ollama at 127.0.0.1:11434; local vault API at 127.0.0.1:8765.
 
 ## Repo Map for AI Agents — Read This First
 
@@ -23,9 +23,9 @@
   CHANGELOG.md                <- What changed each session
   TODO_NEXT.md                <- Immediate next actions
 apps/
-  01_claude-exact-pixel-clone/ <- CURRENT TARGET: screenshot-driven Claude layout, Settings/UserMenu/Apps modals, local Ollama model selector, explicit-only sandboxed HTML artifact preview, relative same-origin proxies. Vite+React+Tailwind; Windows/model behavior still needs user testing.
+  01_claude-exact-pixel-clone/ <- CURRENT: screenshot-led Claude-style UI, same-origin local Ollama proxy, Obsidian driver, sandboxed artifacts, local branching and pin-to-edit. THIS IS CURRENT TARGET.
   02_electron-claude-clone-v6/ <- PREVIOUS: Electron+React Open-claude fork, more features (artifacts, vision, workbench). Use as reference for features.
-extension/                    <- MV3 starter/spec for broad capture, blacklist, Capsule Hub + Quillbot UX; end-to-end behavior is untested
+extension/                    <- Browser extension MV3: default check everything, Capsule Hub + Quillbot UX
 vault/AI-Brain/               <- Obsidian vault canonical memory - 00 System, 01 Inbox, 02 Sources, 03 Memory, 04 Working Memory, 05 Knowledge, 06 Review, 07 Sharing Receipts, 08 Journal, 09 Activity & Undo, 90 Archive, .brain
 spec/
   screenshots/                <- 6 Claude desktop screenshots that ARE the spec for exact clone
@@ -51,11 +51,11 @@ memory/sessions/              <- Session logs for handover
 cd apps\01_claude-exact-pixel-clone
 .\start-app.bat
 ```
-Requires: Node.js 20+ and Ollama installed with at least one model already pulled. `qwen2.5:3b` is the default; the app lists installed Ollama models and never downloads one.
-- `start-app.bat` handles an already-running Ollama, installs the Windows Rollup optional package if missing, starts the vault API on 8765 + Vite on 5173
-- Open http://127.0.0.1:5173
-- Browser requests use same-origin `/ollama` and `/vault` routes, proxied by Vite to loopback Ollama (11434) and Vault API (8765)
-- Vault API accepts `AI_BRAIN_PATH` for an explicitly configured personal vault; otherwise the repository starter vault is used
+Requires: Node.js 20+ and a local Ollama install. qwen2.5:3b is the default; if it is absent, the launcher asks before any optional pull.
+- `start-app.bat` starts Ollama only if needed, asks before any optional `qwen2.5:3b` download, installs Node dependencies, starts the vault API at 8765, and opens the Vite app at 5173.
+- Open `http://127.0.0.1:5173`; browser requests stay same-origin and are proxied to loopback Ollama (`/api/ollama/*`) and the vault API (`/api/vault/*`). No broad `OLLAMA_ORIGINS` setting is written.
+- A local static bundle is built with `build-windows.bat` and served through `server\\preview-server.cjs`, which keeps the same filtered proxies; it defaults to `127.0.0.1`.
+- See `apps/01_claude-exact-pixel-clone/README.md` for safety boundaries, supported local features, and test commands.
 
 ### Electron Clone (More Features)
 ```bat
@@ -79,10 +79,13 @@ Load `extension/` as unpacked in chrome://extensions, ensure vault API running a
 
 ## GitHub Push
 
-This Arena session is fixed to branch `arena/b485c0f2-ai-assistant`. Do not run `git init`, rename/switch branches, or push to `main`. A remote push is an external upload; do it only when explicitly approved, and then push only to the session branch:
-
-```bash
-git push origin arena/b485c0f2-ai-assistant
+```bat
+git init
+git add .
+git commit -m "AI ASSistant master repo - 2026-10-10 - exact clone + extension + vault"
+git branch -M main
+git remote add origin https://github.com/YOURUSERNAME/AI-ASSistant.git
+git push -u origin main
 ```
 
 No secrets in repo. Ollama local, vault local. No API keys committed.

@@ -1,30 +1,32 @@
 # DECISIONS_LOG.md — All Decisions With Dates
 
-**Last Updated:** 2026-10-10 20:10 Asia/Dhaka
+**Last Updated:** 2026-10-12 Asia/Dhaka
 **Rule:** Log every decision with date, what, why, who requested, alternatives considered.
 
+## 2026-10-12 Decisions
+
+### [2026-10-12] Port the designated UI lineage; keep the session branch and existing PR
+- **What:** Read `arena/3c06e1bf-ai-assistant` read-only, adopt the requested UI/server improvements, and apply changes on `arena/b485c0f2-ai-assistant` above PR #4 rather than switching branches or moving the PR base.
+- **Why:** User asked to use the branch and take the best features; the Arena session is fixed to the PR branch. The incoming UI branch already contains the preferred UI and local-first improvements.
+- **Who:** User requested the reference branch; session constraints require remaining on `arena/b485c0f2-ai-assistant`.
+- **Alternative:** Merge/switch wholesale — not selected, to avoid losing the open PR baseline, importing unrelated vault fixtures, or working on an untracked branch.
+
+### [2026-10-12] Prioritize local interaction features; defer sub-agents, MCP and remote hosting
+- **What:** Implement inline artifact preview, draft-only pin-to-edit, local prefix branching, and explicit Obsidian artifact save. Keep image vision gated on installed local-model metadata. Defer concurrent sub-agents, MCP servers, cloud fallback, and remote deployment.
+- **Why:** Inline previews and local forks/edits add value without an external trust boundary. Concurrent agents add inference latency/memory pressure on 8 GB RAM / 4 GB VRAM; MCP and hosting require new destination approvals.
+- **Who:** Assistant selected the fit-to-device/privacy options from the user's curated suggestions; revisit only with explicit user direction.
+
+### [2026-10-12] Preview exact artifact write before local vault save
+- **What:** Make artifact saving a user-initiated, immutable local API write only after the app displays the full content, exact vault root, and deterministic source/note paths.
+- **Why:** Obsidian Markdown remains canonical and the existing local API supports immutable artifact captures; explicit review prevents silent writes and false success.
+- **Alternative:** Auto-save on generation/download — rejected because it would write without a user's explicit review.
+
+### [2026-10-12] Reuse proxy policy in the built preview server
+- **What:** Apply the same route/method/origin/JSON allowlist to static preview, strip cookies/authorization, reject traversal, add safety headers, and bind to loopback by default.
+- **Why:** The prior static preview server bypassed the dev-server allowlist, exposing local Ollama operations through a broader proxy. Normal Windows use should stay local; forwarded preview opt-in is separate.
+- **Implementation:** `server/proxy-policy.cjs`, `server/preview-server.cjs`, integration/path-safety tests.
+
 ## 2026-10-10 Decisions
-
-### [2026-10-10 20:10] Explicit-Only Sandboxed HTML Artifact Runner
-- **What:** Only create an artifact preview after an explicit runnable-page/tool/game request and a complete HTML fence; render in a sandboxed iframe with network access blocked.
-- **Why:** Prevent the previous qwen2.5:3b Tic Tac Toe loop and avoid trusting model-generated code with access to the app or network.
-- **Who:** Implementation choice for the user's stated exact Claude-app handover; no new product requirement inferred.
-- **Alternative:** Auto-detect/preview every code block — rejected because ordinary explanations should not create games/apps and code is untrusted.
-- **Status:** Source + parser/policy tests; actual qwen2.5:3b output and Windows iframe behavior remain untested.
-
-### [2026-10-10 20:10] Same-Origin Vite Proxy for Local Services
-- **What:** Browser calls relative `/ollama/*` and `/vault/*` endpoints; Vite proxies to loopback Ollama and Vault API.
-- **Why:** Keeps browser code independent of the preview host's localhost and avoids direct browser-to-Ollama CORS dependence.
-- **Who:** Implementation choice required by Arena preview and compatible with the local Windows Vite app.
-- **Alternative:** Hard-coded browser fetches to `127.0.0.1` — rejected because remote preview browsers would call the user's own machine, not the sandbox.
-- **Status:** Vite page and vault proxy smoke-tested; Ollama proxy cannot connect in sandbox because no Ollama service is installed.
-
-### [2026-10-10 20:10] Local Model Selector Lists Installed Models Only
-- **What:** Read installed Ollama model names through `/api/tags`, persist the selected model locally, do not auto-pull models, and never silently use a cloud fallback.
-- **Why:** User's TUF A15 has limited RAM/VRAM and slow downloads; qwen2.5:3b is already installed.
-- **Who:** Utso requirement, as implemented in the exact clone.
-- **Alternative:** Bundle/pull qwen3-vl or show fake Sonnet capability — rejected.
-- **Status:** Source/build present; actual model listing and capability behavior still need Windows testing.
 
 ### [2026-10-10 19:20] Create Master Github Repo as AI Memory
 - **What:** Create AI-ASSistant-Github-Repo with .ai/ + 00_LIVING_DOCS/ structure optimized for AI handover, not human aesthetics, single zip with all work + living requirements

@@ -30,8 +30,10 @@
     "ollama_api": "http://127.0.0.1:11434",
     "vault_api": "http://127.0.0.1:8765",
     "vite_dev": "http://127.0.0.1:5173",
-    "ollama_origins_needed": "*",
-    "fix_cors": "setx OLLAMA_ORIGINS \"*\" and restart ollama serve"
+    "ollama_origins_needed": false,
+    "fix_cors": "Browser calls use same-origin /api/ollama proxy to loopback Ollama; do not set OLLAMA_ORIGINS=*.",
+    "built_preview": "server/preview-server.cjs with shared allowlist, default loopback bind",
+    "preview_origin_opt_in": "ALLOW_PREVIEW_ORIGINS=1 is only for forwarded *.e2b.app preview; do not enable for normal local use."
   },
   "app_identity": {
     "name": "AI ASSistant",
@@ -97,7 +99,7 @@
       "claims cannot remember current chat",
       "interprets Flappy Bird example in system prompt as must create game every reply -> Tic Tac Toe loop"
     ],
-    "fix_tictactoe": "override systemPrompt for qwen2.5:3b to simple assistant, only create artifacts when explicitly asked, clear localStorage chat_history",
+    "fix_tictactoe": "Plain local-assistant system prompt plus explicit artifact intent/mode; ordinary replies never run HTML/SVG. Existing transcript is preserved; do not clear history automatically.",
     "ui_vs_intelligence": "UI parity != intelligence, don't promise local model equals Claude",
     "model_aware": "expose every verified option for selected model, hide/disable unsupported, update controls when model changes"
   },

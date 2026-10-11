@@ -1,117 +1,189 @@
 {
-  "date": "2026-10-10",
+  "date": "2026-10-12",
+  "time_updated": "2026-10-12 Asia/Dhaka",
   "timezone": "Asia/Dhaka",
-  "repo_version": "1.0.1-claude-app-increment",
+  "repo_version": "1.3.0-local-first-port",
+  "canonical_repo": "https://github.com/NishadIslamUtso/AI-ASSistant",
+  "note_for_next_ai": "Current Arena work must remain on arena/b485c0f2-ai-assistant. PR #4 is open from e770526. The user-designated arena/3c06e1bf-ai-assistant was fetched read-only (head 871e857); selected UI/server/docs were ported here without checkout/merge or vault fixture data. Current implementation is sandbox-built/tested, not user-confirmed on Windows or live Ollama.",
   "apps": {
     "01_claude-exact-pixel-clone": {
       "path": "apps/01_claude-exact-pixel-clone",
-      "status": "source-updated-build-verified-linux-not-tested-on-windows",
-      "tech": "Vite 5 + React 18 + Tailwind 3; Vite same-origin proxies to loopback Ollama + vault API",
+      "status": "source-written-built-tested-in-sandbox-NOT-tested-on-user-Windows-or-live-Ollama",
+      "tech": "Vite 5 + React 18 + local Express vault API + same-origin policy-filtered Ollama/vault proxies; no direct-browser or cloud fallback",
+      "files": [
+        "src/App.jsx (shell state, local branch creation, artifact save review)",
+        "src/hooks/useChat.js (local Ollama stream/stop, capture and retry)",
+        "src/hooks/useModels.js (installed local models, cloud rejection, verified capabilities)",
+        "src/hooks/usePersistentState.js (localStorage with recovery)",
+        "src/lib/ollama.js (same-origin Ollama client, NDJSON, thinking split)",
+        "src/lib/vault.js (same-origin vault client and explicit acknowledgement)",
+        "src/lib/chat-branches.js (prefix-only local fork with fresh IDs)",
+        "src/lib/edit-pin.js (4,000-character excerpt-to-draft formatting)",
+        "src/lib/artifacts.js (explicit artifact gate, restrictive sandbox, deterministic vault paths)",
+        "src/lib/attachments.js (text/image intake, size/capability guards, local IndexedDB image blobs)",
+        "src/components/Center.jsx (transcript, branching, pin-to-edit, inline artifact preview)",
+        "src/components/ArtifactInlinePreview.jsx and ArtifactPanel.jsx (isolated inline/workbench preview)",
+        "src/components/Composer.jsx, Sidebar.jsx, SettingsModal.jsx, UserMenu.jsx, TitleBar.jsx, TodayView.jsx",
+        "server/proxy-policy.cjs (shared API route/origin/method/content-type policy)",
+        "server/preview-server.cjs (loopback static server, same filtered proxies, path safety)",
+        "server/vault-api.cjs (Obsidian Markdown writer, path/symlink guards)",
+        "tests/ (55 node tests; optional jsdom and Playwright UI suites)",
+        "start-app.bat, build-windows.bat, check-ollama.bat"
+      ],
       "features_implemented": [
-        "Screenshot-targeted 260px dark sidebar, chat search/groups, new chat, working context menu actions",
-        "Claude-style greeting, composer, transcript, responsive width/font/size appearance preferences",
-        "User menu with Settings and Apps and extensions entry points; local-only status notices",
-        "Settings modal from 191707: theme, chat font, transcript size/width, motion, voice preferences; localStorage persistence",
-        "Apps and extensions modal from 191636 with local extension setup disclosure and external-service boundaries",
-        "Ollama model selector lists installed models from /api/tags through Vite proxy; selected model persists; no download/cloud fallback",
-        "Streaming Ollama chat uses selected model and local /api/chat proxy; simple system prompt blocks unsolicited artifacts",
-        "Text file attachments and guarded image attachment path for model names marked vision-capable; 2 MB per-file cap",
-        "Thinking-output toggle shown only for model names with supported-looking identifiers; thinking output displayed when returned",
-        "Explicit-request HTML artifact extraction, library, preview/source panel, CSP network restrictions and sandboxed iframe",
-        "Vault driver routes through relative /vault proxy; configured AI_BRAIN_PATH and repo starter fallback",
-        "Windows start-app.bat supports already-running Ollama, optional Rollup package, vault API startup and local Vite proxy",
-        "Four Node unit tests for artifact intent, parsing and sandbox policy; API smoke test wrote only to isolated /tmp vault"
+        "Screenshot-led AI ASSistant UI with the user palette (#1a1a1a main, #202020 260px sidebar, #242424 composer, #d48264 accent), settings, user/apps dialogs, title/menu bar and Today view",
+        "Local Ollama model selector; default qwen2.5:3b; no automatic model pull or cloud fallback; remote/cloud aliases rejected",
+        "Vision/thinking only when selected installed Ollama metadata verifies capability; images max 2 MB and stored in browser IndexedDB after explicit send",
+        "Explicit HTML/SVG artifacts only; inline visualizer and workbench preview use restrictive CSP and iframe sandbox without allow-same-origin",
+        "Artifact versions stored locally; exact vault root, immutable artifact/note paths and complete source shown before explicit Obsidian save",
+        "Downloaded artifact source warns it is no longer isolated; no remote hosting/deployment",
+        "Pin selection to edit (max 4,000 chars, optional note) adds an unsent quoted draft and preserves existing draft; never auto-sends",
+        "Branch here copies only a transcript prefix with fresh message/artifact IDs, reuses local attachment blobs, preserves original, captures branch locally",
+        "Same-origin policy-filtered Ollama/vault proxies; static preview shares policy, strips cookies/authorization, rejects traversal, loopback default",
+        "Vault context preview before composer injection; blacklist manager, capsules, Today view, local chat history and honest failure states",
+        "Vault API immutable Markdown captures, Asia/Dhaka dates, path/symlink guards and honest write acknowledgements"
       ],
       "features_missing": [
-        "No complete Claude feature inventory / parity audit yet",
-        "Vault capture currently records each submitted user prompt, not the complete user+assistant transcript; Obsidian transcript capture is incomplete",
-        "File Edit View Go Help native menu (Electron wrapper not present in exact clone)",
-        "Project scope is a local selector, not full Claude Projects or project instructions/files",
-        "PDF/DOCX uploads, camera input, voice chat and audio are not implemented",
-        "Capability metadata is heuristic by model name and is not model-verified; qwen3-vl:4b not assumed installed",
-        "Artifact creation depends on the local model following artifact-html format; no Windows/Ollama end-to-end test",
-        "Capsule drag/drop, blacklist manager, Open Loops, Current Snapshot, Today/Journal views",
-        "Extension-to-vault end-to-end workflow and Chrome testing",
-        "Windows installer/Electron wrapper"
+        "User-side Windows 11 ASUS TUF A15 test and actual live Ollama/Ollama model behavior",
+        "Real vision-model test on an already-installed local model",
+        "Optional Playwright app.spec.js suite not run; runner/browser not installed",
+        "Native Windows wrapper/installer",
+        "Full Claude capability audit; no model-quality parity claim",
+        "Journal draft generation/monthly audit and rebuildable .brain index",
+        "Extension-to-vault end-to-end browser test"
       ],
       "known_bugs": [
-        "Windows behavior is untested in this session; run start-app.bat on the target TUF A15",
-        "Ollama was not installed in the Linux sandbox, so model discovery and chat streaming could not be exercised end-to-end",
-        "qwen2.5:3b is text-only; image upload is blocked unless a vision-named model is selected and that capability still needs verification",
-        "HTML artifacts require an explicit build/create request plus an artifact-html (or html) fenced response from the model",
-        "npm audit reports 9 dev-tool advisories (3 moderate, 6 high); production dependency audit reports 0; remediation would require major toolchain changes"
+        "No reproducible Node/build/jsdom failures. Real Windows, Ollama, Obsidian, and Playwright browser paths remain unverified.",
+        "Sub-agents, MCP, cloud fallback and remote hosting are deliberately not connected for privacy and the 8 GB RAM / 4 GB VRAM target."
       ],
-      "build_cmd": "npm install && npm run dev:server & npm run dev",
-      "zip": "Historical only: archive_zips/AI_ASSistant_Exact_Claude_Clone.zip (13K); excludes this session's current source updates"
+      "verified": {
+        "npm_ci": "completed (no default model download)",
+        "vite_build": "clean after current app changes",
+        "unit_tests": "55/55 node --test (rerun after any code edits)",
+        "ui_smoke": "7/7 jsdom tests passed with temporary test-only jsdom install (not an app dependency)",
+        "preview_proxy_security": "static server integration and encoded traversal tests pass",
+        "user_windows_test": "NOT DONE",
+        "live_ollama_test": "NOT DONE; Ollama absent/unreachable in sandbox",
+        "playwright_e2e": "NOT RUN; optional runner/browser absent",
+        "preview_build": "npm run build:preview clean; live preview origin smoke: app/model list/vault status 200; model pull and hostile origin 403; synthetic model + temporary vault only",
+        "production_audit": "npm audit --omit=dev --audit-level=moderate: 0 vulnerabilities",
+        "draft_preservation": "optional jsdom smoke verifies pin-to-edit preserves existing trailing whitespace; draft remains unsent"
+      },
+      "build_cmd": "npm ci && npm test && npm run build",
+      "run_cmd_windows": "start-app.bat",
+      "best_of_cherry_picks": {
+        "arena/3c06e1bf-ai-assistant (read-only ref, head 871e857)": "ported preferred 01199af1 UI lineage, model/vision/security/test improvements and working preview-server fixes onto the current PR branch; no switch/merge",
+        "local additions 2026-10-12": "sandboxed inline artifact visualizer, draft-only pin-to-edit, prefix-only conversation branching, exact preview before local Obsidian artifact save",
+        "deferred ideas": "sub-agents (RAM/latency), MCP (new trust boundary), cloud/remote deploy (external destination)"
+      }
     },
     "02_electron-claude-clone-v6": {
       "path": "apps/02_electron-claude-clone-v6",
-      "status": "built-previously, more features, not exact pixel from latest screenshots",
+      "status": "reference-only, superseded by 01 for pixel accuracy",
       "tech": "React 18 + Vite 5 + Electron 31 + Express + Tailwind, fork of Damienchakma/Open-claude MIT",
-      "features_implemented": [
-        "Claude-like layout compact history left, centered transcript, right user bubbles",
-        "Artifacts panel, Workbench FileExplorer",
-        "ModelService.js supports Ollama + OpenAI + Claude + Gemini + Groq",
-        "VaultPanel, SettingsModal, ThinkingDisplay, CitationDisplay, ImageUpload, SearchIndicator",
-        "ThemeContext dark/light",
-        "Vault API server/vault-api.js + vault-api.cjs",
-        "start-app.bat, start-app-electron.bat, build-windows.bat, check-ollama.bat"
-      ],
-      "features_missing": [
-        "Not exact pixel match to 191547-191707 screenshots (older Claude UI)",
-        "Not connected to real Obsidian vault as canonical? Actually has vault API but SQLite still used in some paths",
-        "Extension integration partial"
-      ],
+      "use_for": "ArtifactPanel/Workbench/ThinkingDisplay reference code",
       "known_bugs": [
-        "No reply bug when ChatMode called sendMessage from useChat which doesn't exist - fixed by restoring LLMFactory streaming",
-        "Tic Tac Toe loop for qwen2.5:3b due to isOpenSourceModel systemPrompt - needs override"
-      ],
-      "zip": "archive_zips/AI_ASSistant_App_Claude_Clone_qwen2.5_3b_FIXED6.zip"
+        "Not pixel-accurate to 191547-191707",
+        "Old system prompt caused the Tic Tac Toe loop"
+      ]
     }
   },
   "extension": {
     "path": "extension/",
-    "status": "starter-spec-implemented, not tested on Chrome",
-    "tech": "MV3, background.js, content-scripts ai-capture, generic-capture, capsule-inject, quillbot-suggestions, popup, lib blacklist capsule vault-writer",
+    "status": "starter-spec-implemented, not tested end-to-end in a browser",
     "features_implemented": [
-      "manifest.json host_permissions <all_urls> + history + storage + scripting + contextMenus",
+      "MV3 manifest with <all_urls> + history + storage + scripting + contextMenus",
       "background.js history listener + blacklist check + failure logging + context menu",
       "lib/blacklist.js pattern matching",
       "lib/capsule.js data model",
       "lib/vault-writer.js POST to 127.0.0.1:8765",
-      "content-scripts/ai-capture.js adapters for ChatGPT Claude Gemini DeepSeek Grok Perplexity Copilot",
-      "content-scripts/generic-capture.js Readability-style",
-      "content-scripts/capsule-inject.js drag-drop + prompt enhancer",
-      "content-scripts/quillbot-suggestions.js toolbar + highlight + inline dropdown",
-      "popup Capsule library search blacklist manager"
+      "content-scripts: ai-capture, generic-capture, capsule-inject, quillbot-suggestions",
+      "popup: capsule library, search, blacklist manager"
     ],
     "features_missing": [
-      "Actual vault file writes need vault API running",
-      "Queue when offline (storage.local) not fully tested",
+      "End-to-end test extension -> vault API -> Obsidian files",
+      "Offline queue flush test",
       "Real Readability integration",
-      "End-to-end test extension -> app API -> vault"
-    ],
-    "zip": "archive_zips/AI_ASSistant_Extension_v1.2_Fixed.zip"
+      "Capsule version/branch/rollback"
+    ]
   },
   "vault": {
     "path": "vault/AI-Brain/",
-    "status": "structure-complete, templates-complete, no real user data yet, 61 files starter",
-    "structure": "00 System, 01 Inbox, 02 Sources, 03 Memory, 04 Working Memory, 05 Knowledge, 06 Review, 07 Sharing Receipts, 08 Journal, 09 Activity & Undo, 90 Archive, .brain",
-    "templates": "Browser Visit, Capsule, Conversation Source, Daily Journal, Entity, Event, Follow-up, Laptop File Reference, Memory Claim, Monthly Audit, Sharing Receipt, Source Scope",
-    "zip": "archive_zips/AI_ASSistant_Obsidian_Vault_v4_Clean.zip"
+    "status": "structure-complete, 61 files, starter content only, no real user data yet",
+    "api_endpoints": [
+      "GET /status",
+      "GET /context?q=",
+      "GET /capsules",
+      "GET /today",
+      "GET /blacklist",
+      "POST /blacklist",
+      "POST /capture (browser_visit, web_page, conversation, capsule, artifact, journal, wasnt_accessible, blacklist_update)"
+    ]
   },
   "current_gaps": [
-    "Windows start-app.bat and UI need user validation on TUF A15",
-    "Ollama model capability detection is name-based and needs a tested Model Registry",
-    "Complete Claude feature audit and native menu/Electron shell remain open",
-    "Obsidian path needs explicit user configuration for a personal vault; repo starter vault is the fallback",
-    "Extension -> Vault API -> Obsidian end-to-end capture and blacklist flows remain untested",
-    "Capsule/Today/Journal/follow-up flows, Windows installer, and other file/audio capabilities remain incomplete"
+    "No user-confirmed Windows/Ollama/Obsidian run",
+    "Playwright E2E suite updated but not run",
+    "Extension -> vault end-to-end untested",
+    "No native installer; no automatic journal generation or rebuildable semantic index",
+    "No remote MCP, cloud fallback, sub-agent orchestration, or hosted artifact deployment by design"
   ],
-  "last_session": {
-    "date": "2026-10-10",
-    "what_done": "Caught up the exact-clone source to the stated handover: implemented Settings/UserMenu/Apps modal, Ollama model selector via same-origin proxy, local text/image attachment path, model-gated thinking display, explicit-only sandboxed HTML artifact runner, and updated vault path safety/logging. Added artifact unit tests; npm test and Vite production build pass; synthetic vault API smoke test used /tmp only.",
-    "user_request": "Continue from the GitHub repository, read the handover and agent instructions, and continue making the Claude app exact clone.",
-    "action_now": "User should test start-app.bat on Windows; next code tasks are extension/vault integration, capability registry validation, Capsule/Today workflows, and eventual desktop wrapper."
+  "last_session": "2026-10-12 — reconciled PR #4 base e770526; read arena/3c06e1bf-ai-assistant at 871e857 without switching; ported selected UI/server/docs; added inline previews, exact draft-only pinning, local prefix branches, explicit artifact-to-vault review; built static preview hardened; 55 Node and 7 optional jsdom tests pass, both Vite builds clean, production audit 0; live preview uses mock Ollama and throwaway vault. Windows, real Ollama, real Obsidian, and Playwright remain unverified.",
+  "palette_ruling": {
+    "authoritative": "user-supplied; never override with screenshot sampling",
+    "shipped": {
+      "bg_main": "#1a1a1a",
+      "bg_side": "#202020",
+      "sidebar_width": "260px",
+      "bg_elev": "#242424",
+      "bg_hover": "#2a2a2a",
+      "bg_active": "#303030",
+      "text": "#e0e0e0",
+      "accent": "#d48264",
+      "btn": "#ffffff",
+      "code_bg": "#141414"
+    },
+    "measured_but_reverted": {
+      "bg_main": "#151515",
+      "bg_side": "#111111",
+      "sidebar_width": "384px",
+      "bg_elev": "#20201f",
+      "bg_hover": "#1d1d1d",
+      "bg_active": "#343434",
+      "text": "#f0efec",
+      "accent": "#d97757"
+    },
+    "geometry_still_from_measurement": [
+      "toolbar 48px",
+      "top bar 52px",
+      "composer radius 18px",
+      "greeting 44px",
+      "transcript widths 880/1040/1200",
+      "grouped settings nav"
+    ],
+    "rule": "Where a pixel measurement disagrees with a value the user stated, use the user's value and flag the difference — never silently override."
+  },
+  "ui_lineage": {
+    "adopted_from": "arena/3c06e1bf-ai-assistant, which adopted arena/01199af1-ai-assistant (959cc3b)",
+    "read_only_reference_head": "871e857",
+    "port_method": "selected app/docs changes copied into arena/b485c0f2-ai-assistant; no checkout/merge and no vault fixture data",
+    "retained": [
+      "current PR local model safety",
+      "TodayView",
+      "Windows-style TitleBar",
+      "Obsidian/local-first requirements"
+    ],
+    "added_2026_10_12": [
+      "ArtifactInlinePreview",
+      "draft-only pin-to-edit",
+      "prefix-only branches",
+      "explicit artifact-to-vault path/content review",
+      "static preview shared proxy policy"
+    ],
+    "tests": {
+      "unit_integration": 55,
+      "ui_jsdom_optional": 7
+    },
+    "merged": false,
+    "pr": "#4 OPEN; head arena/b485c0f2-ai-assistant"
   }
 }

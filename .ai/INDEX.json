@@ -1,6 +1,6 @@
 {
   "repo": "AI-ASSistant-Github-Repo",
-  "generated": "2026-10-10T20:10:00+06:00",
+  "generated": "2026-10-12T00:00:00+06:00",
   "file_index": [
     {
       "path": ".ai/AGENT_INSTRUCTIONS.md",
@@ -54,27 +54,28 @@
     },
     {
       "path": "README.md",
-      "purpose": "Root README, repo map, current Windows quick start and honest implementation status",
+      "purpose": "Root README, repo map, quick start for AI and human, GitHub push instructions",
       "type": "readme"
     },
     {
       "path": "apps/01_claude-exact-pixel-clone/",
-      "purpose": "CURRENT TARGET: screenshot-driven Claude-layout app with local Settings/UserMenu/Apps dialogs, installed Ollama selector, same-origin Vite proxies, attachments and explicit-only sandboxed HTML artifacts; Linux build verified, Windows/Ollama untested",
+      "purpose": "CURRENT TARGET: screenshot-led AI ASSistant UI, local Ollama/vault proxy, sandboxed artifacts, local branching and pin-to-edit; built/tested in sandbox but not Windows-confirmed",
       "type": "app",
       "key_files": [
-        "src/App.jsx - chat/settings/model state in localStorage; model list refresh; dialogs and artifact panel wiring",
-        "src/components/Sidebar.jsx - 260px sidebar, search, chats and functional context menu",
-        "src/components/Center.jsx - greeting, composer, streaming local Ollama, file attachments, thinking and explicit artifact parsing",
-        "src/components/UserMenu.jsx - screenshot-matched account menu; local-only actions disclose limits",
-        "src/components/SettingsModal.jsx - screenshot-matched Appearance and saved preferences",
-        "src/components/AppsExtensionsModal.jsx - screenshot-driven apps/extensions view with honest local status",
-        "src/components/ModelSelector.jsx - installed Ollama models from /api/tags through Vite proxy",
-        "src/components/ArtifactPanel.jsx + ArtifactLibrary.jsx - HTML preview/source, sandbox and artifact list",
-        "src/lib/artifacts.js + artifacts.test.js - explicit intent, HTML extraction, sandbox document and four Node tests",
-        "src/components/VaultPanel.jsx - current minimal toggle panel; Capsule enhancements still pending",
-        "server/vault-api.cjs - local vault driver with AI_BRAIN_PATH and safe path handling",
-        "vite.config.js - relative /ollama and /vault proxies for browser requests",
-        "start-app.bat - Windows launch, existing Ollama and optional Rollup package; still needs Windows test"
+        "src/App.jsx - shell state, local branch creation, exact artifact save review",
+        "src/hooks/useChat.js - local Ollama streaming, stop/retry, vault capture",
+        "src/hooks/useModels.js - installed local model and capability verification",
+        "src/components/Center.jsx - transcript, pin-to-edit, branch buttons, inline preview",
+        "src/components/ArtifactInlinePreview.jsx - isolated inline visualizer",
+        "src/components/ArtifactPanel.jsx - sandbox workbench, versions, download, explicit vault save",
+        "src/lib/chat-branches.js - prefix-only conversation branch",
+        "src/lib/edit-pin.js - draft-only bounded excerpt",
+        "src/lib/artifacts.js - explicit artifact gate, CSP, deterministic vault paths",
+        "server/proxy-policy.cjs - shared API boundary",
+        "server/preview-server.cjs - loopback static preview and filtered proxies",
+        "server/vault-api.cjs - Obsidian Markdown writer",
+        "tests/ - 55 Node tests; optional jsdom/Playwright UI tests",
+        "start-app.bat, build-windows.bat, check-ollama.bat"
       ]
     },
     {
@@ -160,6 +161,9 @@
     "where_is_handover": "00_LIVING_DOCS/HANDOVER_LIVING.md",
     "where_is_vault_structure": "vault/AI-Brain/00 System/",
     "where_is_extension_spec": "extension/README.md + extension/EXTENSION_SPEC.md",
-    "where_to_log_changes": "00_LIVING_DOCS/CHANGELOG.md + memory/sessions/"
+    "where_to_log_changes": "00_LIVING_DOCS/CHANGELOG.md + memory/sessions/",
+    "current_git_branch": "arena/b485c0f2-ai-assistant (fixed for Arena session; PR #4 open)",
+    "current_app_state": "ai/STATE.json and 00_LIVING_DOCS/HANDOVER_LIVING.md",
+    "local_app_safety": "apps/01_claude-exact-pixel-clone/README.md + server/proxy-policy.cjs"
   }
 }
