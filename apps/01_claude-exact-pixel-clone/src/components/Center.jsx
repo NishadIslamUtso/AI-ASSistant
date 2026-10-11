@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Code2, FileText, Image, RefreshCw } from 'lucide-react'
+import { Code2, FileText, GitBranch, Image, RefreshCw } from 'lucide-react'
 import ClaudeMark from './ClaudeMark.jsx'
 import Composer from './Composer.jsx'
 import Markdown from './Markdown.jsx'
@@ -8,7 +8,7 @@ export function getGreeting(date = new Date()) {
   const hour = Number(new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Dhaka', hour: 'numeric', hourCycle: 'h23' }).format(date))
   return hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening'
 }
-export default function Center({ seed, chat, onArtifact, onRetryCapture, settings, notify, onExternalLink, ...composerProps }) {
+export default function Center({ seed, chat, onArtifact, onRetryCapture, onBranch, settings, notify, onExternalLink, ...composerProps }) {
   const transcript = useRef(null)
   const messages = chat?.messages || []
   useEffect(() => {
@@ -19,7 +19,7 @@ export default function Center({ seed, chat, onArtifact, onRetryCapture, setting
   return <main className={`center ${hasMessages ? 'has-messages' : 'home'}`} data-model-ready={composerProps.models.available}>
     {!hasMessages && <div className="free-plan"><span>Free plan</span><span>·</span><button onClick={() => notify('This is a free local Ollama app. Claude plans and billing are not connected.')}>Upgrade</button></div>}
     {hasMessages ? <>
-      <header className="chat-header"><h1>{chat.title}</h1><small>Local · {composerProps.models.model}</small></header>
+      <header className="chat-header"><h1>{chat.title}</h1>{chat.branchOf && <small className="branch-note">Branched conversation</small>}<small>Local · {composerProps.models.model}</small></header>
       <div className="transcript-scroll" ref={transcript}><div className="transcript" key={chat.id}>
         {messages.map(message => <article key={message.id} className={`message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`} aria-label={message.role === 'user' ? 'Your message' : 'Assistant response'}>
           {message.role === 'assistant' && <ClaudeMark size={23} />}
@@ -30,6 +30,7 @@ export default function Center({ seed, chat, onArtifact, onRetryCapture, setting
             {message.status === 'streaming' && !message.content && !message.thinking && <p className="generating">Responding locally…</p>}
             {message.error && <p className={message.status === 'error' ? 'error-text response-error' : 'muted'} role={message.status === 'error' ? 'alert' : undefined}>{message.error}</p>}
             {message.artifacts?.map(artifact => <button key={artifact.id} className="artifact-message-card" onClick={() => onArtifact(artifact.id)}><Code2 size={20} /><span><strong>{artifact.title}</strong><small>{artifact.type === 'html' ? 'HTML Application' : 'SVG Image'} · Open preview</small></span></button>)}
+            {onBranch && message.status !== 'streaming' && <div className="message-actions"><button className="branch-button" aria-label="Branch conversation from this message" title="Branch a new conversation from this message. The original is kept." onClick={() => onBranch(message.id)}><GitBranch size={13} />Branch from here</button></div>}
           </div>
         </article>)}
       </div></div>

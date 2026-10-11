@@ -306,3 +306,21 @@ h1, h2, h3, h4, p { margin: 0; }
   border-bottom: 1px solid var(--subtle-border);
 }
 .app-shell { height: calc(100dvh - 30px); }
+
+/* Inline charts (```chart blocks) */
+.chart-block { margin: 14px 0; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--composer); max-width: 100%; }
+.chart-block figcaption { font: 600 13px/1.4 'Segoe UI', sans-serif; margin-bottom: 6px; }
+.chart-svg { width: 100%; height: auto; display: block; }
+.chart-grid { stroke: var(--border); stroke-width: 1; }
+.chart-tick { fill: var(--muted, #9a9a9a); font: 11px 'Segoe UI', sans-serif; }
+.chart-legend { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; font: 12px/1.4 'Segoe UI', sans-serif; }
+.chart-legend li { display: flex; align-items: center; gap: 6px; }
+.chart-legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.chart-error { font: 13px/1.5 'Segoe UI', sans-serif; color: var(--muted, #9a9a9a); }
+.chart-error pre { white-space: pre-wrap; font-size: 12px; }
+
+/* Branching */
+.message-actions { margin-top: 6px; display: flex; gap: 6px; }
+.branch-button { display: inline-flex; align-items: center; gap: 5px; font: 12px 'Segoe UI', sans-serif; color: var(--muted, #9a9a9a); background: transparent; border: 1px solid var(--border); border-radius: 999px; padding: 3px 10px; cursor: pointer; }
+.branch-button:hover { color: inherit; border-color: var(--accent, #D97757); }
+.branch-note { display: block; font: 12px 'Segoe UI', sans-serif; color: var(--muted, #9a9a9a); }

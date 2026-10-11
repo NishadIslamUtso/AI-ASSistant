@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Plus, Mic, AudioLines, ChevronDown, ArrowUp, Square, Paperclip, Code2, Sparkles, Layers, X, FileText, Image } from 'lucide-react'
 import ModelSelector from './ModelSelector.jsx'
 import { MAX_ATTACHMENTS, readAttachment } from '../lib/attachments.js'
+import { VISION_BRIDGE_MODEL } from '../lib/visionBridge.js'
 import { CAPSULE_DRAG_TYPE, parseCapsuleDrop } from '../lib/vault.js'
 import useDismiss from '../hooks/useDismiss.js'
 export default function Composer({ models, chat, busyChatId, onSend, onStop, projects, projectId, setProjectId, onVault, onContextPreview, contextBundle, clearContext, onCook, notify, seed }) {
@@ -31,7 +32,7 @@ export default function Composer({ models, chat, busyChatId, onSend, onStop, pro
     setAddingFiles(true)
     try {
       const loaded = []
-      for (const file of files) loaded.push(await readAttachment(file, models.capabilities))
+      for (const file of files) loaded.push(await readAttachment(file, { ...models.capabilities, bridge: models.models.some(item => item.name === VISION_BRIDGE_MODEL) }))
       setAttachments(previous => [...previous, ...loaded])
     } catch (error) { notify(error.message) }
     finally { setAddingFiles(false); if (fileInput.current) fileInput.current.value = '' }
@@ -65,7 +66,7 @@ export default function Composer({ models, chat, busyChatId, onSend, onStop, pro
           <button role="menuitem" onClick={() => { setPlusOpen(false); onVault() }}><Layers size={15} /><span>Use a capsule</span></button>
           <button role="menuitem" onClick={() => { setPlusOpen(false); setArtifactMode(!artifactMode) }}><Code2 size={15} /><span>{artifactMode ? 'Cancel artifact' : 'Create HTML artifact'}</span></button>
           <button role="menuitem" disabled={!input.trim()} onClick={() => { setPlusOpen(false); onCook(input) }}><Sparkles size={15} /><span>Cook This Prompt</span></button>
-          <p>Text/code ≤ 12,000 characters per file.<br />Images ≤ 2 MB with verified vision.<br />PDF/Word parsing is not available.</p>
+          <p>Text/code ≤ 12,000 characters per file.<br />Images ≤ 2 MB: sent to a verified vision model, or described by qwen3-vl:4b for text-only models.<br />PDF/Word parsing is not available.</p>
         </div>}
       </div><div className="composer-right-controls">
         {addingFiles && <small>Reading files…</small>}

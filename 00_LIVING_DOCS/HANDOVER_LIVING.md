@@ -196,3 +196,13 @@ Don't claim feature implemented because it appears in plan/README/checklist/ZIP.
 ## 10. Latest Session Log
 
 **2026-10-10:** User posted 6 screenshots 191547-191707 showing actual Claude desktop: Sidebar Search +New Projects Artifacts Customize Oct8 Older, Center Evening Utso greeting with orange asterisk, composer How can I help you today?, Project dropdown Sonnet 5.5 Medium Manual, Free plan Upgrade, NU Utso Free bottom, context menu, Settings modal, Apps and extensions modal, user menu, File menu. Said "come on man, is this to hard to make?" Built exact pixel-perfect clone in AI-ASSistant-Claude-Exact, package.json vite tailwind, App.jsx localStorage claude_exact_chats, Sidebar.jsx search filter + context menu, Center.jsx greeting + textarea + vault context fetch 127.0.0.1:8765/context + direct Ollama 11434/api/chat qwen2.5:3b streaming + log to /capture, VaultPanel.jsx, server/vault-api.cjs, start-app.bat + build-windows.bat handling existing Ollama, zipped 13K. Then user asked for one zip with all we did so far, requirement list updated every time, repo as memory/handover for other AIs, structure suits AIs best. Creating master repo AI-ASSistant-Github-Repo with .ai/ + 00_LIVING_DOCS/ living docs.
+
+
+## Latest handover — 2026-10-12 Asia/Dhaka
+- Branch: arena/abc0197f-ai-assistant. Merge commit 65def82 (winner 871e857 merged). PR #5 (main ← this branch) is open.
+- App: apps/01_claude-exact-pixel-clone. Run with `npm run dev` (127.0.0.1 Vite host) plus `node server/vault-api.cjs` and Ollama on 11434.
+- New in this session: inline charts, branching, project .zip export, vision bridge. See CHANGELOG 2026-10-12.
+- Verification: `npm run build` ✔, `npm test` 61/61 ✔, `npm run test:ui` 5/5 ✔, browser 15/15 ✔ (sandbox Chromium; mock Ollama).
+- Not yet verified: real Ollama + qwen3-vl:4b on the Windows machine; the user has not confirmed these features.
+- Do NOT run browser tests against the repo vault. Use AI_BRAIN_VAULT=<temp copy>.
+- Out of scope: MCP and sub-agents (explained in CHANGELOG). Comment/pin on artifacts not built.

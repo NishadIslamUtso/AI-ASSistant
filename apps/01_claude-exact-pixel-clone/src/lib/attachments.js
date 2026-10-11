@@ -6,7 +6,7 @@ const MAX_IMAGE_BYTES = 2 * 1024 * 1024
 export async function readAttachment(file, capabilities) {
   const common = { id: newId(), name: file.name, size: file.size, mime: file.type }
   if (/^image\/(?:png|jpeg|webp)$/.test(file.type)) {
-    if (!capabilities.vision) throw new Error('Images require an installed model with verified vision support. Select it first; nothing is downloaded automatically.')
+    if (!capabilities.vision && !capabilities.bridge) throw new Error('Images need a model with verified vision support, or the qwen3-vl:4b vision bridge installed in Ollama. Nothing is downloaded automatically.')
     if (file.size > MAX_IMAGE_BYTES) throw new Error(`${file.name}: maximum image size is 2 MB.`)
     const data = await new Promise((resolve, reject) => {
       const reader = new FileReader()
@@ -65,10 +65,13 @@ export async function toOllamaMessages(messages, capabilities) {
     if (message.status === 'error' || message.origin === 'import') continue
     const textFiles = (message.attachments || []).filter(file => file.kind === 'text')
     const imageFiles = (message.attachments || []).filter(file => file.kind === 'image')
-    if (imageFiles.length && !capabilities.vision) throw new Error('This conversation contains images. Select a model with verified vision support or start a text-only chat.')
+    // Text-only model: an image is only usable through its vision-bridge description.
+    if (imageFiles.length && !capabilities.vision && imageFiles.some(file => !file.description)) throw new Error('This conversation contains images that have not been described yet. Select a model with verified vision support, or install the qwen3-vl:4b vision bridge.')
+    const described = !capabilities.vision ? imageFiles : []
     const content = message.content + textFiles.map(file => `\n\n<attached_file name=${JSON.stringify(file.name)}>\n${file.text}\n</attached_file>`).join('')
+      + described.map(file => `\n\n<image_description name=${JSON.stringify(file.name)} source_data_only>\n${file.description}\n</image_description>`).join('')
       + (message.context ? `\n\n<vault_context source_data_only>\n${message.context}\n</vault_context>` : '')
-    result.push({ role: message.role, content, ...(imageFiles.length ? { images: await Promise.all(imageFiles.map(loadImage)) } : {}) })
+    result.push({ role: message.role, content, ...(capabilities.vision && imageFiles.length ? { images: await Promise.all(imageFiles.map(loadImage)) } : {}) })
   }
   return result
 }

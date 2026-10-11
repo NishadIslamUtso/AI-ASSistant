@@ -361,3 +361,18 @@ journal / follow-ups) and P9 (installer).
 - **Verified:** unzip -l shows .ai/ 5 files, ai/ 6 files, .gitignore, gitignore.txt, GITIGNORE.txt all in zip. git status shows .ai/ and .gitignore untracked and not ignored.
 - **New Zips:** Rebuilt AI-ASSistant-Github-Complete-Testable.zip 2.8M and AI-ASSistant-Github-EVERYTHING.zip 3.8M with both dot and visible copies
 - **Recommendation:** Use git push via command line (git add . includes dotfiles) not web UI upload, or upload both dot and visible versions via web UI
+
+
+### 2026-10-12 — Merged the 3c06e1bf "best of" branch + four new features (apps/01)
+- **Merge:** origin/arena/3c06e1bf-ai-assistant (871e857) merged into arena/abc0197f-ai-assistant as commit 65def82. App source and config took the winner's version; living docs keep both sides. Our unused duplicates (MenuBar.jsx, ModelPicker.jsx, Spark.jsx, lib/store.js, lib/hooks.js) were kept, not deleted.
+- **Baseline after merge:** `npm run build` clean; `npm test` 48/48; `npm run test:ui` 5/5.
+- **New: inline chart visualizer.** A ```chart fenced JSON block (bar | line | pie, max 24 points) renders as inline SVG. The chart rule is added to the prompt only when the user asks for a chart. Files: src/lib/chart.js, src/components/ChartBlock.jsx, src/components/Markdown.jsx.
+- **New: branching conversations.** "Branch from here" on any transcript message creates a NEW chat copied up to that message, with fresh message and artifact ids. The original is not modified. Blocked while a reply is streaming. Files: src/lib/branching.js, Center.jsx, App.jsx.
+- **New: artifact export as project .zip.** A store-only ZIP writer with CRC-32, no dependencies. The bundle contains index.html (or image.svg), artifact.json and README.md. The README warns that the export is not sandboxed. Files: src/lib/zip.js, src/lib/exportProject.js, ArtifactPanel.jsx.
+- **New: vision bridge.** A text-only model (qwen2.5:3b) delegates images to qwen3-vl:4b. The vision model must be installed AND verified with /api/show before use; nothing is downloaded. Each image is described once (cached per session) and the text model receives the description, never the raw image. Files: src/lib/visionBridge.js, attachments.js (toOllamaMessages, readAttachment), useChat.js, Composer.jsx.
+- **Mock Ollama:** server/mock-ollama.cjs now returns a labelled sample ```chart reply when asked, and a labelled mock image description for non-streamed vision calls.
+- **Tests:** tests/chart.test.js, tests/branching-export.test.js, tests/vision-bridge.test.js. `npm test` = 61/61 pass.
+- **Browser check (sandbox Chromium, mock Ollama):** 15/15 PASS. Covered chart render, branch creation and truncation, vision bridge (one non-streamed qwen3-vl call with the image; the qwen2.5 call contains image_description and no images), artifact .zip export, and zero console/page errors. Screenshot: /home/user/preview-shots2/01-chart.png.
+- **Status:** source ✔ · compiled ✔ · unit-tested ✔ · browser-tested in the sandbox ✔ · user-confirmed ✘ (not yet tested on the user's Windows machine with real Ollama).
+- **Out of scope (explained, not built):** MCP (Model Context Protocol) servers and sub-agents. Both need a permission model for external tools/processes that the local-only, no-network policy does not yet define. Charts, branching, export and vision cover the practical parts of the curated list.
+- **Test hygiene:** the browser test writes conversation sources to the vault path the vault API uses. The sandbox preview vault API now points at /tmp/preview-vault (copy). Run browser tests against a temporary vault copy (AI_BRAIN_VAULT=...) so the repository's vault/ is never modified by tests.

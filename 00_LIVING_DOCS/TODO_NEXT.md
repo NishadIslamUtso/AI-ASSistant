@@ -128,6 +128,17 @@
 - [ ] User pushes to GitHub: git init, add, commit, remote add origin, push
 - [ ] Verify GitHub repo has living docs + apps + extension + vault + spec + archive_zips
 
+## Session 3 status (2026-10-12 Asia/Dhaka) — merge + new features
+- [x] Merged 3c06e1bf "best of" branch into abc0197f (65def82). Build ✔, 48 unit ✔, 5 UI ✔.
+- [x] Inline chart visualizer — source ✔ compiled ✔ tested ✔ (unit + browser). User-confirmed: ✘
+- [x] Branching conversations — source ✔ compiled ✔ tested ✔. User-confirmed: ✘
+- [x] Artifact export as project .zip — source ✔ compiled ✔ tested ✔. User-confirmed: ✘
+- [x] Vision bridge (qwen2.5:3b → qwen3-vl:4b) — source ✔ compiled ✔ tested ✔ (mock). Real qwen3-vl:4b on the user's RTX 3050 still needs a check. User-confirmed: ✘
+- [ ] Comment/pin on artifact — NOT built.
+- [ ] MCP and sub-agents — out of scope for now (need a permission model for external tools).
+- [ ] Next: run `start-app.bat` on Windows with the real Ollama: send one chart request, branch one chat, attach one image to qwen2.5:3b, export one artifact .zip.
+- [ ] Open the P3–P9 backlog below (artifact runner, dropdowns, uploads, extension wiring, VaultPanel, Today view, installer). Check each against the winner's code before rebuilding.
+
 ## How to Pick Next Task
 
 1. If user reports exact clone doesn't work on Windows, fix Priority 1 first

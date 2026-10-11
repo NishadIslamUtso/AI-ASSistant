@@ -16,6 +16,7 @@ import useModels from './hooks/useModels.js'
 import useChat from './hooks/useChat.js'
 import { DEFAULT_CHATS, DEFAULT_MODEL, DEFAULT_SETTINGS, newId, normalizeChats, normalizeSettings } from './lib/storage.js'
 import { capsuleText, vaultGet } from './lib/vault.js'
+import { branchChat } from './lib/branching.js'
 
 function ProjectsView({ projects, chats, onCreate, onOpen, focused, onBack, onChat, onNew }) {
   if (focused) return <main className="library-view"><button className="back-button" onClick={onBack}><ArrowLeft size={14} />Projects</button><header><h1>{focused.name}</h1><button className="secondary-button" onClick={() => onNew(focused.id)}><Plus size={15} />New chat</button></header><div className="project-chat-list">{chats.filter(chat => chat.projectId === focused.id).map(chat => <button key={chat.id} onClick={() => onChat(chat.id)}>{chat.title}</button>)}</div>{!chats.some(chat => chat.projectId === focused.id) && <p className="library-description">No chats in this project yet.</p>}</main>
@@ -125,6 +126,16 @@ export default function App() {
       default: break // Undo/redo/cut/copy/paste/back/forward/latest are shown disabled in the menu
     }
   }
+  function branchFrom(messageId) {
+    if (!chat) return
+    if (chatRuntime.busyChatId) { notify('Wait for the reply to finish before branching this conversation.'); return }
+    try {
+      const branch = branchChat(chat, messageId, { newId })
+      setChats(previous => [branch, ...previous])
+      navigate(branch.id)
+      notify('Branch created. The original conversation is unchanged.')
+    } catch (error) { notify(error.message) }
+  }
   function newChat(project = null) { navigate(null); setProjectId(project); setDraftNonce(value => value + 1) }
   function openArtifact(id) { setActiveArtifact(id); setRightPanel('artifact') }
   function chatAction(type, item) {
@@ -164,7 +175,7 @@ export default function App() {
     <TitleBar onAction={titleAction} ollamaOk={models.status === 'online'} vaultOk={vaultOk} title={chat?.title || 'AI ASSistant'} />
     <div className="app-shell">
       <Sidebar chats={chats} currentChat={currentChat} navigate={navigate} view={view} onView={setView} onNew={() => newChat()} onAction={chatAction} onSettings={() => setModal('settings')} onApps={() => setModal('apps')} onVault={() => setRightPanel(rightPanel === 'vault' ? null : 'vault')} collapsed={collapsed} onCollapse={() => setCollapsed(!collapsed)} busyChatId={chatRuntime.busyChatId} notify={notify} artifactCount={artifacts.length} onToday={() => setToday(true)} />
-      {view === 'artifacts' ? <ArtifactsLibrary artifacts={artifacts} onOpen={openArtifact} onImport={item => { setImports(previous => [item, ...previous]); notify('Artifact imported locally. Open its card to run the isolated preview.') }} notify={notify} /> : view === 'projects' ? <ProjectsView projects={projects} chats={chats} onCreate={() => setAction({ type: 'createProject' })} focused={projects.find(item => item.id === focusedProject)} onOpen={setFocusedProject} onBack={() => setFocusedProject(null)} onChat={navigate} onNew={newChat} /> : <Center key={currentChat || `new-${draftNonce}`} chat={chat} models={models} onArtifact={openArtifact} onRetryCapture={chatRuntime.retryCapture} settings={settings} notify={notify} busyChatId={chatRuntime.busyChatId} onSend={chatRuntime.send} onStop={chatRuntime.stop} projects={projects} projectId={projectId} setProjectId={selectProject} onVault={() => setRightPanel('vault')} onContextPreview={previewCapsule} contextBundle={contextBundle} clearContext={() => setContextBundle(null)} onCook={cook} onExternalLink={setExternalLink} seed={seed} />}
+      {view === 'artifacts' ? <ArtifactsLibrary artifacts={artifacts} onOpen={openArtifact} onImport={item => { setImports(previous => [item, ...previous]); notify('Artifact imported locally. Open its card to run the isolated preview.') }} notify={notify} /> : view === 'projects' ? <ProjectsView projects={projects} chats={chats} onCreate={() => setAction({ type: 'createProject' })} focused={projects.find(item => item.id === focusedProject)} onOpen={setFocusedProject} onBack={() => setFocusedProject(null)} onChat={navigate} onNew={newChat} /> : <Center key={currentChat || `new-${draftNonce}`} chat={chat} models={models} onArtifact={openArtifact} onRetryCapture={chatRuntime.retryCapture} onBranch={branchFrom} settings={settings} notify={notify} busyChatId={chatRuntime.busyChatId} onSend={chatRuntime.send} onStop={chatRuntime.stop} projects={projects} projectId={projectId} setProjectId={selectProject} onVault={() => setRightPanel('vault')} onContextPreview={previewCapsule} contextBundle={contextBundle} clearContext={() => setContextBundle(null)} onCook={cook} onExternalLink={setExternalLink} seed={seed} />}
       {rightPanel === 'vault' && <VaultPanel onClose={() => setRightPanel(null)} onPreview={previewCapsule} />}
       {rightPanel === 'artifact' && artifact && <ArtifactPanel key={artifact.id} artifact={artifact} onClose={() => setRightPanel(null)} onSave={saveArtifact} notify={notify} />}
     </div>

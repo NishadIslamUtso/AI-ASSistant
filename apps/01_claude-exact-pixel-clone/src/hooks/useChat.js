@@ -2,6 +2,8 @@ import { useRef, useState } from 'react'
 import { newId } from '../lib/storage.js'
 import { loadImage, persistAttachments, toOllamaMessages } from '../lib/attachments.js'
 import { splitThinking, streamChat, systemPrompt } from '../lib/ollama.js'
+import { describeImages, imageNeedsBridge, resolveVisionBridge, VISION_BRIDGE_MODEL } from '../lib/visionBridge.js'
+import { wantsChart } from '../lib/chart.js'
 import { extractArtifacts, wantsArtifact } from '../lib/artifacts.js'
 import { vaultPost } from '../lib/vault.js'
 
@@ -43,16 +45,23 @@ export default function useChat({ chats, setChats, currentChat, navigate, models
     setBusyChatId(chatId)
     try {
       const userMessage = { id: newId(), role: 'user', content: content.trim() || 'Please look at the attached file.', attachments, context, timestamp: new Date().toISOString() }
-      const history = [...(existing?.messages || []), userMessage]
+      let history = [...(existing?.messages || []), userMessage]
+      if (imageNeedsBridge(history, models.capabilities)) {
+        // Text-only model: have the local vision model describe each new image (cached per image).
+        notify(`Describing the image locally with ${VISION_BRIDGE_MODEL}. Your text model will read the description.`)
+        const bridge = await resolveVisionBridge(models.models.map(item => item.name), controller.signal)
+        history = await describeImages(history, { model: bridge, signal: controller.signal })
+        userMessage.attachments = history.at(-1).attachments
+      }
       const requested = wantsArtifact(userMessage.content, artifactMode)
-      const prompt = systemPrompt(requested)
+      const prompt = systemPrompt(requested, wantsChart(userMessage.content))
       const requestMessages = [{ role: 'system', content: prompt }, ...await toOllamaMessages(history, models.capabilities)]
       // Conservative character guard, NOT an exact token counter. Refuse instead
       // of silently dropping old turns from a small 4,096-token local context.
       if (requestMessages.reduce((size, message) => size + message.content.length, 0) > 12_000) {
         throw new Error('This chat and its files/context exceed the conservative 12,000-character budget for the 4,096-token local context. Start a new chat with a smaller capsule. The original transcript is kept.')
       }
-      userMessage.attachments = await persistAttachments(attachments)
+      userMessage.attachments = await persistAttachments(userMessage.attachments)
       const assistant = { id: newId(), role: 'assistant', content: '', thinking: '', status: 'streaming', timestamp: new Date().toISOString(), model: models.model }
       const chat = { ...(existing || { id: chatId, title: userMessage.content.slice(0, 55), date: 'Today', projectId }), messages: [...(existing?.messages || []), userMessage, assistant] }
       setChats(previous => existing ? previous.map(item => item.id === chatId ? chat : item) : [chat, ...previous])

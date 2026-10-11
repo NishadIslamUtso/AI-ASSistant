@@ -36,6 +36,19 @@ const MODELS = [
 const MOCK_NOTICE =
   '**(mock reply — no model loaded: this is `server/mock-ollama.cjs`, not qwen2.5:3b)**'
 
+// A sample chart reply, emitted only when the app asked for a ```chart block.
+const CHART_REPLY = [
+  MOCK_NOTICE,
+  '',
+  'Here is a quick chart (mock data):',
+  '',
+  '```chart',
+  '{"type":"bar","title":"Weekly tasks (mock)","labels":["Mon","Tue","Wed","Thu","Fri"],"values":[3,7,5,9,4]}',
+  '```',
+  '',
+  'Use **Branch from here** on any message to explore another direction.',
+].join('\n')
+
 function replyFor(prompt) {
   const p = String(prompt || '')
   const last = p.split('\n').filter((l) => l.trim()).slice(-1)[0] || ''
@@ -128,9 +141,22 @@ const server = http.createServer((req, res) => {
       }
       const msgs = payload.messages || []
       const prompt = (msgs.find((m) => m.role === 'user') || {}).content || ''
+      // Vision bridge (non-streamed): the mock "describes" the image so the
+      // bridge path can be exercised end to end. Clearly labelled as a mock.
+      if (payload.stream === false) {
+        const images = msgs.flatMap((m) => m.images || [])
+        const content = images.length
+          ? `${MOCK_NOTICE}\n\nMock description of ${images.length} image(s) from ${payload.model}: a simple test picture with a red square on white.`
+          : 'No image was attached.'
+        res.writeHead(200, { 'Content-Type': 'application/json' })
+        return res.end(JSON.stringify({ model: payload.model, created_at: new Date().toISOString(), message: { role: 'assistant', content }, done: true }))
+      }
+      const system = (msgs.find((m) => m.role === 'system') || {}).content || ''
       const text = /\b(tic|tac|toe|game|snake|flappy|build me|make me)\b/i.test(prompt)
         ? ARTIFACT_REPLY
-        : replyFor(prompt)
+        : /```chart/.test(system) && /\b(chart|graph|plot|visuali[sz]e)\b/i.test(prompt)
+          ? CHART_REPLY
+          : replyFor(prompt)
 
       res.writeHead(200, { 'Content-Type': 'application/x-ndjson' })
       const chunks = text.match(/[\s\S]{1,7}/g) || []

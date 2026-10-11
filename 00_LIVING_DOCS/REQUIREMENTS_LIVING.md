@@ -394,6 +394,16 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - **Verified:** 48 unit/integration tests, 5 jsdom UI tests, clean build, all
   endpoints checked live through the preview proxy.
 
+### [2026-10-12] Merge of 3c06e1bf + inline charts, branching, project .zip export, vision bridge
+- Features added (source/compiled/unit-tested/browser-tested in sandbox; NOT yet user-confirmed on Windows):
+  - Inline chart visualizer: ```chart JSON block -> SVG bar/line/pie. Chart prompt rule only when requested.
+  - Branching conversations: "Branch from here" creates a new chat; original kept; blocked while streaming.
+  - Artifact export as project .zip (index.html/image.svg + artifact.json + README). Not sandboxed; warning shown.
+  - Vision bridge: qwen2.5:3b (text) + qwen3-vl:4b (vision, verified via /api/show, never downloaded). Text model receives descriptions, never raw images.
+- Out of scope (explained): MCP servers and sub-agents need a permission model for external tools/processes that the local-only policy does not yet define.
+- Still open from the curated list: comment/pin-on-artifact (click-to-edit a region) is NOT built.
+- Vault safety: tests must use a temporary vault copy (AI_BRAIN_VAULT); the repository vault/ is not a test sink.
+
 ### [NEXT] Add when changed:
 - Use format: ### [YYYY-MM-DD HH:MM] Added/Changed/Fixed: description + why + who requested
 
