@@ -1,88 +1,41 @@
 import { useEffect, useRef } from 'react'
-import { Folder, ChevronDown } from 'lucide-react'
-import Spark from './Spark.jsx'
+import { Code2, FileText, Image, RefreshCw } from 'lucide-react'
+import ClaudeMark from './ClaudeMark.jsx'
 import Composer from './Composer.jsx'
-import ModelPicker from './ModelPicker.jsx'
-import { USER, getGreeting } from '../lib/store.js'
-
-export default function Center({ currentChat, messages, busy, onSend, onStop, model, onModelChange, actions }) {
-  const endRef = useRef(null)
-  const isEmpty = messages.length === 0
-
+import Markdown from './Markdown.jsx'
+import ThinkingDisplay from './ThinkingDisplay.jsx'
+export function getGreeting(date = new Date()) {
+  const hour = Number(new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Dhaka', hour: 'numeric', hourCycle: 'h23' }).format(date))
+  return hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening'
+}
+export default function Center({ seed, chat, onArtifact, onRetryCapture, settings, notify, onExternalLink, ...composerProps }) {
+  const transcript = useRef(null)
+  const messages = chat?.messages || []
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: 'end' })
-  }, [messages])
-
-  const widthStyle = { maxWidth: 'var(--transcript-width)' }
-  const toast = actions.toast
-
-  const modelRow = (
-    <div className="mx-auto mt-2 flex w-full items-center justify-between px-1 text-xs" style={widthStyle}>
-      {isEmpty ? (
-        <button type="button" onClick={() => toast('Projects: not in the local build yet')} className="flex items-center gap-1.5 rounded-md px-1.5 py-1 c-muted-2 c-hover">
-          <Folder size={13} /> Project <ChevronDown size={12} />
-        </button>
-      ) : <span />}
-      <div className="flex items-center gap-3">
-        <ModelPicker model={model} onChange={onModelChange} />
-        <span className="c-muted" title="Display only in this build">Medium</span>
-        <span className="c-muted" title="Display only in this build">Manual</span>
+    const element = transcript.current
+    if (element && element.scrollHeight - element.scrollTop - element.clientHeight < 260) element.scrollTo({ top: element.scrollHeight, behavior: settings.motion === 'Reduced' ? 'instant' : 'smooth' })
+  }, [messages, settings.motion])
+  const hasMessages = messages.length > 0
+  return <main className={`center ${hasMessages ? 'has-messages' : 'home'}`} data-model-ready={composerProps.models.available}>
+    {!hasMessages && <div className="free-plan"><span>Free plan</span><span>·</span><button onClick={() => notify('This is a free local Ollama app. Claude plans and billing are not connected.')}>Upgrade</button></div>}
+    {hasMessages ? <>
+      <header className="chat-header"><h1>{chat.title}</h1><small>Local · {composerProps.models.model}</small></header>
+      <div className="transcript-scroll" ref={transcript}><div className="transcript" key={chat.id}>
+        {messages.map(message => <article key={message.id} className={`message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`} aria-label={message.role === 'user' ? 'Your message' : 'Assistant response'}>
+          {message.role === 'assistant' && <ClaudeMark size={23} />}
+          <div className="message-body"><ThinkingDisplay thinking={message.thinking} streaming={message.status === 'streaming'} />
+            {message.role === 'user' ? <div className="user-text">{message.content}</div> : <Markdown onExternalLink={onExternalLink}>{message.content}</Markdown>}
+            {message.attachments?.length > 0 && <div className="sent-attachments">{message.attachments.map(file => <span key={file.id}>{file.kind === 'image' ? <Image size={13} /> : <FileText size={13} />}{file.name}</span>)}</div>}
+            {message.context && <details className="sent-context"><summary>Included vault context</summary><pre>{message.context}</pre></details>}
+            {message.status === 'streaming' && !message.content && !message.thinking && <p className="generating">Responding locally…</p>}
+            {message.error && <p className={message.status === 'error' ? 'error-text response-error' : 'muted'} role={message.status === 'error' ? 'alert' : undefined}>{message.error}</p>}
+            {message.artifacts?.map(artifact => <button key={artifact.id} className="artifact-message-card" onClick={() => onArtifact(artifact.id)}><Code2 size={20} /><span><strong>{artifact.title}</strong><small>{artifact.type === 'html' ? 'HTML Application' : 'SVG Image'} · Open preview</small></span></button>)}
+          </div>
+        </article>)}
+      </div></div>
+      <div className="reply-composer"><Composer chat={chat} notify={notify} seed={seed} {...composerProps} />
+        <div className="chat-save-status">{chat.vaultStatus === 'saved' ? 'Saved in local chat history and AI-Brain' : chat.vaultStatus === 'saving' ? 'Saving to AI-Brain…' : chat.vaultStatus === 'error' ? <><span title={chat.vaultError}>Local chat kept · vault capture failed</span><button onClick={() => onRetryCapture(chat)}><RefreshCw size={11} />Retry</button></> : 'Local chat history · check important answers'}</div>
       </div>
-    </div>
-  )
-
-  return (
-    <main className="flex h-screen min-w-0 flex-1 flex-col c-main">
-      <div className="flex h-11 shrink-0 items-center justify-center">
-        <div className="flex items-center gap-2 rounded-full px-3 py-1 text-sm c-hover">
-          <span className="c-muted-2">Free plan</span>
-          <span className="c-muted">·</span>
-          <button type="button" onClick={() => toast('Upgrade: this local build is free')} className="text-[#6b9bff]">Upgrade</button>
-        </div>
-      </div>
-
-      {isEmpty ? (
-        <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-6 pb-16">
-          <div className="mb-8 flex items-center gap-3">
-            <Spark size={34} />
-            <h1 className="serif text-[36px] leading-none">{getGreeting()}, {USER.name}</h1>
-          </div>
-          <div className="w-full" style={widthStyle}>
-            <Composer busy={busy} onSend={onSend} onStop={onStop} toast={toast} placeholder="How can I help you today?" />
-          </div>
-          {modelRow}
-        </div>
-      ) : (
-        <>
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <div className="mx-auto space-y-6 px-6 py-8" style={widthStyle}>
-              {messages.map((m) => (
-                m.role === 'user' ? (
-                  <div key={m.id} className="flex justify-end">
-                    <div className="chat-text max-w-[80%] whitespace-pre-wrap rounded-2xl px-4 py-2.5" style={{ background: 'var(--bg-hover)' }}>
-                      {m.content}
-                    </div>
-                  </div>
-                ) : (
-                  <div key={m.id} className="flex gap-3">
-                    <Spark size={20} className="mt-1 shrink-0" />
-                    <div className={`chat-text min-w-0 flex-1 whitespace-pre-wrap ${m.error ? 'text-[var(--danger)]' : ''}`}>
-                      {m.content || (busy && <span className="c-muted">Thinking...</span>)}
-                    </div>
-                  </div>
-                )
-              ))}
-              <div ref={endRef} />
-            </div>
-          </div>
-          <div className="shrink-0 px-6 pb-4 pt-2">
-            <div className="mx-auto w-full" style={widthStyle}>
-              <Composer busy={busy} onSend={onSend} onStop={onStop} toast={toast} placeholder="Reply..." />
-              {modelRow}
-            </div>
-          </div>
-        </>
-      )}
-    </main>
-  )
+    </> : <div className="home-content"><div className="greeting"><ClaudeMark size={28} /><h1>{getGreeting()}, Utso</h1></div><Composer chat={chat} notify={notify} seed={seed} {...composerProps} /></div>}
+  </main>
 }

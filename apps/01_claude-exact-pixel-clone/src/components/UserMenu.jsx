@@ -1,34 +1,24 @@
-import { Settings, Globe, HelpCircle, ArrowUpCircle, LayoutGrid, Info, KeyRound, LogOut, ChevronRight, ExternalLink } from 'lucide-react'
-import { USER } from '../lib/store.js'
-
-// Popover above the avatar (screenshot 191608.png). Outside click / Escape closing is handled by the Sidebar footer.
-export default function UserMenu({ onSettings, onApps, toast }) {
-  const note = (msg) => () => toast(msg)
-  const Item = ({ icon: Icon, label, shortcut, onClick, chevron, external }) => (
-    <button type="button" onClick={onClick} className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-left c-hover">
-      <Icon size={16} className="c-muted-2 shrink-0" />
-      <span className="flex-1">{label}</span>
-      {shortcut && <span className="text-xs c-muted">{shortcut}</span>}
-      {chevron && <ChevronRight size={14} className="c-muted" />}
-      {external && <ExternalLink size={14} className="c-muted" />}
-    </button>
-  )
-  const Sep = () => <div className="my-1 border-t c-border" />
-
-  return (
-    <div role="menu" className="absolute bottom-full left-3 mb-2 w-[300px] rounded-xl c-menu p-1.5 z-[60]">
-      <div className="px-3 py-2 text-sm c-muted truncate">{USER.email}</div>
-      <Item icon={Settings} label="Settings" shortcut="Ctrl+," onClick={onSettings} />
-      <Item icon={Globe} label="Language" chevron onClick={note('Language: English. Other languages are not in the local build yet.')} />
-      <Item icon={HelpCircle} label="Get help" onClick={note('Get help: local build. See README.md in the repo.')} />
-      <Sep />
-      <Item icon={ArrowUpCircle} label="Upgrade plan" onClick={note('Local build is free. Models run on your computer through Ollama.')} />
-      <Item icon={LayoutGrid} label="Get apps and extensions" onClick={onApps} />
-      <Item icon={Info} label="Learn more" chevron onClick={note('Learn more: see docs/ and 00_LIVING_DOCS/ in the repo.')} />
-      <Sep />
-      <Item icon={KeyRound} label="Get API keys" external onClick={note('No API keys needed. Models run locally through Ollama.')} />
-      <Sep />
-      <Item icon={LogOut} label="Log out" onClick={note('Local build has no account to log out of.')} />
-    </div>
-  )
+import { useRef, useState } from 'react'
+import { Settings, Globe, HelpCircle, ArrowUpCircle, Blocks, Info, KeyRound, LogOut, ChevronRight, ExternalLink, Check } from 'lucide-react'
+import useDismiss from '../hooks/useDismiss.js'
+export default function UserMenu({ onClose, onSettings, onApps, notify }) {
+  const ref = useRef(null)
+  const [language, setLanguage] = useState(false)
+  useDismiss(ref, onClose)
+  function action(callback) { onClose(); callback() }
+  return <div ref={ref} className="user-menu popup" role="menu" aria-label="Account menu">
+    <div className="menu-email">nishadislamutso@gmail.com</div>
+    <button role="menuitem" autoFocus onClick={() => action(onSettings)}><Settings size={15} /><span>Settings</span><kbd>Ctrl+,</kbd></button>
+    <button role="menuitem" onClick={() => setLanguage(!language)}><Globe size={15} /><span>Language</span><small>English</small></button>
+    {language && <div className="language-option"><Check size={13} /> English <small>Local interface</small></div>}
+    <button role="menuitem" onClick={() => action(() => notify('Run start-app.bat on your Windows laptop. Ollama uses the existing qwen2.5:3b model; the vault is vault/AI-Brain. See the app README for troubleshooting.'))}><HelpCircle size={15} /><span>Get help</span></button>
+    <div className="menu-separator" />
+    <button role="menuitem" onClick={() => action(() => notify('Local mode is free. This app is not connected to Claude billing and does not use a Claude subscription.'))}><ArrowUpCircle size={15} /><span>Upgrade plan</span></button>
+    <button role="menuitem" onClick={() => action(onApps)}><Blocks size={15} /><span>Get apps and extensions</span></button>
+    <button role="menuitem" onClick={() => action(() => notify('AI ASSistant is a local Ollama chat app with a screenshot-led Claude interface. The Markdown Obsidian vault is canonical memory; UI similarity does not mean Claude-level model intelligence.'))}><Info size={15} /><span>Learn more</span><ChevronRight size={14} /></button>
+    <div className="menu-separator" />
+    <button role="menuitem" onClick={() => action(() => notify('No API key is needed for local Ollama. Cloud providers and Claude API keys are not connected in this build.'))}><KeyRound size={15} /><span>Get API keys</span><ExternalLink size={14} /></button>
+    <div className="menu-separator" />
+    <button role="menuitem" onClick={() => action(() => notify('There is no external account to log out of. Your local chats and original vault sources have been kept.'))}><LogOut size={15} /><span>Log out</span></button>
+  </div>
 }
