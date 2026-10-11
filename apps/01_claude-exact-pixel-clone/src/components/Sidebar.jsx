@@ -1,246 +1,76 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import {
-  ArrowUpRight, ChevronDown, Command, ExternalLink, Folder, FolderInput, FolderPlus,
-  Pencil, Pin, Search, SlidersHorizontal, Trash2, Plus, Shapes, Palette, Clock,
-} from 'lucide-react'
-import { MenuItem, MenuSep, MENU_SURFACE } from './menu.jsx'
+import { useRef, useState } from 'react'
+import { CalendarDays } from 'lucide-react'
+import { PanelLeft, ArrowLeft, ArrowRight, MessagesSquare, Code2, Search, Plus, FolderClosed, Shapes, Briefcase, ChevronDown, SlidersHorizontal, ArrowUpRight, Blocks, MoreVertical, Pin, Pencil, Trash2, PanelsTopLeft, ChevronRight } from 'lucide-react'
 import UserMenu from './UserMenu.jsx'
-import { USER } from '../lib/config.js'
+import useDismiss from '../hooks/useDismiss.js'
 
-const MENU_W = 194
-
-export default function Sidebar({ width, chats, setChats, currentChatId, onSelect, onNew, onOpenSettings, onOpenApps, toast }) {
+function ChatMenu({ menu, close, action, busy }) {
+  const ref = useRef(null)
+  useDismiss(ref, close)
+  const left = Math.min(menu.x, window.innerWidth - 218)
+  const top = Math.min(menu.y, window.innerHeight - 210)
+  const items = [
+    [PanelsTopLeft, 'Open in new window', 'open'], [Pin, menu.chat.pinned ? 'Unpin' : 'Pin', 'pin', 'P'],
+    [Pencil, 'Rename', 'rename', 'R'], [FolderClosed, 'Add to project', 'project', '›'],
+    [FolderClosed, 'Move to group', 'group', '›'], [Trash2, 'Delete', 'delete', 'D'],
+  ]
+  return <div className="popup chat-menu" ref={ref} role="menu" aria-label="Chat actions" style={{ left: Math.max(8, left), top: Math.max(8, top) }}>
+    {items.map(([Icon, label, key, shortcut], index) => <div key={key}>
+      {(index === 1 || index === 5) && <div className="menu-separator" />}
+      <button role="menuitem" aria-label={label} autoFocus={index === 0} disabled={key === 'delete' && busy} className={key === 'delete' ? 'danger' : ''} onClick={() => { close(); action(key, menu.chat) }}><Icon size={15} /><span>{label}</span>{shortcut && <kbd>{shortcut}</kbd>}</button>
+    </div>)}
+  </div>
+}
+export default function Sidebar({ chats, currentChat, navigate, view, onView, onNew, onAction, onSettings, onApps, onVault, collapsed, onCollapse, busyChatId, notify, artifactCount, onToday }) {
   const [search, setSearch] = useState('')
-  const [ctx, setCtx] = useState(null)          // { x, y, chat, sub }
-  const [renaming, setRenaming] = useState(null) // { id, value }
-  const [userOpen, setUserOpen] = useState(false)
-  const ctxRef = useRef(null)
-
-  const q = search.trim().toLowerCase()
-  const visible = useMemo(() => chats.filter((c) => !q || c.title.toLowerCase().includes(q)), [chats, q])
-  const pinned = visible.filter((c) => c.pinned)
-  // Section order = order of first appearance (chats are newest-first), "Today" always first.
-  const groupOrder = useMemo(() => {
-    const seen = []
-    for (const c of chats) if (!c.pinned && !seen.includes(c.group)) seen.push(c.group)
-    return seen.sort((a, b) => (a === 'Today' ? -1 : b === 'Today' ? 1 : 0))
-  }, [chats])
-  const sections = groupOrder
-    .map((g) => ({ label: g, items: visible.filter((c) => !c.pinned && c.group === g) }))
-    .filter((s) => s.items.length > 0)
-
-  // Context menu: close on outside click / Escape, and P/R/D shortcuts like the desktop menu.
-  useEffect(() => {
-    if (!ctx) return undefined
-    const onKey = (e) => {
-      if (e.key === 'Escape') setCtx(null)
-      else if (e.key === 'p' || e.key === 'P') { e.preventDefault(); pinChat(ctx.chat.id) }
-      else if (e.key === 'r' || e.key === 'R') { e.preventDefault(); startRename(ctx.chat) }
-      else if (e.key === 'd' || e.key === 'D') { e.preventDefault(); deleteChat(ctx.chat.id) }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ctx])
-
-  const updateChat = (id, patch) => setChats((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch(c) } : c)))
-  const pinChat = (id) => { updateChat(id, (c) => ({ pinned: !c.pinned })); setCtx(null) }
-  const startRename = (chat) => { setRenaming({ id: chat.id, value: chat.title }); setCtx(null) }
-  const commitRename = () => {
-    if (renaming && renaming.value.trim()) updateChat(renaming.id, () => ({ title: renaming.value.trim() }))
-    setRenaming(null)
-  }
-  const deleteChat = (id) => {
-    setCtx(null)
-    if (!window.confirm('Delete this chat? This removes it from this browser.')) return
-    setChats((prev) => prev.filter((c) => c.id !== id))
-    if (currentChatId === id) onNew()
-  }
-  const moveToGroup = (id, group) => { updateChat(id, () => ({ group, pinned: false })); setCtx(null) }
-
-  const openCtx = (e, chat, anchor) => {
-    e.preventDefault()
-    e.stopPropagation()
-    let x = e.clientX, y = e.clientY
-    if (anchor) { const r = anchor.getBoundingClientRect(); x = r.left - MENU_W + 24; y = r.bottom + 4 }
-    const maxX = window.innerWidth - MENU_W - 8
-    const maxY = window.innerHeight - 330
-    setCtx({ x: Math.max(8, Math.min(x, maxX)), y: Math.max(8, Math.min(y, maxY)), chat, sub: null })
-  }
-
-  const openInNewWindow = (chat) => {
-    setCtx(null)
-    window.open(`${location.pathname}?chat=${encodeURIComponent(chat.id)}`, '_blank', 'width=1100,height=800')
-  }
-
-  const row = (c) => {
-    const active = currentChatId === c.id
-    if (renaming && renaming.id === c.id) {
-      return (
-        <input
-          key={c.id}
-          autoFocus
-          value={renaming.value}
-          onChange={(e) => setRenaming({ ...renaming, value: e.target.value })}
-          onBlur={commitRename}
-          onKeyDown={(e) => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setRenaming(null) }}
-          className="mx-1 mb-0.5 h-8 w-[calc(100%-8px)] rounded-lg border border-line bg-input px-2.5 text-[14px] text-fg outline-none"
-        />
-      )
-    }
-    return (
-      <div
-        key={c.id}
-        onClick={() => onSelect(c.id)}
-        onDoubleClick={() => startRename(c)}
-        onContextMenu={(e) => openCtx(e, c)}
-        className={`group relative flex h-8 cursor-pointer items-center rounded-lg pl-2.5 pr-2 text-[14px] ${
-          active ? 'bg-active text-fg' : 'text-fg2 hover:bg-hover'
-        }`}
-      >
-        <span className="truncate">{c.title}</span>
-        <button
-          type="button"
-          aria-label="Chat options"
-          title="Chat options"
-          onClick={(e) => openCtx(e, c, e.currentTarget)}
-          className="absolute right-1 top-1/2 hidden h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md bg-hover text-fg2 hover:bg-active group-hover:flex"
-        >
-          <span className="text-[16px] leading-none">⋯</span>
-        </button>
-      </div>
-    )
-  }
-
-  return (
-    <aside className="relative flex h-full shrink-0 flex-col border-r border-soft bg-side" style={{ width }}>
-      <div className="px-3 pt-2">
-        <div className="relative">
-          <Search size={15} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-fg3" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search"
-            aria-label="Search chats"
-            className="h-8 w-full rounded-lg border border-soft bg-input pl-8 pr-2.5 text-[14px] text-fg placeholder-fg3 outline-none focus:border-line"
-          />
-        </div>
-
-        <button
-          type="button"
-          onClick={onNew}
-          className={`mt-2 flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-[14px] text-fg hover:bg-active ${currentChatId === null ? 'bg-active' : ''}`}
-        >
-          <Plus size={16} className="text-fg2" /> New
-        </button>
-        <SideItem icon={<Folder size={16} />} label="Projects" onClick={() => toast('Projects are not available yet')} />
-        <SideItem icon={<Shapes size={16} />} label="Artifacts" onClick={() => toast('Artifacts panel is not available yet (roadmap P3)')} />
-        <SideItem icon={<Palette size={16} />} label="Customize" onClick={() => onOpenSettings()} />
-      </div>
-
-      <div className="mt-3 min-h-0 flex-1 overflow-y-auto pb-3 pl-3 pr-1">
-        {pinned.length > 0 && (
-          <Section label="Pinned">
-            {pinned.map(row)}
-          </Section>
-        )}
-        {sections.map((s) => (
-          <Section
-            key={s.label}
-            label={s.label}
-            right={s.label === 'Oct 8' || s.label === 'Today' ? <SlidersHorizontal size={14} className="text-fg3" /> : <ArrowUpRight size={15} className="text-fg3 opacity-0 group-hover/sec:opacity-100" />}
-            chevron={s.label === 'Older'}
-          >
-            {s.items.map(row)}
-          </Section>
-        ))}
-        {visible.length === 0 && <div className="px-2.5 py-3 text-[13px] text-fg3">No chats match “{search}”.</div>}
-      </div>
-
-      <div className="relative flex h-12 shrink-0 items-center justify-between px-3">
-        <button
-          type="button"
-          onClick={() => setUserOpen((o) => !o)}
-          className="flex h-9 min-w-0 items-center gap-2 rounded-lg px-1.5 hover:bg-hover"
-          aria-haspopup="menu"
-          aria-expanded={userOpen}
-        >
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#292929] text-[11px] font-medium text-fg">{USER.initials}</span>
-          <span className="truncate text-[14px] text-fg">{USER.name}</span>
-          <span className="text-[13px] text-fg3">· {USER.plan}</span>
-          <ChevronDown size={14} className="text-fg3" />
-        </button>
-        <button type="button" title="Keyboard shortcuts (Ctrl+,)" aria-label="Keyboard shortcuts" onClick={() => toast('Shortcuts: Ctrl+N new chat · Ctrl+, settings · Ctrl+B sidebar')} className="flex h-7 w-7 items-center justify-center rounded-md text-fg3 hover:bg-hover">
-          <Command size={15} />
-        </button>
-        {userOpen && (
-          <UserMenu
-            onClose={() => setUserOpen(false)}
-            onSettings={() => { setUserOpen(false); onOpenSettings() }}
-            onApps={() => { setUserOpen(false); onOpenApps() }}
-            toast={toast}
-          />
-        )}
-      </div>
-
-      {ctx && (
-        <div className="fixed inset-0 z-50" onMouseDown={() => setCtx(null)} onContextMenu={(e) => { e.preventDefault(); setCtx(null) }}>
-          <div
-            role="menu"
-            style={{ left: ctx.x, top: ctx.y, width: MENU_W }}
-            onMouseDown={(e) => e.stopPropagation()}
-            className={`absolute ${MENU_SURFACE}`}
-          >
-            <MenuItem icon={<ExternalLink size={15} />} label="Open in new window" onClick={() => openInNewWindow(ctx.chat)} />
-            <MenuItem icon={<Pin size={15} />} label={ctx.chat.pinned ? 'Unpin' : 'Pin'} shortcut="P" onClick={() => pinChat(ctx.chat.id)} />
-            <MenuItem icon={<Pencil size={15} />} label="Rename" shortcut="R" onClick={() => startRename(ctx.chat)} />
-            <MenuItem icon={<FolderPlus size={15} />} label="Add to project" submenu onMouseEnter={() => setCtx({ ...ctx, sub: 'project' })} onClick={() => setCtx({ ...ctx, sub: ctx.sub === 'project' ? null : 'project' })} />
-            <MenuItem icon={<FolderInput size={15} />} label="Move to group" submenu onMouseEnter={() => setCtx({ ...ctx, sub: 'group' })} onClick={() => setCtx({ ...ctx, sub: ctx.sub === 'group' ? null : 'group' })} />
-            <MenuSep />
-            <MenuItem icon={<Trash2 size={15} />} label="Delete" shortcut="D" danger onClick={() => deleteChat(ctx.chat.id)} />
-
-            {ctx.sub && (
-              <div
-                className={`absolute top-0 ${MENU_SURFACE} w-[210px]`}
-                style={{ left: MENU_W + 6 }}
-              >
-                {ctx.sub === 'project' && <div className="px-2.5 py-2 text-[13px] text-fg3">No projects yet</div>}
-                {ctx.sub === 'group' && (
-                  <>
-                    {[...new Set(chats.filter((c) => !c.pinned).map((c) => c.group).concat('Today'))]
-                      .filter((g) => g !== ctx.chat.group)
-                      .map((g) => <MenuItem key={g} icon={<Clock size={14} />} label={g} onClick={() => moveToGroup(ctx.chat.id, g)} />)}
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </aside>
-  )
-}
-
-function SideItem({ icon, label, onClick }) {
-  return (
-    <button type="button" onClick={onClick} className="mt-0.5 flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-[14px] text-fg hover:bg-hover">
-      <span className="text-fg2">{icon}</span>
-      {label}
-    </button>
-  )
-}
-
-function Section({ label, children, right, chevron }) {
-  return (
-    <div className="group/sec mb-2">
-      <div className="flex h-8 items-center justify-between pl-2.5 pr-2 text-[13px] text-fg3">
-        <span className="flex items-center gap-1">
-          {label}
-          {chevron && <ChevronDown size={13} className="opacity-0 group-hover/sec:opacity-100" />}
-        </span>
-        {right}
-      </div>
-      <div className="flex flex-col gap-px">{children}</div>
+  const [menu, setMenu] = useState(null)
+  const [userMenu, setUserMenu] = useState(false)
+  const [olderOpen, setOlderOpen] = useState(true)
+  const accountRef = useRef(null)
+  const filtered = chats.filter(chat => chat.title.toLowerCase().includes(search.toLowerCase()))
+  const groups = [...new Set(filtered.filter(chat => !chat.pinned).map(chat => chat.date))]
+  if (filtered.some(chat => chat.pinned)) groups.unshift('Pinned')
+  const openMenu = (event, chat) => { event.preventDefault(); event.stopPropagation(); setUserMenu(false); setMenu({ x: event.clientX || event.currentTarget.getBoundingClientRect().right - 200, y: event.clientY || event.currentTarget.getBoundingClientRect().bottom, chat }) }
+  if (collapsed) return <button className="sidebar-reopen icon-button" onClick={onCollapse} aria-label="Show sidebar"><PanelLeft size={18} /></button>
+  return <aside className="sidebar" aria-label="Chat sidebar">
+    <div className="sidebar-toolbar">
+      {/* Native File/Edit/View/Go/Help remains an Electron-only task. */}
+      <button className="icon-button" aria-label="Hide sidebar" onClick={onCollapse}><PanelLeft size={16} /></button>
+      <button className="icon-button" aria-label="Go back" onClick={() => window.history.back()}><ArrowLeft size={17} /></button>
+      <button className="icon-button" aria-label="Go forward" onClick={() => window.history.forward()}><ArrowRight size={17} /></button>
+      <div className="toolbar-modes"><button className={view === 'chat' ? 'selected' : ''} aria-label="Chat view" onClick={() => onView('chat')}><MessagesSquare size={17} /></button><button className={view === 'artifacts' ? 'selected' : ''} aria-label="Artifacts view" onClick={() => onView('artifacts')}><Code2 size={16} /></button></div>
     </div>
-  )
+    <div className="sidebar-search"><Search size={15} /><input aria-label="Search chats" placeholder="Search" value={search} onChange={event => setSearch(event.target.value)} /></div>
+    <button className="new-chat" onClick={onNew}><Plus size={16} />New</button>
+    <div className="sidebar-scroll">
+      <nav className="sidebar-nav" aria-label="Library">
+        <button onClick={() => onView('projects')} className={view === 'projects' ? 'active' : ''}><FolderClosed size={15} />Projects</button>
+        <button onClick={() => onView('artifacts')} className={view === 'artifacts' ? 'active' : ''}><Shapes size={15} />Artifacts{artifactCount > 0 && <span className="nav-count">{artifactCount}</span>}</button>
+        <button onClick={onToday} title="Today view (Alt+T)"><CalendarDays size={15} />Today</button>
+        <button onClick={onSettings}><Briefcase size={15} />Customize</button>
+      </nav>
+      <div className="chat-groups">
+        {groups.map(group => {
+          const items = filtered.filter(chat => group === 'Pinned' ? chat.pinned : !chat.pinned && chat.date === group)
+          return <section key={group} aria-label={`${group} chats`} className="chat-group">
+            <div className="group-heading">
+              {group === 'Older' ? <button onClick={() => setOlderOpen(!olderOpen)} aria-expanded={olderOpen}>Older<ChevronDown size={12} className={olderOpen ? '' : 'rotate-left'} /></button> : <span>{group}</span>}
+              {group === 'Oct 8' ? <SlidersHorizontal size={13} /> : group === 'Older' ? <ArrowUpRight size={14} /> : null}
+            </div>
+            {(group !== 'Older' || olderOpen || search) && items.map(chat => <div key={chat.id} className={`chat-item ${currentChat === chat.id && view === 'chat' ? 'active' : ''}`} onContextMenu={event => openMenu(event, chat)}>
+              <button className="chat-title" onClick={() => { navigate(chat.id); onView('chat') }} title={chat.title}>{chat.pinned && <Pin size={11} />}{chat.title}</button>
+              <button className="chat-more icon-button" aria-label={`Actions for ${chat.title}`} onClick={event => openMenu(event, chat)}><MoreVertical size={15} /></button>
+            </div>)}
+          </section>
+        })}
+        {!filtered.length && <p className="empty-search">No matching chats</p>}
+      </div>
+    </div>
+    <footer className="sidebar-footer">
+      <button ref={accountRef} className="account-button" aria-label="Utso account menu" aria-expanded={userMenu} onPointerDown={event => event.stopPropagation()} onClick={() => { setMenu(null); setUserMenu(!userMenu) }}><span className="avatar">NU</span><span>Utso <small>· Free</small></span><ChevronDown size={12} /></button>
+      <button className="icon-button" aria-label="Open AI-Brain vault" title="AI-Brain vault" onClick={onVault}><Blocks size={16} /></button>
+    </footer>
+    {userMenu && <UserMenu onClose={() => { setUserMenu(false); accountRef.current?.focus() }} onSettings={onSettings} onApps={onApps} notify={notify} />}
+    {menu && <ChatMenu menu={menu} close={() => setMenu(null)} action={onAction} busy={busyChatId === menu.chat.id} />}
+  </aside>
 }

@@ -1,56 +1,32 @@
 import { useEffect, useState } from 'react'
-import { Search, X } from 'lucide-react'
-import { vaultContext, vaultStatus } from '../lib/api.js'
-
-// AI-Brain panel (View > Toggle AI-Brain panel). Read-only for now:
-// status of the vault driver (127.0.0.1:8765) and a memory search. Drag-drop capsules = roadmap P5/P7.
-export default function VaultPanel({ onClose }) {
-  const [status, setStatus] = useState(null)
-  const [q, setQ] = useState('')
-  const [results, setResults] = useState([])
-  const [err, setErr] = useState(null)
-
-  useEffect(() => { vaultStatus().then(setStatus) }, [])
-
+import { X, Search, RefreshCw, Layers, Shield, GripVertical, ChevronRight } from 'lucide-react'
+import { CAPSULE_DRAG_TYPE, capsuleText, vaultGet } from '../lib/vault.js'
+import BlacklistManager from './BlacklistManager.jsx'
+export default function VaultPanel({ onClose, onPreview }) {
+  const [tab, setTab] = useState('capsules')
+  const [query, setQuery] = useState('')
+  const [capsules, setCapsules] = useState([])
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [revision, setRevision] = useState(0)
   useEffect(() => {
-    if (q.trim().length < 2) { setResults([]); setErr(null); return undefined }
-    const t = setTimeout(async () => {
-      try {
-        const data = await vaultContext(q.trim())
-        setResults(data.capsules || [])
-        setErr(null)
-      } catch (e) {
-        setErr(e.message)
-      }
-    }, 300)
-    return () => clearTimeout(t)
-  }, [q])
-
-  return (
-    <aside className="flex h-full w-[340px] shrink-0 flex-col border-l border-soft bg-side">
-      <div className="flex h-12 shrink-0 items-center justify-between px-4">
-        <span className="text-[15px] font-medium text-fg">AI-Brain</span>
-        <button type="button" onClick={onClose} aria-label="Close AI-Brain panel" className="flex h-7 w-7 items-center justify-center rounded-md text-fg2 hover:bg-hover"><X size={16} /></button>
-      </div>
-      <div className="space-y-3 overflow-y-auto px-4 pb-4 text-[13.5px] text-fg2">
-        <div className="rounded-xl border border-soft bg-main p-3 leading-6">
-          {status === null && 'Checking vault driver…'}
-          {status && status.ok && <>Connected to <span className="text-fg">127.0.0.1:8765</span><div className="truncate text-fg3" title={status.vault}>{status.vault}</div></>}
-          {status && !status.ok && <>Vault driver is not running. Start it with <span className="text-fg">start-app.bat</span>.</>}
-        </div>
-        <div className="relative">
-          <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-fg3" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search memory" aria-label="Search AI-Brain memory" className="h-9 w-full rounded-lg border border-soft bg-input pl-8 pr-3 text-[14px] text-fg placeholder-fg3 outline-none" />
-        </div>
-        {err && <div className="text-[#ef5350]">Search failed: {err}</div>}
-        {results.map((c) => (
-          <div key={c.id} className="rounded-xl border border-soft bg-main p-3">
-            <div className="truncate text-[14px] text-fg">{c.title}</div>
-            <div className="mt-1 line-clamp-3 text-[12.5px] leading-5 text-fg3">{(c.background || '').replace(/---[\s\S]*?---/, '').trim()}</div>
-          </div>
-        ))}
-        {q.trim().length >= 2 && !err && results.length === 0 && <div className="text-fg3">No matching memory yet.</div>}
-      </div>
-    </aside>
-  )
+    const controller = new AbortController()
+    const timer = setTimeout(() => {
+      setLoading(true)
+      vaultGet(`/capsules?q=${encodeURIComponent(query)}`, controller.signal).then(data => { setCapsules(data.capsules || []); setError('') }).catch(error => { if (!controller.signal.aborted) setError(error.message) }).finally(() => { if (!controller.signal.aborted) setLoading(false) })
+    }, query ? 250 : 0)
+    return () => { clearTimeout(timer); controller.abort() }
+  }, [query, revision])
+  return <aside className="vault-panel side-panel" aria-label="AI-Brain vault">
+    <header className="panel-header"><div><h2>AI-Brain</h2><small>Canonical Markdown vault</small></div><button className="icon-button" aria-label="Close vault" onClick={onClose}><X size={17} /></button></header>
+    <div className="panel-tabs"><button className={tab === 'capsules' ? 'selected' : ''} onClick={() => setTab('capsules')}><Layers size={14} />Capsules</button><button className={tab === 'access' ? 'selected' : ''} onClick={() => setTab('access')}><Shield size={14} />Access</button></div>
+    <div className="vault-body">{tab === 'access' ? <BlacklistManager /> : <>
+      <div className="vault-search"><Search size={14} /><input placeholder="Search capsules" aria-label="Search capsules" value={query} onChange={event => setQuery(event.target.value)} /><button className="icon-button" aria-label="Refresh vault" onClick={() => setRevision(value => value + 1)}><RefreshCw size={13} /></button></div>
+      <p className="vault-instruction">Drag a capsule into the composer, or click to preview its exact context. Nothing is sent until you send your message.</p>
+      {loading && <p className="muted">Reading local vault…</p>}
+      {error && <p className="error-text" role="alert">Vault unavailable: {error}</p>}
+      {!loading && !error && !capsules.length && <div className="vault-empty"><Layers size={28} /><h3>No capsules yet</h3><p>Capsules saved by the collector will appear here. No sample memories have been invented.</p></div>}
+      {capsules.map(capsule => <button key={capsule.id} className="capsule-card" draggable onDragStart={event => { const content = capsuleText(capsule); event.dataTransfer.setData(CAPSULE_DRAG_TYPE, JSON.stringify({ ...capsule, content })); event.dataTransfer.effectAllowed = 'copy' }} onClick={() => onPreview({ ...capsule, content: capsuleText(capsule) })}><div><GripVertical size={13} /><strong>{capsule.title}</strong><ChevronRight size={13} /></div><p>{capsule.background?.slice(0, 120) || 'Source-linked context'}</p><small>v{capsule.version || 1} · {capsule.source || 'Local vault'}</small></button>)}
+    </>}</div><footer className="panel-footnote">Local vault API · 127.0.0.1:8765<br />No external account or upload.</footer>
+  </aside>
 }

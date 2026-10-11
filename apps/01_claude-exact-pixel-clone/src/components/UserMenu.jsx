@@ -1,39 +1,24 @@
-import { useEffect, useRef } from 'react'
-import { HelpCircle, ExternalLink, Info, KeyRound, Languages, LayoutGrid, LogOut, Settings, Star } from 'lucide-react'
-import { MenuItem, MenuSep, MENU_SURFACE } from './menu.jsx'
-import { USER } from '../lib/config.js'
-
-// Opens above the NU avatar (screenshot 191608). Width 310 CSS px = 371 px in the screenshot.
-export default function UserMenu({ onClose, onSettings, onApps, toast }) {
+import { useRef, useState } from 'react'
+import { Settings, Globe, HelpCircle, ArrowUpCircle, Blocks, Info, KeyRound, LogOut, ChevronRight, ExternalLink, Check } from 'lucide-react'
+import useDismiss from '../hooks/useDismiss.js'
+export default function UserMenu({ onClose, onSettings, onApps, notify }) {
   const ref = useRef(null)
-
-  useEffect(() => {
-    const onDown = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose() }
-    const onKey = (e) => { if (e.key === 'Escape') onClose() }
-    document.addEventListener('mousedown', onDown)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('mousedown', onDown)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [onClose])
-
-  const soon = (msg) => () => { onClose(); toast(msg) }
-
-  return (
-    <div ref={ref} role="menu" className={`absolute bottom-full left-0 z-50 mb-2 w-[310px] ${MENU_SURFACE}`}>
-      <div className="truncate px-2.5 pb-2 pt-1.5 text-[13px] text-fg3">{USER.email}</div>
-      <MenuItem icon={<Settings size={16} />} label="Settings" shortcut="Ctrl+," onClick={onSettings} />
-      <MenuItem icon={<Languages size={16} />} label="Language" onClick={soon('Language: English only for now')} />
-      <MenuItem icon={<HelpCircle size={16} />} label="Get help" onClick={soon('Help: this is the local AI ASSistant build. See README.md in the repo.')} />
-      <MenuSep />
-      <MenuItem icon={<Star size={16} />} label="Upgrade plan" onClick={soon('AI ASSistant is free and local-only. No upgrade needed.')} />
-      <MenuItem icon={<LayoutGrid size={16} />} label="Get apps and extensions" onClick={() => { onClose(); onApps() }} />
-      <MenuItem icon={<Info size={16} />} label="Learn more" submenu onClick={soon('Learn more: see 00_LIVING_DOCS/ in the repo')} />
-      <MenuSep />
-      <MenuItem icon={<KeyRound size={16} />} label="Get API keys" external onClick={soon('No API keys needed: models run locally through Ollama.')} />
-      <MenuSep />
-      <MenuItem icon={<LogOut size={16} />} label="Log out" onClick={soon('Local-only app: there is no account to log out of.')} />
-    </div>
-  )
+  const [language, setLanguage] = useState(false)
+  useDismiss(ref, onClose)
+  function action(callback) { onClose(); callback() }
+  return <div ref={ref} className="user-menu popup" role="menu" aria-label="Account menu">
+    <div className="menu-email">nishadislamutso@gmail.com</div>
+    <button role="menuitem" autoFocus onClick={() => action(onSettings)}><Settings size={15} /><span>Settings</span><kbd>Ctrl+,</kbd></button>
+    <button role="menuitem" onClick={() => setLanguage(!language)}><Globe size={15} /><span>Language</span><small>English</small></button>
+    {language && <div className="language-option"><Check size={13} /> English <small>Local interface</small></div>}
+    <button role="menuitem" onClick={() => action(() => notify('Run start-app.bat on your Windows laptop. Ollama uses the existing qwen2.5:3b model; the vault is vault/AI-Brain. See the app README for troubleshooting.'))}><HelpCircle size={15} /><span>Get help</span></button>
+    <div className="menu-separator" />
+    <button role="menuitem" onClick={() => action(() => notify('Local mode is free. This app is not connected to Claude billing and does not use a Claude subscription.'))}><ArrowUpCircle size={15} /><span>Upgrade plan</span></button>
+    <button role="menuitem" onClick={() => action(onApps)}><Blocks size={15} /><span>Get apps and extensions</span></button>
+    <button role="menuitem" onClick={() => action(() => notify('AI ASSistant is a local Ollama chat app with a screenshot-led Claude interface. The Markdown Obsidian vault is canonical memory; UI similarity does not mean Claude-level model intelligence.'))}><Info size={15} /><span>Learn more</span><ChevronRight size={14} /></button>
+    <div className="menu-separator" />
+    <button role="menuitem" onClick={() => action(() => notify('No API key is needed for local Ollama. Cloud providers and Claude API keys are not connected in this build.'))}><KeyRound size={15} /><span>Get API keys</span><ExternalLink size={14} /></button>
+    <div className="menu-separator" />
+    <button role="menuitem" onClick={() => action(() => notify('There is no external account to log out of. Your local chats and original vault sources have been kept.'))}><LogOut size={15} /><span>Log out</span></button>
+  </div>
 }
