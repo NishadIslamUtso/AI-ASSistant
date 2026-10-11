@@ -306,3 +306,24 @@ h1, h2, h3, h4, p { margin: 0; }
   border-bottom: 1px solid var(--subtle-border);
 }
 .app-shell { height: calc(100dvh - 30px); }
+
+/* --- stolen-features styling: fork (branching), live visualizer, comment pin --- */
+.message-body { position: relative; }
+.fork-button {
+  position: absolute; top: 2px; right: 0;
+  display: inline-flex; align-items: center; gap: 4px;
+  font: 11px/1 'Segoe UI', sans-serif; color: var(--muted);
+  background: transparent; border: 1px solid transparent; border-radius: 6px;
+  padding: 3px 6px; opacity: 0; transition: opacity .12s ease;
+  cursor: pointer;
+}
+.message-body:hover .fork-button, .fork-button:focus-visible { opacity: 1; }
+.fork-button:hover { color: var(--text); border-color: var(--border); background: var(--hover); }
+.artifact-message-card.live-card { border-color: var(--accent, #d97757); animation: live-pulse 1.6s ease-in-out infinite; }
+.artifact-message-card.live-card small { color: var(--accent, #d97757); }
+@keyframes live-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(217, 119, 87, 0.35); }
+  50% { box-shadow: 0 0 0 6px rgba(217, 119, 87, 0); }
+}
+[data-motion="reduced"] .artifact-message-card.live-card { animation: none; }
+.icon-button.pin-active { color: var(--accent, #d97757); background: var(--hover); outline: 1px solid var(--accent, #d97757); }

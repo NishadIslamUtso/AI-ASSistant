@@ -268,6 +268,21 @@ not the handover, is the source of truth, so all of it was built this session.
 **Next:** user runs `start-app.bat` on the TUF A15 and reports; then P6 (Today view /
 journal / follow-ups) and P9 (installer).
 
+## 2026-10-12
+
+### 01:30 — Adopted Winner Branch + Stole Best Features From Curated List
+- **What:** Merged arena/3c06e1bf-ai-assistant (the user's chosen winner: 01199af1 UI, 48+5 tests, hardened vault/proxy server, TitleBar, TodayView, attachments w/ honest vision gating, capsule drag-drop, artifact versions) into this session branch; fixed merge damage (my stale Center.jsx copy was interleaved → duplicate default export; restored apps/01 wholesale from winner, now 52 unit + 5 jsdom tests green).
+- **Stolen features implemented (from CURATED_BEST_CLONES_AND_RUNNERS.md):**
+  1. Inline Visualizer live while streaming (open-webui-plugins idea): `extractLiveSource` in lib/artifacts.js surfaces the last html/svg fence before its closing ```; useChat patches message.live each chunk; Center shows a pulsing 'Live preview' card; ArtifactPanel renders it live (quantized to avoid per-token iframe reloads), auto-opens once per message, hands over to the real versioned artifact when the stream completes.
+  2. Comment-mode pin (open-codesign idea): buildPreviewHtml ships a pin bridge inside the CSP sandbox; ArtifactPanel MapPin toggle; clicking an element posts selector+snippet; App seeds the composer with 'change the element at <selector> (currently: <snippet>) like this:'.
+  3. Branching conversations (LobeChat idea): Fork button on every transcript message → new chat with messages sliced to that point, original untouched.
+  4. Vision bridge hint (Skyzi000 idea, honest variant): attaching an image to a text-only model now lists installed vision candidates (e.g. qwen3-vl:4b) to switch to; nothing auto-downloads.
+- **Why:** User: 'leave everything, copy [winner branch]' + 'take the best from all of them and make my app functional'.
+- **Tested:** npm test 52/52 (4 new live/pin tests), test:ui 5/5, vite build clean; sandbox stack (mock-ollama 11434 + vault 8765 + vite proxy) verified: /api/ollama tags/show/chat stream; live detection at raw len 126, complete 1132-char fence at end, final artifact 'Tic Tac Toe'.
+- **Not tested:** real Ollama streaming + Windows start-app.bat (user action); pin/fork flows in a real browser (covered by unit/jsdom only).
+- **Files Changed:** apps/01: lib/artifacts.js, hooks/useChat.js, components/{Center,ArtifactPanel,Composer}.jsx, App.jsx, index.css, tests/live-features.test.js.
+- **Next:** P6 extension end-to-end, P7 VaultPanel blacklist drag-drop polish, P9 installer.
+
 ## 2026-10-10
 
 ### 20:45 — Arena Session: Built the Missing Modals + Artifact Runner + Model Selector (Exact Clone)

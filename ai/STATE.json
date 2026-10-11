@@ -8,7 +8,7 @@
   "apps": {
     "01_claude-exact-pixel-clone": {
       "path": "apps/01_claude-exact-pixel-clone",
-      "status": "built-compiled-tested-by-24-automated-checks-NOT-tested-on-user-windows",
+      "status": "winner-adopted+stolen-features-sandbox-verified-needs-windows-test",
       "tech": "Vite 5 + React 18 + Tailwind + Express vault API, direct Ollama",
       "files": [
         "src/App.jsx (state, sending, streaming, artifacts, shortcuts)",
@@ -61,16 +61,22 @@
         "TodayView - Current Snapshot, Open Loops, due follow-ups with answer/skip/snooze/stop, journal draft (ported from brain01)",
         "server/mock-ollama.cjs - Ollama-compatible stub for sandbox previews; never started by start-app.bat, labels every reply as a mock",
         "vault API /today now returns parsed follow-ups, today's journal and the vault path",
-        "20 unit + vault-integration tests (node --test, no new dependencies) and 4 jsdom UI smoke tests behind npm run test:ui"
+        "20 unit + vault-integration tests (node --test, no new dependencies) and 4 jsdom UI smoke tests behind npm run test:ui",
+        "ADOPTED 2026-10-12: merged winner arena/3c06e1bf (01199af1 UI, TitleBar File/Edit/View/Go/Help, TodayView Alt+T, attachments+vision gating, ThinkingDisplay, ArtifactsLibrary, BlacklistManager, proxy-policy security, preview-server, 48+5 tests)",
+        "Live inline visualizer: extractLiveSource + message.live + pulsing Live preview card + ArtifactPanel live mode (quantized iframe reloads, auto-open once, handover to versioned artifact)",
+        "Comment-mode pin: MapPin toggle in ArtifactPanel, pin bridge inside CSP sandbox, selector+snippet seeded into composer",
+        "Branching conversations: Fork button per message -> new chat sliced to that message",
+        "Vision bridge hint: image attach on text-only model lists installed vision candidates; no auto-download"
       ],
       "features_missing": [
-        "End-to-end test on the user's Windows machine (top priority)",
-        "Journal auto-generation from captured sources",
-        "Windows installer (Electron/Tauri)",
-        "Full Claude feature-parity audit in 00 System/Claude Feature Audit.md"
+        "P6 extension -> vault API -> Obsidian end-to-end test",
+        "Quillbot inline suggestions (extension-side)",
+        "P9 Windows installer / Electron wrapper",
+        "Sub-agent isolated context + MCP one-click (deliberately not stolen: out of local scope)"
       ],
       "known_bugs": [
-        "None currently reproducible. The Tic Tac Toe loop is fixed structurally: plain system prompt with no code example + artifacts only on explicit request; Settings > System > Reset local data clears any old looped chat."
+        "Live preview iframe reloads on each 512-char growth chunk (state inside artifact resets while streaming; final artifact is stable)",
+        "Ollama CORS if user bypasses proxy and hits 11434 directly with OLLAMA_ORIGINS unset (proxy path avoids CORS entirely)"
       ],
       "verified": {
         "vite_build": "clean",
@@ -134,13 +140,16 @@
     ]
   },
   "current_gaps": [
-    "Exact clone not yet run on the user's Windows machine",
-    "Today view partial (snapshot + open loops only, no journal generation or follow-ups)",
-    "Extension -> vault end-to-end untested",
-    "No installer",
-    "Quillbot inline suggestions live only in the extension, cannot be wired into the desktop app"
+    "P6 extension end-to-end",
+    "P9 Windows installer",
+    "Windows real-machine test of start-app.bat (user action)"
   ],
-  "last_session": "2026-10-11 \u2014 UI/UX adopted wholesale from arena/01199af1 at the user's request; title bar + Today view kept; vault API adopted with /today,/status,artifact,journal ported back; 48+5 tests pass; no branch merged",
+  "last_session": {
+    "date": "2026-10-12",
+    "what_done": "Adopted winner branch 3c06e1bf into session branch (fixed merge-damaged Center.jsx), stole 4 features from curated list (live visualizer, comment pin, fork/branching, vision bridge hint), 52 unit + 5 jsdom tests green, sandbox-verified streaming+live+artifact chain via mock Ollama behind vite proxy",
+    "user_request": "leave everything, copy winner branch; take the best from all of them and make my app functional",
+    "action_now": "docs updated; commit + push; PR #3 carries the work"
+  },
   "palette_ruling": {
     "authoritative": "user-supplied",
     "shipped": {

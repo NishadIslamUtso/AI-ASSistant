@@ -33,7 +33,16 @@ export default function Composer({ models, chat, busyChatId, onSend, onStop, pro
       const loaded = []
       for (const file of files) loaded.push(await readAttachment(file, models.capabilities))
       setAttachments(previous => [...previous, ...loaded])
-    } catch (error) { notify(error.message) }
+    } catch (error) {
+      // Vision bridge hint: text-only models can still see images by switching
+      // to an installed vision model. Nothing is ever downloaded automatically.
+      let message = error.message
+      if (/vision/i.test(message)) {
+        const candidates = (models.models || []).filter(item => /(?:vl|llava|moondream|vision|llava-vision)/i.test(item.name)).map(item => item.name)
+        if (candidates.length) message += ` Installed vision candidates: ${candidates.join(', ')} — select one in the model selector to bridge this image; nothing is downloaded automatically.`
+      }
+      notify(message)
+    }
     finally { setAddingFiles(false); if (fileInput.current) fileInput.current.value = '' }
   }
   async function send() {

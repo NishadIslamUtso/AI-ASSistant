@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { FolderClosed, Plus, X, ArrowLeft } from 'lucide-react'
 import Sidebar from './components/Sidebar.jsx'
@@ -66,7 +66,31 @@ export default function App() {
   }, [])
   const chatRuntime = useChat({ chats, setChats, currentChat, navigate, models, notify })
   const artifacts = useMemo(() => [...imports, ...chats.flatMap(chat => chat.messages.flatMap(message => message.artifacts || []))], [imports, chats])
-  const artifact = artifacts.find(item => item.id === activeArtifact)
+  const streamingLive = chat?.messages?.find(message => message.status === 'streaming' && message.live) || null
+  const liveShape = useMemo(() => {
+    if (!streamingLive?.live) return null
+    // Quantize growth so the sandboxed iframe is not reloaded on every token.
+    const rawSource = streamingLive.live.source
+    const quantized = rawSource.slice(0, Math.max(512, Math.floor(rawSource.length / 512) * 512))
+    return { id: `live-${streamingLive.id}`, title: 'Live preview', type: streamingLive.live.type, versions: [{ content: quantized }] }
+  }, [streamingLive?.id, streamingLive?.live?.type, streamingLive?.live?.source])
+  const [liveOpenFor, setLiveOpenFor] = useState(null)
+  const artifactIsLive = Boolean(liveShape && liveOpenFor === streamingLive?.id)
+  const artifact = artifactIsLive ? liveShape : artifacts.find(item => item.id === activeArtifact)
+  const autoLive = useRef(new Set())
+  useEffect(() => {
+    if (streamingLive && !autoLive.current.has(streamingLive.id)) {
+      autoLive.current.add(streamingLive.id)
+      setLiveOpenFor(streamingLive.id)
+      setRightPanel('artifact')
+    }
+    if (!streamingLive && liveOpenFor) {
+      const done = chat?.messages?.find(message => message.id === liveOpenFor)
+      const finished = done?.artifacts?.[done.artifacts.length - 1]
+      if (finished) setActiveArtifact(finished.id)
+      setLiveOpenFor(null)
+    }
+  }, [streamingLive, liveOpenFor, chat])
   useEffect(() => {
     const onPop = () => { setCurrentChat(new URLSearchParams(window.location.search).get('chat')); setView('chat'); setContextBundle(null) }
     window.addEventListener('popstate', onPop)
@@ -155,6 +179,25 @@ export default function App() {
       previewCapsule({ title: 'Cook This Prompt', content: items.map(item => `${capsuleText(item)}\nSource: ${item.source || item.id}`).join('\n\n---\n\n') })
     } catch (error) { notify(`Could not retrieve local context: ${error.message}. Your prompt is unchanged.`) }
   }
+  function forkChat(messageId) {
+    if (!chat) return
+    const index = chat.messages.findIndex(message => message.id === messageId)
+    if (index === -1) return
+    const forked = {
+      id: newId(), title: `Fork: ${chat.title}`.slice(0, 60), date: 'Today',
+      projectId: chat.projectId || null,
+      messages: chat.messages.slice(0, index + 1).map(message => ({ ...message, status: message.status === 'streaming' ? 'stopped' : message.status })),
+    }
+    setChats(previous => [forked, ...previous])
+    navigate(forked.id)
+    notify('Branched into a new chat. The original conversation is unchanged.')
+  }
+  function pinToComposer({ selector, snippet }) {
+    const label = artifact ? artifact.title : 'the artifact'
+    setSeed(previous => ({ text: `In "${label}", change the element at ${selector} (currently: ${String(snippet).slice(0, 300)}) like this: `, n: previous.n + 1 }))
+    setView('chat')
+    notify('Element pinned into the composer — describe the change and send.')
+  }
   function saveArtifact(id, content) {
     const append = item => item.id === id ? { ...item, versions: [...item.versions, { content, savedAt: new Date().toISOString(), edited: true }] } : item
     if (imports.some(item => item.id === id)) setImports(previous => previous.map(append))
@@ -164,9 +207,9 @@ export default function App() {
     <TitleBar onAction={titleAction} ollamaOk={models.status === 'online'} vaultOk={vaultOk} title={chat?.title || 'AI ASSistant'} />
     <div className="app-shell">
       <Sidebar chats={chats} currentChat={currentChat} navigate={navigate} view={view} onView={setView} onNew={() => newChat()} onAction={chatAction} onSettings={() => setModal('settings')} onApps={() => setModal('apps')} onVault={() => setRightPanel(rightPanel === 'vault' ? null : 'vault')} collapsed={collapsed} onCollapse={() => setCollapsed(!collapsed)} busyChatId={chatRuntime.busyChatId} notify={notify} artifactCount={artifacts.length} onToday={() => setToday(true)} />
-      {view === 'artifacts' ? <ArtifactsLibrary artifacts={artifacts} onOpen={openArtifact} onImport={item => { setImports(previous => [item, ...previous]); notify('Artifact imported locally. Open its card to run the isolated preview.') }} notify={notify} /> : view === 'projects' ? <ProjectsView projects={projects} chats={chats} onCreate={() => setAction({ type: 'createProject' })} focused={projects.find(item => item.id === focusedProject)} onOpen={setFocusedProject} onBack={() => setFocusedProject(null)} onChat={navigate} onNew={newChat} /> : <Center key={currentChat || `new-${draftNonce}`} chat={chat} models={models} onArtifact={openArtifact} onRetryCapture={chatRuntime.retryCapture} settings={settings} notify={notify} busyChatId={chatRuntime.busyChatId} onSend={chatRuntime.send} onStop={chatRuntime.stop} projects={projects} projectId={projectId} setProjectId={selectProject} onVault={() => setRightPanel('vault')} onContextPreview={previewCapsule} contextBundle={contextBundle} clearContext={() => setContextBundle(null)} onCook={cook} onExternalLink={setExternalLink} seed={seed} />}
+      {view === 'artifacts' ? <ArtifactsLibrary artifacts={artifacts} onOpen={openArtifact} onImport={item => { setImports(previous => [item, ...previous]); notify('Artifact imported locally. Open its card to run the isolated preview.') }} notify={notify} /> : view === 'projects' ? <ProjectsView projects={projects} chats={chats} onCreate={() => setAction({ type: 'createProject' })} focused={projects.find(item => item.id === focusedProject)} onOpen={setFocusedProject} onBack={() => setFocusedProject(null)} onChat={navigate} onNew={newChat} /> : <Center key={currentChat || `new-${draftNonce}`} chat={chat} models={models} onArtifact={openArtifact} onLive={id => { setLiveOpenFor(id); setRightPanel('artifact') }} onFork={forkChat} onRetryCapture={chatRuntime.retryCapture} settings={settings} notify={notify} busyChatId={chatRuntime.busyChatId} onSend={chatRuntime.send} onStop={chatRuntime.stop} projects={projects} projectId={projectId} setProjectId={selectProject} onVault={() => setRightPanel('vault')} onContextPreview={previewCapsule} contextBundle={contextBundle} clearContext={() => setContextBundle(null)} onCook={cook} onExternalLink={setExternalLink} seed={seed} />}
       {rightPanel === 'vault' && <VaultPanel onClose={() => setRightPanel(null)} onPreview={previewCapsule} />}
-      {rightPanel === 'artifact' && artifact && <ArtifactPanel key={artifact.id} artifact={artifact} onClose={() => setRightPanel(null)} onSave={saveArtifact} notify={notify} />}
+      {rightPanel === 'artifact' && artifact && <ArtifactPanel key={artifact.id} artifact={artifact} live={artifactIsLive} onPin={pinToComposer} onClose={() => setRightPanel(null)} onSave={saveArtifact} notify={notify} />}
     </div>
     {today && <TodayView onClose={() => setToday(false)} onAsk={topic => { setToday(false); setView('chat'); setSeed(previous => ({ text: topic, n: previous.n + 1 })) }} />}
     {modal === 'settings' && <SettingsModal settings={settings} setSettings={setSettings} onClose={() => setModal(null)} onApps={() => setModal('apps')} onVault={() => setRightPanel('vault')} models={models} />}

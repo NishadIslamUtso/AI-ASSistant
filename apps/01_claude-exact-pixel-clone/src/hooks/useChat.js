@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { newId } from '../lib/storage.js'
 import { loadImage, persistAttachments, toOllamaMessages } from '../lib/attachments.js'
 import { splitThinking, streamChat, systemPrompt } from '../lib/ollama.js'
-import { extractArtifacts, wantsArtifact } from '../lib/artifacts.js'
+import { extractArtifacts, extractLiveSource, wantsArtifact } from '../lib/artifacts.js'
 import { vaultPost } from '../lib/vault.js'
 
 export default function useChat({ chats, setChats, currentChat, navigate, models, notify }) {
@@ -78,9 +78,14 @@ export default function useChat({ chats, setChats, currentChat, navigate, models
         raw += record.message?.content || ''
         nativeThinking += record.message?.thinking || ''
         final = { ...final, ...splitThinking(raw, nativeThinking) }
+        if (requested) {
+          const live = extractLiveSource(raw)
+          if (live) final.live = live; else delete final.live
+        }
         patch(chat.id, assistant.id, final)
       })
       final.status = 'complete'
+      delete final.live
       final.artifacts = extractArtifacts(final.content, { requested, messageId: assistant.id, chatId: chat.id, title: chat.messages.at(-2).content })
     } catch (error) {
       if (controller.signal.aborted) {
