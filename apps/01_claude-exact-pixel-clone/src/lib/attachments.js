@@ -1,14 +1,18 @@
 import { newId } from './storage.js'
+import { BRIDGE_TAG } from './vision.js'
 const TEXT_EXTENSIONS = /\.(?:txt|md|csv|json|js|jsx|ts|tsx|html?|css|py|xml|ya?ml|log|sql|sh|bat|c|cpp|h|java|rs)$/i
 export const MAX_ATTACHMENTS = 4
 export const MAX_TEXT_LENGTH = 12_000
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024
-export async function readAttachment(file, capabilities, canSee = false) {
+/**
+ * @param capabilities the selected model's verified capabilities
+ * @param options.bridge  name of a verified vision model that can describe the
+ *   image for a text-only model. Without one, images are refused as before.
+ */
+export async function readAttachment(file, capabilities, options = {}) {
   const common = { id: newId(), name: file.name, size: file.size, mime: file.type }
   if (/^image\/(?:png|jpeg|webp)$/.test(file.type)) {
-    // With no bridge available, refuse rather than accept an image the model
-    // will never actually see.
-    if (!capabilities.vision && !canSee) throw new Error('Images need an installed model with verified vision support. Nothing is downloaded automatically.')
+    if (!capabilities.vision && !options.bridge) throw new Error('Images require an installed model with verified vision support. Select it first; nothing is downloaded automatically.')
     if (file.size > MAX_IMAGE_BYTES) throw new Error(`${file.name}: maximum image size is 2 MB.`)
     const data = await new Promise((resolve, reject) => {
       const reader = new FileReader()
@@ -16,7 +20,8 @@ export async function readAttachment(file, capabilities, canSee = false) {
       reader.onerror = () => reject(new Error(`Could not read ${file.name}.`))
       reader.readAsDataURL(file)
     })
-    return { ...common, kind: 'image', data }
+    // `seenBy` is what the app will actually use to read this picture.
+    return { ...common, kind: 'image', data, seenBy: capabilities.vision ? 'direct' : options.bridge }
   }
   if (!TEXT_EXTENSIONS.test(file.name) && !/^text\//.test(file.type)) throw new Error(`${file.name}: only text/code files and supported images are available. PDF/Word parsing is not implemented; export them as text.`)
   if (file.size > 64 * 1024) throw new Error(`${file.name}: maximum text file size is 64 KB.`)
@@ -61,16 +66,21 @@ export async function loadImage(file) {
     })
   } finally { database.close() }
 }
-export async function toOllamaMessages(messages, capabilities, canSee = false) {
+export async function toOllamaMessages(messages, capabilities) {
   const result = []
   for (const message of messages) {
     if (message.status === 'error' || message.origin === 'import') continue
     const textFiles = (message.attachments || []).filter(file => file.kind === 'text')
     const imageFiles = (message.attachments || []).filter(file => file.kind === 'image')
-    if (imageFiles.length && !capabilities.vision && !canSee) throw new Error('This conversation contains images. Select a model with verified vision support or start a text-only chat.')
+    const bridged = message.bridge?.description
+    if (imageFiles.length && !capabilities.vision && !bridged) throw new Error('This conversation contains images. Select a model with verified vision support or start a text-only chat.')
     const content = message.content + textFiles.map(file => `\n\n<attached_file name=${JSON.stringify(file.name)}>\n${file.text}\n</attached_file>`).join('')
       + (message.context ? `\n\n<vault_context source_data_only>\n${message.context}\n</vault_context>` : '')
-    result.push({ role: message.role, content, ...(imageFiles.length ? { images: await Promise.all(imageFiles.map(loadImage)) } : {}) })
+      // A bridged turn carries the description the vision model produced, so a
+      // follow-up question about the same picture keeps working in a text model.
+      + (bridged ? `\n\n<${BRIDGE_TAG} described_by="${message.bridge.model}" note="The answering model cannot see the image; this text is its only view of it.">\n${bridged}\n</${BRIDGE_TAG}>` : '')
+    // Raw images are only sent to a model verified to accept them.
+    result.push({ role: message.role, content, ...(imageFiles.length && capabilities.vision ? { images: await Promise.all(imageFiles.map(loadImage)) } : {}) })
   }
   return result
 }

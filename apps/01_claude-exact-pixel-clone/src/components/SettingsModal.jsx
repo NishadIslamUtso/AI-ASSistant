@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { Settings, CircleUserRound, Shield, CreditCard, Briefcase, History, Bell, MoonStar, Code2, Monitor, Plug, Wrench, ScrollText, Blocks, Search, X, Sun, Moon } from 'lucide-react'
+import { Settings, CircleUserRound, Shield, CreditCard, Briefcase, History, Bell, MoonStar, Code2, Monitor, Plug, Wrench, ScrollText, Blocks, Search, X, Sun, Moon, Eye } from 'lucide-react'
 import Dialog from './Dialog.jsx'
 import BlacklistManager from './BlacklistManager.jsx'
 const navigation = [
   ['Settings', [['General', Settings], ['Account', CircleUserRound], ['Privacy', Shield], ['Billing', CreditCard], ['Capabilities', Briefcase], ['Memory', History], ['Reflect', Bell], ['Time and focus', MoonStar], ['Claude Code', Code2]]],
-  ['This computer', [['System', Monitor], ['Extensions', Plug], ['Developer', Wrench]]],
+  ['This computer', [['System', Monitor], ['Vision', Eye], ['Extensions', Plug], ['Developer', Wrench]]],
   ['Customize', [['Skills', ScrollText], ['Connectors', Blocks]]],
 ]
 function Segments({ label, options, value, onChange, icons }) {
@@ -16,7 +16,7 @@ function Row({ label, description, children }) {
 function Select({ label, value, options, onChange }) {
   return <select aria-label={label} value={value} onChange={event => onChange(event.target.value)}>{options.map(option => <option key={option}>{option}</option>)}</select>
 }
-export default function SettingsModal({ settings, setSettings, onClose, onApps, onVault, models }) {
+export default function SettingsModal({ settings, setSettings, onClose, onApps, onVault, models, vision, visionModel, setVisionModel }) {
   const [active, setActive] = useState('General')
   const [search, setSearch] = useState('')
   const update = (key, value) => setSettings(previous => ({ ...previous, [key]: value }))
@@ -45,6 +45,11 @@ export default function SettingsModal({ settings, setSettings, onClose, onApps, 
         {active === 'Privacy' && <><p className="settings-copy">Local-first. Excluded sources are denied at the vault API. Passwords, cookies, tokens, payment fields and unsent drafts must never be captured. Browser-side scope sync still needs end-to-end verification.</p><BlacklistManager /></>}
         {active === 'Billing' && <p className="settings-copy">Local mode is free. There is no Claude subscription, billing connection or upgrade in this app.</p>}
         {active === 'Capabilities' && <div className="settings-copy"><p>Selected model: <strong>{models.model}</strong></p><p>Text chat and text/code attachments run locally.</p><p>Vision: {models.capabilities.vision ? 'verified by Ollama /api/show' : 'unavailable or not verified'}</p><p>Thinking: {models.capabilities.thinking ? 'verified by Ollama /api/show' : 'unavailable or not verified'}</p><p>Model capabilities are not inferred from names. This UI does not make qwen2.5:3b as capable as Claude.</p></div>}
+        {active === 'Vision' && <><p className="settings-copy">A text-only model cannot see a picture. With the bridge, an installed <em>vision</em> model describes the image first and the description is what {models.model} reads. The picture never leaves this computer and the transcript always names the model that looked at it.</p>
+          <Row label="Bridge model" description="Only models that reported vision through Ollama /api/show are listed."><Select label="Vision bridge model" value={visionModel} options={['auto', ...vision.visionModels.map(entry => entry.name)]} onChange={value => setVisionModel(value === 'auto' ? '' : value)} /></Row>
+          <div className="settings-copy"><p>{vision.probing ? 'Checking installed models…' : vision.visionModels.length ? `Verified vision models: ${vision.visionModels.map(entry => entry.name).join(', ')}` : 'No installed model has reported vision support yet.'}</p>
+          <p>Images are usable right now: <strong>{vision.imageSupport === 'direct' ? `yes, ${models.model} sees them directly` : vision.imageSupport === 'bridge' ? `yes, via ${vision.bridgeModel}` : 'no — attach an image and the app will say so rather than dropping it'}</strong></p>
+          <button className="secondary-button" onClick={() => { vision.visionModels.forEach(entry => vision.forget(entry.name)); models.refresh() }}>Re-check model capabilities</button></div></>}
         {active === 'Memory' && <div className="settings-copy"><p>Canonical memory: the Markdown files in vault/AI-Brain. The app does not create a second authoritative database.</p><button className="secondary-button" onClick={() => { onClose(); onVault() }}>Open AI-Brain vault</button></div>}
         {active === 'System' && <div className="settings-copy"><p>AI ASSistant 0.2.0 · Vite web build</p><p>Ollama: 127.0.0.1:11434</p><p>Vault driver: 127.0.0.1:8765</p><p>Browser requests are proxied through this app. A native Windows title bar and menu will require the pending Electron wrapper.</p></div>}
         {active === 'Extensions' && <div className="settings-copy"><p>The local MV3 collector lives in the repository’s extension folder. Chrome installation and capture still require Windows/Chrome testing.</p><button className="secondary-button" onClick={onApps}>Apps and extensions</button></div>}

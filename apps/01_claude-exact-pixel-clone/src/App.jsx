@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { FolderClosed, Plus, X, ArrowLeft } from 'lucide-react'
 import Sidebar from './components/Sidebar.jsx'
@@ -10,10 +10,13 @@ import ArtifactPanel from './components/ArtifactPanel.jsx'
 import ArtifactsLibrary from './components/ArtifactsLibrary.jsx'
 import TitleBar from './components/TitleBar.jsx'
 import TodayView from './components/TodayView.jsx'
+import SubAgentPanel from './components/SubAgentPanel.jsx'
 import Dialog from './components/Dialog.jsx'
 import usePersistentState from './hooks/usePersistentState.js'
 import useModels from './hooks/useModels.js'
 import useChat from './hooks/useChat.js'
+import useVisionBridge from './hooks/useVisionBridge.js'
+import useSubAgents from './hooks/useSubAgents.js'
 import { DEFAULT_CHATS, DEFAULT_MODEL, DEFAULT_SETTINGS, newId, normalizeChats, normalizeSettings } from './lib/storage.js'
 import { capsuleText, vaultGet } from './lib/vault.js'
 
@@ -56,27 +59,29 @@ export default function App() {
   const [vaultOk, setVaultOk] = useState(false)
   const [vaultPath, setVaultPath] = useState('')
   const [externalLink, setExternalLink] = useState(null)
+  const [visionModel, setVisionModel] = usePersistentState('claude_exact_vision_model', '', value => typeof value === 'string' ? value : '', notify)
   const models = useModels(model, setModel)
+  const vision = useVisionBridge({ models: models.models, status: models.status, selected: model, preferred: visionModel })
+  const subAgents = useSubAgents({ models, notify })
+  const autoOpenedLive = useRef('')
   const chat = chats.find(item => item.id === currentChat)
-  // Branch switcher: every chat sharing a parentId (or itself, if it is
-  // the root) is an alternate path through the same conversation.
-  const chatView = useMemo(() => {
-    if (!chat) return chat
-    const root = chat.parentId || chat.id
-    const branches = chats.filter(item => (item.parentId || item.id) === root)
-    return branches.length > 1
-      ? { ...chat, branches: branches.map(item => ({ id: item.id, label: item.id === root ? `${item.title} (main)` : item.title })) }
-      : { ...chat, branches: [] }
-  }, [chat, chats])
   const navigate = useCallback(id => {
     const url = new URL(window.location.href)
     if (id) url.searchParams.set('chat', id); else url.searchParams.delete('chat')
     window.history.pushState({}, '', url)
     setCurrentChat(id); setView('chat'); setContextBundle(null); setProjectId(null)
   }, [])
-  const chatRuntime = useChat({ chats, setChats, currentChat, navigate, models, notify })
-  const artifacts = useMemo(() => [...imports, ...chats.flatMap(chat => chat.messages.flatMap(message => message.artifacts || []))], [imports, chats])
+  const chatRuntime = useChat({ chats, setChats, currentChat, navigate, models, vision, notify })
+  const liveArtifacts = chatRuntime.live.artifacts
+  const artifacts = useMemo(() => {
+    const saved = [...imports, ...chats.flatMap(chat => chat.messages.flatMap(message => message.artifacts || []))]
+    const known = new Set(saved.map(item => item.id))
+    // A half-written artifact is openable immediately; once the reply finishes
+    // the saved version replaces it under the same id.
+    return [...saved, ...liveArtifacts.filter(item => !known.has(item.id))]
+  }, [imports, chats, liveArtifacts])
   const artifact = artifacts.find(item => item.id === activeArtifact)
+  const artifactLive = liveArtifacts.some(item => item.id === activeArtifact)
   useEffect(() => {
     const onPop = () => { setCurrentChat(new URLSearchParams(window.location.search).get('chat')); setView('chat'); setContextBundle(null) }
     window.addEventListener('popstate', onPop)
@@ -96,6 +101,15 @@ export default function App() {
     return () => media.removeEventListener('change', apply)
   }, [settings])
   useEffect(() => { if (!notice) return; const timer = setTimeout(() => setNotice(''), 15_000); return () => clearTimeout(timer) }, [notice])
+  // The live preview is the point of streaming an app: open it as soon as the
+  // model commits to a document, once per reply, and never fight the user.
+  useEffect(() => {
+    const first = liveArtifacts[0]
+    if (!first || autoOpenedLive.current === chatRuntime.live.messageId) return
+    autoOpenedLive.current = chatRuntime.live.messageId
+    setActiveArtifact(first.id)
+    setRightPanel('artifact')
+  }, [liveArtifacts, chatRuntime.live.messageId])
   useEffect(() => {
     let alive = true
     const check = () => vaultGet('/status').then(data => {
@@ -110,6 +124,12 @@ export default function App() {
   useEffect(() => {
     const onKey = event => {
       if (event.altKey && (event.key === 't' || event.key === 'T')) { event.preventDefault(); setToday(value => !value) }
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && (event.key === 'G' || event.key === 'g')) {
+        event.preventDefault(); setRightPanel(panel => panel === 'agents' ? null : 'agents')
+      }
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && (event.key === 'A' || event.key === 'a')) {
+        event.preventDefault(); setView(current => current === 'artifacts' ? 'chat' : 'artifacts')
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -122,6 +142,7 @@ export default function App() {
       case 'toggle-sidebar': setCollapsed(!collapsed); break
       case 'toggle-artifacts': setView(view === 'artifacts' ? 'chat' : 'artifacts'); break
       case 'toggle-vault': setRightPanel(rightPanel === 'vault' ? null : 'vault'); break
+      case 'toggle-agents': setRightPanel(rightPanel === 'agents' ? null : 'agents'); break
       case 'search-chats': notify('Use the search field at the top of the sidebar to filter your chats.'); break
       case 'save-artifact': if (rightPanel === 'artifact' && artifact) notify('Use Save in the artifact panel to store a new version locally.'); else notify('No artifact is open. Open one from the Artifacts view first.'); break
       case 'open-vault': notify(vaultPath ? `Vault folder: ${vaultPath}` : 'The vault API is offline, so the vault path is unavailable.'); break
@@ -136,25 +157,14 @@ export default function App() {
     }
   }
   function newChat(project = null) { navigate(null); setProjectId(project); setDraftNonce(value => value + 1) }
-  /** Branch a new conversation that copies every message up to messageId. */
-  function branchFrom(chatId, messageId) {
-    const source = chats.find(item => item.id === chatId)
-    if (!source) return
-    const index = source.messages.findIndex(message => message.id === messageId)
-    if (index < 0) return
-    const parentId = source.parentId || source.id
-    const branchId = newId()
-    const branchCount = chats.filter(item => (item.parentId || item.id) === parentId).length
-    setChats(previous => [...previous, {
-      ...source, id: branchId, parentId,
-      title: `${source.title} · Branch ${branchCount}`,
-      messages: source.messages.slice(0, index + 1).map(message => ({ ...message })),
-      vaultStatus: null, createdAt: new Date().toISOString(),
-    }])
-    navigate(branchId)
-    notify(`Branched from that reply. The original conversation is untouched.`)
-  }
   function openArtifact(id) { setActiveArtifact(id); setRightPanel('artifact') }
+  function branchFrom(messageId) {
+    const id = chatRuntime.branch(currentChat, messageId)
+    if (!id) { notify('That message could not be branched from. The chat is unchanged.'); return }
+    navigate(id)
+    notify('Branched into a new chat from that message. The original chat is untouched.')
+  }
+  function insertFromAgent(text) { setSeed(previous => ({ text, n: previous.n + 1 })); setView('chat') }
   function chatAction(type, item) {
     if (type === 'open') { const url = new URL(window.location.href); url.searchParams.set('chat', item.id); window.open(url, '_blank', 'noopener,noreferrer'); return }
     if (type === 'pin') { setChats(previous => previous.map(chat => chat.id === item.id ? { ...chat, pinned: !chat.pinned } : chat)); return }
@@ -191,14 +201,15 @@ export default function App() {
   return <>
     <TitleBar onAction={titleAction} ollamaOk={models.status === 'online'} vaultOk={vaultOk} title={chat?.title || 'AI ASSistant'} />
     <div className="app-shell">
-      <Sidebar chats={chats} currentChat={currentChat} navigate={navigate} view={view} onView={setView} onNew={() => newChat()} onAction={chatAction} onSettings={() => setModal('settings')} onApps={() => setModal('apps')} onVault={() => setRightPanel(rightPanel === 'vault' ? null : 'vault')} collapsed={collapsed} onCollapse={() => setCollapsed(!collapsed)} busyChatId={chatRuntime.busyChatId} notify={notify} artifactCount={artifacts.length} onToday={() => setToday(true)} />
-      {view === 'artifacts' ? <ArtifactsLibrary artifacts={artifacts} onOpen={openArtifact} onImport={item => { setImports(previous => [item, ...previous]); notify('Artifact imported locally. Open its card to run the isolated preview.') }} notify={notify} /> : view === 'projects' ? <ProjectsView projects={projects} chats={chats} onCreate={() => setAction({ type: 'createProject' })} focused={projects.find(item => item.id === focusedProject)} onOpen={setFocusedProject} onBack={() => setFocusedProject(null)} onChat={navigate} onNew={newChat} /> : <Center key={currentChat || `new-${draftNonce}`} chat={chatView} models={models} onArtifact={openArtifact} onRetryCapture={chatRuntime.retryCapture} settings={settings} notify={notify} busyChatId={chatRuntime.busyChatId} onSend={chatRuntime.send} onStop={chatRuntime.stop} projects={projects} projectId={projectId} setProjectId={selectProject} onVault={() => setRightPanel('vault')} onContextPreview={previewCapsule} contextBundle={contextBundle} clearContext={() => setContextBundle(null)} onCook={cook} onExternalLink={setExternalLink} seed={seed} onBranch={messageId => branchFrom(chat.id, messageId)} onNavigateBranch={navigate} />}
+      <Sidebar chats={chats} currentChat={currentChat} navigate={navigate} view={view} onView={setView} onNew={() => newChat()} onAction={chatAction} onSettings={() => setModal('settings')} onApps={() => setModal('apps')} onVault={() => setRightPanel(rightPanel === 'vault' ? null : 'vault')} onAgents={() => setRightPanel(rightPanel === 'agents' ? null : 'agents')} agentsActive={rightPanel === 'agents'} collapsed={collapsed} onCollapse={() => setCollapsed(!collapsed)} busyChatId={chatRuntime.busyChatId} notify={notify} artifactCount={artifacts.length} onToday={() => setToday(true)} />
+      {view === 'artifacts' ? <ArtifactsLibrary artifacts={artifacts} onOpen={openArtifact} onImport={item => { setImports(previous => [item, ...previous]); notify('Artifact imported locally. Open its card to run the isolated preview.') }} notify={notify} /> : view === 'projects' ? <ProjectsView projects={projects} chats={chats} onCreate={() => setAction({ type: 'createProject' })} focused={projects.find(item => item.id === focusedProject)} onOpen={setFocusedProject} onBack={() => setFocusedProject(null)} onChat={navigate} onNew={newChat} /> : <Center key={currentChat || `new-${draftNonce}`} chat={chat} models={models} onArtifact={openArtifact} onRetryCapture={chatRuntime.retryCapture} settings={settings} notify={notify} busyChatId={chatRuntime.busyChatId} onSend={chatRuntime.send} onStop={chatRuntime.stop} projects={projects} projectId={projectId} setProjectId={selectProject} onVault={() => setRightPanel('vault')} onContextPreview={previewCapsule} contextBundle={contextBundle} clearContext={() => setContextBundle(null)} onCook={cook} onExternalLink={setExternalLink} seed={seed} vision={vision} onBranch={branchFrom} liveArtifacts={liveArtifacts} />}
       {rightPanel === 'vault' && <VaultPanel onClose={() => setRightPanel(null)} onPreview={previewCapsule} />}
-      {rightPanel === 'artifact' && artifact && <ArtifactPanel key={artifact.id} artifact={artifact} onClose={() => setRightPanel(null)} onSave={saveArtifact} notify={notify} />}
+      {rightPanel === 'agents' && <SubAgentPanel subAgents={subAgents} models={models} onClose={() => setRightPanel(null)} onInsert={insertFromAgent} notify={notify} onExternalLink={setExternalLink} />}
+      {rightPanel === 'artifact' && artifact && <ArtifactPanel key={artifact.id} artifact={artifact} live={artifactLive} models={models} onClose={() => setRightPanel(null)} onSave={saveArtifact} notify={notify} onExternalLink={setExternalLink} />}
     </div>
     {today && <TodayView onClose={() => setToday(false)} onAsk={topic => { setToday(false); setView('chat'); setSeed(previous => ({ text: topic, n: previous.n + 1 })) }} />}
-    {modal === 'settings' && <SettingsModal settings={settings} setSettings={setSettings} onClose={() => setModal(null)} onApps={() => setModal('apps')} onVault={() => setRightPanel('vault')} models={models} />}
-    {modal === 'apps' && <AppsExtensionsModal onClose={() => setModal(null)} notify={notify} />}
+    {modal === 'settings' && <SettingsModal settings={settings} setSettings={setSettings} onClose={() => setModal(null)} onApps={() => setModal('apps')} onVault={() => setRightPanel('vault')} models={models} vision={vision} visionModel={visionModel} setVisionModel={setVisionModel} />}
+    {modal === 'apps' && <AppsExtensionsModal onClose={() => setModal(null)} notify={notify} models={models} vision={vision} vaultOk={vaultOk} vaultPath={vaultPath} subAgents={subAgents} onAgents={() => setRightPanel('agents')} />}
     {action && <ActionDialog action={action} projects={projects} onClose={() => setAction(null)} onApply={applyAction} />}
     {previewContext && <Dialog title="Preview vault context" onClose={() => setPreviewContext(null)} className="context-dialog" labelledBy="context-title"><div className="context-preview"><h3>{previewContext.title}</h3><p>Exact excerpt for the local model <strong>{model}</strong>. Adding it does not send your message or contact an external AI.</p><pre>{previewContext.content}</pre><footer><button className="secondary-button" onClick={() => setPreviewContext(null)}>Cancel</button><button className="white-button" onClick={() => { setContextBundle(previewContext); setPreviewContext(null); setView('chat') }}>Add to composer</button></footer></div></Dialog>}
     {externalLink && <Dialog title="Open external link?" onClose={() => setExternalLink(null)} className="context-dialog" labelledBy="external-title"><div className="context-preview"><p>The external site will receive this exact URL, including its path and query. No chat, files or extra vault context will be attached by the app. Review the destination before allowing this one navigation.</p><pre>{externalLink}</pre><footer><button className="secondary-button" onClick={() => setExternalLink(null)}>Cancel</button><button className="white-button" onClick={() => { window.open(externalLink, '_blank', 'noopener,noreferrer'); setExternalLink(null) }}>Open this link</button></footer></div></Dialog>}

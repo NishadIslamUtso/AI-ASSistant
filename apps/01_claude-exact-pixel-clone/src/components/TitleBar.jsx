@@ -40,6 +40,7 @@ const MENUS = [
     items: [
       { id: 'toggle-sidebar', label: 'Toggle sidebar', accel: 'Ctrl+B' },
       { id: 'toggle-vault', label: 'Toggle AI-Brain panel', accel: 'Ctrl+J' },
+      { id: 'toggle-agents', label: 'Toggle sub agents panel', accel: 'Ctrl+Shift+G' },
       { id: 'toggle-artifacts', label: 'Toggle artifacts panel', accel: 'Ctrl+Shift+A' },
       { id: 'today', label: 'Today view', accel: 'Alt+T' },
       { sep: true },

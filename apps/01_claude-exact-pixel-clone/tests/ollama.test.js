@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { chooseTurnModel, getCapabilities, isRemoteModel, readNdjson, splitThinking, streamChat, systemPrompt } from '../src/lib/ollama.js'
+import { getCapabilities, isRemoteModel, readNdjson, splitThinking, streamChat, systemPrompt } from '../src/lib/ollama.js'
 
 function stream(text, size = 1) {
   const bytes = new TextEncoder().encode(text)
@@ -75,22 +75,4 @@ test('remote Ollama entries are not mistaken for installed local models', () => 
 test('oversized NDJSON records are rejected even if they arrive in one complete chunk', async () => {
   const body = `{"message":{"content":"${'x'.repeat(2_000_001)}"}}\n`
   await assert.rejects(async () => { for await (const record of readNdjson(stream(body, body.length))) void record }, /oversized/)
-})
-
-const bridge = (attachments, visionModel = 'qwen3-vl:4b') => chooseTurnModel({ model: 'qwen2.5:3b', capabilities: { vision: false, thinking: false }, visionModel, attachments })
-
-test('vision bridge keeps the selected model for plain text even when a vision model exists', () => {
-  assert.deepEqual(bridge([]), { model: 'qwen2.5:3b', bridged: false })
-})
-test('vision bridge hands an image turn to the installed vision model', () => {
-  assert.deepEqual(bridge([{ kind: 'image' }]), { model: 'qwen3-vl:4b', bridged: true, requestedModel: 'qwen2.5:3b' })
-})
-test('vision bridge does not trigger when the selected model already has vision', () => {
-  assert.deepEqual(chooseTurnModel({ model: 'qwen3-vl:4b', capabilities: { vision: true, thinking: false }, visionModel: 'qwen3-vl:4b', attachments: [{ kind: 'image' }] }), { model: 'qwen3-vl:4b', bridged: false })
-})
-test('vision bridge never routes to a model that is not installed', () => {
-  assert.deepEqual(bridge([{ kind: 'image' }], ''), { model: 'qwen2.5:3b', bridged: false })
-})
-test('vision bridge ignores text attachments', () => {
-  assert.deepEqual(bridge([{ kind: 'text' }]), { model: 'qwen2.5:3b', bridged: false })
 })

@@ -4,7 +4,7 @@ import ModelSelector from './ModelSelector.jsx'
 import { MAX_ATTACHMENTS, readAttachment } from '../lib/attachments.js'
 import { CAPSULE_DRAG_TYPE, parseCapsuleDrop } from '../lib/vault.js'
 import useDismiss from '../hooks/useDismiss.js'
-export default function Composer({ models, chat, busyChatId, onSend, onStop, projects, projectId, setProjectId, onVault, onContextPreview, contextBundle, clearContext, onCook, notify, seed }) {
+export default function Composer({ models, vision, chat, busyChatId, onSend, onStop, projects, projectId, setProjectId, onVault, onContextPreview, contextBundle, clearContext, onCook, notify, seed }) {
   const [input, setInput] = useState('')
   useEffect(() => { if (seed?.text) setInput(seed.text) }, [seed?.n])
   const [attachments, setAttachments] = useState([])
@@ -31,8 +31,11 @@ export default function Composer({ models, chat, busyChatId, onSend, onStop, pro
     setAddingFiles(true)
     try {
       const loaded = []
-      for (const file of files) loaded.push(await readAttachment(file, models.capabilities, models.canSee))
+      for (const file of files) loaded.push(await readAttachment(file, models.capabilities, { bridge: vision?.bridgeModel }))
       setAttachments(previous => [...previous, ...loaded])
+      // Never let the hop happen silently the first time it is used.
+      const bridged = loaded.filter(file => file.kind === 'image' && file.seenBy !== 'direct')
+      if (bridged.length) notify(`${bridged.length} image${bridged.length === 1 ? '' : 's'} will be described locally by ${vision.bridgeModel} before ${models.model} answers, because ${models.model} cannot see images.`)
     } catch (error) { notify(error.message) }
     finally { setAddingFiles(false); if (fileInput.current) fileInput.current.value = '' }
   }
@@ -53,7 +56,7 @@ export default function Composer({ models, chat, busyChatId, onSend, onStop, pro
   return <div className="composer-wrap">
     <div className={`composer ${dragOver ? 'drag-over' : ''}`} onDragOver={event => { if (event.dataTransfer.types.includes('Files') || event.dataTransfer.types.includes(CAPSULE_DRAG_TYPE)) { event.preventDefault(); setDragOver(true) } }} onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget)) setDragOver(false) }} onDrop={drop}>
       {(attachments.length > 0 || contextBundle || artifactMode) && <div className="attachment-chips">
-        {attachments.map(file => <div key={file.id} className="attachment-chip">{file.kind === 'image' ? <Image size={14} /> : <FileText size={14} />}<span>{file.name}</span><button aria-label={`Remove attachment ${file.name}`} onClick={() => setAttachments(previous => previous.filter(item => item.id !== file.id))}><X size={12} /></button></div>)}
+        {attachments.map(file => <div key={file.id} className="attachment-chip">{file.kind === 'image' ? <Image size={14} /> : <FileText size={14} />}<span>{file.name}{file.kind === 'image' && file.seenBy && file.seenBy !== 'direct' ? ` · ${file.seenBy} looks` : ''}</span><button aria-label={`Remove attachment ${file.name}`} onClick={() => setAttachments(previous => previous.filter(item => item.id !== file.id))}><X size={12} /></button></div>)}
         {contextBundle && <div className="attachment-chip context-chip"><Layers size={14} /><button onClick={() => onContextPreview(contextBundle)}>Context: {contextBundle.title}</button><button aria-label="Remove context" onClick={clearContext}><X size={12} /></button></div>}
         {artifactMode && <div className="attachment-chip"><Code2 size={14} />HTML artifact<button aria-label="Cancel artifact mode" onClick={() => setArtifactMode(false)}><X size={12} /></button></div>}
       </div>}
@@ -65,7 +68,7 @@ export default function Composer({ models, chat, busyChatId, onSend, onStop, pro
           <button role="menuitem" onClick={() => { setPlusOpen(false); onVault() }}><Layers size={15} /><span>Use a capsule</span></button>
           <button role="menuitem" onClick={() => { setPlusOpen(false); setArtifactMode(!artifactMode) }}><Code2 size={15} /><span>{artifactMode ? 'Cancel artifact' : 'Create HTML artifact'}</span></button>
           <button role="menuitem" disabled={!input.trim()} onClick={() => { setPlusOpen(false); onCook(input) }}><Sparkles size={15} /><span>Cook This Prompt</span></button>
-          <p>Text/code ≤ 12,000 characters per file.<br />Images ≤ 2 MB with verified vision.<br />PDF/Word parsing is not available.</p>
+          <p>Text/code ≤ 12,000 characters per file.<br />Images ≤ 2 MB{vision?.bridgeModel && !models.capabilities.vision ? <> — described by <strong>{vision.bridgeModel}</strong>, then answered by {models.model}</> : ' with verified vision'}.<br />PDF/Word parsing is not available.</p>
         </div>}
       </div><div className="composer-right-controls">
         {addingFiles && <small>Reading files…</small>}

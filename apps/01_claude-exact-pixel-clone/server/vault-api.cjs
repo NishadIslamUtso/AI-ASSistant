@@ -203,24 +203,6 @@ function createVaultApp({ vaultPath = process.env.AI_BRAIN_VAULT || process.env.
       response.json({ date, snapshot: bodyOf('04 Working Memory/Current Snapshot.md'), openLoops: loops, followups: parseFollowups(loops), journal: bodyOf(journalPath), journalPath, vault: root })
     } catch (error) { next(error) }
   })
-  // Export a runnable artifact as a ZIP so it can be deployed. Built in memory;
-  // entry names are validated, so nothing can escape the archive or the vault.
-  app.post('/export-zip', (request, response, next) => {
-    try {
-      const files = request.body?.files
-      if (!Array.isArray(files) || !files.length) throw new InputError('No files to export.')
-      if (files.length > 200) throw new InputError('A maximum of 200 files can be exported at once.')
-      const entries = files.map(file => {
-        if (typeof file?.name !== 'string' || typeof file?.content !== 'string') throw new InputError('Every exported file needs a name and text content.')
-        if (file.content.length > 2_000_000) throw new InputError(`${String(file.name).slice(0, 120)} is too large to export.`)
-        let name
-        try { name = safeEntryName(file.name) } catch { throw new InputError('Invalid archive entry name. Use relative paths with forward slashes.') }
-        return { name, content: file.content }
-      })
-      const archive = createZip(entries, clock())
-      response.json({ ok: true, filename: `ai-assistant-artifact-${dhakaParts(clock()).date}.zip`, zip: archive.toString('base64'), bytes: archive.length })
-    } catch (error) { next(error) }
-  })
   app.get('/blacklist', (_request, response, next) => { try { response.json({ excluded_patterns: blacklist() }) } catch (error) { next(error) } })
   app.post('/blacklist', (request, response, next) => { try { response.json(updateBlacklist(request.body)) } catch (error) { next(error) } })
 
@@ -379,6 +361,23 @@ function createVaultApp({ vaultPath = process.env.AI_BRAIN_VAULT || process.env.
       const entries = request.query.q ? search(listEntries(), request.query.q).slice(0, 5) : []
       response.json({ capsules: entries.filter(entry => entry.type === 'capsule'), entities: entries.filter(entry => entry.type !== 'capsule'), claims: [], retrieval: 'local-keyword-search' })
     } catch (error) { next(error) }
+  })
+  // Deployable export. Builds a ZIP in memory from caller-supplied text files.
+  // Nothing is written to the vault, and no filesystem path is taken from the
+  // request: names are normalised and rejected if they try to escape.
+  app.post('/export-zip', (request, response, next) => {
+    try {
+      const files = request.body?.files
+      if (!Array.isArray(files) || !files.length) throw new InputError('Nothing to export: no files were provided.')
+      if (files.length > 200) throw new InputError('Too many files: a deployable export is limited to 200 files.')
+      const entries = files.map(file => {
+        if (typeof file?.content !== 'string') throw new InputError('Every exported file needs text content.')
+        if (file.content.length > 2_000_000) throw new InputError('Each exported file is limited to 2 MB.')
+        return { name: safeEntryName(file.name), content: file.content }
+      })
+      const zip = createZip(entries)
+      response.json({ ok: true, filename: `ai-assistant-artifact-${dhakaParts().date}.zip`, zip: zip.toString('base64'), bytes: zip.length })
+    } catch (error) { next(error instanceof InputError ? error : new InputError(error.message)) }
   })
   app.use((error, _request, response, _next) => {
     const status = error instanceof InputError || error instanceof SyntaxError ? 400 : error.status || 500
