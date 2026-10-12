@@ -6,6 +6,8 @@ import { extractArtifacts, extractStreamingArtifacts, wantsArtifact } from '../l
 import { BRIDGE_MAX_CHARS, buildBridgeMessages, bridgeBlock, cleanDescription, needsBridge } from '../lib/vision.js'
 import { askLocal } from '../lib/ask.js'
 import { vaultPost } from '../lib/vault.js'
+import { extractCitations } from '../lib/citations.js'
+import { wantsChart } from '../lib/chart.js'
 
 export default function useChat({ chats, setChats, currentChat, navigate, models, vision, notify }) {
   const [busyChatId, setBusyChatId] = useState(null)

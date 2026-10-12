@@ -110,9 +110,13 @@ export default function useSubAgents({ models, notify }) {
       if (agent.useVault) {
         const query = agent.task.replace(/\s+/g, ' ').trim().slice(0, 120)
         const data = await vaultGet(`/context?q=${encodeURIComponent(query)}`, controller.signal).catch(() => null)
-        if (data?.items?.length) {
-          vaultSources = data.items.slice(0, 4).map(item => ({ id: item.id, title: item.title, source: item.source }))
-          vaultContext = `\n\n<vault_context source_data_only>\n${data.items.slice(0, 4).map(item => `### ${item.title}\n${String(item.snippet || item.content || '').slice(0, 1500)}`).join('\n\n')}\n</vault_context>`
+        // The vault API returns capsules and entities separately; there is no
+        // `items` field. Reading the wrong key here used to silently disable
+        // vault context for every sub-agent.
+        const items = [...(data?.capsules || []), ...(data?.entities || [])].slice(0, 4)
+        if (items.length) {
+          vaultSources = items.map(item => ({ id: item.id, title: item.title, source: item.source }))
+          vaultContext = `\n\n<vault_context source_data_only>\n${items.map(item => `### ${item.title}\n${String(item.snippet || item.content || '').slice(0, 1500)}`).join('\n\n')}\n</vault_context>`
         }
       }
       const messages = [
