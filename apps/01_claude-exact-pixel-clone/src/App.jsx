@@ -73,6 +73,25 @@ export default function App() {
   }, [])
   const chatRuntime = useChat({ chats, setChats, currentChat, navigate, models, vision, notify })
   const liveArtifacts = chatRuntime.live.artifacts
+  // Cherry Studio's TopicBranchPanel, translated: instead of a bare "this is a
+  // branch" label, every chat that shares a root is listed so you can jump
+  // between paths through the same conversation.
+  const branchFamily = useMemo(() => {
+    if (!chat) return []
+    const byId = new Map(chats.map(item => [item.id, item]))
+    const rootOf = id => {
+      let current = byId.get(id), guard = 0
+      while (current?.branchedFrom && guard < 50) { current = byId.get(current.branchedFrom.chatId); guard += 1 }
+      return current?.id
+    }
+    const root = rootOf(chat.id)
+    if (!root) return []
+    return chats
+      .filter(item => rootOf(item.id) === root)
+      .map(item => ({ id: item.id, title: item.title, isRoot: item.id === root, messages: item.messages.length }))
+      .sort((a, b) => Number(b.isRoot) - Number(a.isRoot))
+  }, [chat, chats])
+
   const artifacts = useMemo(() => {
     const saved = [...imports, ...chats.flatMap(chat => chat.messages.flatMap(message => message.artifacts || []))]
     const known = new Set(saved.map(item => item.id))
@@ -202,7 +221,7 @@ export default function App() {
     <TitleBar onAction={titleAction} ollamaOk={models.status === 'online'} vaultOk={vaultOk} title={chat?.title || 'AI ASSistant'} />
     <div className="app-shell">
       <Sidebar chats={chats} currentChat={currentChat} navigate={navigate} view={view} onView={setView} onNew={() => newChat()} onAction={chatAction} onSettings={() => setModal('settings')} onApps={() => setModal('apps')} onVault={() => setRightPanel(rightPanel === 'vault' ? null : 'vault')} onAgents={() => setRightPanel(rightPanel === 'agents' ? null : 'agents')} agentsActive={rightPanel === 'agents'} collapsed={collapsed} onCollapse={() => setCollapsed(!collapsed)} busyChatId={chatRuntime.busyChatId} notify={notify} artifactCount={artifacts.length} onToday={() => setToday(true)} />
-      {view === 'artifacts' ? <ArtifactsLibrary artifacts={artifacts} onOpen={openArtifact} onImport={item => { setImports(previous => [item, ...previous]); notify('Artifact imported locally. Open its card to run the isolated preview.') }} notify={notify} /> : view === 'projects' ? <ProjectsView projects={projects} chats={chats} onCreate={() => setAction({ type: 'createProject' })} focused={projects.find(item => item.id === focusedProject)} onOpen={setFocusedProject} onBack={() => setFocusedProject(null)} onChat={navigate} onNew={newChat} /> : <Center key={currentChat || `new-${draftNonce}`} chat={chat} models={models} onArtifact={openArtifact} onRetryCapture={chatRuntime.retryCapture} settings={settings} notify={notify} busyChatId={chatRuntime.busyChatId} onSend={chatRuntime.send} onStop={chatRuntime.stop} projects={projects} projectId={projectId} setProjectId={selectProject} onVault={() => setRightPanel('vault')} onContextPreview={previewCapsule} contextBundle={contextBundle} clearContext={() => setContextBundle(null)} onCook={cook} onExternalLink={setExternalLink} seed={seed} vision={vision} onBranch={branchFrom} liveArtifacts={liveArtifacts} />}
+      {view === 'artifacts' ? <ArtifactsLibrary artifacts={artifacts} onOpen={openArtifact} onImport={item => { setImports(previous => [item, ...previous]); notify('Artifact imported locally. Open its card to run the isolated preview.') }} notify={notify} /> : view === 'projects' ? <ProjectsView projects={projects} chats={chats} onCreate={() => setAction({ type: 'createProject' })} focused={projects.find(item => item.id === focusedProject)} onOpen={setFocusedProject} onBack={() => setFocusedProject(null)} onChat={navigate} onNew={newChat} /> : <Center key={currentChat || `new-${draftNonce}`} chat={chat} models={models} onArtifact={openArtifact} onRetryCapture={chatRuntime.retryCapture} settings={settings} notify={notify} busyChatId={chatRuntime.busyChatId} onSend={chatRuntime.send} onStop={chatRuntime.stop} projects={projects} projectId={projectId} setProjectId={selectProject} onVault={() => setRightPanel('vault')} onContextPreview={previewCapsule} contextBundle={contextBundle} clearContext={() => setContextBundle(null)} onCook={cook} onExternalLink={setExternalLink} seed={seed} vision={vision} onBranch={branchFrom} liveArtifacts={liveArtifacts} branchFamily={branchFamily} onNavigateBranch={navigate} />}
       {rightPanel === 'vault' && <VaultPanel onClose={() => setRightPanel(null)} onPreview={previewCapsule} />}
       {rightPanel === 'agents' && <SubAgentPanel subAgents={subAgents} models={models} onClose={() => setRightPanel(null)} onInsert={insertFromAgent} notify={notify} onExternalLink={setExternalLink} />}
       {rightPanel === 'artifact' && artifact && <ArtifactPanel key={artifact.id} artifact={artifact} live={artifactLive} models={models} onClose={() => setRightPanel(null)} onSave={saveArtifact} notify={notify} onExternalLink={setExternalLink} />}

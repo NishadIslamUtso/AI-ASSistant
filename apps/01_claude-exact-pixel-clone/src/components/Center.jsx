@@ -17,7 +17,7 @@ function LiveArtifactCard({ artifact, onArtifact }) {
     <Eye size={14} />
   </button>
 }
-export default function Center({ seed, chat, onArtifact, onRetryCapture, settings, notify, onExternalLink, onBranch, liveArtifacts = [], ...composerProps }) {
+export default function Center({ seed, chat, onArtifact, onRetryCapture, settings, notify, onExternalLink, onBranch, liveArtifacts = [], branchFamily = [], onNavigateBranch, ...composerProps }) {
   const transcript = useRef(null)
   const messages = chat?.messages || []
   useEffect(() => {
@@ -32,7 +32,14 @@ export default function Center({ seed, chat, onArtifact, onRetryCapture, setting
   return <main className={`center ${hasMessages ? 'has-messages' : 'home'}`} data-model-ready={composerProps.models.available}>
     {!hasMessages && <div className="free-plan"><span>Free plan</span><span>·</span><button onClick={() => notify('This is a free local Ollama app. Claude plans and billing are not connected.')}>Upgrade</button></div>}
     {hasMessages ? <>
-      <header className="chat-header"><h1>{chat.title}</h1><small>{chat.branchedFrom ? 'Branch · ' : 'Local · '}{composerProps.models.model}{composerProps.models.capabilities.vision ? ' · vision' : ''}</small></header>
+      <header className="chat-header"><h1>{chat.title}</h1><small>{chat.branchedFrom ? 'Branch · ' : 'Local · '}{composerProps.models.model}{composerProps.models.capabilities.vision ? ' · vision' : ''}</small>
+        {branchFamily.length > 1 && <label className="branch-picker" title="Jump between branches of this conversation">
+          <GitBranch size={12} />
+          <select value={chat.id} onChange={event => event.target.value !== chat.id && onNavigateBranch?.(event.target.value)}>
+            {branchFamily.map(branch => <option key={branch.id} value={branch.id}>{branch.isRoot ? `${branch.title} (original)` : branch.title} · {branch.messages} msg</option>)}
+          </select>
+        </label>}
+      </header>
       <div className="transcript-scroll" ref={transcript}><div className="transcript" key={chat.id}>
         {messages.map(message => <article key={message.id} className={`message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`} aria-label={message.role === 'user' ? 'Your message' : 'Assistant response'}>
           {message.role === 'assistant' && <ClaudeMark size={23} />}

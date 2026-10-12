@@ -30,7 +30,7 @@ export default function SubAgentPanel({ subAgents, models, onClose, onInsert, no
         {!agents.length && <p className="agents-empty">A sub-agent takes one task, works in its own context, and leaves one result. Use it for research, critique, extraction or code that the conversation should not carry.</p>}
         {agents.map(entry => <button key={entry.id} className={`agent-chip ${entry.id === activeId ? 'selected' : ''}`} onClick={() => { setActiveId(entry.id); setDraft(null) }}>
           <Bot size={14} />
-          <span><strong>{entry.name}</strong><small>{entry.status === 'running' ? 'Running…' : entry.status === 'done' ? `Done · ${Math.max(1, Math.round((entry.ms || 0) / 1000))}s` : entry.status === 'error' ? 'Failed' : AGENT_PRESETS.find(item => item.id === entry.preset)?.name || 'Custom'}</small></span>
+          <span><strong>{entry.name}</strong><small>{entry.status === 'running' ? 'Running…' : entry.status === 'waiting' ? 'Queued…' : entry.status === 'done' ? `Done · ${Math.max(1, Math.round((entry.ms || 0) / 1000))}s` : entry.status === 'error' ? 'Failed' : AGENT_PRESETS.find(item => item.id === entry.preset)?.name || 'Custom'}</small></span>
           {entry.status === 'running' && <span className="agent-pulse" aria-hidden="true" />}
         </button>)}
       </div>
@@ -48,7 +48,8 @@ export default function SubAgentPanel({ subAgents, models, onClose, onInsert, no
             : <button className="white-button" disabled={busy || !(draft ?? agent.task).trim()} onClick={() => run(agent.id)}><Play size={13} />Run agent</button>}
           <button className="icon-button" aria-label="Delete sub agent" disabled={running} onClick={() => remove(agent.id)}><Trash2 size={15} /></button>
         </div>
-        {busy && !running && <p className="muted">Another sub-agent is running. This one will run when that finishes.</p>}
+        {agent.status === 'waiting' && <p className="muted">Queued — it starts as soon as the running job finishes. The GPU is only ever doing one job.</p>}
+        {busy && !running && agent.status !== 'waiting' && <p className="muted">Another sub-agent is running. This one will run when that finishes.</p>}
         {agent.status === 'error' && <p className="error-text" role="alert"><AlertTriangle size={13} /> {agent.error}</p>}
         {agent.output && <div className="agent-output">
           <header><span>Result · {agent.model}</span><div>

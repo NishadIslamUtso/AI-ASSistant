@@ -52,7 +52,7 @@ export const NEW_AGENT = { id: '', name: '', preset: 'researcher', task: '', use
 
 const KEY = 'claude_exact_agents'
 const normalize = value => Array.isArray(value)
-  ? value.filter(agent => agent && typeof agent.id === 'string' && typeof agent.task === 'string').slice(0, 40).map(agent => ({ ...agent, status: agent.status === 'running' ? 'idle' : agent.status }))
+  ? value.filter(agent => agent && typeof agent.id === 'string' && typeof agent.task === 'string').slice(0, 40).map(agent => ({ ...agent, status: ['running', 'waiting'].includes(agent.status) ? 'idle' : agent.status }))
   : []
 
 export default function useSubAgents({ models, notify }) {
@@ -64,6 +64,10 @@ export default function useSubAgents({ models, notify }) {
   const [busy, setBusy] = useState(false)
   const jobRef = useRef(null)
   const controllerRef = useRef(null)
+  // Jan's Cowork model, translated: sub-agents are lanes that go
+  // waiting -> running -> done. Asking for a job while one is running used to
+  // refuse it; now it queues, and the panel shows the plan before it executes.
+  const queueRef = useRef([])
   const agentsRef = useRef(agents)
   agentsRef.current = agents
 
@@ -86,7 +90,12 @@ export default function useSubAgents({ models, notify }) {
   async function run(id, { model = models.model, onProgress } = {}) {
     const agent = agentsRef.current.find(entry => entry.id === id)
     if (!agent) return null
-    if (jobRef.current) { notify('Another sub-agent is running. Jobs run one at a time so they do not compete for the GPU.'); return null }
+    if (jobRef.current) {
+      if (queueRef.current.includes(id)) return null
+      queueRef.current.push(id)
+      patch(id, { status: 'waiting', error: '' })
+      return null
+    }
     if (!agent.task.trim()) { notify('Write the task for this sub-agent first.'); return null }
     const controller = new AbortController()
     controllerRef.current = controller
@@ -122,12 +131,29 @@ export default function useSubAgents({ models, notify }) {
     } finally {
       jobRef.current = null
       controllerRef.current = null
-      setBusy(false)
+      const next = queueRef.current.shift()
+      if (next && agentsRef.current.some(agent => agent.id === next && agent.status === 'waiting')) {
+        void run(next)
+      } else {
+        setBusy(false)
+      }
     }
   }
 
+  /** Queue several sub-agents; they run one at a time in the order given. */
+  async function runMany(ids) {
+    const list = ids.filter(id => agentsRef.current.some(agent => agent.id === id))
+    if (!list.length) return
+    const [first, ...rest] = list
+    queueRef.current = rest
+    for (const id of rest) patch(id, { status: 'waiting', error: '' })
+    await run(first)
+  }
+
   return {
-    agents, activeId, setActiveId, busy, runningId: jobRef.current, add, remove, run, patch, persist,
+    agents, activeId, setActiveId, busy, runningId: jobRef.current, add, remove, run, runMany, patch, persist,
+    queuedIds: queueRef.current,
+    waitingCount: agents.filter(agent => agent.status === 'waiting').length,
     /** Stop the running job. Partial output already written stays visible. */
     stop: () => controllerRef.current?.abort(),
     clearFinished: () => persist(agentsRef.current.filter(agent => agent.status === 'running')) }
