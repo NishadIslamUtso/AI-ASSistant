@@ -410,3 +410,13 @@ h1, h2, h3, h4, p { margin: 0; }
 .branch-picker { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; color: var(--muted, #999); font-size: 11px; }
 .branch-picker select { background: var(--composer, #242424); color: var(--text, #e8e8e8); border: 1px solid var(--border, #333); border-radius: 6px; font: 11px 'Segoe UI', sans-serif; padding: 3px 6px; max-width: 220px; }
 .chat-header { display: flex; align-items: center; gap: 10px; }
+.connector-list { display: flex; flex-direction: column; gap: 10px; margin: 4px 0 12px; }
+.connector { display: flex; align-items: flex-start; gap: 11px; border: 1px solid var(--border, #333); border-radius: 10px; padding: 11px 13px; background: var(--composer, #242424); }
+.connector.up { border-color: #2f6b46; } .connector.down { border-color: #6b3a30; }
+.connector-icon { flex: none; margin-top: 1px; color: var(--muted, #999); }
+.connector.up .connector-icon { color: #6bbf59; } .connector.down .connector-icon { color: #e06c5f; }
+.connector-body { flex: 1; min-width: 0; }
+.connector-body strong { display: block; font-size: 13px; }
+.connector-body small { display: block; font-size: 11px; color: var(--muted, #999); }
+.connector-body p { margin: 6px 0 0; font-size: 12px; line-height: 1.5; }
+.connector-state { flex: none; font-size: 11px; color: var(--muted, #999); }

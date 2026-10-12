@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Settings, CircleUserRound, Shield, CreditCard, Briefcase, History, Bell, MoonStar, Code2, Monitor, Plug, Wrench, ScrollText, Blocks, Search, X, Sun, Moon, Eye } from 'lucide-react'
 import Dialog from './Dialog.jsx'
 import BlacklistManager from './BlacklistManager.jsx'
+import Connectors from './Connectors.jsx'
 const navigation = [
   ['Settings', [['General', Settings], ['Account', CircleUserRound], ['Privacy', Shield], ['Billing', CreditCard], ['Capabilities', Briefcase], ['Memory', History], ['Reflect', Bell], ['Time and focus', MoonStar], ['Claude Code', Code2]]],
   ['This computer', [['System', Monitor], ['Vision', Eye], ['Extensions', Plug], ['Developer', Wrench]]],
@@ -16,7 +17,7 @@ function Row({ label, description, children }) {
 function Select({ label, value, options, onChange }) {
   return <select aria-label={label} value={value} onChange={event => onChange(event.target.value)}>{options.map(option => <option key={option}>{option}</option>)}</select>
 }
-export default function SettingsModal({ settings, setSettings, onClose, onApps, onVault, models, vision, visionModel, setVisionModel }) {
+export default function SettingsModal({ settings, setSettings, onClose, onApps, onVault, models, vision, visionModel, setVisionModel, vaultOk, vaultPath, onRecheck }) {
   const [active, setActive] = useState('General')
   const [search, setSearch] = useState('')
   const update = (key, value) => setSettings(previous => ({ ...previous, [key]: value }))
@@ -54,7 +55,8 @@ export default function SettingsModal({ settings, setSettings, onClose, onApps, 
         {active === 'System' && <div className="settings-copy"><p>AI ASSistant 0.2.0 · Vite web build</p><p>Ollama: 127.0.0.1:11434</p><p>Vault driver: 127.0.0.1:8765</p><p>Browser requests are proxied through this app. A native Windows title bar and menu will require the pending Electron wrapper.</p></div>}
         {active === 'Extensions' && <div className="settings-copy"><p>The local MV3 collector lives in the repository’s extension folder. Chrome installation and capture still require Windows/Chrome testing.</p><button className="secondary-button" onClick={onApps}>Apps and extensions</button></div>}
         {active === 'Developer' && <div className="settings-copy"><p>npm test · npm run build · npm run test:e2e</p><p>No native build tools or model downloads are needed. If Ollama is offline, run your existing Ollama installation and refresh the model list.</p></div>}
-        {!['Account', 'Privacy', 'Billing', 'Capabilities', 'Memory', 'System', 'Extensions', 'Developer'].includes(active) && <p className="settings-copy">{active} is a screenshot-matched navigation entry. Its runtime integration is not implemented yet; no background action is enabled.</p>}
+        {active === 'Connectors' && <Connectors models={models} vaultOk={vaultOk} vaultPath={vaultPath} onRecheck={onRecheck} onVault={onVault} />}
+        {!['Account', 'Privacy', 'Billing', 'Capabilities', 'Memory', 'System', 'Extensions', 'Developer', 'Connectors'].includes(active) && <p className="settings-copy">{active} is a screenshot-matched navigation entry. Its runtime integration is not implemented yet; no background action is enabled.</p>}
       </>}
     </div>
   </Dialog>
