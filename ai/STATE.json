@@ -1,14 +1,14 @@
 {
-  "date": "2026-10-10",
-  "time_updated": "2026-10-11 21:20 Asia/Dhaka",
+  "date": "2026-10-14",
+  "time_updated": "2026-10-14 Asia/Dhaka",
   "timezone": "Asia/Dhaka",
   "repo_version": "1.2.0-best-of",
   "canonical_repo": "https://github.com/NishadIslamUtso/AI-ASSistant",
-  "note_for_next_ai": "The repo is the source of truth, not any handover text. A previous handover claimed UserMenu/SettingsModal/AppsExtensionsModal existed \u2014 they did not. They were built on 2026-10-10 22:40. Verify file existence before trusting a status list.",
+  "note_for_next_ai": "The repo is the source of truth, not any handover text. Verify file existence before trusting a status list - files have been claimed to exist and not been there, three times. Check `git log HEAD...origin/<branch>` divergence BEFORE committing: the sandbox can be silently reset to an old base while the remote has moved on. On 2026-10-14 the sandbox was at an 18-commit-old base and a commit was nearly built on the wrong history.",
   "apps": {
     "01_claude-exact-pixel-clone": {
       "path": "apps/01_claude-exact-pixel-clone",
-      "status": "built-compiled-tested-by-24-automated-checks-NOT-tested-on-user-windows",
+      "status": "built-compiled-tested-by-171-automated-checks-NOT-tested-on-user-windows",
       "tech": "Vite 5 + React 18 + Tailwind + Express vault API, direct Ollama",
       "files": [
         "src/App.jsx (state, sending, streaming, artifacts, shortcuts)",
@@ -31,7 +31,11 @@
         "src/components/TitleBar.jsx (191558)",
         "src/components/Dropdown.jsx, src/components/ContextMenu.jsx",
         "server/vault-api.cjs (the only writer to the vault)",
-        "start-app.bat, check-ollama.bat, build-windows.bat, README.md"
+        "start-app.bat, check-ollama.bat, build-windows.bat, README.md",
+        "src/design-systems/ (16 token sets, lazy-loaded, from open-design Apache-2.0)",
+        "src/lib/skills.js (named reusable sub-agent instructions)",
+        "THIRD_PARTY_NOTICES.md (Apache-2.0 attribution)",
+        "tests/design-tokens.test.js (9 checks)"
       ],
       "features_implemented": [
         "Sidebar 260px #202020: Search, New chat, Projects, Artifacts (n), Customize, Pinned/Today/Oct 8/Older groups, NU Utso Free -> user menu",
@@ -51,7 +55,7 @@
         "Cook This Prompt (Capsule Hub style prompt enhancer)",
         "Direct Ollama streaming with abort; vault capture of every turn",
         "Vite proxies /ollama and /vault -> Ollama CORS no longer required",
-        "Light/dark/system theme, reduced motion, transcript size, width, chat font \u2014 all really applied",
+        "Light/dark/system theme, reduced motion, transcript size, width, chat font — all really applied",
         "Keyboard: Ctrl+B sidebar, Ctrl+J AI-Brain, Ctrl+Shift+A artifacts, Ctrl+N new chat",
         "Measured theme: sidebar 384px #111111, main #151515, composer #20201f, active row #343434, text #f0efec, accent #d97757, link #4099ec (replaces the wrong estimates)",
         "Spark.jsx - real Claude starburst SVG (ported from abc0197f) used for greeting + assistant avatar",
@@ -88,7 +92,9 @@
         "brain01": "TodayView.jsx, server/mock-ollama.cjs - adopted",
         "1e3d04e4": "vite preview host - already covered by host 0.0.0.0 + allowedHosts:true",
         "00aa9faf": "context-menu submenus + hash deep-links - NOT adopted (needs a router; the six menu items already work)"
-      }
+      },
+      "branch": "arena/3c06e1bf-ai-assistant",
+      "head": "624bc69"
     },
     "02_electron-claude-clone-v6": {
       "path": "apps/02_electron-claude-clone-v6",
@@ -140,7 +146,7 @@
     "No installer",
     "Quillbot inline suggestions live only in the extension, cannot be wired into the desktop app"
   ],
-  "last_session": "2026-10-11 \u2014 UI/UX adopted wholesale from arena/01199af1 at the user's request; title bar + Today view kept; vault API adopted with /today,/status,artifact,journal ported back; 48+5 tests pass; no branch merged",
+  "last_session": "2026-10-11 — UI/UX adopted wholesale from arena/01199af1 at the user's request; title bar + Today view kept; vault API adopted with /today,/status,artifact,journal ported back; 48+5 tests pass; no branch merged",
   "palette_ruling": {
     "authoritative": "user-supplied",
     "shipped": {
@@ -173,7 +179,7 @@
       "transcript widths 880/1040/1200",
       "grouped settings nav"
     ],
-    "rule": "Where a pixel measurement disagrees with a value the user stated, use the user's value and flag the difference \u2014 never silently override."
+    "rule": "Where a pixel measurement disagrees with a value the user stated, use the user's value and flag the difference — never silently override."
   },
   "ui_lineage": {
     "adopted_from": "arena/01199af1-ai-assistant (de6ddc9)",
@@ -186,7 +192,7 @@
       "server/proxy-policy.cjs"
     ],
     "kept_from_this_branch": [
-      "TitleBar.jsx (Windows title bar \u2014 required, absent in 01199af1)",
+      "TitleBar.jsx (Windows title bar — required, absent in 01199af1)",
       "TodayView.jsx (Alt+T, P8)",
       "server/mock-ollama.cjs"
     ],
@@ -209,5 +215,17 @@
     },
     "merged": false,
     "pr": "#8 open"
+  },
+  "docs": {
+    "prd": "docs/claude-exact-pixel-clone-PRD.md",
+    "app_design": "docs/claude-exact-pixel-clone-APP-DESIGN.md"
+  },
+  "external_sources": {
+    "open-design": {
+      "url": "https://github.com/nexu-io/open-design",
+      "license": "Apache-2.0",
+      "taken": "design-system token :root blocks (16 of 152) and the skills mechanism (idea only, no skill text copied)",
+      "attribution": "apps/01_claude-exact-pixel-clone/THIRD_PARTY_NOTICES.md"
+    }
   }
 }

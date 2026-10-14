@@ -1,7 +1,45 @@
 # CHANGELOG.md — What Changed Each Session (Living)
 
-**Last Updated:** 2026-10-11 21:20 Asia/Dhaka
+**Last Updated:** 2026-10-14 Asia/Dhaka
 **Rule:** Log every change with date, what, why. This is memory for next AI.
+
+## 2026-10-14 — Design systems and reusable skills (from open-design)
+
+The user pointed at <https://github.com/nexu-io/open-design> and said to take
+every feature the app does not already have. Two were worth porting; both ship
+in commit `624bc69` on `arena/3c06e1bf-ai-assistant`.
+
+**Design systems (16 token sets).** open-design keeps 152 systems as plain
+`tokens.css` files. We bundle 16 of the most useful as lazy-loaded ES modules
+in `src/design-systems/`. A picker in the artifact panel applies one; the tokens
+are injected into the live preview *and* into the exported ZIP, so a deployed
+site looks like what you previewed. The token `<style>` is inserted **after**
+the CSP meta tag, so sandboxing is never loosened. Apache-2.0, attributed in
+`apps/01_claude-exact-pixel-clone/THIRD_PARTY_NOTICES.md`.
+
+**Skills (reusable instructions).** open-design's skills mechanism — a
+capability is data you can add, edit and delete, not code you have to ship —
+ported onto sub-agents. Any instruction can be saved under a name and reused on
+any sub-agent afterwards (`src/lib/skills.js`). The six built-in roles stay in
+code because they are tuned for a 3B model on 4 GB of VRAM.
+
+**Two north-star docs added** (`docs/claude-exact-pixel-clone-PRD.md`,
+`docs/claude-exact-pixel-clone-APP-DESIGN.md`) covering the pixel target, the
+user's authoritative hex values, and behavioural notes in the user's own words.
+
+171 tests pass; `build:preview` is clean.
+
+### Sandbox data loss, and the fix
+
+The sandbox was reset to the old base commit `547b4d8` mid-session, so a first
+commit (`8e79f7d`) was built on the wrong history while the remote branch
+carried 18 commits the sandbox could not see. Resolved by saving the new files,
+`git reset --hard origin/arena/3c06e1bf-ai-assistant`, then reapplying the six
+source patches — verified first by diffing, so that 18 commits of prior work on
+those same files were not clobbered. **Lesson: check `git log` divergence before
+committing, not after.** Several files an earlier handover claimed existed did
+not survive; verify file existence before trusting any status list.
+
 
 ## 2026-10-11 (22:55) — Fix: preview host was blocked by the origin allowlists
 
