@@ -1,4 +1,5 @@
 import BrainMark from './BrainMark'
+import type { VaultState } from '../hooks/useVault'
 
 /**
  * The bar across the top. The window frame is the operating system's, so this is
@@ -9,12 +10,16 @@ export default function TitleBar({
   model,
   ollamaStatus,
   preview = false,
+  vault,
 }: {
   model: string
   ollamaStatus: 'loading' | 'online' | 'offline'
   /** In the browser there is no Ollama to find, so the chip says what this is
    *  instead of reporting a service on the person's machine as missing. */
   preview?: boolean
+  /** The vault, when the app is running where one can exist. The chip is the
+   *  mockup's second indicator: green when conversations are being kept. */
+  vault?: VaultState
 }) {
   const state = preview
     ? 'Preview'
@@ -53,6 +58,26 @@ export default function TitleBar({
           />
           {state}
         </span>
+
+        {!preview && vault && vault.state !== 'unknown' && (
+          <span
+            className="flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 text-[11px] text-muted"
+            title={
+              vault.state === 'ready'
+                ? `Conversations are kept in ${vault.path}.`
+                : vault.state === 'missing'
+                  ? `${vault.error} Nothing is written until you point the app at a vault.`
+                  : 'The vault could not be reached. Conversations are being kept in this app only.'
+            }
+          >
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                vault.state === 'ready' ? 'bg-ok' : vault.state === 'missing' ? 'bg-warn' : 'bg-muted'
+              }`}
+            />
+            {vault.state === 'ready' ? 'Vault' : vault.state === 'missing' ? 'No vault' : 'Vault offline'}
+          </span>
+        )}
       </div>
     </header>
   )

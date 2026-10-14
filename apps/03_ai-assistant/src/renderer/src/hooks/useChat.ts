@@ -145,6 +145,10 @@ export default function useChat({
               : item
           )
         )
+        // One line, no dialog, and the conversation itself is untouched. A
+        // capture that failed without saying so would be the worst outcome: a
+        // vault that looks like it is keeping things and is not.
+        notify(`This conversation was not kept: ${(error as Error).message}`)
       }
     }
   }
@@ -259,7 +263,9 @@ export default function useChat({
       )
       if (!existing) navigate(chatId)
       setLive({ chatId, messageId: assistant.id, artifacts: [] })
-      void capture(chat)
+      // No capture here: the reply is still streaming, and a half-written turn is
+      // not evidence. The conversation is kept when the turn ends — complete,
+      // stopped or failed — a few lines below.
       void run({ chat, userMessage, assistant, requested, wantsBridge, thinking, controller, history })
       // Return once the send is accepted, so the composer clears immediately.
       return true

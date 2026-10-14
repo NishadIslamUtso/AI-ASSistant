@@ -14,8 +14,11 @@ import useChat from './hooks/useChat'
 import useArtifactRewrite from './hooks/useArtifactRewrite'
 import useModels from './hooks/useModels'
 import usePersistentState from './hooks/usePersistentState'
+import useVault from './hooks/useVault'
 import { useChats } from './state/useChats'
 import { isDemo } from './platform/bridge'
+import { vaultPost } from '@shared/lib/vault'
+import { conversationCapture } from '@shared/lib/capture'
 
 /**
  * The app.
@@ -48,6 +51,9 @@ export default function App() {
     () => chats.chats.find(entry => entry.id === chats.currentChat) || null,
     [chats.chats, chats.currentChat]
   )
+  // Re-checked whenever the current conversation is kept, so a vault that has
+  // gone missing shows as a chip rather than as a save that quietly did not happen.
+  const vault = useVault(chat?.vaultStatus)
 
   const navigate = useCallback((chatId: string) => chats.open(chatId), [chats])
 
@@ -65,6 +71,10 @@ export default function App() {
     // Settings > Performance will edit this. Until then the 4 GB profile is the
     // safe default: it is the one that cannot overflow a small card.
     inference: { profile: DEFAULT_PROFILE_ID },
+    // Where finished conversations are kept. In the browser preview there is no
+    // vault behind the interface, so nothing is attempted and no failed request
+    // appears in the console — the preview stays quiet, as it must.
+    capture: isDemo ? undefined : chat => vaultPost('/capture', conversationCapture(chat)).then(() => undefined),
   })
 
   const artifacts = useMemo(
@@ -173,7 +183,14 @@ export default function App() {
 
   return (
     <div className="flex h-full flex-col bg-bg text-ink">
-      <TitleBar model={models.model} ollamaStatus={models.status} preview={isDemo} />
+      <TitleBar
+        model={models.model}
+        ollamaStatus={models.status}
+        preview={isDemo}
+        // Re-checked when a conversation is kept, so a vault that went missing
+        // shows up as a chip rather than as a save that silently did not happen.
+        vault={vault}
+      />
       <div className="flex min-h-0 flex-1">
         <Sidebar
           chats={chats.chats}
