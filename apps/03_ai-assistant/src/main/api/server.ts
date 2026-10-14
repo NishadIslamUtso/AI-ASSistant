@@ -2,6 +2,7 @@ import { createServer, request as httpRequest, type IncomingMessage, type Server
 import { createReadStream, existsSync, statSync } from 'node:fs'
 import { extname, join, normalize, resolve } from 'node:path'
 import { localTarget, protectLocalApi } from './guard'
+import { BODY_LIMIT, readBody } from './body'
 import { handleVaultRequest } from '../vault/routes'
 import type { VaultService } from '../vault/service'
 import { parseCloudModel } from '../../shared/lib/providers'
@@ -67,34 +68,8 @@ export type LocalApi = {
 
 const OLLAMA_DEFAULT = 'http://127.0.0.1:11434'
 
-/** A capture carries conversation text and attachment bytes; this is the ceiling. */
-const BODY_LIMIT = 20 * 1024 * 1024
-
 /** How much of a reply a cloud provider is asked for. They all require a ceiling. */
 const CLOUD_MAX_TOKENS = 4096
-
-/**
- * Read a request body with a hard limit. Over the limit the socket is destroyed
- * rather than the text buffered, so an oversized request cannot fill memory.
- */
-function readBody(request: IncomingMessage, limit: number): Promise<string> {
-  return new Promise((resolvePromise, reject) => {
-    const chunks: Buffer[] = []
-    let received = 0
-    request.on('data', (chunk: Buffer) => {
-      received += chunk.length
-      if (received > limit) {
-        // Stop storing, and let the refusal be written: destroying the socket
-        // here would turn an explainable 413 into a connection reset.
-        reject(new Error('That request is larger than the vault accepts (20 MB).'))
-        return
-      }
-      chunks.push(chunk)
-    })
-    request.on('end', () => resolvePromise(Buffer.concat(chunks).toString('utf8')))
-    request.on('error', reject)
-  })
-}
 
 const CONTENT_TYPES: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',

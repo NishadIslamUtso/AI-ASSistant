@@ -59,6 +59,15 @@ const api = {
     /** The operating system's folder picker. null when the person closed it. */
     chooseFolder: (): Promise<string | null> => ipcRenderer.invoke('vault:choose-folder'),
   },
+  extension: {
+    /**
+     * Whether the browser extension can reach this app, and at what address. A
+     * port that is open is a fact the interface shows rather than something to
+     * discover from an extension that quietly stopped working.
+     */
+    status: (): Promise<{ ok: boolean; listening: boolean; port: number; url: string; error: string }> =>
+      ipcRenderer.invoke('extension:status'),
+  },
 }
 
 contextBridge.exposeInMainWorld('api', api)

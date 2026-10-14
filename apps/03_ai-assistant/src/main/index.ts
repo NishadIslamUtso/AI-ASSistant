@@ -2,6 +2,7 @@ import { app, BrowserWindow, dialog, ipcMain, safeStorage, shell } from 'electro
 import { join } from 'node:path'
 import { writeFileSync } from 'node:fs'
 import { startLocalApi, type LocalApi } from './api/server'
+import { DEFAULT_EXTENSION_PORT, startExtensionApi, type ExtensionApi } from './extension/server'
 import { createVaultService, resolveVaultRoot } from './vault/service'
 import { createKeyStore, type KeyStore } from './cloud/keys'
 import { createCloudClient, type CloudClient } from './cloud/client'
@@ -20,6 +21,16 @@ import {
  * files, the vault index, Ollama, the database. The renderer only ever talks to
  * it through the preload bridge, so there is no localhost HTTP and no CORS.
  */
+
+/**
+ * The port the browser extension posts to. Fixed, because an extension cannot
+ * discover a moving port; overridable for a machine where something else already
+ * owns 8765.
+ */
+function extensionPortWanted(): number {
+  const wanted = Number(process.env.AI_ASSISTANT_EXTENSION_PORT || DEFAULT_EXTENSION_PORT)
+  return Number.isFinite(wanted) && wanted > 0 && wanted < 65536 ? wanted : DEFAULT_EXTENSION_PORT
+}
 
 /**
  * The port the app's own API listens on. Fixed rather than ephemeral only so the
@@ -151,6 +162,19 @@ function registerBridges(): void {
     }
   })
 
+  /**
+   * Whether the browser extension can reach this app, and where. Shown in
+   * Settings > System: a port that is open is a fact the person should be able to
+   * see, not something to find out from an extension that quietly stopped working.
+   */
+  ipcMain.handle('extension:status', () => ({
+    ok: true,
+    listening: Boolean(extensionApi?.listening),
+    port: extensionApi?.port ?? extensionPortWanted(),
+    url: extensionApi?.url || `http://127.0.0.1:${extensionPortWanted()}`,
+    error: extensionApi?.error || '',
+  }))
+
   ipcMain.handle('vault:choose-folder', async () => {
     const [window] = BrowserWindow.getAllWindows()
     const chosen = await dialog.showOpenDialog(window, {
@@ -171,6 +195,7 @@ const consoleErrors: string[] = []
 const consoleWarnings: string[] = []
 
 let api: LocalApi | null = null
+let extensionApi: ExtensionApi | null = null
 let settings: AppSettings = { ...EMPTY_SETTINGS }
 let settingsFile = ''
 let keyStore: KeyStore | null = null
@@ -345,6 +370,14 @@ if (!gotLock) {
       console.log(`[api] could not start: ${(error as Error).message}`)
       api = null
     }
+    // The extension's own port. Narrow on purpose (see src/main/extension/server.ts):
+    // it carries the capture side of the vault and nothing that could spend a key
+    // or change a setting. A busy port is reported, never fatal.
+    extensionApi = await startExtensionApi({ port: extensionPortWanted(), vault })
+    if (extensionApi.listening) {
+      console.log(`[extension] listening at ${extensionApi.url} — captures, context and the never-check list only`)
+    }
+
     createWindow()
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow()
@@ -353,6 +386,7 @@ if (!gotLock) {
 
   app.on('before-quit', () => {
     void api?.close()
+    void extensionApi?.close()
   })
 
   app.on('window-all-closed', () => {

@@ -47,6 +47,10 @@ export type DesktopBridge = {
     /** The operating system's folder picker. null when the person closed it. */
     chooseFolder: () => Promise<string | null>
   }
+  /** Whether the browser extension can reach this app, and where. */
+  extension: {
+    status: () => Promise<{ ok: boolean; listening: boolean; port: number; url: string; error: string }>
+  }
   /**
    * Online providers. In the desktop app these are questions for the main
    * process, which holds the keys; the interface is never handed one.
@@ -86,6 +90,16 @@ const demoBridge: DesktopBridge = {
     }),
   },
   vault: { chooseFolder: async () => null },
+  // No socket is open here, and none can be: this is a page, not the app.
+  extension: {
+    status: async () => ({
+      ok: false,
+      listening: false,
+      port: 8765,
+      url: 'http://127.0.0.1:8765',
+      error: 'The port the browser extension posts to belongs to the desktop app, not to this window.',
+    }),
+  },
   /**
    * No keychain, no main process, no key: every answer says that rather than
    * pretending a provider was reached.
