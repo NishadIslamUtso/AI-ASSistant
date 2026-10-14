@@ -25,8 +25,9 @@
 - **Settings is one full-window surface**: a rail (System, Appearance, Performance, Vault) with one section
   at a time on the right, a search box that finds settings by name, and a per-section Reset. Terse rows:
   a label and the control, no descriptions underneath.
-- **The vault API is in-process.** The old `server/vault-api.cjs` on 127.0.0.1:8765 is not part of this app,
-  and no port is open for the extension yet — that is a known gap, not a feature.
+- **The app's vault API is in-process; the browser extension gets its own loopback port.** 127.0.0.1:8765,
+  `chrome-extension://` origins only, carrying the capture side of the vault and nothing that could spend a
+  key, change a setting or export the vault. (The old `server/vault-api.cjs` is still not part of this app.)
 - **Memory is measured against the profile the owner chose**, never against a hardcoded 4 GB. Choosing a
   profile IS the answer to "how much video memory is there". CPU-only and Custom claim nothing and are
   never warned about; when a preset really cannot hold the loaded model, one sentence names the numbers and
@@ -51,6 +52,13 @@
   as a timeline with site grouping, kind filters, search and a time window, over the app's own API. It
   invents nothing: a visit is labelled a visit (the vault's own "not proof of reading" is repeated, never
   upgraded), a captured page is one entry rather than two, and the counts always describe the rows on screen.
+- **The app ships as an installer.** `AI-ASSistant-Setup-0.1.0.exe` (~84 MB, NSIS, assisted, per-user, no
+  admin prompt, desktop + Start-menu shortcuts, and uninstalling it leaves the vault and settings alone), built
+  from `electron-builder.yml`. It is **not code-signed**, so Windows shows SmartScreen's "unknown publisher"
+  until a certificate exists — `apps/03_ai-assistant/RELEASE-WINDOWS.md` states that in advance, explains what
+  it does and does not mean, and carries the reproducible build recipe. Verified by listing the installer's own
+  payload and by booting the same configuration's Linux bundle; the install on Windows itself is the owner's
+  own test, not something the sandbox can prove.
 - **Verified on 2026-10-14:** 27 test files / 255 tests, clean typecheck, clean web build, desktop smoke
   `errors=0 warnings=0`, browser check 33/33 with 0 console problems, the desktop vault end-to-end green
   (message → answer → Markdown in the vault → vault moved from Settings), and the desktop cloud end-to-end
@@ -502,6 +510,17 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - **Removed:** the Vercel deployment files, at the owner's request.
 - **Verified:** 208 tests, typecheck, web build, desktop smoke, browser check, desktop end-to-end.
 - **Where:** branch `arena/3c06e1bf-ai-assistant-v3`, merged into `main`.
+
+### [2026-10-14 evening] The Windows installer exists
+The first file a person can double-click: `AI-ASSistant-Setup-0.1.0.exe` — NSIS, assisted (not one-click),
+per-user (no admin prompt), folder choosable, desktop + Start-menu shortcuts, and an uninstall that keeps the
+vault and settings. Unsigned, so SmartScreen will warn about an unknown publisher; the release notes say so
+plainly, in advance, with the exact text. Built from `electron-builder.yml` by electron-builder 26.15.3, icon
+rendered from the app's own `BrainMark.tsx`, `electronLanguages: [en-US]` and `compression: maximum` as the two
+honest size trims (95,963,305 → 87,748,105 bytes). Verified: the payload listed out of the installer
+(`app.asar` 31.9 MB, the exe, the uninstaller, `en-US.pak` only — 21 entries) and the same configuration's
+Linux bundle boots clean (`errors=0 warnings=0`). Not verified anywhere: an actual Windows install — that is
+Priority 1, the owner's own test.
 
 ### [NEXT] Add when changed:
 - Use format: ### [YYYY-MM-DD HH:MM] Added/Changed/Fixed: description + why + who requested

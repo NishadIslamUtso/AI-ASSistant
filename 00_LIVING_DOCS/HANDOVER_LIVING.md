@@ -1,6 +1,6 @@
 # HANDOVER_LIVING.md — Current State + Gaps (Living)
 
-**Last Updated:** 2026-10-14 (night) Asia/Dhaka
+**Last Updated:** 2026-10-14 (evening) Asia/Dhaka
 **Purpose:** everything a new AI or developer needs to continue, without trusting anybody's memory.
 
 ## 1. Executive Summary
@@ -16,19 +16,29 @@ the first item on the list.
 ## 2. Where the code stands (2026-10-14)
 
 **Branch:** `arena/3c06e1bf-ai-assistant-v3` → merged into `main`. Both pushed.
-Last landed: `a52f2bf` (merge: Settings as the full window), on top of `4731756`, `5b371b4`, `110a80b`.
+Last landed: `2b46b46` (merge: Browsing Maps, on top of `e453dd4`), after `93f2e5c` (merge: Agent access,
+on top of `b1a84a4`) and `7a5e8f4` (merge: online providers).
 
 **Verified in the sandbox — this is evidence, not a plan:**
 
-- [x] `npm test` → 22 files / 208 tests pass
+- [x] `npm test` → 27 files / 255 tests pass
 - [x] `npm run typecheck` → clean
-- [x] `npm run build:web` → clean; the browser preview on 4174 serves the fresh bundle
-- [x] Browser check: 28 assertions true, **0 console problems** — includes the width token actually being
-      painted, reload persistence, the rail's search, Reset, and "no false warning"
+- [x] `npm run build` (desktop) and `npm run build:web` → clean
 - [x] `npm run smoke` → `SMOKE OK title="AI ASSistant" size=1280x820 errors=0 warnings=0`
-- [x] Desktop end-to-end: a typed message is answered, the conversation is found in the vault on disk,
-      `09 Activity & Undo` is appended, the vault is moved from Settings, and the next conversation lands in
-      the **new** vault while the old one is untouched — console clean throughout
+- [x] Browser check: 40 assertions, **0 console problems**
+- [x] Desktop end-to-end — five checks, all green: the vault (a typed message is answered, the conversation is
+      found in the vault on disk, `09 Activity & Undo` is appended, the vault is moved from Settings and the
+      next conversation lands in the **new** vault), the cloud path (key pasted → Test → model in the composer
+      → the provider's own answer, asked exactly once), the extension port (a capture lands in the vault, the
+      never-check list round-trips, no-origin and page-origin refused), agent access (a switch off → `403`
+      with the reason and nothing written; `Keep conversations` off → the chip says `Vault off` and nothing is
+      kept), and Browsing Maps (a seeded week → exactly 7 entries, a torn line is not an 8th, counts follow
+      the filter) — console clean throughout
+- [x] **The Windows installer**: built, its payload listed out of the installer itself (`app.asar`, the exe, the
+      uninstaller, `en-US.pak` only), and the same configuration packaged for Linux boots clean —
+      `SMOKE OK … errors=0 warnings=0`
+- [ ] **It has still not run on the owner's Windows machine** — the installer exists now, and installing it
+      there is Priority 1
 
 ## 3. What works, in the owner's terms
 
@@ -43,15 +53,37 @@ Last landed: `a52f2bf` (merge: Settings as the full window), on top of `4731756`
   - *Performance* — Ollama's options from profile presets or Custom values, measured against the chosen profile.
   - *Vault* — the folder, chosen through the main process; a folder that does not exist is refused and
     nothing is created in its place.
+  - *Models* — the models Ollama reports, plus a key per online provider (Anthropic, OpenAI, Gemini,
+    OpenRouter, Groq, DeepSeek, xAI, or any OpenAI-compatible endpoint), sealed by the machine and never
+    handed to the interface.
+  - *Agent access* — the local model, browser captures, keeping conversations, and one switch per keyed
+    provider; each enforced in the main process *before* anything is sent or written. Files, Shell, Web and
+    MCP are stated as not built rather than offered as switches.
+- **Where an answer came from** is on every reply: `local`, or `online · <provider>`.
+- **Browser capture has a socket**: `127.0.0.1:8765`, loopback and `chrome-extension://` origins only,
+  carrying the capture side of the vault (health, status, context, capsules, blacklist, capture) and nothing
+  that could spend a key, change a setting or export the vault.
+- **Browsing Maps**: the vault's own record — conversations, captured pages and visits — as a timeline with
+  site grouping, kind filters, search and a time window. A visit stays a visit; nothing is invented and no
+  count disagrees with the rows on screen.
+- **A Windows installer** (`AI-ASSistant-Setup-0.1.0.exe`, ~84 MB, NSIS, per-user, unsigned → SmartScreen
+  warning): notes, first run and the reproducible build recipe in `apps/03_ai-assistant/RELEASE-WINDOWS.md`.
 
 ## 4. What is honestly missing
 
-1. **It has not run on the owner's Windows machine.** No installer exists; `npm run dev` is the way in.
-2. **Cloud providers** (Claude / GPT / Gemini APIs) — a required feature, not implemented.
-3. **Settings > Agent access** — the permission surface; built when something real can be granted.
-4. **The extension cannot reach the app.** The vault API is in-process; no loopback port is open. This blocks
-   the whole browser-capture feature and is a deliberate deferral, not an oversight.
-5. **No voice / wake word.** Parked by the owner until he has better hardware.
+1. **It has not run on the owner's Windows machine.** The installer exists now
+   (`AI-ASSistant-Setup-0.1.0.exe`); installing it and using it is the owner's own test, and the first item on
+   the list.
+2. **The browser extension itself is still a starter.** The app has carried the port it needs since `8e589a0`,
+   but the extension has not been loaded or run against it — nothing is captured from a browser yet, so
+   Browsing Maps is mostly the app's own conversations.
+3. **The preview/export chain, the topic list / branch tree, and projects + chat memory** — asked for, not
+   built.
+4. **Cloud follow-ups:** per-provider default model, an audit log, a token/cost meter, cloud → local-only
+   failover.
+5. **No code signing.** Windows will warn about an unknown publisher until a certificate exists; the release
+   notes say so plainly rather than letting it look like a mistake.
+6. **No voice / wake word.** Parked by the owner until he has better hardware.
 
 ## 5. How to continue
 
@@ -71,3 +103,6 @@ Last landed: `a52f2bf` (merge: Settings as the full window), on top of `4731756`
 - **2026-10-14 — it became an app.** Vault writes through the main process; Settings with Appearance and
   Performance; the Vercel deployment files deleted at the owner's request; Settings rebuilt as the full
   window; and the memory warning fixed to measure against the profile the owner chose.
+- **2026-10-14 (evening) — it became shippable.** Online providers behind Settings > Agent access, the loopback
+  port for the browser extension, Browsing Maps over the vault's own record, and finally a Windows installer
+  (`AI-ASSistant-Setup-0.1.0.exe`) — the first file a person can double-click.

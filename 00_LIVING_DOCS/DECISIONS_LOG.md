@@ -1,9 +1,26 @@
 # DECISIONS_LOG.md — All Decisions With Dates
 
-**Last Updated:** 2026-10-14 (night) Asia/Dhaka
+**Last Updated:** 2026-10-14 (evening) Asia/Dhaka
 **Rule:** Log every decision with date, what, why, who requested, alternatives considered.
 
 ## 2026-10-14 Decisions
+
+### [2026-10-14 evening] An unsigned Windows installer — and saying so out loud
+- **What:** the app now packages with electron-builder + NSIS: an **assisted** install (you choose the folder,
+  it is not one-click), **per-user** (`perMachine: false`, so no admin prompt), desktop + Start-menu shortcuts,
+  `deleteAppDataOnUninstall: false` (the vault and settings outlive an uninstall), `compression: maximum`,
+  `electronLanguages: [en-US]` (the other 54 Chromium locales were 46 MB unpacked for text nobody sees), and an
+  icon rendered from the app's own `BrainMark.tsx` — no new mark drawn. **No code signing.**
+- **Why:** the owner's first open item is running this on his own Windows machine, and
+  `npm install && npm run dev` is not something a person installs. The standing rule "don't call a third-party
+  installer safe without verification" applies to our own installer too: the release notes state, before the
+  warning appears, that SmartScreen will say *unknown publisher* and what that does and does not mean.
+- **Alternatives:** buy a code-signing certificate (rejected for now — money plus identity verification, and
+  it changes no code); one-click NSIS (rejected: no folder choice, less to explain); MSI (rejected: NSIS is
+  electron-builder's well-trodden path); ship a ZIP of `win-unpacked` (rejected: an uninstaller and shortcuts
+  are part of being an app).
+- **Note:** electron-builder 26 removed `win.publisherName` from its schema, and with no certificate there is
+  no signing block at all — so the config carries no half-configured signing that could only ever fail.
 
 ### [2026-10-14 night] Settings is a full window, not a modal
 - **What:** Settings became a full-window surface with a section rail, one section at a time, a search and a
