@@ -30,6 +30,7 @@ import {
   type CloudProviderView,
 } from '../../shared/lib/providers'
 import type { OllamaMessage, OllamaRecord } from '../../shared/types'
+import { cloudEnabled, DEFAULT_PERMISSIONS, type Permissions } from '../../shared/lib/permissions'
 import type { KeyStore } from './keys'
 
 export type CloudModel = CloudModelView
@@ -89,6 +90,11 @@ export function createCloudClient(options: {
   keys: KeyStore
   /** The custom provider's base URL and model come from the machine's settings. */
   config?: () => { custom?: { baseUrl?: string; model?: string } }
+  /**
+   * What the person allowed, read fresh on every call: switching a provider off in
+   * Settings has to take effect at once, not at the next launch.
+   */
+  permissions?: () => Permissions
   env?: Record<string, string | undefined>
   fetchImpl?: typeof fetch
 }): CloudClient {
@@ -96,6 +102,7 @@ export function createCloudClient(options: {
   const env = options.env || process.env
   const request = options.fetchImpl || fetch
   const config: () => { custom?: { baseUrl?: string; model?: string } } = options.config || (() => ({}))
+  const permissions: () => Permissions = options.permissions || (() => DEFAULT_PERMISSIONS)
 
   const baseFor = (provider: CloudProvider): string =>
     baseUrlFor(provider, { env, custom: config().custom })
@@ -104,7 +111,20 @@ export function createCloudClient(options: {
     return keys.get(provider.id)
   }
 
+  /**
+   * A provider that is switched off in Settings > Agent access is not reachable
+   * at all — no model list, no test, no reply. The key stays saved: taking a key
+   * away and stopping its use are different decisions.
+   */
+  function switchedOff(provider: CloudProvider): string {
+    return keys.has(provider.id) && !cloudEnabled(permissions(), provider.id, true)
+      ? `${provider.label} is switched off in Settings > Agent access. Turn it on there, or nothing is sent to it.`
+      : ''
+  }
+
   async function listFor(provider: CloudProvider): Promise<CloudModel[]> {
+    const off = switchedOff(provider)
+    if (off) throw new Error(off)
     const apiKey = keyFor(provider)
     if (!apiKey) throw new Error(`No key is saved for ${provider.label}.`)
     const baseUrl = baseFor(provider)
@@ -145,12 +165,15 @@ export function createCloudClient(options: {
         baseUrl: provider.custom ? config().custom?.baseUrl || '' : baseFor(provider),
         hasKey: keys.has(provider.id),
         sessionOnly: keys.has(provider.id) && !keys.persisted(provider.id),
+        enabled: cloudEnabled(permissions(), provider.id, keys.has(provider.id)),
       })),
 
     models: async () => {
       const models: CloudModel[] = []
       const problems: { provider: string; error: string }[] = []
-      const enabled = CLOUD_PROVIDERS.filter(provider => keys.has(provider.id))
+      // Only the providers that may answer: a switched-off one is not asked for
+      // its models, so its models never appear in the composer.
+      const enabled = CLOUD_PROVIDERS.filter(provider => cloudEnabled(permissions(), provider.id, keys.has(provider.id)))
       // In parallel: a provider that is slow or down must not hold up the rest,
       // and each failure is reported against its own provider.
       const results = await Promise.all(
@@ -179,6 +202,8 @@ export function createCloudClient(options: {
       const parsed = parseCloudModel(input.model)
       if (!parsed) throw new Error(`That is not a cloud model: ${input.model}.`)
       const { provider, model } = parsed
+      const off = switchedOff(provider)
+      if (off) throw new Error(off)
       const apiKey = keyFor(provider)
       if (!apiKey) throw new Error(`No key is saved for ${provider.label}. Add one in Settings > Models.`)
       const baseUrl = baseFor(provider)

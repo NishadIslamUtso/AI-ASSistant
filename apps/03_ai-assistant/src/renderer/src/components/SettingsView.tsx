@@ -11,6 +11,7 @@ import {
   type InferenceSettings,
 } from '@shared/lib/inference'
 import { CLOUD_PROVIDERS, type CloudProviderView } from '@shared/lib/providers'
+import { DEFAULT_PERMISSIONS, type Permissions } from '@shared/lib/permissions'
 import { ACCENTS, DEFAULT_APPEARANCE, WIDTHS, type Appearance } from '../state/appearance'
 import {
   CUSTOM_FIELDS,
@@ -38,6 +39,10 @@ import {
  *   Memory is measured against the profile that was chosen — choosing a profile
  *   IS the answer to "how much video memory is there", so picking 6 GB is never
  *   answered with a warning about 4.
+ * - Agent access: what each agent is allowed to do. Every switch here governs
+ *   something that exists and is checked where it happens — the main process
+ *   refuses a switched-off provider and a switched-off capture before anything
+ *   leaves or is written. Permissions with nothing behind them are not offered.
  * - System: what is running — and that includes the port the browser extension
  *   posts to, because an open port the person cannot see would be a secret.
  * - Models: the online providers, one row each. A key is pasted here and never
@@ -52,7 +57,7 @@ import {
  * browser preview there is no folder to choose and no model to run.
  */
 
-type SectionId = 'system' | 'appearance' | 'models' | 'performance' | 'vault'
+type SectionId = 'agents' | 'system' | 'appearance' | 'models' | 'performance' | 'vault'
 
 type Row = {
   /** What the row is called, and what the rail's search matches on. */
@@ -70,6 +75,7 @@ const SECTIONS: readonly {
   resettable?: boolean
 }[] = Object.freeze([
   { id: 'system', title: 'System', group: 'This computer' },
+  { id: 'agents', title: 'Agent access', group: 'This app', resettable: true },
   { id: 'appearance', title: 'Appearance', group: 'This app', resettable: true },
   { id: 'models', title: 'Models', group: 'This app' },
   { id: 'performance', title: 'Performance', group: 'This app', resettable: true },
@@ -85,6 +91,12 @@ function SectionIcon({ id }: { id: SectionId }) {
       <>
         <rect x="2" y="3" width="16" height="11" rx="2" />
         <path d="M7 17h6" />
+      </>
+    ),
+    agents: (
+      <>
+        <path d="M10 3 4 5.4v3.9c0 3.5 2.5 6.3 6 7.4 3.5-1.1 6-3.9 6-7.4V5.4z" />
+        <path d="M7.6 10.2 9.4 12l3-3.4" />
       </>
     ),
     appearance: (
@@ -124,6 +136,40 @@ function SectionIcon({ id }: { id: SectionId }) {
   )
 }
 
+/**
+ * A permission switch. The whole control, with nothing written beside it: the
+ * label says what is being allowed and the position says whether it is.
+ */
+function Switch({
+  checked,
+  label,
+  onChange,
+}: {
+  checked: boolean
+  label: string
+  onChange: (checked: boolean) => void
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={() => onChange(!checked)}
+      className={`relative h-[22px] w-[40px] shrink-0 rounded-full border transition-colors ${
+        checked ? 'border-accent bg-accent/60' : 'border-line bg-card'
+      }`}
+    >
+      <span
+        aria-hidden="true"
+        className={`absolute top-[2px] h-[16px] w-[16px] rounded-full transition-all ${
+          checked ? 'left-[21px] bg-white' : 'left-[2px] bg-muted'
+        }`}
+      />
+    </button>
+  )
+}
+
 export default function SettingsView({
   open,
   onClose,
@@ -134,9 +180,13 @@ export default function SettingsView({
   inference,
   onInferenceChange,
   models,
+  permissions,
+  onPermissionsChange,
 }: {
   open: boolean
   onClose: () => void
+  permissions: Permissions
+  onPermissionsChange: (next: Permissions) => void
   vault: VaultState
   /** Called after the vault moves, so the rest of the app re-reads it. */
   onChanged: () => void
@@ -158,6 +208,7 @@ export default function SettingsView({
   const [customBase, setCustomBase] = useState('')
   const [customModel, setCustomModel] = useState('')
   const [extension, setExtension] = useState({ listening: false, port: 8765, url: '', error: '' })
+  const [permissionProblem, setPermissionProblem] = useState('')
   const [query, setQuery] = useState('')
   const [typed, setTyped] = useState('')
   const [problem, setProblem] = useState('')
@@ -291,6 +342,25 @@ export default function SettingsView({
     }))
   }
 
+  /**
+   * One permission, saved where it is enforced. The result comes back from the
+   * main process, so the switch shows what the machine recorded rather than what
+   * this component just asked for.
+   */
+  async function setPermission(next: Permissions): Promise<void> {
+    const result = await bridge.settings.update({ permissions: next })
+    if (!result?.ok || !result.settings?.permissions) {
+      setPermissionProblem(result?.error || 'That permission could not be saved.')
+      return
+    }
+    setPermissionProblem('')
+    onPermissionsChange(result.settings.permissions)
+    // A provider switched off disappears from the composer's list immediately,
+    // and one switched on appears: the model list is the permission's first
+    // visible effect.
+    models.refresh()
+  }
+
   /** The custom endpoint: an address and a model name, kept in the settings file. */
   async function saveCustom(baseUrl: string, model: string): Promise<void> {
     const result = await bridge.settings.update({ cloud: { baseUrl, model } })
@@ -344,6 +414,10 @@ export default function SettingsView({
 
   const warning = vramWarning(inference, installed?.size || 0)
   const fix = warning ? fitToProfile(inference, installed?.size || 0) : null
+
+  // The providers that have a key, which are exactly the ones a permission can
+  // govern: no key, nothing to allow.
+  const keyedProviders = providers.filter(provider => provider.hasKey)
 
   const rowsById: Record<SectionId, Row[]> = {
     system: [
@@ -438,6 +512,109 @@ export default function SettingsView({
           ]
         : []),
     ],
+    agents: isDemo
+      ? [
+          {
+            label: 'Agents',
+            terms: 'permission allow local cloud vault browser extension files shell web mcp',
+            body: (
+              <p className="text-[12px] leading-relaxed text-muted">
+                There is no machine behind this window: no local model to run, no vault to write to, and no port for
+                a browser extension. Permissions are recorded and enforced by the desktop app.
+              </p>
+            ),
+          },
+        ]
+      : [
+          {
+            label: 'Local model',
+            terms: 'ollama local agent answer permission allow',
+            body: (
+              <Switch
+                label="Allow the local model"
+                checked={permissions.local}
+                onChange={checked => void setPermission({ ...permissions, local: checked })}
+              />
+            ),
+          },
+          {
+            label: 'Browser extension',
+            terms: 'chrome extension capture port 8765 permission',
+            body: (
+              <div className="flex flex-col gap-1.5">
+                <Switch
+                  label="Allow browser captures"
+                  checked={permissions.browserCapture}
+                  onChange={checked => void setPermission({ ...permissions, browserCapture: checked })}
+                />
+                {!extension.listening && (
+                  <span className="text-[11.5px] text-muted">
+                    {extension.error || 'There is no port for it to post to at the moment.'}
+                  </span>
+                )}
+              </div>
+            ),
+          },
+          ...keyedProviders.map(provider => ({
+            label: provider.label,
+            terms: `${provider.id} cloud provider online answer permission`,
+            body: (
+              <Switch
+                label={`Allow ${provider.label}`}
+                checked={provider.enabled}
+                onChange={checked =>
+                  void setPermission({
+                    ...permissions,
+                    cloud: { ...permissions.cloud, [provider.id]: checked },
+                  })
+                }
+              />
+            ),
+          })),
+          ...(keyedProviders.length
+            ? []
+            : [
+                {
+                  label: 'Cloud models',
+                  terms: 'provider key none online',
+                  body: (
+                    <p className="text-[12px] leading-relaxed text-muted">
+                      No provider key is saved yet, so no cloud model can answer. Keys are added in Models.
+                    </p>
+                  ),
+                },
+              ]),
+          {
+            label: 'Keeping conversations',
+            terms: 'vault write markdown save conversation permission',
+            body: (
+              <Switch
+                label="Keep conversations"
+                checked={permissions.keepConversations}
+                onChange={checked => void setPermission({ ...permissions, keepConversations: checked })}
+              />
+            ),
+          },
+          {
+            label: 'Not built yet',
+            terms: 'files shell web mcp future tools',
+            body: (
+              <p className="text-[12px] leading-relaxed text-muted">
+                Files, Shell, Web and MCP tools are not built yet, so there is nothing to grant. Each one appears
+                here as its own permission when it exists.
+              </p>
+            ),
+          },
+          ...(permissionProblem
+            ? [
+                {
+                  label: 'Permission',
+                  terms: 'error could not save',
+                  body: <p className="text-[12px] text-warn">{permissionProblem}</p>,
+                },
+              ]
+            : []),
+        ],
     appearance: [
       {
         label: 'Accent',
@@ -807,6 +984,10 @@ export default function SettingsView({
   function resetSection(): void {
     if (section === 'appearance') onAppearanceChange(DEFAULT_APPEARANCE)
     if (section === 'performance') onInferenceChange(DEFAULT_INFERENCE)
+    // Every permission back to its own default, which is the safe answer rather
+    // than the last one: a local model may answer, a local vault may keep, and
+    // nothing online is switched on or off except by a key.
+    if (section === 'agents') void setPermission(DEFAULT_PERMISSIONS)
   }
 
   return (

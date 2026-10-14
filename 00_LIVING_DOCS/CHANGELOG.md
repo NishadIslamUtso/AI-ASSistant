@@ -1,7 +1,69 @@
 # CHANGELOG.md — What Changed Each Session (Living)
 
-**Last Updated:** 2026-10-14 (night) Asia/Dhaka
+**Last Updated:** 2026-10-14 (late night) Asia/Dhaka
 **Rule:** Log every change with date, what, why. This is memory for next AI.
+
+## 2026-10-14 (late night) — Agent access: switches that actually govern something
+
+The owner asked for one permission surface — "put everything in settings, so i can
+give access to the cloud agent or the local agent of something when I want to".
+That surface now exists, and every switch on it is enforced where the thing happens.
+
+### The section
+Settings > **Agent access**: `Local model`, `Browser extension`, `Keep conversations`,
+and one row per provider that has a key (`Allow Claude (Anthropic)`, and so on).
+Capabilities that do not exist — Files, Shell, Web, MCP — are stated as not built
+rather than offered as switches, because a switch governing nothing is a lie with a
+nice colour. In the browser preview the whole section says there is no machine
+behind the window instead.
+
+### Enforced, not decorative
+`src/shared/lib/permissions.ts` is the one shape; the main process is the one that
+acts on it, and each permission lands on something real:
+
+- **A switched-off provider is unreachable** — no model list, no Test request, no
+  reply: three refusals, in the main process, before anything leaves the machine.
+  The key stays saved; switching off is not deleting. Read fresh per call, so the
+  switch takes effect immediately, without a restart.
+- **Browser captures off** → the extension port answers `403 { skipped: true,
+  reason: 'captures-off' }` with the reason and where to change it, nothing is
+  written, and `/health` tells the extension `captures: false` so it can say why
+  instead of retrying. Reading the never-check list is still allowed: that list is
+  what keeps a site private.
+- **Keeping conversations off** → nothing is attempted at all, so nothing fails, and
+  the title bar says **Vault off**. A green "Vault" chip while nothing is written
+  would be the one kind of lie this app forbids.
+- **Local model off** → the composer refuses the send and says why.
+
+The window never decides: it asks, the main process sanitises (`normalizePermissions`),
+writes, and hands back what it recorded — so the switch shows the machine's answer.
+
+### Also here
+Every reply now carries where it came from: a small `local` or `online · Claude
+(Anthropic)` label beside the model name and time. The model menu already marked online
+models; this is the same fact on the answer itself.
+
+### Verified
+- `npm test` → 26 files / 245 tests: permissions round-trip and every unreadable shape
+  falling back to the default (never to a yes nobody chose), a switched-off provider
+  that is never contacted while its key survives, and the extension port refusing
+  captures while still serving the never-check list
+- **Desktop end-to-end** (`shot-tools/check-agent-access.cjs`, 8 s, green): a capture
+  through the extension port lands in the vault → Settings > Agent access opens with
+  three real switches → **Browser extension off in the window** → the settings file
+  records it, the next capture is 403 with the reason, nothing new is written, the
+  port reports `captures: false` → **on again in the same pane** → the same capture is
+  accepted → **Keep conversations off** → the chip says `Vault off` and a message
+  typed into the app is answered but written nowhere → **on again** → the next
+  conversation is kept. **0 console problems**
+- Browser check now 37/37, console 0 (the preview names the section, offers no switch
+  it cannot honour, and the search finds it)
+- Extension port (1.4 s), vault (6.1 s) and cloud (3.9 s) checks all still green
+- One check-harness bug was found and fixed on the way, worth recording: the check
+  was clicking the sidebar's Settings button while the pane already covered the
+  window, so the click landed on `Reset section` and silently switched everything
+  back on. A test can pass or fail for reasons that have nothing to do with the app;
+  the fix was to drive the pane it had open. The app was right both times.
 
 ## 2026-10-14 (night) — the port the browser extension posts to
 

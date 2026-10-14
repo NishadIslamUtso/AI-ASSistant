@@ -67,15 +67,27 @@ export default function TitleBar({
                 ? `Conversations are kept in ${vault.path}.`
                 : vault.state === 'missing'
                   ? `${vault.error} Nothing is written until you point the app at a vault.`
-                  : 'The vault could not be reached. Conversations are being kept in this app only.'
+                  : vault.state === 'off'
+                    ? 'Keeping conversations is switched off in Settings > Agent access. Nothing is written to your vault.'
+                    : 'The vault could not be reached. Conversations are being kept in this app only.'
             }
           >
             <span
               className={`h-1.5 w-1.5 rounded-full ${
-                vault.state === 'ready' ? 'bg-ok' : vault.state === 'missing' ? 'bg-warn' : 'bg-muted'
+                vault.state === 'ready'
+                  ? 'bg-ok'
+                  : vault.state === 'missing'
+                    ? 'bg-warn'
+                    : 'bg-muted'
               }`}
             />
-            {vault.state === 'ready' ? 'Vault' : vault.state === 'missing' ? 'No vault' : 'Vault offline'}
+            {vault.state === 'ready'
+              ? 'Vault'
+              : vault.state === 'missing'
+                ? 'No vault'
+                : vault.state === 'off'
+                  ? 'Vault off'
+                  : 'Vault offline'}
           </span>
         )}
       </div>

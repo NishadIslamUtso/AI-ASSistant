@@ -1,5 +1,6 @@
 import type { Artifact, Message } from '@shared/types'
 import type { ElementPick } from '@shared/lib/artifacts'
+import { parseCloudModel } from '@shared/lib/providers'
 import type { ArtifactView } from '@/state/artifactView'
 import ArtifactCard from './ArtifactCard'
 import BrainMark from './BrainMark'
@@ -137,7 +138,28 @@ export default function MessageRow({
         {message.error ? <p className="mt-2 text-[12px] text-warn">{message.error}</p> : null}
 
         {message.status === 'complete' && typeof message.ms === 'number' ? (
-          <p className="mt-2 text-[11px] text-muted">
+          <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted">
+            {/* Where this answer came from, said on every reply. An online answer
+                is the one that left the machine, so it is labelled rather than
+                left to be inferred from a model's name. */}
+            {(() => {
+              const online = parseCloudModel(message.model)
+              return online ? (
+                <span
+                  className="rounded-md border border-line px-1.5 py-0.5"
+                  title={`Answered online by ${online.provider.label}.`}
+                >
+                  online · {online.provider.label}
+                </span>
+              ) : (
+                <span
+                  className="rounded-md border border-line px-1.5 py-0.5"
+                  title="Answered by a model on this machine."
+                >
+                  local
+                </span>
+              )
+            })()}
             {message.model} · {(message.ms / 1000).toFixed(1)}s
           </p>
         ) : null}

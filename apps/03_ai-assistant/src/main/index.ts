@@ -15,6 +15,7 @@ import {
   writeSettings,
   type AppSettings,
 } from './settings'
+import { normalizePermissions } from '../shared/lib/permissions'
 
 /**
  * The main process. Everything that touches the machine lives on this side:
@@ -90,7 +91,11 @@ function registerBridges(): void {
     'settings:update',
     (
       _event,
-      patch: { vaultPath?: string; cloud?: { baseUrl?: string; model?: string } }
+      patch: {
+        vaultPath?: string
+        cloud?: { baseUrl?: string; model?: string }
+        permissions?: unknown
+      }
     ): { ok: boolean; error?: string; settings: AppSettings; status?: unknown } => {
       // A provider endpoint is a plain preference, so it is written first: a
       // folder problem must never lose what somebody just typed into the other
@@ -103,6 +108,14 @@ function registerBridges(): void {
             baseUrl: typeof patch.cloud.baseUrl === 'string' ? patch.cloud.baseUrl : cloud.baseUrl,
             model: typeof patch.cloud.model === 'string' ? patch.cloud.model : cloud.model,
           },
+        })
+      }
+      // What an agent may do. Sanitised on the way in — the window asks, the main
+      // process decides — and the app's own settings file is the record.
+      if (patch?.permissions && typeof patch.permissions === 'object') {
+        settings = writeSettings(settingsFile, {
+          ...settings,
+          permissions: normalizePermissions(patch.permissions),
         })
       }
       // No vault path in the patch means the caller is not moving the vault, so
@@ -343,7 +356,13 @@ if (!gotLock) {
     // `custom` is the provider whose address and model a person types in
     // themselves; the client reads it fresh on every request, so changing it in
     // Settings needs no restart.
-    cloud = createCloudClient({ keys: keyStore, config: () => ({ custom: settings.cloud }), env: process.env })
+    cloud = createCloudClient({
+      keys: keyStore,
+      config: () => ({ custom: settings.cloud }),
+      // Read fresh on every call, so a switch in Settings takes effect at once.
+      permissions: () => settings.permissions,
+      env: process.env,
+    })
     const enabled = keyStore.ids().length
     console.log(
       `[cloud] keys ${keyStore.encryption === 'os' ? 'sealed by this machine' : 'held for this run only'}; ` +
@@ -373,7 +392,11 @@ if (!gotLock) {
     // The extension's own port. Narrow on purpose (see src/main/extension/server.ts):
     // it carries the capture side of the vault and nothing that could spend a key
     // or change a setting. A busy port is reported, never fatal.
-    extensionApi = await startExtensionApi({ port: extensionPortWanted(), vault })
+    extensionApi = await startExtensionApi({
+      port: extensionPortWanted(),
+      vault,
+      mayCapture: () => settings.permissions.browserCapture,
+    })
     if (extensionApi.listening) {
       console.log(`[extension] listening at ${extensionApi.url} — captures, context and the never-check list only`)
     }

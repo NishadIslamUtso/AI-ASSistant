@@ -19,6 +19,11 @@ import type { VaultService } from '../vault/service'
  *   - no export, so it cannot ask for the whole vault in one response
  *   - JSON writes only, same 20 MB ceiling as the app, loopback only
  *
+ * One more thing it does: it asks permission. `mayCapture` is read on every
+ * request, so switching browser captures off in Settings > Agent access stops
+ * them immediately — the origin rule decides who may ask, the permission decides
+ * whether there is anything to answer with.
+ *
  * And who it answers: a browser extension's id does not exist until the person
  * installs it, so any `chrome-extension://` origin is answered. That is safe
  * because of what the port can *do*, not because of who is asking — the worst an
@@ -119,10 +124,17 @@ export function startExtensionApi(options: {
   port?: number
   vault: VaultService
   host?: string
+  /**
+   * Whether captures are allowed at all, read on every request. Absent means yes:
+   * a caller that has not been told about permissions (a test) is not silently
+   * blocked, and the app always passes the real answer.
+   */
+  mayCapture?: () => boolean
 }): Promise<ExtensionApi> {
   const wanted = options.port ?? DEFAULT_EXTENSION_PORT
   const host = options.host || '127.0.0.1'
   const service = options.vault
+  const mayCapture = (): boolean => (options.mayCapture ? options.mayCapture() : true)
 
   const server = createServer((request, response) => {
     void handle(request, response).catch(error => {
@@ -209,6 +221,9 @@ export function startExtensionApi(options: {
           port,
           vault: service.root,
           available: service.available(),
+          // So the extension can say "the app has captures switched off" instead
+          // of retrying a request that will keep being refused.
+          captures: mayCapture(),
           timezone: 'Asia/Dhaka',
           message: 'The browser extension posts captures here. Nothing else is served on this port.',
         },
@@ -243,6 +258,24 @@ export function startExtensionApi(options: {
         )
         return
       }
+    }
+
+    // The one permission this port acts on. Reading the never-check list is still
+    // allowed while captures are off: the list is what keeps a site private, and
+    // the popup has to be able to show it.
+    if (route === '/capture' && !mayCapture()) {
+      send(
+        response,
+        403,
+        {
+          ok: false,
+          skipped: true,
+          reason: 'captures-off',
+          error: 'Captures from the browser extension are switched off in Settings > Agent access.',
+        },
+        decision.allow
+      )
+      return
     }
 
     const reply = handleVaultRequest(service, {

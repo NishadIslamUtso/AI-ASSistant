@@ -144,6 +144,49 @@ test('a web page gets nothing, and is not even told the port is there', async t 
 
 /* ------------------------------------------------------------ what it can do */
 
+test('captures switched off in Agent access are refused, and nothing is written', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'ai-assistant-extension-off-'))
+  const service = createVaultService({ vaultPath: root, clock: CLOCK })
+  let allowed = true
+  const api = await startExtensionApi({ port: 0, vault: service, mayCapture: () => allowed })
+  t.after(async () => {
+    await api.close()
+    rmSync(root, { recursive: true, force: true })
+  })
+  const post = (route: string, body: unknown): Promise<Response> =>
+    fetch(`${api.url}${route}`, {
+      method: 'POST',
+      headers: { origin: EXT, 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+
+  // On: the capture is written.
+  assert.equal((await post('/capture', conversation())).status, 200)
+  assert.equal(existsSync(join(root, '02 Sources/Conversations/claude/2026')), true)
+
+  // Off: refused, with the reason and the place to change it, and nothing new
+  // lands on disk. The permission is read per request, so this is immediate.
+  allowed = false
+  const refused = await post('/capture', conversation({ conversation_id: 'ext-chat-off' }))
+  assert.equal(refused.status, 403)
+  const body = (await refused.json()) as { ok: boolean; skipped: boolean; reason: string; error: string }
+  assert.equal(body.ok, false)
+  assert.equal(body.skipped, true)
+  assert.equal(body.reason, 'captures-off')
+  assert.match(body.error, /switched off in Settings > Agent access/)
+  assert.equal(existsSync(join(root, '02 Sources/Conversations/claude/2026/ext-chat-off')), false)
+
+  // Reading is still allowed: the never-check list is what keeps a site private,
+  // and the extension has to be able to show it while captures are off.
+  assert.equal((await fetch(`${api.url}/blacklist`, { headers: { origin: EXT } })).status, 200)
+  const health = await (await fetch(`${api.url}/health`, { headers: { origin: EXT } })).json()
+  assert.equal((health as { captures: boolean }).captures, false, 'the extension can see why instead of retrying')
+
+  // On again, without a restart.
+  allowed = true
+  assert.equal((await post('/capture', conversation({ conversation_id: 'ext-chat-back' }))).status, 200)
+})
+
 test('a capture from the extension lands in the vault as Markdown', async t => {
   const { call, root, filesIn } = await withPort(t)
   const captured = await call('POST', '/capture', { origin: EXT, body: conversation() })

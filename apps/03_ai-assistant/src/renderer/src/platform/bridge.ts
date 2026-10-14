@@ -19,6 +19,7 @@
  *      so the UI's own empty state is what the person sees.
  */
 import type { CloudModelsAnswer, CloudTestAnswer, CloudView } from '@shared/lib/providers'
+import { DEFAULT_PERMISSIONS, type Permissions } from '@shared/lib/permissions'
 
 /** What the preload script exposes today. It grows as the main process does. */
 export type DesktopBridge = {
@@ -28,12 +29,16 @@ export type DesktopBridge = {
   }
   settings: {
     /** What the app has been told to do. */
-    read: () => Promise<{ vaultPath: string; cloud: { baseUrl: string; model: string } }>
+    read: () => Promise<{ vaultPath: string; cloud: { baseUrl: string; model: string }; permissions: Permissions }>
     /** Save a change; the main process decides and reports what happened. */
-    update: (patch: { vaultPath?: string; cloud?: { baseUrl?: string; model?: string } }) => Promise<{
+    update: (patch: {
+      vaultPath?: string
+      cloud?: { baseUrl?: string; model?: string }
+      permissions?: Permissions
+    }) => Promise<{
       ok: boolean
       error?: string
-      settings?: { vaultPath: string; cloud?: { baseUrl: string; model: string } }
+      settings?: { vaultPath: string; cloud?: { baseUrl: string; model: string }; permissions?: Permissions }
       status?: {
         ok: boolean
         available: boolean
@@ -83,7 +88,13 @@ export const hasDesktopBridge = (): boolean =>
 const demoBridge: DesktopBridge = {
   app: { version: 'web preview', platform: 'web' },
   settings: {
-    read: async () => ({ vaultPath: '', cloud: { baseUrl: '', model: '' } }),
+    read: async () => ({
+      vaultPath: '',
+      cloud: { baseUrl: '', model: '' },
+      // No machine behind this window: nothing is granted, and saying otherwise
+      // would be a switch that governs nothing.
+      permissions: { ...DEFAULT_PERMISSIONS, browserCapture: false, keepConversations: false },
+    }),
     update: async () => ({
       ok: false,
       error: 'Settings are part of the desktop app. This window is the interface only, so there is no folder to change.',

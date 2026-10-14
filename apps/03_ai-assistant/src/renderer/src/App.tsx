@@ -23,7 +23,8 @@ import {
 } from './state/appearance'
 import { DEFAULT_INFERENCE, INFERENCE_KEY, normalizeInference } from './state/performance'
 import { useChats } from './state/useChats'
-import { isDemo } from './platform/bridge'
+import { bridge, isDemo } from './platform/bridge'
+import { DEFAULT_PERMISSIONS, normalizePermissions, type Permissions } from '@shared/lib/permissions'
 import { vaultPost } from '@shared/lib/vault'
 import { conversationCapture } from '@shared/lib/capture'
 
@@ -48,7 +49,14 @@ export default function App() {
     value => (typeof value === 'string' && value.trim() ? value : DEFAULT_MODEL),
     setNotice
   )
-  const models = useModels(model, setModel)
+  /**
+   * What each agent may do, as the main process holds it. Read when the window
+   * opens and re-read after Settings writes, because the main process is what
+   * enforces them: this is a copy of the record, never the record itself.
+   */
+  const [permissions, setPermissions] = useState<Permissions>(DEFAULT_PERMISSIONS)
+  const [permissionsRevision, setPermissionsRevision] = useState(0)
+  const models = useModels(model, setModel, permissions)
   const [draft, setDraft] = useState('')
   // Set for a moment when the rail jumps to an artifact, so a click on something
   // already on screen still shows that it did something.
@@ -86,6 +94,19 @@ export default function App() {
     applyAppearance(appearance)
   }, [appearance])
 
+  useEffect(() => {
+    let cancelled = false
+    bridge.settings
+      .read()
+      .then(settings => {
+        if (!cancelled) setPermissions(normalizePermissions(settings?.permissions))
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [permissionsRevision])
+
   const navigate = useCallback((chatId: string) => chats.open(chatId), [chats])
 
   const chatApi = useChat({
@@ -105,7 +126,12 @@ export default function App() {
     // Where finished conversations are kept. In the browser preview there is no
     // vault behind the interface, so nothing is attempted and no failed request
     // appears in the console — the preview stays quiet, as it must.
-    capture: isDemo ? undefined : chat => vaultPost('/capture', conversationCapture(chat)).then(() => undefined),
+    // Nothing is attempted when keeping conversations is switched off, so nothing
+    // fails and no request appears anywhere: the switch is the whole behaviour.
+    capture:
+      isDemo || !permissions.keepConversations
+        ? undefined
+        : chat => vaultPost('/capture', conversationCapture(chat)).then(() => undefined),
   })
 
   const artifacts = useMemo(
@@ -220,7 +246,9 @@ export default function App() {
         preview={isDemo}
         // Re-checked when a conversation is kept, so a vault that went missing
         // shows up as a chip rather than as a save that silently did not happen.
-        vault={vault}
+        // With keeping switched off the chip says so, because a green "Vault"
+        // while nothing is written would be the one kind of lie this app forbids.
+        vault={permissions.keepConversations ? vault : { ...vault, state: 'off' }}
       />
       {/* Settings fills this row rather than the whole window, so the app keeps
           its own header and the operating system keeps the window frame. */}
@@ -270,6 +298,13 @@ export default function App() {
         <SettingsView
           open={settingsOpen}
           onClose={() => setSettingsOpen(false)}
+          permissions={permissions}
+          onPermissionsChange={(next: Permissions) => {
+            setPermissions(next)
+            // Re-read from the main process, so what the window shows is what the
+            // machine recorded rather than what this component hoped for.
+            setPermissionsRevision(revision => revision + 1)
+          }}
           vault={vault}
           onChanged={() => setVaultRevision(revision => revision + 1)}
           appearance={appearance}

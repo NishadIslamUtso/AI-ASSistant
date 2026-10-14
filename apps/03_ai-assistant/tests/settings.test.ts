@@ -26,6 +26,12 @@ test('no settings file means nothing chosen yet, not an error', (t) => {
   const dir = tempDir('ai-assistant-settings-')
   t.after(() => rmSync(dir, { recursive: true, force: true }))
   assert.deepEqual(readSettings(join(dir, 'settings.json')), EMPTY_SETTINGS)
+  assert.deepEqual(EMPTY_SETTINGS.permissions, {
+    local: true,
+    browserCapture: true,
+    keepConversations: true,
+    cloud: {},
+  })
 })
 
 test('settings round-trip, and unknown keys are dropped rather than kept', (t) => {
@@ -44,6 +50,9 @@ test('settings round-trip, and unknown keys are dropped rather than kept', (t) =
   assert.deepEqual(readSettings(file), {
     vaultPath: '/tmp/some vault',
     cloud: { baseUrl: 'https://example.test/v1', model: 'my-model' },
+    // Nothing was said about permissions, so the file carries the defaults: a
+    // local model may answer, a local vault may keep, nothing is switched off.
+    permissions: { local: true, browserCapture: true, keepConversations: true, cloud: {} },
   })
   assert.equal(readdirSync(join(dir, 'nested')).includes('settings.json.tmp'), false, 'no half-written file is left')
 
@@ -78,6 +87,47 @@ test('a hand-edited endpoint is capped, never trusted, and never a launch failur
   // A cloud object of the wrong shape degrades to empty, field by field.
   writeFileSync(file, JSON.stringify({ vaultPath: '/tmp', cloud: 'nonsense' }), 'utf8')
   assert.deepEqual(readSettings(file).cloud, { baseUrl: '', model: '' })
+})
+
+test('permissions round-trip, and anything unreadable becomes the safe default', (t) => {
+  const file = join(tempDir('ai-assistant-perms-'), 'settings.json')
+  const written = writeSettings(file, {
+    vaultPath: '',
+    cloud: { baseUrl: '', model: '' },
+    permissions: { local: false, browserCapture: false, keepConversations: false, cloud: { openai: false } },
+  })
+  assert.deepEqual(written.permissions, {
+    local: false,
+    browserCapture: false,
+    keepConversations: false,
+    cloud: { openai: false },
+  })
+  assert.deepEqual(readSettings(file).permissions, written.permissions, 'what was written is what is read')
+
+  // A hand-edited file: unknown providers are dropped, non-booleans fall back to
+  // the default — never to a yes that nobody chose, and never to a crash.
+  const edited = writeFileSync(
+    file,
+    JSON.stringify({
+      permissions: { local: 'yes please', cloud: { openai: false, madeup: true, anthropic: 'on' }, extra: 1 },
+    })
+  )
+  void edited
+  const read = readSettings(file)
+  assert.deepEqual(read.permissions, {
+    local: true,
+    browserCapture: true,
+    keepConversations: true,
+    cloud: { openai: false },
+  })
+
+  writeFileSync(file, '{"permissions": "nonsense"}')
+  assert.deepEqual(readSettings(file).permissions, {
+    local: true,
+    browserCapture: true,
+    keepConversations: true,
+    cloud: {},
+  })
 })
 
 test('a folder chosen in Settings is the only candidate, so a missing one is reported', () => {
