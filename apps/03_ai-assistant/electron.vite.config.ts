@@ -26,11 +26,26 @@ export default defineConfig({
   renderer: {
     root: resolve(__dirname, 'src/renderer'),
     resolve: {
-      alias: { '@': resolve(__dirname, 'src/renderer/src') },
+      alias: {
+        '@': resolve(__dirname, 'src/renderer/src'),
+        '@shared': resolve(__dirname, 'src/shared'),
+      },
     },
     plugins: [react(), tailwindcss()],
     build: {
       rollupOptions: { input: resolve(__dirname, 'src/renderer/index.html') },
+    },
+    server: {
+      // The main process serves /api on this port; forwarding it here keeps the
+      // renderer's fetch calls same-origin in dev exactly as in the built app.
+      // The Origin header is rewritten to match, so the same guard decides both.
+      proxy: {
+        '/api': {
+          target: `http://127.0.0.1:${process.env.AI_ASSISTANT_API_PORT || 41979}`,
+          changeOrigin: true,
+          headers: { origin: `http://127.0.0.1:${process.env.AI_ASSISTANT_API_PORT || 41979}` },
+        },
+      },
     },
   },
 })

@@ -26,8 +26,11 @@ export default defineConfig({
   plugins: [react(), tailwind()],
   resolve: {
     alias: {
+      // The same three aliases the desktop build and tsconfig know about, so a
+      // component cannot accidentally be importable in one build and not another.
       '@shared': fileURLToPath(new URL('./src/shared', import.meta.url)),
       '@renderer': fileURLToPath(new URL('./src/renderer/src', import.meta.url)),
+      '@': fileURLToPath(new URL('./src/renderer/src', import.meta.url)),
     },
   },
   // Binding to 0.0.0.0 and allowing any host is what makes this work behind a

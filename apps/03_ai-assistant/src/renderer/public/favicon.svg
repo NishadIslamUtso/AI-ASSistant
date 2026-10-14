@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="80 108 600 440" role="img" aria-label="AI ASSistant">
+  <!--
+    The app mark, for the browser tab.
+
+    Exactly the artwork from BrainMark.tsx — not a redraw — but framed on the head
+    and glasses, because at 16px across the thumbs-up and the sneakers become
+    three grey pixels. The ids are plain here rather than namespaced: a favicon is
+    one document with one copy of itself.
+  -->
+  <defs>
+    <path
+      id="fav-body"
+      d="M356 148 C322 120 281 112 242 120 C169 131 107 178 80 246 C40 344 59 438 119 482 C178 526 280 530 330 483 C341 473 351 459 356 447 C362 463 372 479 386 489 C440 531 529 518 580 471 C637 419 649 333 618 252 C593 185 540 137 476 122 C432 112 391 121 356 148Z"
+    />
+    <clipPath id="fav-clip">
+      <use href="#fav-body" />
+    </clipPath>
+    <clipPath id="fav-left">
+      <circle cx="299" cy="280" r="67" />
+    </clipPath>
+    <clipPath id="fav-right">
+      <circle cx="470" cy="249" r="67" />
+    </clipPath>
+  </defs>
+
+  <g>
+    <use href="#fav-body" fill="#FF99A5" />
+    <g clip-path="url(#fav-clip)">
+      <use href="#fav-body" transform="translate(0 -12)" fill="#FFAFB8" />
+      <path d="M356 148 C338 172 333 198 342 234" stroke="#F27F89" stroke-width="10" stroke-linecap="round" />
+      <path d="M366 366 C380 389 376 420 356 447" stroke="#EE7B87" stroke-width="11" stroke-linecap="round" />
+    </g>
+  </g>
+
+  <g>
+    <g stroke="#242725" stroke-linecap="round">
+      <path d="M229 288 L184 300" stroke-width="18" />
+      <path d="M370 267 C381 262 390 261 399 260" stroke-width="11" />
+    </g>
+    <g fill="#DECBDE">
+      <circle cx="299" cy="280" r="69" />
+      <circle cx="470" cy="249" r="69" />
+    </g>
+    <g fill="#9099A2">
+      <ellipse cx="294" cy="287" rx="19.5" ry="27.5" />
+      <ellipse cx="472" cy="262" rx="20" ry="28" />
+    </g>
+    <g fill="#FFFFFF" opacity="0.94">
+      <path d="M308 205 L324 210 L251 341 L235 331Z" clip-path="url(#fav-left)" />
+      <path d="M466 174 L483 179 L414 306 L400 296Z" clip-path="url(#fav-right)" />
+    </g>
+    <g stroke="#242725" stroke-width="15.5">
+      <circle cx="299" cy="280" r="71" />
+      <circle cx="470" cy="249" r="71" />
+    </g>
+  </g>
+
+  <path d="M374 325 C378 343 399 345 406 325" stroke="#384638" stroke-width="7" stroke-linecap="round" />
+</svg>

@@ -1,12 +1,20 @@
 import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'node:path'
 import { writeFileSync } from 'node:fs'
+import { startLocalApi, type LocalApi } from './api/server'
 
 /**
  * The main process. Everything that touches the machine lives on this side:
  * files, the vault index, Ollama, the database. The renderer only ever talks to
  * it through the preload bridge, so there is no localhost HTTP and no CORS.
  */
+
+/**
+ * The port the app's own API listens on. Fixed rather than ephemeral only so the
+ * Vite dev server's proxy can find it in dev; if it is taken, the app falls back
+ * to any free port and says so, because a busy port is not the user's problem.
+ */
+const API_PORT = Number(process.env.AI_ASSISTANT_API_PORT || 41979)
 
 const isSmoke = process.argv.includes('--smoke')
 const smokeOutArg = process.argv.find(arg => arg.startsWith('--smoke-out='))
@@ -15,6 +23,8 @@ const smokeOut = smokeOutArg ? smokeOutArg.split('=')[1] : ''
 /** Renderer console output, kept so the smoke run can fail on it. */
 const consoleErrors: string[] = []
 const consoleWarnings: string[] = []
+
+let api: LocalApi | null = null
 
 function createWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -67,10 +77,17 @@ function createWindow(): BrowserWindow {
   // taken by the smoke run captures something real rather than an unpainted frame.
   window.once('ready-to-show', () => window.show())
 
+  // The interface is always loaded over http, never from file://, so that its
+  // fetch calls are same-origin and the local API boundary sees a real Origin.
+  // In dev that origin is Vite's, which forwards /api to the server below.
   const devServer = process.env['ELECTRON_RENDERER_URL']
   if (devServer) {
     void window.loadURL(devServer)
+  } else if (api) {
+    void window.loadURL(`${api.url}/`)
   } else {
+    // The API failed to start. Show the interface anyway rather than nothing —
+    // it renders its own offline state, which is more useful than a blank window.
     void window.loadFile(join(__dirname, '../renderer/index.html'))
   }
 
@@ -123,11 +140,27 @@ if (!gotLock) {
     }
   })
 
-  void app.whenReady().then(() => {
+  void app.whenReady().then(async () => {
+    const rendererDir = process.env['ELECTRON_RENDERER_URL']
+      ? undefined
+      : join(__dirname, '../renderer')
+    try {
+      api = await startLocalApi({ port: API_PORT, rendererDir })
+      if (api.port !== API_PORT) {
+        console.log(`[api] port ${API_PORT} was busy; listening on ${api.port} instead.`)
+      }
+    } catch (error) {
+      console.log(`[api] could not start: ${(error as Error).message}`)
+      api = null
+    }
     createWindow()
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow()
     })
+  })
+
+  app.on('before-quit', () => {
+    void api?.close()
   })
 
   app.on('window-all-closed', () => {

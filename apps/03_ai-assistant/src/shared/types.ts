@@ -57,7 +57,18 @@ export type Attachment = {
 export type StoredAttachment = Omit<Attachment, 'data'>
 
 /** The bridge's description of an image, kept so follow-up turns still work. */
-export type BridgeRecord = { description: string; model: string; truncated?: boolean }
+export type BridgeRecord = {
+  description: string
+  model: string
+  /** How much of the description the answering model was given, in characters. */
+  chars?: number
+  truncated?: boolean
+}
+
+/** A citation is a link the model actually wrote, never one the app found. */
+export type Citation = { id: string; url: string; label: string }
+
+export type MessageStatus = 'streaming' | 'complete' | 'stopped' | 'error'
 
 export type Message = {
   id: string
@@ -72,13 +83,22 @@ export type Message = {
   context?: string
   /** Set when the reply came from the vision bridge rather than the model itself. */
   bridge?: BridgeRecord
-  /** 'error' marked turns are never sent back to the model. */
-  status?: 'ok' | 'error'
+  /** Turns marked 'error' are never sent back to the model. */
+  status?: MessageStatus
+  /** What the app is doing right now, shown in place of a silent pause. */
+  stage?: string
   /** Imported turns are shown but not sent. */
   origin?: 'chat' | 'import'
+  /** ISO timestamp. `at` is the older field name, still read for old history. */
+  timestamp?: string
+  at?: string
   /** Set when the user edited a question and it was answered again. */
   editedAt?: string
-  at?: string
+  /** True when this reply replaced an earlier one for the same question. */
+  regenerated?: boolean
+  citations?: Citation[]
+  /** How long the reply took, in milliseconds. */
+  ms?: number
   /** An error string when the turn failed. Never a silent empty reply. */
   error?: string
 }
@@ -89,12 +109,21 @@ export type Chat = {
   /** Group heading in the sidebar: 'Today', 'Oct 8', 'Older'. */
   date?: string
   pinned?: boolean
-  projectId?: string
+  /** null means "no project", which is different from "not loaded yet". */
+  projectId?: string | null
   /** The chat this one was branched from, if any. */
   branchOf?: string
   /** Epoch milliseconds, used for ordering search results. */
   updatedAt?: number
   messages: Message[]
+  /** Where this chat stands with the vault. 'error' is shown as a small badge,
+   *  never as a dialog, and never blocks the conversation. */
+  vaultStatus?: 'saving' | 'saved' | 'error'
+  vaultError?: string
+  /** How many branches have been taken from this chat. */
+  branches?: number
+  /** Set on a branch, pointing back at what it came from. */
+  branchedFrom?: { chatId: string; messageId: string; at: string }
 }
 
 export type Profile = {

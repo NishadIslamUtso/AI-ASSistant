@@ -3,9 +3,11 @@
  * Only links that actually appear in the answer text are shown; nothing is
  * invented and no search is performed.
  */
+import type { Citation } from '../types'
+
 const LINK = /\[([^\]]{1,120})\]\((https?:\/\/[^\s)]+)\)/g
 
-export type Citation = { id: string; url: string; label: string }
+export type { Citation }
 
 export function extractCitations(text = ''): Citation[] {
   const seen = new Set<string>()
