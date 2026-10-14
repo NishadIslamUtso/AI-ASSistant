@@ -74,6 +74,12 @@ const LIMITS: Record<keyof InferenceOptions, [number, number]> = Object.freeze({
   num_gpu: [0, 999],
 }) as Record<keyof InferenceOptions, [number, number]>
 
+/**
+ * The same ranges the request is held to, so Settings can show a person the
+ * limits instead of describing them from memory.
+ */
+export const INFERENCE_LIMITS = LIMITS
+
 const clamp = (value: unknown, [min, max]: [number, number], fallback: number): number => {
   const n = Math.round(Number(value))
   return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback
