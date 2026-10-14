@@ -1,14 +1,14 @@
 {
   "date": "2026-10-14",
-  "time_updated": "2026-10-14 Asia/Dhaka",
+  "time_updated": "2026-10-14 (evening) Asia/Dhaka",
   "timezone": "Asia/Dhaka",
   "repo_version": "1.2.0-best-of",
   "canonical_repo": "https://github.com/NishadIslamUtso/AI-ASSistant",
-  "note_for_next_ai": "The repo is the source of truth, not any handover text. Verify file existence before trusting a status list - files have been claimed to exist and not been there, three times. Check `git log HEAD...origin/<branch>` divergence BEFORE committing: the sandbox can be silently reset to an old base while the remote has moved on. On 2026-10-14 the sandbox was at an 18-commit-old base and a commit was nearly built on the wrong history.",
+  "note_for_next_ai": "The repo is the source of truth, not any handover text. Verify file existence before trusting a status list - claimed files have been absent three times. ALWAYS run `git rev-list --left-right --count HEAD...origin/<branch>` BEFORE committing: the sandbox can be silently reset to an old base while the remote has moved on, twice now by 18 commits. The app is AI ASSistant, NOT a Claude clone - do not reintroduce Claude branding.",
   "apps": {
     "01_claude-exact-pixel-clone": {
       "path": "apps/01_claude-exact-pixel-clone",
-      "status": "built-compiled-tested-by-171-automated-checks-NOT-tested-on-user-windows",
+      "status": "built-compiled-tested-by-214-automated-checks-NOT-tested-on-user-windows",
       "tech": "Vite 5 + React 18 + Tailwind + Express vault API, direct Ollama",
       "files": [
         "src/App.jsx (state, sending, streaming, artifacts, shortcuts)",
@@ -35,7 +35,13 @@
         "src/design-systems/ (16 token sets, lazy-loaded, from open-design Apache-2.0)",
         "src/lib/skills.js (named reusable sub-agent instructions)",
         "THIRD_PARTY_NOTICES.md (Apache-2.0 attribution)",
-        "tests/design-tokens.test.js (9 checks)"
+        "tests/design-tokens.test.js (9 checks)",
+        "src/components/BrainMark.jsx (the AI ASSistant logo)",
+        "src/lib/profile.js (customizable name, neutral defaults for open source)",
+        "src/lib/inference.js (VRAM/memory profiles for Ollama)",
+        "src/lib/search.js (full-text chat search)",
+        "src/lib/prompts.js (slash-menu prompt library)",
+        "tests/props.test.js (every declared prop must be passed)"
       ],
       "features_implemented": [
         "Sidebar 260px #202020: Search, New chat, Projects, Artifacts (n), Customize, Pinned/Today/Oct 8/Older groups, NU Utso Free -> user menu",
@@ -94,7 +100,8 @@
         "00aa9faf": "context-menu submenus + hash deep-links - NOT adopted (needs a router; the six menu items already work)"
       },
       "branch": "arena/3c06e1bf-ai-assistant",
-      "head": "624bc69"
+      "head": "c2cdf3f",
+      "identity": "AI ASSistant - not a Claude clone; logo is BrainMark, name is customizable"
     },
     "02_electron-claude-clone-v6": {
       "path": "apps/02_electron-claude-clone-v6",
@@ -227,5 +234,8 @@
       "taken": "design-system token :root blocks (16 of 152) and the skills mechanism (idea only, no skill text copied)",
       "attribution": "apps/01_claude-exact-pixel-clone/THIRD_PARTY_NOTICES.md"
     }
+  },
+  "open_source": {
+    "ready": "Profile is customizable with neutral defaults. Screenshots must never be bundled into a distributable (spec/screenshots/ is local reference only)."
   }
 }

@@ -1,7 +1,77 @@
 # CHANGELOG.md — What Changed Each Session (Living)
 
-**Last Updated:** 2026-10-14 Asia/Dhaka
+**Last Updated:** 2026-10-14 (evening) Asia/Dhaka
 **Rule:** Log every change with date, what, why. This is memory for next AI.
+
+## 2026-10-14 — Rebrand to AI ASSistant, plus four features from other apps
+
+The app is no longer a Claude clone. It is **AI ASSistant**.
+
+### Rebrand
+
+- **Logo**: the supplied cheeky-brain SVG, in `src/components/BrainMark.jsx`,
+  replacing `ClaudeMark` in the title bar, the assistant avatar and the
+  greeting. Every element id inside the artwork is namespaced per instance with
+  `useId` — the mark is built from `<use>` and `clipPath` references, so two
+  copies on one page would otherwise steal each other's shapes and the sidebar
+  logo would silently clip the one in settings.
+- **All Claude references removed** from user-facing copy: extensions dialog,
+  model selector footnote, billing text, user menu, capabilities panel. The
+  settings entry "Claude Code" is now "AI ASSistant Code".
+
+### Customizable profile
+
+Name, email and an optional tagline are editable under **Settings > Account**
+and stored locally (`src/lib/profile.js`). Defaults are neutral ("Friend", no
+email) **because this is going open source** — a fresh clone says something
+sensible to whoever opens it instead of greeting them as the author. The
+greeting uses it and it never travels anywhere.
+
+### Features taken from other apps
+
+Following `spec/PARTIAL_FEATURES_AUDIT.md`'s "what is genuinely worth taking":
+
+1. **Memory profile (from Atomic Chat)** — `num_ctx` was hardcoded to 4096 with
+   no way to change it. Five profiles (4 GB / 6 GB / 8 GB / CPU-only / custom)
+   under **Settings > Performance**, each a plain set of Ollama options. On a
+   4 GB RTX 3050 a 3B model is ~1.9 GB of weights, and a large context on top
+   spills to shared memory so every token crawls. Threaded from one piece of
+   App state through every caller: main chat, vision bridge, sub-agents,
+   artifact rewrites. Warns in plain language when the context probably won't
+   fit.
+2. **Full-text chat search** — sidebar search matched chat *titles* only, so a
+   conversation you remembered the contents of was unreachable unless you also
+   remembered what you called it. Now scans message bodies, with up to three
+   highlighted snippets per chat and title matches ranked first.
+3. **Regenerate and edit-and-resend** — two things every chat app has. Editing
+   replaces a question and re-answers it, keeping the thread.
+4. **Slash menu with a prompt library (from open-design)** — typing "/" opens
+   eight built-in prompts, the behaviour written down in
+   `docs/claude-exact-pixel-clone-APP-DESIGN.md` and never built. Chosen for a
+   3B model: instructions about *form*, which is what a small model cannot
+   infer alone. Placeholders stay as `{{braces}}` for the person to fill in.
+
+### New guard: tests/props.test.js
+
+Checks that every prop a component declares is actually passed where it is
+rendered. A missing prop is invisible — Vite builds it without complaint and a
+stubbed test with hand-written props passes happily — so the failure only ever
+appears as "undefined is not a function" on the one click nobody tried. It
+immediately caught a real bug: an `inference={inference}` meant for
+ArtifactPanel had landed on SubAgentPanel, and nothing had failed. Resolves
+props passed through a spread one level up, so `{...composerProps}` is not
+reported broken.
+
+### Sandbox data loss (recurring)
+
+The sandbox was again silently reset to an old base while the remote branch had
+18 commits the sandbox could not see; a commit was built on the wrong history.
+Recovered by saving new files, `reset --hard origin/<branch>`, then diffing each
+touched file before reapplying so prior work on those files was not clobbered.
+**Always check `git log HEAD...origin/<branch>` divergence before committing.**
+
+214 tests pass; `build:preview` clean.
+
 
 ## 2026-10-14 — Design systems and reusable skills (from open-design)
 
