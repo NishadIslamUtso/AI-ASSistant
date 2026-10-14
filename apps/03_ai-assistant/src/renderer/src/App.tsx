@@ -1,8 +1,10 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DEFAULT_MODEL } from '@shared/lib/storage'
 import { DEFAULT_PROFILE, normalizeProfile } from '@shared/lib/profile'
 import { DEFAULT_PROFILE_ID } from '@shared/lib/inference'
 import TitleBar from './components/TitleBar'
+import ArtifactsRail from './components/ArtifactsRail'
+import { chatArtifacts } from './state/artifactView'
 import Sidebar from './components/Sidebar'
 import ChatView from './components/ChatView'
 import useChat from './hooks/useChat'
@@ -34,6 +36,9 @@ export default function App() {
   )
   const models = useModels(model, setModel)
   const [draft, setDraft] = useState('')
+  // Set for a moment when the rail jumps to an artifact, so a click on something
+  // already on screen still shows that it did something.
+  const [highlight, setHighlight] = useState('')
 
   const chat = useMemo(
     () => chats.chats.find(entry => entry.id === chats.currentChat) || null,
@@ -57,6 +62,24 @@ export default function App() {
     // safe default: it is the one that cannot overflow a small card.
     inference: { profile: DEFAULT_PROFILE_ID },
   })
+
+  const artifacts = useMemo(
+    () => chatArtifacts(chat?.messages || []),
+    [chat?.messages]
+  )
+
+  useEffect(() => {
+    if (!highlight) return
+    const timer = setTimeout(() => setHighlight(''), 1600)
+    return () => clearTimeout(timer)
+  }, [highlight])
+
+  const jumpToArtifact = (artifactId: string): void => {
+    setHighlight(artifactId)
+    document
+      .getElementById(`artifact-${artifactId}`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
 
   const send = async (): Promise<void> => {
     const text = draft
@@ -93,6 +116,8 @@ export default function App() {
           onStop={chatApi.stop}
           busy={Boolean(chatApi.busyChatId)}
           models={isDemo ? { ...models, error: '' } : models}
+          live={chatApi.live}
+          highlightId={highlight}
           notice={notice}
           preview={
             isDemo
@@ -100,6 +125,12 @@ export default function App() {
               : ''
           }
         />
+        {artifacts.length > 0 ? (
+          <ArtifactsRail
+            items={artifacts}
+            onJump={item => jumpToArtifact(item.id)}
+          />
+        ) : null}
       </div>
     </div>
   )
