@@ -1,6 +1,6 @@
 {
   "date": "2026-10-14",
-  "time_updated": "2026-10-14 (night) Asia/Dhaka",
+  "time_updated": "2026-10-14 (evening) Asia/Dhaka",
   "timezone": "Asia/Dhaka",
   "repo_version": "2.0.0-ai-assistant",
   "canonical_repo": "https://github.com/NishadIslamUtso/AI-ASSistant",
@@ -9,11 +9,12 @@
     "integration_branch": "main",
     "rule": "Finished, verified work lands as a commit on the branch, is merged --no-ff into main, both are pushed, then it is reported. Never merge anything the user did not ask for.",
     "last_landed": [
-      "a52f2bf  merge: Settings as the full window (into main)",
-      "4731756  Settings: the full window, and memory measured against the profile you chose",
-      "5b371b4  Settings: Appearance and Performance",
-      "110a80b  Remove the Vercel deployment files",
-      "9be8a2a  merge: Settings > Appearance and Performance"
+      "e453dd4  Browsing Maps: the memory map of what was read and when",
+      "2b46b46  merge: Browsing Maps (into main)",
+      "b1a84a4  Agent access - permissions that are enforced, not drawn",
+      "93f2e5c  merge: Agent access (into main)",
+      "1ad5f92 -> 7a5e8f4  online providers (into main)",
+      "this session: the Windows installer (electron-builder + NSIS) - see CHANGELOG.md"
     ],
     "verify_with": "git log --oneline -6 && git diff --stat main arena/3c06e1bf-ai-assistant-v3"
   },
@@ -21,14 +22,14 @@
   "apps": {
     "03_ai-assistant": {
       "path": "apps/03_ai-assistant",
-      "status": "ACTIVE - the app. Built and verified in the sandbox (tests, typecheck, web build, desktop smoke, two end-to-end checks). NOT yet run on the user's Windows machine.",
+      "status": "ACTIVE - the app. Built and verified in the sandbox (27 files / 255 tests, typecheck, both builds, desktop smoke, five end-to-end desktop checks). Ships as a Windows installer; the install on the user's Windows machine is NOT DONE (Priority 1).",
       "tech": "Electron 40 + electron-vite 5 + Vite 6 + React 19 + TypeScript 5.7 + Tailwind 4 + Vitest 2; yaml for frontmatter; no other runtime dependency",
       "layout": {
         "src/main": "main process: settings.ts (atomic writes), vault/ (service, routes, files, text, blacklist, zip, errors), api/ (loopback guard + server for future use)",
         "src/preload": "index.ts - the ONLY bridge: settings.read/update, vault.chooseFolder",
         "src/renderer/src": "components (Sidebar, TitleBar, ChatView, MessageRow, Composer, SettingsView, ArtifactsRail, ArtifactCard/Preview, BrainMark), hooks (useChat, useModels, useVault, useArtifactRewrite, usePersistentState, useDesignTokens, useDismiss), state (appearance, performance, chats, artifactEdits, artifactView), platform/bridge.ts, styles/globals.css",
         "src/shared": "lib (capture, chat, inference, markdown, prompts, skills, storage, vault, zip, design-systems/), types.ts",
-        "tests": "22 files / 208 tests; tests/pending/ holds three parked suites + README"
+        "tests": "27 files / 255 tests; tests/pending/ holds three parked suites + README"
       },
       "features_implemented": [
         "Browsing Maps: a timeline of what the vault holds (conversations, captured pages, visits) with site grouping, kind filters, search and a time window, read from the vault through /api/vault/sources \u2014 a visit is labelled a visit, never reading",
@@ -45,7 +46,8 @@
         "Vault folder chosen through the main process; missing folders are refused and never replaced",
         "Online providers (Claude/Anthropic, GPT/OpenAI, Gemini, OpenRouter, Groq, DeepSeek, Grok, any OpenAI-compatible endpoint): off until a key is saved in Settings > Models, key sealed by the machine and never handed to the interface",
         "Cloud models named provider/model and answered through the same /api/ollama/chat address, as the same NDJSON records \u2014 one streaming path for local and online alike",
-        "Browser preview build that states plainly it is the interface only"
+        "Browser preview build that states plainly it is the interface only",
+        "Windows installer (NSIS, assisted, per-user, unsigned): AI-ASSistant-Setup-0.1.0.exe (~84 MB) built by electron-builder 26.15.3 from electron-builder.yml, icon rendered from the app's own BrainMark, en-US locale only, maximum compression; release notes in apps/03_ai-assistant/RELEASE-WINDOWS.md"
       ],
       "known_gaps": [
         "The extension itself is still a starter: it is not loaded, not ported into this app's flow, and captures nothing until it is \u2014 so the map is mostly what the app itself kept",
@@ -63,10 +65,14 @@
         "user_windows_test": "NOT DONE",
         "desktop_e2e_extension": "outside the repo: the app opens the port; a script playing the extension captures a conversation that lands in the vault as Markdown, reads and writes the never-check list, is refused as a page, is refused with no origin, finds no chat route, and sees the port named in Settings > System; console clean",
         "desktop_e2e_agent_access": "outside the repo: a capture through the extension port lands in the vault; Browser extension switched off in the window -> settings file records it, next capture 403 with the reason, nothing written, port reports captures:false; switched on in the same pane -> accepted; Keep conversations off -> chip says Vault off and a typed message is answered but written nowhere; on -> next conversation kept; console clean",
-        "desktop_e2e_memory_map": "outside the repo: a vault seeded like a week of capture (7 entries incl. a deliberately half-written jsonl line) -> Browsing Maps in the real app shows exactly 7, the four titles, docs.example as the busiest site, no half.example; site click -> 2 and the header count follows, search -> 1, Visits -> 3, a visit says it is not reading, and a vault moved away underneath the app is reported; console clean"
+        "desktop_e2e_memory_map": "outside the repo: a vault seeded like a week of capture (7 entries incl. a deliberately half-written jsonl line) -> Browsing Maps in the real app shows exactly 7, the four titles, docs.example as the busiest site, no half.example; site click -> 2 and the header count follows, search -> 1, Visits -> 3, a visit says it is not reading, and a vault moved away underneath the app is reported; console clean",
+        "installer_build": "electron-builder: dist:linux dir + Windows NSIS installer both produced after a clean typecheck + build",
+        "installer_payload": "listed out of the installer's own $PLUGINSDIR/app-64.7z: AI ASSistant.exe, resources/app.asar 31.9 MB, Uninstall AI ASSistant.exe, elevate.exe, en-US.pak only (21 entries)",
+        "installer_linux_boot": "the same config's linux-unpacked bundle: SMOKE OK title=\"AI ASSistant\" size=1280x820 errors=0 warnings=0",
+        "installer_windows_install": "NOT DONE - no Windows machine in the sandbox; a Wine silent install proves nothing (extraction outruns the timeout). Installing it on the TUF A15 is the owner's own test."
       },
-      "build_cmd": "npm install && npm run build",
-      "run_cmd": "npm run dev (desktop) | npm run build:web && npm run preview:web (browser preview)"
+      "build_cmd": "npm install && npm run build | npm run dist:win (installer) | npm run dist:win:dir (unpacked) | npm run dist:linux",
+      "run_cmd": "npm run dev (desktop) | npm run build:web && npm run preview:web (browser preview) | the installer, on Windows"
     },
     "01_claude-exact-pixel-clone": {
       "path": "apps/01_claude-exact-pixel-clone",
@@ -84,7 +90,7 @@
   "extension": {
     "path": "extension/",
     "status": "starter + spec implemented, NOT wired to the app",
-    "blocking_gap": "the app's vault API is in-process with no listening port, so extension/lib/vault-writer.js has nothing to POST to; opening a loopback port for chrome-extension:// origins is the work (see tests/pending/README.md in the app and extension/README.md)",
+    "blocking_gap": "resolved - the app opens 127.0.0.1:8765 for chrome-extension:// origins (capture side only). What remains is the extension itself: it is still a starter, has not been loaded or run against the app, and therefore captures nothing from a browser yet",
     "features_implemented": [
       "manifest.json (MV3), lib/blacklist.js pattern matching (host-aware), lib/capsule.js data model, lib/vault-writer.js",
       "spec for Capsule Hub + Quillbot behaviour, default-check-everything policy, never-check blacklist, failure logging"

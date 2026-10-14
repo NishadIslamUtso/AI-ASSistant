@@ -1,0 +1,74 @@
+# electron-builder.yml — how AI ASSistant becomes something a person can install.
+#
+# Deliberately small, and every line here is a decision rather than a default:
+#
+# - The payload is `out/` and nothing else. `out/` is what electron-vite builds:
+#   the main process, the preload script and the renderer. `node_modules` is not
+#   shipped because nothing in the packaged app needs it — the dependencies that
+#   do (React, Tailwind) are compiled into `out/renderer` by Vite, and the main
+#   process uses only Node built-ins and Electron itself.
+# - `asar` on, so the app's own files are not laid out loose in the install
+#   directory where a stray edit by hand would change behaviour silently.
+# - One target: NSIS. Per-user, not per-machine, so installing does not ask for
+#   administrator rights; and it lets the person choose the folder, because an app
+#   that writes notes into a vault is an app whose owner will have opinions about
+#   where it lives.
+# - No code-signing certificate is configured, and that is stated rather than
+#   left to be discovered: an unsigned installer makes Windows show the "unknown
+#   publisher" warning. Signing needs a certificate this project does not have.
+appId: com.aiassistant.desktop
+productName: AI ASSistant
+
+directories:
+  output: dist
+  # `build/icon.png` is the app's own mark, rendered from the BrainMark component
+  # it already draws (see shot-tools/render-mark.cjs). electron-builder derives the
+  # .ico from it for Windows; nothing about the artwork is authored for the
+  # installer, and no second logo exists.
+  buildResources: build
+
+# What goes in: the built app, and the package file Electron reads for its name,
+# version and entry point.
+files:
+  - out/**/*
+  - package.json
+
+# The app is written in English, so the other 54 Chromium locale files (46 MB
+# unpacked) are not shipped. A person who needs another language is better served
+# by a real translation than by Chromium's menus.
+electronLanguages:
+  - en-US
+
+# Maximum, because an installer is downloaded: this is the difference between a
+# 92 MB file and a smaller one, at the cost of a slower build.
+compression: maximum
+
+# Nothing to rebuild: the app has no native modules. Saying so skips a step that
+# would otherwise run for every build and fail on a machine without toolchains.
+npmRebuild: false
+
+# The interface is served from the app's own process over http, so the packaged
+# build must not be sandboxed away from loopback.
+asar: true
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  # A person running this on Windows will see "Windows protected your PC" until
+  # the project has a signing certificate. There is no certificate, so nothing
+  # here pretends otherwise — the README says what to expect.
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: AI ASSistant
+  artifactName: AI-ASSistant-Setup-${version}.exe
+  # Uninstall leaves the person's own data alone. The vault lives where they chose
+  # it, and the app's settings live in the user's app-data folder — neither is the
+  # installer's business to remove.
+  deleteAppDataOnUninstall: false

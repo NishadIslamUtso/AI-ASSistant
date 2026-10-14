@@ -11,6 +11,11 @@ dist/
 /apps/*/dist-web/
 build/
 out/
+
+# electron-builder's icon folder is source, not build output
+!apps/03_ai-assistant/build/
+apps/03_ai-assistant/build/*
+!apps/03_ai-assistant/build/icon.png
 .next/
 .nuxt/
 .output/

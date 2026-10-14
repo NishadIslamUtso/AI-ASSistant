@@ -71,13 +71,14 @@ Every change updates `00_LIVING_DOCS/REQUIREMENTS_LIVING.md`, `CHANGELOG.md`, `H
 ```bash
 cd apps/03_ai-assistant
 npm install
-npm test              # 22 files / 208 tests
+npm test              # 27 files / 255 tests
 npm run typecheck     # clean
 npm run build:web     # browser preview build -> dist-web/
 npm run preview:web   # http://localhost:4174 (interface only, and it says so)
 npm run build         # desktop bundle
 npm run smoke         # opens the real window: "SMOKE OK ... errors=0 warnings=0"
 npm run dev           # the desktop app (needs Ollama on 11434)
+npm run dist:win      # Windows installer (unsigned; notes in apps/03_ai-assistant/RELEASE-WINDOWS.md)
 ```
 
 The desktop end-to-end check (mock model server + real window over the DevTools protocol) lives outside

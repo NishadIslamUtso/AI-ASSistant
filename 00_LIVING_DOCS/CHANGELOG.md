@@ -1,7 +1,61 @@
 # CHANGELOG.md — What Changed Each Session (Living)
 
-**Last Updated:** 2026-10-15 (early) Asia/Dhaka
+**Last Updated:** 2026-10-14 (evening) Asia/Dhaka
 **Rule:** Log every change with date, what, why. This is memory for next AI.
+
+## 2026-10-14 (evening) — the Windows installer
+
+Until now, "install it" meant `npm install && npm run dev` on a machine with Node, a terminal and a tolerance
+for terminals. The app now ships as **one file a person can double-click**: `AI-ASSistant-Setup-0.1.0.exe`.
+
+### What it is
+- **NSIS, assisted** (not one-click): the install folder can be changed, desktop + Start-menu shortcuts are
+  created, and it is **per-user**, so Windows never asks to elevate.
+- **`deleteAppDataOnUninstall: false`** — uninstalling the app leaves the vault, the settings and the sealed
+  keys alone. Memory that disappears with an app is not memory.
+- **Unsigned.** There is no certificate, so Windows shows SmartScreen's *"unknown publisher"* box. The release
+  notes (`apps/03_ai-assistant/RELEASE-WINDOWS.md`) say so *before* it appears, explain what it does and does
+  not mean, and say the one thing that is true: an unsigned installer is indistinguishable from a malicious one
+  by Windows alone — so only run the one you built or downloaded from a source you trust.
+- The whole packaging config is `electron-builder.yml` at the app root, commented; `npm run dist:win`,
+  `dist:win:dir` and `dist:linux` are the scripts.
+- The icon is the app's **own BrainMark**, rendered from `BrainMark.tsx` by `shot-tools/render-mark.cjs` into
+  `build/icon.png` (512×512). No new mark was drawn, and `.gitignore` got a precise negation so the icon is
+  source while the rest of `build/` stays ignored.
+
+### Size, honestly
+First build: **95,963,305 bytes**. Shipped build: **87,748,105 bytes**, from two decisions that are argued in
+the release notes — `electronLanguages: [en-US]` (54 unused Chromium locale files = 46 MB unpacked, for text
+nobody would see) and `compression: maximum` (slower to build, smaller to download). Verified by listing the
+installer's payload, not by trusting the number: `AI ASSistant.exe`, `resources/app.asar` (31.9 MB),
+`Uninstall AI ASSistant.exe`, `elevate.exe`, `en-US.pak` only — 21 entries.
+
+### Verified before offering it
+- The payload was extracted from the installer's own `$PLUGINSDIR/app-64.7z` and listed (75 files before the
+  locale trim, 21 entries after; `app.asar` present both times).
+- **The same configuration packaged for Linux boots clean**:
+  `SMOKE OK title="AI ASSistant" size=1280x820 errors=0 warnings=0` — proof that the packaged asar is complete
+  and the app starts from a package, not only from source.
+- The full suite and both builds ran first: 27 files / 255 tests, typecheck clean, desktop + web builds clean.
+
+### What is **not** verified — and one dead end worth writing down
+An actual install **on Windows**. There is no Windows machine here. A Wine silent install was attempted and is
+**not** evidence: unpacking the payload under Wine outruns any sane timeout, so the empty folder it left said
+nothing either way. (Wine itself is only needed because NSIS runs on Linux *builders*; on Windows
+`npm run dist:win` needs nothing. On Linux it needs 32-bit Wine too, with `WINEPREFIX` outside the repo.)
+The install on a real Windows machine is the owner's own test, and it is Priority 1.
+
+### Files
+| File | What |
+|---|---|
+| `apps/03_ai-assistant/electron-builder.yml` | the whole packaging config, commented (NSIS, per-user, icon, locales, compression) |
+| `apps/03_ai-assistant/build/icon.png` | the app icon — the BrainMark, 512×512 |
+| `apps/03_ai-assistant/package.json` / `package-lock.json` | electron-builder 26.15.3 as a devDependency; `dist:win`, `dist:win:dir`, `dist:linux` |
+| `apps/03_ai-assistant/RELEASE-WINDOWS.md` | release notes: the SmartScreen text in advance, what installs where, first run, the reproducible build recipe, known gaps |
+| `.gitignore` | `build/` stays ignored except the app icon |
+
+### Landing
+This commit on `arena/3c06e1bf-ai-assistant-v3`, merged into `main`.
 
 ## 2026-10-15 (early) — Browsing Maps: what was read and when
 
