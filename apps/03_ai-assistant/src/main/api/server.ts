@@ -35,6 +35,12 @@ export type LocalApi = {
   port: number
   url: string
   close: () => Promise<void>
+  /**
+   * Point the vault routes at a different service, while the app runs. Settings
+   * uses this: choosing a folder should not need a restart, and the interface
+   * re-checks the status the moment it changes.
+   */
+  setVault: (vault: VaultService) => void
 }
 
 const OLLAMA_DEFAULT = 'http://127.0.0.1:11434'
@@ -167,6 +173,7 @@ function handleStatic(
 /** Start the API. Resolves once it is listening so the caller can load the window. */
 export function startLocalApi(options: LocalApiOptions): Promise<LocalApi> {
   const ollama = localTarget(options.ollamaUrl || OLLAMA_DEFAULT, 'OLLAMA_API_URL')
+  let vault = options.vault
 
   const server = createServer((request, response) => {
     try {
@@ -218,7 +225,7 @@ export function startLocalApi(options: LocalApiOptions): Promise<LocalApi> {
    * failure answers with a sentence instead of an empty 200.
    */
   async function handleVault(request: IncomingMessage, response: ServerResponse): Promise<void> {
-    if (!options.vault) {
+    if (!vault) {
       response.writeHead(503, { 'Content-Type': 'application/json' })
       response.end(JSON.stringify({ ok: false, error: 'The vault service is not running in this process.' }))
       return
@@ -242,7 +249,7 @@ export function startLocalApi(options: LocalApiOptions): Promise<LocalApi> {
         return
       }
     }
-    const reply = handleVaultRequest(options.vault, {
+    const reply = handleVaultRequest(vault, {
       route: url.pathname.replace(/^\/api\/vault/, ''),
       method: request.method || 'GET',
       query: url.searchParams,
@@ -262,6 +269,9 @@ export function startLocalApi(options: LocalApiOptions): Promise<LocalApi> {
         port,
         url: `http://127.0.0.1:${port}`,
         close: () => new Promise<void>(done => server.close(() => done())),
+        setVault: next => {
+          vault = next
+        },
       })
     })
   })

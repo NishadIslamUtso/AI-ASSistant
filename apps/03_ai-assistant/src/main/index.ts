@@ -1,8 +1,9 @@
-import { app, BrowserWindow, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { join } from 'node:path'
 import { writeFileSync } from 'node:fs'
 import { startLocalApi, type LocalApi } from './api/server'
 import { createVaultService, resolveVaultRoot } from './vault/service'
+import { EMPTY_SETTINGS, folderProblem, readSettings, writeSettings, type AppSettings } from './settings'
 
 /**
  * The main process. Everything that touches the machine lives on this side:
@@ -18,21 +19,55 @@ import { createVaultService, resolveVaultRoot } from './vault/service'
 const API_PORT = Number(process.env.AI_ASSISTANT_API_PORT || 41979)
 
 /**
- * Where the vault is: what the environment asks for, then the vault that ships
- * with a checkout, then this user's own app data folder. The first one that
- * exists wins. Nothing is ever created — a missing vault is reported by the
- * interface, because replacing a vault the user meant to point at would be the
- * worst possible outcome.
+ * Where the vault is, in order of who decides:
+ *
+ * 1. the folder the user chose in Settings — the only one that is a decision
+ * 2. what the environment asks for, which is how the tests and the browser
+ *    preview point at a throwaway vault
+ * 3. `vault/AI-Brain` in the checkout, so a fresh clone works with no setup
+ * 4. this user's own app data folder, for a packaged build
+ *
+ * The first path that exists wins. Nothing is ever created — a missing vault is
+ * reported by the interface, because replacing the vault somebody meant to point
+ * at would be the worst outcome available.
  */
 function vaultRoot(): string {
   const checkout = app.isPackaged ? '' : join(app.getAppPath(), '..', '..', 'vault', 'AI-Brain')
   return resolveVaultRoot([
+    settings.vaultPath,
     process.env.AI_ASSISTANT_VAULT || '',
     process.env.AI_BRAIN_VAULT || '',
     process.env.AI_BRAIN_PATH || '',
     checkout,
     join(app.getPath('userData'), 'vault'),
   ]).root
+}
+
+/** Everything the renderer is allowed to ask about settings and the folder. */
+function registerSettingsBridge(): void {
+  ipcMain.handle('settings:read', () => settings)
+
+  ipcMain.handle('settings:update', (_event, patch: { vaultPath?: string }) => {
+    const wanted = typeof patch?.vaultPath === 'string' ? patch.vaultPath : settings.vaultPath
+    const problem = folderProblem(wanted)
+    if (problem) return { ok: false, error: problem }
+    settings = writeSettings(settingsFile, { ...settings, vaultPath: wanted.trim() })
+    // Point the running service at the new folder. No restart, and the interface
+    // is told the result instead of assuming it worked.
+    const next = createVaultService({ vaultPath: vaultRoot() })
+    api?.setVault(next)
+    return { ok: true, settings, status: next.status() }
+  })
+
+  ipcMain.handle('vault:choose-folder', async () => {
+    const [window] = BrowserWindow.getAllWindows()
+    const chosen = await dialog.showOpenDialog(window, {
+      title: 'Choose the folder AI ASSistant keeps its notes in',
+      buttonLabel: 'Use this folder',
+      properties: ['openDirectory', 'createDirectory'],
+    })
+    return chosen.canceled || !chosen.filePaths.length ? null : chosen.filePaths[0]
+  })
 }
 
 const isSmoke = process.argv.includes('--smoke')
@@ -44,6 +79,8 @@ const consoleErrors: string[] = []
 const consoleWarnings: string[] = []
 
 let api: LocalApi | null = null
+let settings: AppSettings = { ...EMPTY_SETTINGS }
+let settingsFile = ''
 
 function createWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -163,6 +200,12 @@ if (!gotLock) {
     const rendererDir = process.env['ELECTRON_RENDERER_URL']
       ? undefined
       : join(__dirname, '../renderer')
+    // What the user chose last time, read before anything can need it. A damaged
+    // file means "nothing chosen yet", never a failed launch.
+    settingsFile = join(app.getPath('userData'), 'settings.json')
+    settings = readSettings(settingsFile)
+    registerSettingsBridge()
+
     // The vault lives in this process: no companion server to start, no port to
     // find, and the interface's /api/vault calls land on these files.
     const vault = createVaultService({ vaultPath: vaultRoot() })
