@@ -1,4 +1,50 @@
-# Release notes — `AI-ASSistant-Setup-0.1.0.exe` (Windows)
+# Release notes — the Windows installer
+
+## 0.1.1 — the logo, for real this time
+
+| | |
+|---|---|
+| Name | `AI-ASSistant-Setup-0.1.1.exe` |
+| Size | 87,869,296 bytes |
+| SHA-256 | `f56828ef96a08de4327221768bad648fa777e95a8bdec966a6e43768a261ad5f` |
+| Signed | No — SmartScreen will say "unknown publisher" |
+
+**What changed:** the icon. 0.1.0 shipped a mark with its body missing — the glasses, hands and sneakers
+painted and the brain itself did not, which is what showed up on the desktop shortcut and in the title bar.
+The cause: the brain is defined once inside the mark and painted **through a reference**, and the icon
+renderer left that reference unresolved, so the body silently painted nothing while everything drawn directly
+still looked plausible.
+
+Three fixes, all in the renderer, none of them hand-drawn artwork:
+
+- The renderer now **checks the drawing against itself** — every `url(#…)` in the extracted SVG must point at
+  an id that exists — and **refuses to write an image** if one is missing.
+- It then reads the render back **as pixels**: the pink body must be a large blob in the middle of the tile,
+  the lenses grey with their white shine, the sneakers purple, and the tile clean where the drawing does not
+  reach. A transparent PNG paints white behind itself in most viewers, which is how a hollow logo passed a
+  look-at-it check once already; pixels are not a matter of opinion.
+- The mark now sits on a **rounded dark tile**, because a white-bodied mark on transparency disappears on a
+  light wallpaper and turns to mush at 16 px. The `.ico` carries seven sizes (16 → 256) instead of one PNG
+  Windows scales badly.
+
+It also carries the **Artifacts** screen from 0.1.0's successor (what the app builds now survives the
+conversation), plus the sidebar's collapse/resize and the conversation-toolbar fixes.
+
+**Verified before shipping:** 269 tests, clean typecheck, `SMOKE OK errors=0 warnings=0`, and the icon read
+back **out of the built executables** with `wrestool` — all seven sizes present in both
+`AI ASSistant.exe` and the installer, with the body present in the 64 px frame.
+
+**Installing:** run it; it replaces 0.1.0 in place (per-user, no admin). Windows will warn about an unknown
+publisher — there is still no signing certificate, and this file says so rather than pretending.
+
+**Still true, unchanged:** it installs per-user, leaves your data on uninstall, and `npm run dist:win` on
+Windows needs nothing extra.
+
+---
+
+# Release notes — `AI-ASSistant-Setup-0.1.0.exe` (Windows) — superseded
+
+> The icon in this build is the broken one described above. Kept as history.
 
 **What this is:** the first installer this app has had. Everything below is what a person actually needs to
 know before double-clicking it — including the warning Windows will show and why.
@@ -118,7 +164,7 @@ npm run dist:linux       # → dist/linux-unpacked/                (for a smoke 
 ### Icon
 
 The app icon is the app's own **BrainMark**, rendered from the existing `BrainMark.tsx` component by
-`shot-tools/render-mark.cjs` into `build/icon.png` (512×512). No new logo was drawn for packaging.
+`shot-tools/render-mark.cjs` into `build/icon.png` (512×512) — **the arrangement this release had, since superseded by `resources/` and the reference/pixel checks above.** No new logo was drawn for packaging.
 
 ---
 

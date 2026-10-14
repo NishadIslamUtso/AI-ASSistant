@@ -1,6 +1,6 @@
 {
   "date": "2026-10-14",
-  "time_updated": "2026-10-14 (late evening) Asia/Dhaka",
+  "time_updated": "2026-10-14 (late night) Asia/Dhaka",
   "timezone": "Asia/Dhaka",
   "repo_version": "2.0.0-ai-assistant",
   "canonical_repo": "https://github.com/NishadIslamUtso/AI-ASSistant",
@@ -9,10 +9,10 @@
     "integration_branch": "main",
     "rule": "Finished, verified work lands as a commit on the branch, is merged --no-ff into main, both are pushed, then it is reported. Never merge anything the user did not ask for.",
     "last_landed": [
-      "this session: the Artifacts screen (library + nav entry), the sidebar collapse, the logo id fix",
-      "75aa731  merge: Windows installer (into main)",
-      "06157c7  Windows installer: AI-ASSistant-Setup-0.1.0.exe, and the docs that go with it",
-      "2b46b46  merge: Browsing Maps (into main)"
+      "this session: the app icon fixed for real (references audited + pixels checked), tiled 7-size .ico, installer 0.1.1",
+      "1f97e3a  merge: the Artifacts rail fix (into main)",
+      "5da2fa9  Artifacts screen: keep the conversation's artifacts rail on the chat view",
+      "4b5c514  merge: the Artifacts screen - a real library, the sidebar collapse, and the logo"
     ],
     "verify_with": "git log --oneline -6 && git diff --stat main arena/3c06e1bf-ai-assistant-v3"
   },
@@ -73,10 +73,13 @@
         "installer_payload": "listed out of the installer's own $PLUGINSDIR/app-64.7z: AI ASSistant.exe, resources/app.asar 31.9 MB, Uninstall AI ASSistant.exe, elevate.exe, en-US.pak only (21 entries)",
         "installer_linux_boot": "the same config's linux-unpacked bundle: SMOKE OK title=\"AI ASSistant\" size=1280x820 errors=0 warnings=0",
         "installer_windows_install": "NOT DONE - no Windows machine in the sandbox; a Wine silent install proves nothing (extraction outruns the timeout). Installing it on the TUF A15 is the owner's own test.",
-        "desktop_e2e_artifacts": "outside the repo (shot-tools/check-artifact-library.cjs, 7.5 s, green): the app starts with an empty app-data folder; a message is sent; the mock model answers with a real HTML document; index.json and items/<id>/v1.html are read OFF DISK before the screen is trusted; the grid shows one card with the real title/date/v1; the thumbnail's srcdoc carries the document and its sandbox is empty; rename changes the name on disk; remove empties the grid, shows the empty state, and the files are found in .trash/ while the item folder is gone; 12 logo url(#...) references resolve, 0 broken; the collapsed sidebar rail measures 56px; console clean"
+        "desktop_e2e_artifacts": "outside the repo (shot-tools/check-artifact-library.cjs, 7.5 s, green): the app starts with an empty app-data folder; a message is sent; the mock model answers with a real HTML document; index.json and items/<id>/v1.html are read OFF DISK before the screen is trusted; the grid shows one card with the real title/date/v1; the thumbnail's srcdoc carries the document and its sandbox is empty; rename changes the name on disk; remove empties the grid, shows the empty state, and the files are found in .trash/ while the item folder is gone; 12 logo url(#...) references resolve, 0 broken; the collapsed sidebar rail measures 56px; console clean",
+        "installer_windows_build": "AI-ASSistant-Setup-0.1.1.exe, 87,869,296 bytes, built 2026-10-14; icon verified by reading it OUT of the exe with wrestool (7 sizes, brain present at 64px)",
+        "icon": "resources/icon.png + resources/icon.ico (7 sizes) rendered from BrainMark by shot-tools/render-mark.cjs, which now audits every url(#...) reference and reads the render back as pixels before writing"
       },
       "build_cmd": "npm install && npm run build | npm run dist:win (installer) | npm run dist:win:dir (unpacked) | npm run dist:linux",
-      "run_cmd": "npm run dev (desktop) | npm run build:web && npm run preview:web (browser preview) | the installer, on Windows"
+      "run_cmd": "npm run dev (desktop) | npm run build:web && npm run preview:web (browser preview) | the installer, on Windows",
+      "version": "0.1.1"
     },
     "01_claude-exact-pixel-clone": {
       "path": "apps/01_claude-exact-pixel-clone",

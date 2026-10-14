@@ -21,11 +21,15 @@ productName: AI ASSistant
 
 directories:
   output: dist
-  # `build/icon.png` is the app's own mark, rendered from the BrainMark component
-  # it already draws (see shot-tools/render-mark.cjs). electron-builder derives the
-  # .ico from it for Windows; nothing about the artwork is authored for the
+  # `resources/` holds the app's own mark — `icon.png` and a seven-size
+  # `icon.ico` — rendered from the BrainMark component the app already draws (see
+  # shot-tools/render-mark.cjs). Nothing about the artwork is authored for the
   # installer, and no second logo exists.
-  buildResources: build
+  #
+  # It is `resources/` and not `build/` on purpose: `build/` is this project's
+  # build-output name, and the workspace snapshots exclude any directory with that
+  # name, which quietly deleted the icon twice. An icon is source.
+  buildResources: resources
 
 # What goes in: the built app, and the package file Electron reads for its name,
 # version and entry point.
@@ -56,11 +60,16 @@ win:
     - target: nsis
       arch:
         - x64
+  # The .ico carries every size Windows asks for (16 → 256) instead of one big
+  # PNG it has to scale, which is how a taskbar icon goes blurry.
+  icon: resources/icon.ico
   # A person running this on Windows will see "Windows protected your PC" until
   # the project has a signing certificate. There is no certificate, so nothing
   # here pretends otherwise — the README says what to expect.
 
 nsis:
+  installerIcon: resources/icon.ico
+  uninstallerIcon: resources/icon.ico
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true

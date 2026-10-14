@@ -229,7 +229,7 @@ let cloud: CloudClient | null = null
  * it just means the operating system's default stands.
  */
 function windowIcon(): string | undefined {
-  for (const candidate of [join(app.getAppPath(), 'build', 'icon.png'), join(process.resourcesPath || '', 'icon.png')]) {
+  for (const candidate of [join(app.getAppPath(), 'resources', 'icon.png'), join(process.resourcesPath || '', 'icon.png')]) {
     try {
       if (candidate && existsSync(candidate)) return candidate
     } catch {

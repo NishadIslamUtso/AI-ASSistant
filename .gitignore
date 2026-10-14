@@ -12,10 +12,10 @@ dist/
 build/
 out/
 
-# electron-builder's icon folder is source, not build output
-!apps/03_ai-assistant/build/
-apps/03_ai-assistant/build/*
-!apps/03_ai-assistant/build/icon.png
+# The app's own mark is source and lives in resources/, which is tracked like any
+# other source file. It used to sit in build/ with a negation to keep it — but that
+# directory name is excluded from this project's workspace snapshots, so the icon
+# kept vanishing from the working tree.
 .next/
 .nuxt/
 .output/
