@@ -63,18 +63,25 @@ choices, so you cannot get it wrong:
 - **Set it to `apps/03_ai-assistant`** — convenient, because the Vercel dashboard
   then deals with this app alone.
 
-The install and build commands detect which folder they are in by looking for the
-app's own package name, and both write the built site to `dist-web` inside the
-Root Directory. There is a copy of `vercel.json` in the app folder as well as at
-the repository root for the same reason: Vercel reads the config from the Root
-Directory, the two files are identical, and both settings therefore do exactly
-the same thing.
+Two settings, one implementation. `vercel-install.sh` and `vercel-build.sh` live
+in this folder and act on the folder they are in, so they behave identically
+either way; each `vercel.json` just calls them. The app's copy of the config says
+`sh vercel-build.sh`, the repository root's copy says
+`sh apps/03_ai-assistant/vercel-build.sh`. Vercel reads the config from the Root
+Directory, so the right one is found without anyone configuring anything, and the
+built site is written to `dist-web` inside the Root Directory in both cases.
+
+Why scripts instead of one inline command: **Vercel rejects a `buildCommand`
+longer than 256 characters.** The inline version that detected its own location
+was 270, and the schema validation refused the deployment before it ran.
+`buildCommand` is now 18 characters, and the logic lives here where it can be
+read and changed.
 
 An earlier version of this file assumed the repository root, and failed with
 `cd: apps/03_ai-assistant: No such file or directory` when the Root Directory was
 set to the app — it tried to descend into the folder it was already standing in.
 If you set the Root Directory in the dashboard, clear any custom Install or Build
-Command left over from that attempt, so the ones in `vercel.json` apply.
+Command left over from an earlier attempt, so the ones in `vercel.json` apply.
 
 The install runs with `ELECTRON_SKIP_BINARY_DOWNLOAD=1`. That is deliberately not
 `--ignore-scripts`: skipping every lifecycle script can leave esbuild and rollup
