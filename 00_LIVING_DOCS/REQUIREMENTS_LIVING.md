@@ -47,7 +47,11 @@
   Browser extension, Keeping conversations, and one switch per provider that has a key. Capabilities that
   do not exist (Files, Shell, Web, MCP) are stated as not built, never offered as switches. Every reply is
   labelled `local` or `online · <provider>`.
-- **Verified on 2026-10-14:** 26 test files / 245 tests, clean typecheck, clean web build, desktop smoke
+- **Browsing Maps** reads the record the vault already holds — conversations, captured pages and visits —
+  as a timeline with site grouping, kind filters, search and a time window, over the app's own API. It
+  invents nothing: a visit is labelled a visit (the vault's own "not proof of reading" is repeated, never
+  upgraded), a captured page is one entry rather than two, and the counts always describe the rows on screen.
+- **Verified on 2026-10-14:** 27 test files / 255 tests, clean typecheck, clean web build, desktop smoke
   `errors=0 warnings=0`, browser check 33/33 with 0 console problems, the desktop vault end-to-end green
   (message → answer → Markdown in the vault → vault moved from Settings), and the desktop cloud end-to-end
   green (key pasted → Test → model in the composer menu → the provider's own answer, provider asked exactly
@@ -425,6 +429,20 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - **Why:** the user compared the branches and preferred that one's look and feel.
 - **Verified:** 48 unit/integration tests, 5 jsdom UI tests, clean build, all
   endpoints checked live through the preview proxy.
+
+### [2026-10-15 early] Browsing Maps: the memory map of what was read and when
+- **Added:** `src/main/vault/sources.ts` — reads the vault's own sources (conversation and page frontmatter,
+  monthly activity jsonl), newest first, with hosts and Dhaka days summarised; bounded walking and head-only
+  reads, with a capped map saying so rather than a hang.
+- **Added:** `GET /api/vault/sources` (and the guard entry), taking `q`, `kind` and `days`.
+- **Added:** the **Browsing Maps** surface, opened from the sidebar: search, kind chips that carry their own
+  counts, 7/30/everything, top sites with a bar, a day-by-day timeline, and an entry that opens in place to
+  say where it is on disk, when it happened, how much was kept, and whether it is a capture or only a visit.
+- **Kept honest:** one entry per captured page (a jsonl line with `source_id` is that file's record), a
+  half-written line is not a visit, a visit is never presented as reading, and a missing vault is one sentence.
+- **Verified:** 255 tests; desktop end-to-end green against a seeded vault (7 entries, four titles, busiest
+  site, site/search/kind filters all narrowing with the header count following, and the vault-moved-away case);
+  40 browser assertions.
 
 ### [2026-10-14 late night] Agent access: the permission surface, with teeth
 - **Added:** `src/shared/lib/permissions.ts` (the one shape: local, browserCapture, keepConversations, and a

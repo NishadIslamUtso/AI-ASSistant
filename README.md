@@ -13,7 +13,7 @@ grants it, from Settings.
 
 | Path | What it is | State |
 |---|---|---|
-| `apps/03_ai-assistant/` | **THE APP.** Electron + React + TypeScript + Tailwind 4. Real chat, artifacts, comment mode, vault writes, online providers, an extension port, agent permissions, Settings. | Active. 245 tests, typecheck, both builds, desktop smoke and all four end-to-end checks (vault, cloud, extension port, agent access) green in the sandbox. **Not yet run on the user's Windows machine.** |
+| `apps/03_ai-assistant/` | **THE APP.** Electron + React + TypeScript + Tailwind 4. Real chat, artifacts, comment mode, vault writes, online providers, an extension port, agent permissions, Browsing Maps, Settings. | Active. 255 tests, typecheck, both builds, desktop smoke and all five end-to-end checks (vault, cloud, extension port, agent access, browsing maps) green in the sandbox. **Not yet run on the user's Windows machine.** |
 | `apps/01_claude-exact-pixel-clone/` | The first clone, built to match six Claude screenshots. | Historical. Kept as the port source for libs/hooks/server logic. Not the app. |
 | `apps/02_electron-claude-clone-v6/` | An older Electron fork with more features. | Historical reference. |
 | `extension/` | MV3 browser extension: collector + context suggester. | Starter + spec. **The app now has the port it needs** (127.0.0.1:8765, capture side only), but the extension itself has not been loaded or run against it yet. |

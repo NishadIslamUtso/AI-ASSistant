@@ -19,6 +19,7 @@ export default function Sidebar({
   onNew,
   onDelete,
   onOpenSettings,
+  onOpenMemory,
   profileName,
 }: {
   chats: Chat[]
@@ -28,6 +29,8 @@ export default function Sidebar({
   onDelete: (chatId: string) => void
   /** The profile row at the bottom is the way in to Settings, as in the mockup. */
   onOpenSettings: () => void
+  /** Browsing Maps: what was read and when, drawn from the vault. */
+  onOpenMemory: () => void
   profileName: string
 }) {
   const [query, setQuery] = useState('')
@@ -104,6 +107,20 @@ export default function Sidebar({
           ))
         )}
       </nav>
+
+      <button
+        type="button"
+        onClick={onOpenMemory}
+        aria-label="Browsing Maps"
+        title="What was read and when"
+        className="flex w-full items-center gap-2.5 border-t border-line px-3 py-2.5 text-left text-muted hover:bg-white/[0.06] hover:text-ink"
+      >
+        <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0">
+          <circle cx="9" cy="9" r="6" />
+          <path d="M6.6 9h4.8M9 6.6v4.8" />
+        </svg>
+        <span className="text-[12.5px]">Browsing Maps</span>
+      </button>
 
       <button
         type="button"

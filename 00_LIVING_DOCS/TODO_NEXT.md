@@ -1,6 +1,6 @@
 # TODO_NEXT.md — Immediate Next Actions (Living)
 
-**Last Updated:** 2026-10-14 (late night) Asia/Dhaka
+**Last Updated:** 2026-10-15 (early) Asia/Dhaka
 **Rule:** Priority order. Update after each session, check off when done.
 
 ---
@@ -20,7 +20,6 @@ Nothing below matters until the app has run on the TUF A15.
 
 ## Priority 2 — What the owner has already asked for
 
-- [ ] **Browsing Maps** — the memory map of what was read and when
 - [ ] A Windows installer (nothing exists yet; `npm run dev` is the way in)
 
 ## Priority 3 — Parked by the owner
@@ -36,6 +35,8 @@ Nothing below matters until the app has run on the TUF A15.
 - [x] Memory warning measured against the chosen profile; no more "6 GB answered with 4 GB"
 - [x] Vercel deployment files removed
 - [x] Every living doc, `.ai/` file and the extension docs brought to the current state
+- [x] **Browsing Maps** — the timeline of what the vault holds (conversations, captured pages, visits) with
+      site grouping, kind filters, search and a time window; a visit stays a visit
 - [x] **Settings > Agent access** — the local model, browser captures, keeping conversations and each keyed
       provider, each one enforced in the main process; Files, Shell, Web and MCP are stated as not built rather
       than offered. Every reply is labelled `local` or `online · <provider>`

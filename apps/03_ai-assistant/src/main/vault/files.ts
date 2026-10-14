@@ -16,9 +16,13 @@ import {
   appendFileSync,
   existsSync,
   mkdirSync,
+  openSync,
   readdirSync,
   readFileSync,
+  readSync,
+  closeSync,
   realpathSync,
+  statSync,
   writeFileSync,
 } from 'node:fs'
 import { dirname, resolve, sep } from 'node:path'
@@ -116,6 +120,93 @@ export function createVaultFiles(root: string, clock: () => Date) {
     return files
   }
 
+  /**
+   * The first `limit` bytes of a file, for reading a heading or a frontmatter
+   * block without loading a whole capture into memory. A map of what the vault
+   * holds must be cheap: it looks at thousands of files, and only reads the part
+   * that says what each one is.
+   */
+  function readHead(relative: string, limit = 8 * 1024): string {
+    const full = filePath(relative)
+    if (!existsSync(full)) return ''
+    const real = realpathSync(full)
+    if (!real.startsWith(realRoot + sep)) throw new InputError('Symlink outside vault.')
+    const descriptor = openSync(real, 'r')
+    try {
+      const size = statSync(real).size
+      const take = Math.max(1, Math.min(limit, size))
+      const buffer = Buffer.alloc(take)
+      const read = readSync(descriptor, buffer, 0, take, 0)
+      return buffer.subarray(0, read).toString('utf8')
+    } finally {
+      closeSync(descriptor)
+    }
+  }
+
+  /** How big a file is, for a map that says how much was kept. 0 when absent. */
+  function size(relative: string): number {
+    try {
+      const full = filePath(relative)
+      if (!existsSync(full)) return 0
+      return statSync(full).size
+    } catch {
+      return 0
+    }
+  }
+
+  /**
+   * Every file under a folder whose name ends with `extension`, as vault-relative
+   * paths, newest directory first. Bounded on purpose: a walk that decides how
+   * much work to do is the difference between a map and a hang, so it stops at
+   * `limit` files and says that it stopped.
+   */
+  function walkFiles(
+    relative: string,
+    extension: string,
+    limit = 4000
+  ): { files: string[]; capped: boolean } {
+    const directory = filePath(relative)
+    if (!existsSync(directory)) return { files: [], capped: false }
+    const files: string[] = []
+    let capped = false
+    let visited = 0
+    const walk = (current: string): void => {
+      if (capped) return
+      let entries: import('node:fs').Dirent[]
+      try {
+        entries = readdirSync(current, { withFileTypes: true })
+      } catch {
+        return
+      }
+      for (const entry of entries) {
+        if (capped) return
+        if (entry.name.startsWith('.')) continue
+        const full = resolve(current, entry.name)
+        if (entry.isDirectory()) {
+          visited += 1
+          if (visited > limit) {
+            capped = true
+            return
+          }
+          walk(full)
+          continue
+        }
+        if (!entry.name.endsWith(extension)) continue
+        files.push(full.slice(root.length + 1))
+        if (files.length >= limit) {
+          capped = true
+          return
+        }
+      }
+    }
+    try {
+      walk(directory)
+    } catch {
+      /* A partially unreadable vault reports what it could read. */
+    }
+    return { files, capped }
+  }
+
   /** Markdown file names in one folder, for the entity library. */
   function listMarkdown(relative: string): string[] {
     const directory = filePath(relative)
@@ -123,7 +214,21 @@ export function createVaultFiles(root: string, clock: () => Date) {
     return readdirSync(directory).filter(file => file.endsWith('.md'))
   }
 
-  return { root, filePath, ensureDirectory, read, writeOnce, write, append, activity, countFiles, listMarkdown }
+  return {
+    root,
+    filePath,
+    ensureDirectory,
+    read,
+    readHead,
+    writeOnce,
+    write,
+    append,
+    activity,
+    countFiles,
+    listMarkdown,
+    walkFiles,
+    size,
+  }
 }
 
 export type VaultFiles = ReturnType<typeof createVaultFiles>
