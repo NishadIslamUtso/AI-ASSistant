@@ -38,6 +38,9 @@ Run it in this order; each line is a thing you can see with your own eyes.
 
 ## 4. Artifacts (nav) and the sidebar
 
+> Automated: `node scripts/check-artifact-library.cjs` — starts the app and the mock model, then reads
+> `index.json` and the version files off disk before it trusts the screen (22 assertions, console clean).
+
 - [ ] A chat that produces a document ("make me a pomodoro timer") puts it in the Artifacts screen
 - [ ] The card shows a real thumbnail, the date, and `v1`; the footer names the folder the files are in
 - [ ] Rename changes the name **in the card**; Duplicate makes a `… copy` that can be edited independently
