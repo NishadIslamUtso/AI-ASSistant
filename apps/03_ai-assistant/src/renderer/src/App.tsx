@@ -1,15 +1,24 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DEFAULT_MODEL } from '@shared/lib/storage'
 import { DEFAULT_PROFILE, normalizeProfile } from '@shared/lib/profile'
 import { DEFAULT_PROFILE_ID } from '@shared/lib/inference'
 import TitleBar from './components/TitleBar'
+import ArtifactsRail from './components/ArtifactsRail'
+import { chatArtifacts } from './state/artifactView'
+import { restoredInPlace, withNewVersion } from './state/artifactEdits'
+import type { Artifact } from '@shared/types'
+import type { ElementPick } from '@shared/lib/artifacts'
 import Sidebar from './components/Sidebar'
 import ChatView from './components/ChatView'
 import useChat from './hooks/useChat'
+import useArtifactRewrite from './hooks/useArtifactRewrite'
 import useModels from './hooks/useModels'
 import usePersistentState from './hooks/usePersistentState'
+import useVault from './hooks/useVault'
 import { useChats } from './state/useChats'
 import { isDemo } from './platform/bridge'
+import { vaultPost } from '@shared/lib/vault'
+import { conversationCapture } from '@shared/lib/capture'
 
 /**
  * The app.
@@ -34,11 +43,17 @@ export default function App() {
   )
   const models = useModels(model, setModel)
   const [draft, setDraft] = useState('')
+  // Set for a moment when the rail jumps to an artifact, so a click on something
+  // already on screen still shows that it did something.
+  const [highlight, setHighlight] = useState('')
 
   const chat = useMemo(
     () => chats.chats.find(entry => entry.id === chats.currentChat) || null,
     [chats.chats, chats.currentChat]
   )
+  // Re-checked whenever the current conversation is kept, so a vault that has
+  // gone missing shows as a chip rather than as a save that quietly did not happen.
+  const vault = useVault(chat?.vaultStatus)
 
   const navigate = useCallback((chatId: string) => chats.open(chatId), [chats])
 
@@ -56,7 +71,103 @@ export default function App() {
     // Settings > Performance will edit this. Until then the 4 GB profile is the
     // safe default: it is the one that cannot overflow a small card.
     inference: { profile: DEFAULT_PROFILE_ID },
+    // Where finished conversations are kept. In the browser preview there is no
+    // vault behind the interface, so nothing is attempted and no failed request
+    // appears in the console — the preview stays quiet, as it must.
+    capture: isDemo ? undefined : chat => vaultPost('/capture', conversationCapture(chat)).then(() => undefined),
   })
+
+  const artifacts = useMemo(
+    () => chatArtifacts(chat?.messages || []),
+    [chat?.messages]
+  )
+
+  useEffect(() => {
+    if (!highlight) return
+    const timer = setTimeout(() => setHighlight(''), 1600)
+    return () => clearTimeout(timer)
+  }, [highlight])
+
+  const jumpToArtifact = (artifactId: string): void => {
+    setHighlight(artifactId)
+    document
+      .getElementById(`artifact-${artifactId}`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+
+  const rewrite = useArtifactRewrite({
+    model: models.model,
+    available: models.available,
+    inference: { profile: DEFAULT_PROFILE_ID },
+  })
+
+  /**
+   * Replace an artifact on a message. Both the rewrite and the restore go through
+   * here, so there is exactly one place in the app that edits a document — and it
+   * can only ever append a version (see artifactEdits).
+   */
+  const replaceArtifact = (messageId: string, artifactId: string, next: Artifact): void => {
+    chats.setChats(previous =>
+      previous.map(entry =>
+        entry.id !== chats.currentChat
+          ? entry
+          : {
+              ...entry,
+              messages: entry.messages.map(message =>
+                message.id !== messageId
+                  ? message
+                  : {
+                      ...message,
+                      artifacts: (message.artifacts || []).map(artifact =>
+                        artifact.id === artifactId ? next : artifact
+                      ),
+                    }
+              ),
+            }
+      )
+    )
+  }
+
+  /** Which message holds an artifact, so an edit can be written back to the right
+   *  place even when the card is showing an older version of the same file. */
+  const findArtifact = (artifactId: string): { messageId: string; artifact: Artifact } | null => {
+    for (const message of chat?.messages || []) {
+      const found = (message.artifacts || []).find(artifact => artifact.id === artifactId)
+      if (found) return { messageId: message.id, artifact: found }
+    }
+    return null
+  }
+
+  const runRewrite = async ({
+    artifact,
+    source,
+    pick,
+    comment,
+  }: {
+    artifact: Artifact
+    source: string
+    pick: ElementPick
+    comment: string
+  }): Promise<boolean> => {
+    const next = await rewrite.rewrite({ artifact, source, pick, comment })
+    if (!next) return false
+    const found = findArtifact(artifact.id)
+    // A no-op rewrite comes back as the same artifact, and withNewVersion returns
+    // it unchanged rather than inventing a version for it.
+    if (found) replaceArtifact(found.messageId, artifact.id, withNewVersion(found.artifact, next, comment.trim().slice(0, 60)))
+    setNotice('')
+    return true
+  }
+
+  const restoreVersion = (artifactId: string, index: number): void => {
+    const found = findArtifact(artifactId)
+    if (!found) return
+    try {
+      replaceArtifact(found.messageId, artifactId, restoredInPlace(found.artifact, index))
+    } catch (failure) {
+      setNotice((failure as Error).message)
+    }
+  }
 
   const send = async (): Promise<void> => {
     const text = draft
@@ -72,7 +183,14 @@ export default function App() {
 
   return (
     <div className="flex h-full flex-col bg-bg text-ink">
-      <TitleBar model={models.model} ollamaStatus={models.status} preview={isDemo} />
+      <TitleBar
+        model={models.model}
+        ollamaStatus={models.status}
+        preview={isDemo}
+        // Re-checked when a conversation is kept, so a vault that went missing
+        // shows up as a chip rather than as a save that silently did not happen.
+        vault={vault}
+      />
       <div className="flex min-h-0 flex-1">
         <Sidebar
           chats={chats.chats}
@@ -93,13 +211,27 @@ export default function App() {
           onStop={chatApi.stop}
           busy={Boolean(chatApi.busyChatId)}
           models={isDemo ? { ...models, error: '' } : models}
+          live={chatApi.live}
+          highlightId={highlight}
           notice={notice}
+          onRewrite={runRewrite}
+          onRestore={(artifact, index) => restoreVersion(artifact.id, index)}
+          busyArtifactId={rewrite.busyId || ''}
+          rewriteStage={rewrite.stage}
+          rewriteError={rewrite.error}
+          rewriteErrorFor={rewrite.errorFor}
           preview={
             isDemo
               ? 'Browser preview — this window is the interface only. Models, files and your vault live on your own machine, in the desktop app.'
               : ''
           }
         />
+        {artifacts.length > 0 ? (
+          <ArtifactsRail
+            items={artifacts}
+            onJump={item => jumpToArtifact(item.id)}
+          />
+        ) : null}
       </div>
     </div>
   )

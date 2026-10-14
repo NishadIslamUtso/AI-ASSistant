@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import { Check, Copy, FileCode2 } from 'lucide-react'
-import type { Message } from '@shared/types'
-import { artifactSource } from '@shared/lib/artifacts'
+import type { Artifact, Message } from '@shared/types'
+import type { ElementPick } from '@shared/lib/artifacts'
+import type { ArtifactView } from '@/state/artifactView'
+import ArtifactCard from './ArtifactCard'
 import BrainMark from './BrainMark'
 
 /**
@@ -12,15 +12,43 @@ import BrainMark from './BrainMark'
  * app's mark beside it. Thinking, when the model reports it separately, is folded
  * away rather than mixed into the answer.
  */
-export default function MessageRow({ message }: { message: Message }) {
+export default function MessageRow({
+  message,
+  artifacts = [],
+  tokens = '',
+  highlightId = '',
+  onRewrite,
+  onRestore,
+  busyArtifactId = '',
+  rewriteStage = '',
+  rewriteError = '',
+  rewriteErrorFor = '',
+}: {
+  message: Message
+  /** Already resolved for this message: live draft while streaming, saved after. */
+  artifacts?: ArtifactView[]
+  tokens?: string
+  /** Set briefly when the rail jumps to an artifact here. */
+  highlightId?: string
+  onRewrite: (request: {
+    artifact: Artifact
+    source: string
+    pick: ElementPick
+    comment: string
+  }) => Promise<boolean>
+  onRestore: (artifact: Artifact, index: number) => void
+  busyArtifactId?: string
+  rewriteStage?: string
+  rewriteError?: string
+  /** The artifact the error belongs to, so it is not printed on every card. */
+  rewriteErrorFor?: string
+}) {
   if (message.role === 'user') {
     return (
       <div className="flex justify-end">
         <div className="max-w-[80%] whitespace-pre-wrap break-words rounded-2xl bg-card px-4 py-2.5 text-[14px] leading-relaxed">
           {message.content}
-          {message.editedAt && (
-            <span className="mt-1 block text-[11px] text-muted">edited</span>
-          )}
+          {message.editedAt && <span className="mt-1 block text-[11px] text-muted">edited</span>}
           {(message.attachments || []).length > 0 && (
             <ul className="mt-1.5 flex flex-wrap gap-1.5">
               {message.attachments?.map(file => (
@@ -73,10 +101,20 @@ export default function MessageRow({ message }: { message: Message }) {
           <span className="caret ml-0.5 inline-block h-4 w-[2px] translate-y-0.5 bg-accent" />
         ) : null}
 
-        {message.artifacts && message.artifacts.length > 0 ? (
-          <ul className="mt-3 flex flex-col gap-2">
-            {message.artifacts.map(artifact => (
-              <ArtifactCard key={artifact.id} message={message} artifactId={artifact.id} />
+        {artifacts.length > 0 ? (
+          <ul className="mt-3 flex flex-col gap-3">
+            {artifacts.map(view => (
+              <ArtifactCard
+                key={view.artifact.id}
+                view={view}
+                tokens={tokens}
+                highlighted={view.artifact.id === highlightId}
+                onRewrite={onRewrite}
+                onRestore={onRestore}
+                busy={busyArtifactId === view.artifact.id}
+                stage={busyArtifactId === view.artifact.id ? rewriteStage : ''}
+                error={rewriteErrorFor === view.artifact.id ? rewriteError : ''}
+              />
             ))}
           </ul>
         ) : null}
@@ -96,9 +134,7 @@ export default function MessageRow({ message }: { message: Message }) {
           </ul>
         ) : null}
 
-        {message.error ? (
-          <p className="mt-2 text-[12px] text-warn">{message.error}</p>
-        ) : null}
+        {message.error ? <p className="mt-2 text-[12px] text-warn">{message.error}</p> : null}
 
         {message.status === 'complete' && typeof message.ms === 'number' ? (
           <p className="mt-2 text-[11px] text-muted">
@@ -107,50 +143,5 @@ export default function MessageRow({ message }: { message: Message }) {
         ) : null}
       </div>
     </div>
-  )
-}
-
-/**
- * A file the model wrote. The preview panel arrives with the artifacts step; until
- * then the card is honest about what is here — the source, and a way to take it.
- */
-function ArtifactCard({ message, artifactId }: { message: Message; artifactId: string }) {
-  const [copied, setCopied] = useState(false)
-  const artifact = message.artifacts?.find(entry => entry.id === artifactId)
-  if (!artifact) return null
-  const draft = artifact.partial || artifact.versions.some(version => version.draft)
-
-  const copy = async (): Promise<void> => {
-    try {
-      await navigator.clipboard.writeText(artifactSource(artifact))
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1600)
-    } catch {
-      // Clipboard access can be refused. Saying nothing is fine: the source is
-      // in the transcript above and nothing was lost.
-    }
-  }
-
-  return (
-    <li className="flex items-center gap-3 rounded-xl border border-line bg-card px-3 py-2.5">
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/15 text-accent">
-        <FileCode2 size={15} />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13px]">{artifact.title}</span>
-        <span className="text-[11px] text-muted">
-          {artifact.type.toUpperCase()}
-          {draft ? ' · still being written' : ''}
-        </span>
-      </span>
-      <button
-        type="button"
-        onClick={() => void copy()}
-        className="flex shrink-0 items-center gap-1.5 rounded-lg border border-line px-2 py-1 text-[12px] text-muted hover:text-ink"
-      >
-        {copied ? <Check size={13} /> : <Copy size={13} />}
-        {copied ? 'Copied' : 'Copy'}
-      </button>
-    </li>
   )
 }

@@ -2,6 +2,8 @@ import { createServer, request as httpRequest, type IncomingMessage, type Server
 import { createReadStream, existsSync, statSync } from 'node:fs'
 import { extname, join, normalize, resolve } from 'node:path'
 import { localTarget, protectLocalApi } from './guard'
+import { handleVaultRequest } from '../vault/routes'
+import type { VaultService } from '../vault/service'
 
 /**
  * The local API, inside the app.
@@ -22,7 +24,11 @@ export type LocalApiOptions = {
   /** Directory holding the built renderer. Omitted in dev, where Vite serves it. */
   rendererDir?: string
   ollamaUrl?: string
-  vaultUrl?: string
+  /**
+   * The vault, living in this process. It is not a URL and there is no second
+   * server: captures are written by the same process that serves this API.
+   */
+  vault?: VaultService
 }
 
 export type LocalApi = {
@@ -32,7 +38,32 @@ export type LocalApi = {
 }
 
 const OLLAMA_DEFAULT = 'http://127.0.0.1:11434'
-const VAULT_DEFAULT = 'http://127.0.0.1:8765'
+
+/** A capture carries conversation text and attachment bytes; this is the ceiling. */
+const BODY_LIMIT = 20 * 1024 * 1024
+
+/**
+ * Read a request body with a hard limit. Over the limit the socket is destroyed
+ * rather than the text buffered, so an oversized request cannot fill memory.
+ */
+function readBody(request: IncomingMessage, limit: number): Promise<string> {
+  return new Promise((resolvePromise, reject) => {
+    const chunks: Buffer[] = []
+    let received = 0
+    request.on('data', (chunk: Buffer) => {
+      received += chunk.length
+      if (received > limit) {
+        // Stop storing, and let the refusal be written: destroying the socket
+        // here would turn an explainable 413 into a connection reset.
+        reject(new Error('That request is larger than the vault accepts (20 MB).'))
+        return
+      }
+      chunks.push(chunk)
+    })
+    request.on('end', () => resolvePromise(Buffer.concat(chunks).toString('utf8')))
+    request.on('error', reject)
+  })
+}
 
 const CONTENT_TYPES: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -75,7 +106,7 @@ function forward(
       protocol: new URL(target).protocol,
       hostname: new URL(target).hostname,
       port: new URL(target).port,
-      path: toTargetPath(url.pathname.replace(/^\/api\/(?:ollama|vault)/, '') + url.search),
+      path: toTargetPath(url.pathname.replace(/^\/api\/ollama/, '') + url.search),
       method: request.method,
       headers: { ...request.headers, host: new URL(target).host },
     },
@@ -136,7 +167,6 @@ function handleStatic(
 /** Start the API. Resolves once it is listening so the caller can load the window. */
 export function startLocalApi(options: LocalApiOptions): Promise<LocalApi> {
   const ollama = localTarget(options.ollamaUrl || OLLAMA_DEFAULT, 'OLLAMA_API_URL')
-  const vault = localTarget(options.vaultUrl || VAULT_DEFAULT, 'VAULT_API_URL')
 
   const server = createServer((request, response) => {
     try {
@@ -166,7 +196,10 @@ export function startLocalApi(options: LocalApiOptions): Promise<LocalApi> {
           return
         }
         if (pathname.startsWith('/api/vault')) {
-          forward(request, response, vault, rest => rest || '/', 'The vault service')
+          void handleVault(request, response).catch(error => {
+            if (!response.headersSent) response.writeHead(500, { 'Content-Type': 'application/json' })
+            response.end(JSON.stringify({ ok: false, error: (error as Error).message }))
+          })
           return
         }
         if (options.rendererDir) {
@@ -177,6 +210,46 @@ export function startLocalApi(options: LocalApiOptions): Promise<LocalApi> {
         response.end('Not found.')
       }
     )
+  }
+
+  /**
+   * The vault's routes, answered here rather than forwarded anywhere. Every
+   * reply is JSON, so the interface never has to guess what came back, and a
+   * failure answers with a sentence instead of an empty 200.
+   */
+  async function handleVault(request: IncomingMessage, response: ServerResponse): Promise<void> {
+    if (!options.vault) {
+      response.writeHead(503, { 'Content-Type': 'application/json' })
+      response.end(JSON.stringify({ ok: false, error: 'The vault service is not running in this process.' }))
+      return
+    }
+    const url = new URL(request.url || '/', 'http://127.0.0.1')
+    let body: unknown
+    if (request.method === 'POST') {
+      let text: string
+      try {
+        text = await readBody(request, BODY_LIMIT)
+      } catch (error) {
+        response.writeHead(413, { 'Content-Type': 'application/json' })
+        response.end(JSON.stringify({ ok: false, error: (error as Error).message }))
+        return
+      }
+      try {
+        body = text ? JSON.parse(text) : {}
+      } catch {
+        response.writeHead(400, { 'Content-Type': 'application/json' })
+        response.end(JSON.stringify({ ok: false, error: 'That request was not valid JSON.' }))
+        return
+      }
+    }
+    const reply = handleVaultRequest(options.vault, {
+      route: url.pathname.replace(/^\/api\/vault/, ''),
+      method: request.method || 'GET',
+      query: url.searchParams,
+      body,
+    })
+    response.writeHead(reply.status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' })
+    response.end(JSON.stringify(reply.body))
   }
 
   return new Promise<LocalApi>((resolvePromise, reject) => {

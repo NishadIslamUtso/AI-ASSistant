@@ -78,6 +78,41 @@ export const artifactSource = (artifact: Artifact, version?: number): string =>
   artifact.versions[version ?? artifact.versions.length - 1]?.content || ''
 
 /** Interactive plus the inline visualizer: charts, click-to-pick, live reload. */
+/**
+ * Marks elements the app itself puts into a preview — currently the outline drawn
+ * around whatever the pointer is over.
+ *
+ * It has to exist because those elements are children of the document body, and
+ * an element path is a list of child indices. Appending the outline to the body
+ * shifts the index of everything after it, so a click on the first button reports
+ * "the second child", and the rewrite lands on the wrong element. That is exactly
+ * the bug this constant fixes: the index must count the document's own elements,
+ * not the app's furniture.
+ */
+export const PREVIEW_CHROME_ATTRIBUTE = 'data-ai-assistant-chrome'
+
+/**
+ * The index path from the document body down to this element.
+ *
+ * Written to be self-contained — no imports, no outer references — because the
+ * preview script injects this exact function into the frame, so the code that
+ * reports a pick and the code that applies a rewrite cannot disagree about what a
+ * path means. It is exported so it can be tested directly.
+ */
+export function elementPath(element: Element): number[] {
+  const path: number[] = []
+  let node: Element | null = element
+  while (node && node.parentElement && node !== node.ownerDocument.body) {
+    const siblings = Array.prototype.filter.call(
+      node.parentElement.children,
+      (child: Element) => !child.hasAttribute('data-ai-assistant-chrome')
+    ) as Element[]
+    path.unshift(siblings.indexOf(node))
+    node = node.parentElement
+  }
+  return path
+}
+
 export function previewScript(channel: string): string {
   return `<script>
 (function () {
@@ -201,14 +236,7 @@ export function previewScript(channel: string): string {
 
   /* ---------- click to pick (comment mode) ---------- */
   var picking = false, outlined = null, outline = null;
-  function pathOf(element) {
-    var path = [], node = element;
-    while (node && node.parentElement && node !== document.body) {
-      path.unshift(Array.prototype.indexOf.call(node.parentElement.children, node));
-      node = node.parentElement;
-    }
-    return path;
-  }
+  var pathOf = ${String(elementPath)};
   function target(event) {
     var element = event.target;
     if (element === outline) return null;
@@ -221,7 +249,7 @@ export function previewScript(channel: string): string {
     if (!element) { if (outline) outline.remove(); return; }
     if (!outline) {
       outline = document.createElement('div');
-      outline.setAttribute('data-ai-assistant-outline', '');
+      outline.setAttribute('data-ai-assistant-chrome', '');
       outline.style.cssText = 'position:fixed;pointer-events:none;z-index:2147483647;border:2px solid #d48264;background:#d4826418;border-radius:3px;transition:all .06s linear';
       document.body.appendChild(outline);
     }
@@ -285,12 +313,48 @@ export function withDesignTokens(source: string, tokens = ''): string {
   return style + value
 }
 
+/**
+ * A full document gets the preview's head inserted into its OWN head; a fragment
+ * gets wrapped.
+ *
+ * Wrapping a whole document is the mistake this avoids, and it is worth spelling
+ * out because the result looked fine. Given
+ * `<html><head><style>…</style></head><body><button>…` placed inside another
+ * body, the HTML parser drops the inner `<html>`, `<head>` and `<body>` tags and
+ * keeps the style — as a child of the OUTER body. The frame then has one more
+ * element before the content than the document does, so an element path taken
+ * from the frame points one element too far along when the same path is applied
+ * to the source. Clicking a button edited the element beside it.
+ *
+ * Inserting instead means the frame's DOM is the document's DOM, plus our head —
+ * so a path means the same thing on both sides. It also keeps the wrapper styles
+ * out of the body entirely.
+ */
+function withPreviewHead(source: string, head: string): string {
+  const headStart = source.search(/<head[^>]*>/i)
+  if (headStart > -1) {
+    // First thing in the head: an earlier meta CSP cannot be loosened by a later
+    // one, so the artifact's own policy (if it has one) only ever adds to this.
+    const insertAt = source.indexOf('>', headStart) + 1
+    return source.slice(0, insertAt) + head + source.slice(insertAt)
+  }
+  const htmlStart = source.search(/<html[^>]*>/i)
+  if (htmlStart > -1) {
+    const insertAt = source.indexOf('>', htmlStart) + 1
+    return source.slice(0, insertAt) + `<head>${head}</head>` + source.slice(insertAt)
+  }
+  return `<!doctype html><html><head>${head}</head><body>${source}</body></html>`
+}
+
 export function buildPreviewHtml(source: string, channel = 'artifact-preview', tokens = ''): string {
   const policy = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; media-src data: blob:; connect-src 'none'; font-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
   // This is always the first head/CSP, even when the source contains a full page.
   // Additional CSPs in untrusted content cannot loosen this one.
   const tokensStyle = tokens ? `<style id="ai-design-tokens">${tokens}</style>` : ''
-  return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${policy}"><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{margin:0;font-family:system-ui,sans-serif;background:white;color:#171717}*{box-sizing:border-box}canvas[data-chart]{display:block;width:100%}</style>${tokensStyle}${previewScript(channel)}</head><body>${source}</body></html>`
+  const head = `<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${policy}"><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{margin:0;font-family:system-ui,sans-serif;background:white;color:#171717}*{box-sizing:border-box}canvas[data-chart]{display:block;width:100%}</style>${tokensStyle}${previewScript(channel)}`
+  const value = String(source || '')
+  if (/^\s*(?:<!doctype html|<html[\s>])/i.test(value)) return withPreviewHead(value, head)
+  return `<!doctype html><html><head>${head}</head><body>${value}</body></html>`
 }
 
 /* ---------------- comment mode: pick, describe, rewrite ---------------- */

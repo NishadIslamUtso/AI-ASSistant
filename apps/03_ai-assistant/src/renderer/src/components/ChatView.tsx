@@ -1,6 +1,9 @@
 import { useEffect, useRef } from 'react'
-import type { Chat } from '@shared/types'
+import type { Artifact, Chat } from '@shared/types'
+import type { ElementPick } from '@shared/lib/artifacts'
 import type { ModelState } from '@/hooks/useModels'
+import { useDesignTokens } from '@/hooks/useDesignTokens'
+import { viewsForMessage, type LiveArtifacts } from '@/state/artifactView'
 import Composer from './Composer'
 import MessageRow from './MessageRow'
 import BrainMark from './BrainMark'
@@ -28,6 +31,14 @@ export default function ChatView({
   models,
   notice,
   preview,
+  live,
+  highlightId,
+  onRewrite,
+  onRestore,
+  busyArtifactId,
+  rewriteStage,
+  rewriteError,
+  rewriteErrorFor,
 }: {
   chat: Chat | null
   draft: string
@@ -38,11 +49,28 @@ export default function ChatView({
   models: ModelState
   notice: string
   preview?: string
+  /** What the streaming sweep currently has, so a draft redraws as it is written. */
+  live?: LiveArtifacts
+  /** Briefly set when the rail jumps to an artifact in this conversation. */
+  highlightId?: string
+  onRewrite: (request: {
+    artifact: Artifact
+    source: string
+    pick: ElementPick
+    comment: string
+  }) => Promise<boolean>
+  onRestore: (artifact: Artifact, index: number) => void
+  busyArtifactId?: string
+  rewriteStage?: string
+  rewriteError?: string
+  rewriteErrorFor?: string
 }) {
   const scroller = useRef<HTMLDivElement | null>(null)
   const follow = useRef(true)
+  const tokens = useDesignTokens()
 
   const messages = chat?.messages || []
+  const liveArtifacts: LiveArtifacts = live || { messageId: '', artifacts: [] }
   const lastContent = messages.length
     ? messages[messages.length - 1].content.length + (messages[messages.length - 1].status || '')
     : ''
@@ -68,7 +96,19 @@ export default function ChatView({
           ) : (
             <div className="flex flex-col gap-7">
               {messages.map(message => (
-                <MessageRow key={message.id} message={message} />
+                <MessageRow
+                  key={message.id}
+                  message={message}
+                  artifacts={viewsForMessage(message.id, message.artifacts, liveArtifacts)}
+                  tokens={tokens}
+                  highlightId={highlightId}
+                  onRewrite={onRewrite}
+                  onRestore={onRestore}
+                  busyArtifactId={busyArtifactId}
+                  rewriteStage={rewriteStage}
+                  rewriteError={rewriteError}
+                  rewriteErrorFor={rewriteErrorFor}
+                />
               ))}
             </div>
           )}

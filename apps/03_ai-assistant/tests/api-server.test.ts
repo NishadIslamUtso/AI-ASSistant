@@ -28,9 +28,10 @@ async function start(overrides: Partial<Parameters<typeof startLocalApi>[0]> = {
     // Port 0 means "any free port", so a test never fights the running app for one.
     port: 0,
     rendererDir: root,
-    // Deliberately dead services: this is what an offline machine looks like.
+    // Deliberately dead service: this is what an offline machine looks like.
+    // The vault is not a URL any more — it runs in this process, and
+    // tests/vault-http.test.ts is where its own routes are covered.
     ollamaUrl: 'http://127.0.0.1:9',
-    vaultUrl: 'http://127.0.0.1:9',
     ...overrides,
   })
 }

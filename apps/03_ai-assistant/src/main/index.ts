@@ -2,6 +2,7 @@ import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'node:path'
 import { writeFileSync } from 'node:fs'
 import { startLocalApi, type LocalApi } from './api/server'
+import { createVaultService, resolveVaultRoot } from './vault/service'
 
 /**
  * The main process. Everything that touches the machine lives on this side:
@@ -15,6 +16,24 @@ import { startLocalApi, type LocalApi } from './api/server'
  * to any free port and says so, because a busy port is not the user's problem.
  */
 const API_PORT = Number(process.env.AI_ASSISTANT_API_PORT || 41979)
+
+/**
+ * Where the vault is: what the environment asks for, then the vault that ships
+ * with a checkout, then this user's own app data folder. The first one that
+ * exists wins. Nothing is ever created — a missing vault is reported by the
+ * interface, because replacing a vault the user meant to point at would be the
+ * worst possible outcome.
+ */
+function vaultRoot(): string {
+  const checkout = app.isPackaged ? '' : join(app.getAppPath(), '..', '..', 'vault', 'AI-Brain')
+  return resolveVaultRoot([
+    process.env.AI_ASSISTANT_VAULT || '',
+    process.env.AI_BRAIN_VAULT || '',
+    process.env.AI_BRAIN_PATH || '',
+    checkout,
+    join(app.getPath('userData'), 'vault'),
+  ]).root
+}
 
 const isSmoke = process.argv.includes('--smoke')
 const smokeOutArg = process.argv.find(arg => arg.startsWith('--smoke-out='))
@@ -144,8 +163,16 @@ if (!gotLock) {
     const rendererDir = process.env['ELECTRON_RENDERER_URL']
       ? undefined
       : join(__dirname, '../renderer')
+    // The vault lives in this process: no companion server to start, no port to
+    // find, and the interface's /api/vault calls land on these files.
+    const vault = createVaultService({ vaultPath: vaultRoot() })
+    console.log(
+      vault.available()
+        ? `[vault] ${vault.root}`
+        : `[vault] nothing at ${vault.root}; captures will report that rather than create one.`
+    )
     try {
-      api = await startLocalApi({ port: API_PORT, rendererDir })
+      api = await startLocalApi({ port: API_PORT, rendererDir, vault })
       if (api.port !== API_PORT) {
         console.log(`[api] port ${API_PORT} was busy; listening on ${api.port} instead.`)
       }
