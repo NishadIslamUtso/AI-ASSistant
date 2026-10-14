@@ -43,6 +43,7 @@ export default function SubAgentPanel({ subAgents, models, onClose, onInsert, no
         <label className="agent-field"><span>Role</span><select value={agent.preset} onChange={event => edit({ preset: event.target.value })}>{AGENT_PRESETS.map(entry => <option key={entry.id} value={entry.id}>{entry.name}</option>)}
           {skills.length > 0 && <optgroup label="Your skills">{skills.map(entry => <option key={entry.id} value={entry.id}>{entry.name}</option>)}</optgroup>}</select></label>
         <p className="agent-hint">{preset.hint}</p>
+        <label className="agent-field"><span>Task</span><textarea rows={6} value={draft ?? agent.task} placeholder="One self-contained task. The sub-agent cannot see this chat." onChange={event => { setDraft(event.target.value); edit({ task: event.target.value }) }} /></label>
         <label className="agent-field"><span>Instruction</span><textarea rows={4} value={agent.system ?? preset.system} placeholder="What this sub-agent is told to do." onChange={event => edit({ system: event.target.value })} /></label>
         <div className="agent-skill-row">
           {saveOpen ? <>
@@ -58,7 +59,6 @@ export default function SubAgentPanel({ subAgents, models, onClose, onInsert, no
             {agent.system && <button className="secondary-button" onClick={() => { edit({ system: undefined }); notify('Reverted to the built-in instruction.') }}>Reset</button>}
           </>}
         </div>
-        <label className="agent-field"><span>Task</span><textarea rows={6} value={draft ?? agent.task} placeholder="One self-contained task. The sub-agent cannot see this chat." onChange={event => { setDraft(event.target.value); edit({ task: event.target.value }) }} /></label>
         <div className="agent-controls">
           <label className="agent-toggle"><input type="checkbox" checked={Boolean(agent.useVault)} onChange={event => edit({ useVault: event.target.checked })} /><Database size={13} />Search AI-Brain for context</label>
           <small>{String(draft ?? agent.task).length.toLocaleString()} / 12,000 characters</small>

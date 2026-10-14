@@ -62,6 +62,16 @@ function declaredNames(text) {
   }
   // declarations
   for (const m of text.matchAll(/\b(?:function\s*\*?|const|let|var|class)\s+([A-Za-z_$][\w$]*)/g)) names.add(m[1])
+  // Destructured bindings and params: {a, b} , [a, b] , (a, b).
+  // This pass matches only groups with NO nesting inside. A wider match would
+  // start at the `{` of `{items.map(([Icon, label], i) => …` and swallow the
+  // inner array, losing `Icon` — which is a binding the JSX check below needs.
+  for (const m of text.matchAll(/[{([]\s*([^{}()[\]]*?)\s*[)}\]]/g)) {
+    for (const part of m[1].split(',')) {
+      const name = part.split(':').pop().split('=')[0].trim().replace(/^\.\.\./, '').replace(/^[^\w$]+/, '')
+      if (/^[A-Za-z_$][\w$]*$/.test(name)) names.add(name)
+    }
+  }
   // destructured bindings and params: {a, b} , [a, b] , (a, b)
   for (const m of text.matchAll(/[{([]\s*([^)}\]]{0,400}?)\s*[)}\]]/g)) {
     for (const part of m[1].split(',')) {
@@ -91,6 +101,33 @@ function calledNames(text) {
   return names
 }
 
+/**
+ * Components used in JSX, e.g. <ClaudeMark size={28} />.
+ *
+ * This is the check that was missing. A component reference is not a function
+ * call in source — `<Foo />` compiles to `jsx(Foo, …)` at build time — so an
+ * identifier check that only looks for `name(` never sees it. Vite does not
+ * error either, because it just emits the reference and lets the runtime deal
+ * with it. The result is a blank page with "Foo is not defined" and a green
+ * build, which is exactly what happened when ClaudeMark was renamed to
+ * BrainMark in two places and missed in a third.
+ */
+function jsxComponentNames(text) {
+  const names = new Set()
+  const stripped = text
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/^\s*\/\/.*$/gm, ' ')
+    // A tag-looking string like '<div className="x">' is prose, not JSX.
+    .replace(/`(?:\\.|[^`\\])*`/g, '``')
+    .replace(/"(?:\\.|[^"\\])*"/g, '""')
+    .replace(/'(?:\\.|[^'\\])*'/g, "''")
+  for (const m of stripped.matchAll(/<\/?([A-Z][\w.]*)/g)) {
+    // <Foo.Bar /> resolves the Foo binding, not Foo.Bar.
+    names.add(m[1].split('.')[0])
+  }
+  return names
+}
+
 const files = walk(SRC)
 
 test('source tree is not empty', () => {
@@ -104,6 +141,13 @@ for (const file of files) {
     const known = declaredNames(text)
     const unknown = [...calledNames(text)].filter(name => name.length > 1 && !known.has(name) && !GLOBALS.has(name))
     assert.deepEqual(unknown, [], `${rel} calls ${unknown.join(', ')} which is not imported, declared, or global`)
+  })
+
+  test(`${rel} renders only components it can resolve`, () => {
+    const text = fs.readFileSync(file, 'utf8')
+    const known = declaredNames(text)
+    const unknown = [...jsxComponentNames(text)].filter(name => !known.has(name) && !GLOBALS.has(name))
+    assert.deepEqual(unknown, [], `${rel} renders ${unknown.join(', ')} which is not imported, declared, or global`)
   })
 }
 

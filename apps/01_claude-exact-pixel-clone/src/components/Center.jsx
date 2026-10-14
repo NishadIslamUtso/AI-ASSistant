@@ -78,7 +78,7 @@ export default function Center({ seed, chat, onArtifact, onRetryCapture, setting
       <div className="reply-composer"><Composer chat={chat} notify={notify} seed={seed} {...composerProps} />
         <div className="chat-save-status">{chat.vaultStatus === 'saved' ? 'Saved in local chat history and AI-Brain' : chat.vaultStatus === 'saving' ? 'Saving to AI-Brain…' : chat.vaultStatus === 'error' ? <><span title={chat.vaultError}>Local chat kept · vault capture failed</span><button onClick={() => onRetryCapture(chat)}><RefreshCw size={11} />Retry</button></> : 'Local chat history · check important answers'}</div>
       </div>
-    </> : <div className="home-content"><div className="greeting"><ClaudeMark size={28} /><h1>{getGreeting()}, {firstName(profile)}</h1></div><Composer chat={chat} notify={notify} seed={seed} {...composerProps} /></div>}
+    </> : <div className="home-content"><div className="greeting"><BrainMark size={28} /><h1>{getGreeting()}, {firstName(profile)}</h1></div><Composer chat={chat} notify={notify} seed={seed} {...composerProps} /></div>}
   </main>
 }
 

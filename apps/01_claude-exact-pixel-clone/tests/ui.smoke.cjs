@@ -369,7 +369,12 @@ test('a sub agent answers in its own context and leaves the transcript alone', a
 
     click(byText('button', /New sub agent/))
     await sleep(200)
-    const task = [...doc.querySelectorAll('.agent-field textarea')][0]
+    // Target the Task field by its label, never by index. Adding a field
+    // above it once silently broke this test — it typed into the Instruction
+    // box instead and the agent ran with an empty task.
+    const task = [...doc.querySelectorAll('.agent-field')]
+      .find(label => /^Task$/.test(label.querySelector('span')?.textContent || ''))
+      ?.querySelector('textarea')
     assert.ok(task, 'the sub-agent task field is missing')
     type(task, 'List the open questions in the workout plan')
     await sleep(150)
