@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { CalendarDays } from 'lucide-react'
+import { highlightParts, searchChats } from '../lib/search.js'
 import { PanelLeft, ArrowLeft, ArrowRight, MessagesSquare, Code2, Search, Plus, FolderClosed, Shapes, Briefcase, ChevronDown, SlidersHorizontal, ArrowUpRight, Blocks, MoreVertical, Pin, Pencil, Trash2, PanelsTopLeft, ChevronRight, Bot } from 'lucide-react'
 import UserMenu from './UserMenu.jsx'
 import useDismiss from '../hooks/useDismiss.js'
@@ -27,7 +28,12 @@ export default function Sidebar({ chats, currentChat, navigate, view, onView, on
   const [userMenu, setUserMenu] = useState(false)
   const [olderOpen, setOlderOpen] = useState(true)
   const accountRef = useRef(null)
-  const filtered = chats.filter(chat => chat.title.toLowerCase().includes(search.toLowerCase()))
+  // Title match when the query is empty-ish, full-text otherwise. Either way a
+  // chat whose title matches is never hidden, so this is a strict improvement.
+  const query = search.trim()
+  const results = query ? searchChats(chats, query) : []
+  const filtered = query ? results.map(entry => entry.chat) : chats
+  const matchesFor = chatId => results.find(entry => entry.chat.id === chatId)?.matches || []
   const groups = [...new Set(filtered.filter(chat => !chat.pinned).map(chat => chat.date))]
   if (filtered.some(chat => chat.pinned)) groups.unshift('Pinned')
   const openMenu = (event, chat) => { event.preventDefault(); event.stopPropagation(); setUserMenu(false); setMenu({ x: event.clientX || event.currentTarget.getBoundingClientRect().right - 200, y: event.clientY || event.currentTarget.getBoundingClientRect().bottom, chat }) }
@@ -59,12 +65,13 @@ export default function Sidebar({ chats, currentChat, navigate, view, onView, on
               {group === 'Oct 8' ? <SlidersHorizontal size={13} /> : group === 'Older' ? <ArrowUpRight size={14} /> : null}
             </div>
             {(group !== 'Older' || olderOpen || search) && items.map(chat => <div key={chat.id} className={`chat-item ${currentChat === chat.id && view === 'chat' ? 'active' : ''}`} onContextMenu={event => openMenu(event, chat)}>
-              <button className="chat-title" onClick={() => { navigate(chat.id); onView('chat') }} title={chat.title}>{chat.pinned && <Pin size={11} />}{chat.title}</button>
+              <button className="chat-title" onClick={() => { navigate(chat.id); onView('chat') }} title={chat.title}>{chat.pinned && <Pin size={11} />}{query ? highlightParts(chat.title, query).map((part, index) => typeof part === 'string' ? part : <mark key={index}>{part.mark}</mark>) : chat.title}</button>
+              {matchesFor(chat.id).map(match => <p key={match.messageId} className="chat-search-snippet">{highlightParts(match.snippet, query).map((part, index) => typeof part === 'string' ? part : <mark key={index}>{part.mark}</mark>)}</p>)}
               <button className="chat-more icon-button" aria-label={`Actions for ${chat.title}`} onClick={event => openMenu(event, chat)}><MoreVertical size={15} /></button>
             </div>)}
           </section>
         })}
-        {!filtered.length && <p className="empty-search">No matching chats</p>}
+        {!filtered.length && <p className="empty-search">No chats match “{query}”</p>}
       </div>
     </div>
     <footer className="sidebar-footer">
