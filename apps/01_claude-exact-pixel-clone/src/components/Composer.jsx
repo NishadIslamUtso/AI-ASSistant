@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { filterPrompts, loadPrompts, placeholdersIn } from '../lib/prompts.js'
 import { Plus, Mic, AudioLines, ChevronDown, ArrowUp, Square, Paperclip, Code2, Sparkles, Layers, X, FileText, Image } from 'lucide-react'
 import ModelSelector from './ModelSelector.jsx'
 import { MAX_ATTACHMENTS, readAttachment } from '../lib/attachments.js'
@@ -14,7 +15,41 @@ export default function Composer({ models, vision, chat, busyChatId, onSend, onS
   const [plusOpen, setPlusOpen] = useState(false)
   const [projectOpen, setProjectOpen] = useState(false)
   const [dragOver, setDragOver] = useState(false)
+  // The slash menu: "/" at the start of a word opens the prompt library.
+  const [userPrompts, setUserPrompts] = useState(() => loadPrompts())
+  const [slashIndex, setSlashIndex] = useState(0)
+  const slash = useMemo(() => {
+    const match = /(?:^|\s)\/([^\s/]*)$/.exec(input)
+    return match ? { query: match[1], start: match.index + (match[0].startsWith('/') ? 0 : 1) } : null
+  }, [input])
+  const slashMatches = useMemo(
+    () => (slash ? filterPrompts(userPrompts, slash.query) : []),
+    [slash, userPrompts],
+  )
+  const slashOpen = Boolean(slash) && slashMatches.length > 0
+  useEffect(() => { setSlashIndex(0) }, [slash?.query])
   const textarea = useRef(null)
+  /** Replace the "/query" the person typed with the prompt they picked. */
+  const applyPrompt = useCallback(prompt => {
+    if (!slash) return
+    const before = input.slice(0, slash.start)
+    const body = prompt.body
+    setInput(before + body)
+    setSlashIndex(0)
+    const blanks = placeholdersIn(body).length
+    notify(blanks
+      ? `Inserted "${prompt.name}". It has ${blanks} placeholder${blanks === 1 ? '' : 's'} in {{braces}} to fill in.`
+      : `Inserted "${prompt.name}".`)
+    requestAnimationFrame(() => {
+      const node = textarea.current
+      if (!node) return
+      node.focus()
+      // Park the cursor at the first placeholder so it can be typed over.
+      const at = body.indexOf('{{')
+      const position = before.length + (at === -1 ? body.length : at)
+      node.setSelectionRange(position, position)
+    })
+  }, [slash, input, notify])
   const fileInput = useRef(null)
   const plusRef = useRef(null)
   const projectRef = useRef(null)
@@ -60,7 +95,30 @@ export default function Composer({ models, vision, chat, busyChatId, onSend, onS
         {contextBundle && <div className="attachment-chip context-chip"><Layers size={14} /><button onClick={() => onContextPreview(contextBundle)}>Context: {contextBundle.title}</button><button aria-label="Remove context" onClick={clearContext}><X size={12} /></button></div>}
         {artifactMode && <div className="attachment-chip"><Code2 size={14} />HTML artifact<button aria-label="Cancel artifact mode" onClick={() => setArtifactMode(false)}><X size={12} /></button></div>}
       </div>}
-      <textarea ref={textarea} aria-label="Message" placeholder={chat?.messages?.length ? 'Reply…' : 'How can I help you today?'} value={input} onChange={event => setInput(event.target.value)} rows={2} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); send() } }} />
+      {slashOpen && slashIndex >= 0 && <div className="slash-menu" role="listbox" aria-label="Prompts">
+        <p className="slash-menu-head">Prompts</p>
+        {slashMatches.map((prompt, index) => <button key={prompt.id} role="option" aria-selected={index === slashIndex}
+          className={index === slashIndex ? 'slash-item selected' : 'slash-item'}
+          onMouseEnter={() => setSlashIndex(index)}
+          onMouseDown={event => { event.preventDefault(); applyPrompt(prompt) }}>
+          <span className="slash-name">/{prompt.name}</span>
+          <span className="slash-hint">{prompt.hint}</span>
+        </button>)}
+        <p className="slash-menu-foot">↑↓ to choose · Tab or Enter to insert · Esc to dismiss</p>
+      </div>}
+      <textarea ref={textarea} aria-label="Message" placeholder={chat?.messages?.length ? 'Reply…' : 'How can I help you today?'} value={input} onChange={event => setInput(event.target.value)} rows={2} onKeyDown={event => {
+        if (slashOpen) {
+          if (event.key === 'ArrowDown') { event.preventDefault(); setSlashIndex((slashIndex + 1) % slashMatches.length); return }
+          if (event.key === 'ArrowUp') { event.preventDefault(); setSlashIndex((slashIndex - 1 + slashMatches.length) % slashMatches.length); return }
+          if (event.key === 'Escape') { event.preventDefault(); setSlashIndex(-1); return }
+          if (event.key === 'Tab' || (event.key === 'Enter' && !event.shiftKey)) {
+            event.preventDefault()
+            if (slashIndex >= 0) applyPrompt(slashMatches[slashIndex])
+            return
+          }
+        }
+        if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); send() }
+      }} />
       <div className="composer-controls"><div ref={plusRef} className="composer-plus">
         <button className="icon-button" aria-label="Add attachments or tools" aria-expanded={plusOpen} onClick={() => setPlusOpen(!plusOpen)} disabled={Boolean(busyChatId) || addingFiles}><Plus size={21} /></button>
         {plusOpen && <div className="popup plus-menu" role="menu" aria-label="Composer tools">
