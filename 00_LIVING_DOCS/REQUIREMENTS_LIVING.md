@@ -43,7 +43,11 @@
   for `chrome-extension://` origins, carrying the capture side of the vault and nothing that
   could spend a key, change a setting or export the vault. The extension itself is still a
   starter: it has not been loaded or run against the app yet, and nothing is captured until it is.
-- **Verified on 2026-10-14:** 26 test files / 242 tests, clean typecheck, clean web build, desktop smoke
+- **Permissions live in Settings > Agent access and are enforced in the main process**: Local model,
+  Browser extension, Keeping conversations, and one switch per provider that has a key. Capabilities that
+  do not exist (Files, Shell, Web, MCP) are stated as not built, never offered as switches. Every reply is
+  labelled `local` or `online · <provider>`.
+- **Verified on 2026-10-14:** 26 test files / 245 tests, clean typecheck, clean web build, desktop smoke
   `errors=0 warnings=0`, browser check 33/33 with 0 console problems, the desktop vault end-to-end green
   (message → answer → Markdown in the vault → vault moved from Settings), and the desktop cloud end-to-end
   green (key pasted → Test → model in the composer menu → the provider's own answer, provider asked exactly
@@ -421,6 +425,19 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - **Why:** the user compared the branches and preferred that one's look and feel.
 - **Verified:** 48 unit/integration tests, 5 jsdom UI tests, clean build, all
   endpoints checked live through the preview proxy.
+
+### [2026-10-14 late night] Agent access: the permission surface, with teeth
+- **Added:** `src/shared/lib/permissions.ts` (the one shape: local, browserCapture, keepConversations, and a
+  per-provider map), stored in the app's settings file, sanitised on the way in.
+- **Added:** Settings > Agent access — a switch per permission and per keyed provider, plus the not-built
+  capabilities stated as such. In the browser preview it says there is no machine behind the window.
+- **Enforced:** a switched-off provider is refused before any request (key kept), a switched-off capture is
+  `403 { skipped, reason: 'captures-off' }` on the extension port with nothing written, keeping switched off
+  means nothing is attempted and the title bar says `Vault off`, and the local model switched off refuses
+  the send with a sentence.
+- **Added:** `local` / `online · <provider>` on every finished reply.
+- **Verified:** 245 tests; desktop end-to-end green (off → refused and nothing written → on → accepted, for
+  both captures and keeping, with the chip telling the truth between them); 37 browser assertions.
 
 ### [2026-10-14 night] The extension port: the app opens one socket for the browser extension
 - **Added:** `src/main/extension/server.ts` — a second listener on 127.0.0.1:8765

@@ -107,6 +107,8 @@ export type CloudProviderView = {
   baseUrl: string
   hasKey: boolean
   sessionOnly: boolean
+  /** Switched off in Settings > Agent access: the key is kept, and nothing is sent. */
+  enabled: boolean
 }
 
 export type CloudView = {

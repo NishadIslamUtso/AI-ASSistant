@@ -1,6 +1,6 @@
 # TODO_NEXT.md — Immediate Next Actions (Living)
 
-**Last Updated:** 2026-10-14 (night) Asia/Dhaka
+**Last Updated:** 2026-10-14 (late night) Asia/Dhaka
 **Rule:** Priority order. Update after each session, check off when done.
 
 ---
@@ -20,8 +20,6 @@ Nothing below matters until the app has run on the TUF A15.
 
 ## Priority 2 — What the owner has already asked for
 
-- [ ] **Settings > Agent access** — the single permission surface (Local / Cloud × Vault, Files, Shell, Web,
-      MCP). Built when something real can be granted; cloud off by default
 - [ ] **Browsing Maps** — the memory map of what was read and when
 - [ ] A Windows installer (nothing exists yet; `npm run dev` is the way in)
 
@@ -38,6 +36,9 @@ Nothing below matters until the app has run on the TUF A15.
 - [x] Memory warning measured against the chosen profile; no more "6 GB answered with 4 GB"
 - [x] Vercel deployment files removed
 - [x] Every living doc, `.ai/` file and the extension docs brought to the current state
+- [x] **Settings > Agent access** — the local model, browser captures, keeping conversations and each keyed
+      provider, each one enforced in the main process; Files, Shell, Web and MCP are stated as not built rather
+      than offered. Every reply is labelled `local` or `online · <provider>`
 - [x] **The extension port** — 127.0.0.1:8765, loopback only, `chrome-extension://` origins only, carrying the
       capture side of the vault (health, status, context, capsules, blacklist, capture) and nothing that could
       spend a key, change a setting or export the vault. What is left of browser capture is the extension itself:

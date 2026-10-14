@@ -274,3 +274,50 @@ test('an OpenAI-style stream reads the same, and a stream that just stops is sti
     await provider.close()
   }
 })
+
+test('a provider switched off in Agent access is never asked, and its key stays', async () => {
+  const provider = await fakeProvider((_request, response) => {
+    response.writeHead(200, { 'content-type': 'application/json' })
+    response.end('{"data":[{"id":"gpt-4o-mini"}]}')
+  })
+  try {
+    const keys = createKeyStore({ file: join(mkdtempSync(join(tmpdir(), 'keys-')), 'keys.json') })
+    keys.set('openai', 'sk-live')
+    const permissions = () => ({ local: true, browserCapture: true, keepConversations: true, cloud: { openai: false } })
+    const client = createCloudClient({
+      keys,
+      permissions,
+      env: { AI_ASSISTANT_OPENAI_BASE_URL: provider.url },
+    })
+
+    // The provider is still listed — with the key it has — so the switch that
+    // turned it off can be found again, but it is not reachable.
+    const view = client.providers().find(entry => entry.id === 'openai')
+    assert.equal(view?.hasKey, true)
+    assert.equal(view?.enabled, false)
+
+    // No model list, no test request, and no reply: three refusals, before any
+    // request leaves this machine.
+    assert.deepEqual(await client.models(), { models: [], problems: [] })
+    await assert.rejects(() => client.listModels('openai'), /switched off in Settings > Agent access/)
+    await assert.rejects(async () => {
+      for await (const _record of client.stream({ model: 'openai/gpt-4o-mini', messages: [], maxTokens: 4096 })) {
+        // unreachable
+      }
+    }, /switched off in Settings > Agent access/)
+    assert.equal(provider.seen.length, 0, 'a switched-off provider is never contacted')
+    assert.equal(keys.get('openai'), 'sk-live', 'the key is kept: switching off is not deleting')
+
+    // Switched back on, the same client works without recreating anything: the
+    // permission is read fresh on every call.
+    const on = createCloudClient({
+      keys,
+      permissions: () => ({ local: true, browserCapture: true, keepConversations: true, cloud: { openai: true } }),
+      env: { AI_ASSISTANT_OPENAI_BASE_URL: provider.url },
+    })
+    assert.equal((await on.models()).models.length, 1)
+    assert.equal(provider.seen.length, 1)
+  } finally {
+    await provider.close()
+  }
+})

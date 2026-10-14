@@ -15,7 +15,8 @@ import { isDemo } from '../platform/bridge'
  * rule, and inventing a vault would break a more important one.
  */
 export type VaultState = {
-  state: 'unknown' | 'ready' | 'missing' | 'offline'
+  /** 'off' is not a vault state but a decision: keeping conversations is switched off. */
+  state: 'unknown' | 'ready' | 'missing' | 'offline' | 'off'
   /** Where the vault is, as the app was told. Shown when it is missing. */
   path: string
   /** The sentence the vault gave, so the interface can repeat it rather than guess. */

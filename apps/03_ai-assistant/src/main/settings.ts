@@ -11,6 +11,7 @@
  */
 import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
+import { DEFAULT_PERMISSIONS, normalizePermissions, type Permissions } from '../shared/lib/permissions'
 
 export type AppSettings = {
   /**
@@ -24,9 +25,19 @@ export type AppSettings = {
    * than with the keys — a person can read and edit it.
    */
   cloud: { baseUrl: string; model: string }
+  /**
+   * What each agent is allowed to do — see shared/lib/permissions.ts. Read and
+   * written here because the main process is what enforces them, and the window
+   * is told the result rather than deciding for itself.
+   */
+  permissions: Permissions
 }
 
-export const EMPTY_SETTINGS: AppSettings = { vaultPath: '', cloud: { baseUrl: '', model: '' } }
+export const EMPTY_SETTINGS: AppSettings = {
+  vaultPath: '',
+  cloud: { baseUrl: '', model: '' },
+  permissions: DEFAULT_PERMISSIONS,
+}
 
 export function readSettings(file: string): AppSettings {
   try {
@@ -42,6 +53,7 @@ export function readSettings(file: string): AppSettings {
         baseUrl: text(cloud.baseUrl, 2048),
         model: text(cloud.model, 300),
       },
+      permissions: normalizePermissions(parsed.permissions),
     }
   } catch {
     return { ...EMPTY_SETTINGS }
@@ -56,6 +68,7 @@ export function writeSettings(file: string, settings: AppSettings): AppSettings 
       baseUrl: String(cloud.baseUrl || '').trim().slice(0, 2048),
       model: String(cloud.model || '').trim().slice(0, 300),
     },
+    permissions: normalizePermissions(settings.permissions),
   }
   mkdirSync(dirname(file), { recursive: true })
   // Write beside the file and rename over it: a crash mid-write cannot leave a

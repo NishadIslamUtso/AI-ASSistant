@@ -13,7 +13,7 @@ grants it, from Settings.
 
 | Path | What it is | State |
 |---|---|---|
-| `apps/03_ai-assistant/` | **THE APP.** Electron + React + TypeScript + Tailwind 4. Real chat, artifacts, comment mode, vault writes, online providers, an extension port, Settings. | Active. 242 tests, typecheck, both builds, desktop smoke and all three end-to-end checks (vault, cloud, extension port) green in the sandbox. **Not yet run on the user's Windows machine.** |
+| `apps/03_ai-assistant/` | **THE APP.** Electron + React + TypeScript + Tailwind 4. Real chat, artifacts, comment mode, vault writes, online providers, an extension port, agent permissions, Settings. | Active. 245 tests, typecheck, both builds, desktop smoke and all four end-to-end checks (vault, cloud, extension port, agent access) green in the sandbox. **Not yet run on the user's Windows machine.** |
 | `apps/01_claude-exact-pixel-clone/` | The first clone, built to match six Claude screenshots. | Historical. Kept as the port source for libs/hooks/server logic. Not the app. |
 | `apps/02_electron-claude-clone-v6/` | An older Electron fork with more features. | Historical reference. |
 | `extension/` | MV3 browser extension: collector + context suggester. | Starter + spec. **The app now has the port it needs** (127.0.0.1:8765, capture side only), but the extension itself has not been loaded or run against it yet. |
@@ -79,6 +79,8 @@ These are the owner's own words and corrections. They outrank anything a later A
   things and stay.)
 - Online APIs (Claude and the rest) are a feature, not an afterthought — but nothing is sent anywhere until a
   key is saved by hand. Keys belong to the machine, not to the interface.
+- Permissions belong in one place — "put everything in settings, so i can give access to the cloud agent or the
+  local agent of something when I want to" — and every switch must govern something real, or it is not shown.
 - App name is **AI ASSistant**; no Claude branding in user-facing copy.
 - Do not look at other branches for design. From other branches take only finished logic, never JSX.
 - Open-source ready for anyone's machine: no hardcoded names, emails, paths or model tags.

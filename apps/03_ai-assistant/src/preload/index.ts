@@ -4,6 +4,7 @@ import type {
   CloudTestAnswer,
   CloudView,
 } from '../shared/lib/providers'
+import type { Permissions } from '../shared/lib/permissions'
 
 /**
  * The only bridge between the window and the machine.
@@ -22,18 +23,21 @@ const api = {
   },
   settings: {
     /** What the app has been told to do, as the main process holds it. */
-    read: (): Promise<{ vaultPath: string; cloud: { baseUrl: string; model: string } }> =>
-      ipcRenderer.invoke('settings:read'),
+    read: (): Promise<{
+      vaultPath: string
+      cloud: { baseUrl: string; model: string }
+      permissions: Permissions
+    }> => ipcRenderer.invoke('settings:read'),
     /**
      * Save a change. The main process decides whether it is possible and says
      * what happened; the renderer is told the result rather than assuming one.
      */
     update: (
-      patch: { vaultPath?: string; cloud?: { baseUrl?: string; model?: string } }
+      patch: { vaultPath?: string; cloud?: { baseUrl?: string; model?: string }; permissions?: Permissions }
     ): Promise<{
       ok: boolean
       error?: string
-      settings?: { vaultPath: string; cloud: { baseUrl: string; model: string } }
+      settings?: { vaultPath: string; cloud: { baseUrl: string; model: string }; permissions: Permissions }
       status?: { ok: boolean; available: boolean; vault: string; error?: string; counts?: { files: number; entities: number } }
     }> => ipcRenderer.invoke('settings:update', patch),
   },

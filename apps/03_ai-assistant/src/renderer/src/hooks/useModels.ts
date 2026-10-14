@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ModelCapabilities } from '@shared/types'
 import { getCapabilities, isRemoteModel, listModels, showModel } from '@shared/lib/ollama'
 import { parseCloudModel } from '@shared/lib/providers'
+import { DEFAULT_PERMISSIONS, type Permissions } from '@shared/lib/permissions'
 import { bridge, isDemo } from '../platform/bridge'
 
 /** Nothing is assumed about a model until Ollama's own metadata says so. */
@@ -39,7 +40,12 @@ export type ModelState = {
  * support is taken from Ollama's capability list, never from a model's name —
  * `qwen3-vl` looking like "vision" proves nothing about what is installed.
  */
-export default function useModels(model: string, setModel: (name: string) => void): ModelState {
+export default function useModels(
+  model: string,
+  setModel: (name: string) => void,
+  /** What the person allowed in Settings > Agent access. */
+  permissions: Permissions = DEFAULT_PERMISSIONS
+): ModelState {
   const [local, setLocal] = useState<InstalledModel[]>([])
   const [online, setOnline] = useState<InstalledModel[]>([])
   const [status, setStatus] = useState<ModelState['status']>('loading')
@@ -128,7 +134,9 @@ export default function useModels(model: string, setModel: (name: string) => voi
       setVerification({
         name: model,
         local: isCloud,
-        error: isCloud ? '' : `${model} needs a key saved in Settings > Models.`,
+        error: isCloud
+          ? ''
+          : `${model} is not available right now: no key is saved for it, or its provider is switched off in Settings > Agent access.`,
       })
       return
     }
@@ -172,6 +180,11 @@ export default function useModels(model: string, setModel: (name: string) => voi
     models,
     status,
     error:
+      // A local answer switched off is said plainly, and it is the reason a send
+      // is refused — the switch is not decoration.
+      !cloudName && !permissions.local
+        ? 'Answering with the local model is switched off in Settings > Agent access.'
+        :
       // An online model is unaffected by Ollama being down, and saying otherwise
       // would be a warning about something that is not in the way.
       cloudName
@@ -185,6 +198,6 @@ export default function useModels(model: string, setModel: (name: string) => voi
     refresh: () => void refresh(),
     available: isCloud
       ? true
-      : status === 'online' && inList && verification.name === model && verification.local,
+      : permissions.local && status === 'online' && inList && verification.name === model && verification.local,
   }
 }
