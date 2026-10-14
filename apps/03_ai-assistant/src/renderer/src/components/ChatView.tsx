@@ -90,7 +90,7 @@ export default function ChatView({
   return (
     <main className="flex min-w-0 flex-1 flex-col">
       <div ref={scroller} onScroll={trackScroll} className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-[760px] px-6 py-6">
+        <div className="mx-auto w-full max-w-[var(--chat-width)] px-6 py-6">
           {messages.length === 0 ? (
             <EmptyState onPick={setDraft} />
           ) : (

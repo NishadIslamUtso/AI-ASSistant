@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DEFAULT_MODEL } from '@shared/lib/storage'
 import { DEFAULT_PROFILE, normalizeProfile } from '@shared/lib/profile'
-import { DEFAULT_PROFILE_ID } from '@shared/lib/inference'
 import TitleBar from './components/TitleBar'
 import ArtifactsRail from './components/ArtifactsRail'
 import { chatArtifacts } from './state/artifactView'
@@ -16,6 +15,13 @@ import useModels from './hooks/useModels'
 import usePersistentState from './hooks/usePersistentState'
 import useVault from './hooks/useVault'
 import SettingsDialog from './components/SettingsDialog'
+import {
+  APPEARANCE_KEY,
+  DEFAULT_APPEARANCE,
+  applyAppearance,
+  normalizeAppearance,
+} from './state/appearance'
+import { DEFAULT_INFERENCE, INFERENCE_KEY, normalizeInference } from './state/performance'
 import { useChats } from './state/useChats'
 import { isDemo } from './platform/bridge'
 import { vaultPost } from '@shared/lib/vault'
@@ -60,6 +66,26 @@ export default function App() {
   // quietly did not happen.
   const vault = useVault(`${chat?.vaultStatus || ''}:${vaultRevision}`)
 
+  // Interface preferences live in this window's storage, not the machine's
+  // settings file: they are about how the app reads rather than where your
+  // work is, so they also work in the browser preview.
+  const [appearance, setAppearance] = usePersistentState(
+    APPEARANCE_KEY,
+    DEFAULT_APPEARANCE,
+    normalizeAppearance,
+    setNotice
+  )
+  const [inference, setInference] = usePersistentState(
+    INFERENCE_KEY,
+    DEFAULT_INFERENCE,
+    normalizeInference,
+    setNotice
+  )
+
+  useEffect(() => {
+    applyAppearance(appearance)
+  }, [appearance])
+
   const navigate = useCallback((chatId: string) => chats.open(chatId), [chats])
 
   const chatApi = useChat({
@@ -73,9 +99,9 @@ export default function App() {
     // here, and attaching an image says plainly what is missing.
     vision: { bridgeModel: '' },
     notify: setNotice,
-    // Settings > Performance will edit this. Until then the 4 GB profile is the
-    // safe default: it is the one that cannot overflow a small card.
-    inference: { profile: DEFAULT_PROFILE_ID },
+    // What Settings > Performance chose. Left alone it is the 4 GB profile:
+    // the one that cannot overflow a small card.
+    inference,
     // Where finished conversations are kept. In the browser preview there is no
     // vault behind the interface, so nothing is attempted and no failed request
     // appears in the console — the preview stays quiet, as it must.
@@ -103,7 +129,7 @@ export default function App() {
   const rewrite = useArtifactRewrite({
     model: models.model,
     available: models.available,
-    inference: { profile: DEFAULT_PROFILE_ID },
+    inference,
   })
 
   /**
@@ -245,6 +271,11 @@ export default function App() {
         onClose={() => setSettingsOpen(false)}
         vault={vault}
         onChanged={() => setVaultRevision(revision => revision + 1)}
+        appearance={appearance}
+        onAppearanceChange={setAppearance}
+        inference={inference}
+        onInferenceChange={setInference}
+        models={models}
       />
     </div>
   )
