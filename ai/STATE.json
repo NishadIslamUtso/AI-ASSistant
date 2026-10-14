@@ -31,6 +31,7 @@
         "tests": "22 files / 208 tests; tests/pending/ holds three parked suites + README"
       },
       "features_implemented": [
+        "Browsing Maps: a timeline of what the vault holds (conversations, captured pages, visits) with site grouping, kind filters, search and a time window, read from the vault through /api/vault/sources \u2014 a visit is labelled a visit, never reading",
         "Settings > Agent access: switches for the local model, browser captures, keeping conversations and each keyed provider \u2014 every one enforced in the main process (refused before anything leaves or is written), with the not-built capabilities stated as such",
         "Every reply labelled where it came from: local, or online \u00b7 <provider>",
         "Extension port on 127.0.0.1:8765: the browser extension can post captures, read context and capsules, and round-trip the never-check list \u2014 capture side only, chrome-extension:// origins only, visible in Settings > System",
@@ -47,11 +48,11 @@
         "Browser preview build that states plainly it is the interface only"
       ],
       "known_gaps": [
-        "The extension itself is still a starter: it is not loaded, not ported into this app's flow, and captures nothing until it is",
+        "The extension itself is still a starter: it is not loaded, not ported into this app's flow, and captures nothing until it is \u2014 so the map is mostly what the app itself kept",
         "Agent access governs what exists (models, captures, keeping, provider keys); Files, Shell, Web and MCP appear as \"not built yet\" until each one exists"
       ],
       "verified": {
-        "tests": "npm test -> 26 files / 245 tests pass",
+        "tests": "npm test -> 27 files / 255 tests pass",
         "typecheck": "npm run typecheck -> clean",
         "web_build": "npm run build:web -> clean",
         "desktop_build": "npm run build -> clean (main, preload, renderer)",
@@ -61,7 +62,8 @@
         "desktop_e2e_cloud": "outside the repo: provider-shaped server -> Settings > Models -> endpoint typed, key saved, Test answered 1 model -> model picked from the composer menu -> the provider\u2019s own answer; provider asked exactly once with Bearer <key>, nothing plaintext on disk, console clean",
         "user_windows_test": "NOT DONE",
         "desktop_e2e_extension": "outside the repo: the app opens the port; a script playing the extension captures a conversation that lands in the vault as Markdown, reads and writes the never-check list, is refused as a page, is refused with no origin, finds no chat route, and sees the port named in Settings > System; console clean",
-        "desktop_e2e_agent_access": "outside the repo: a capture through the extension port lands in the vault; Browser extension switched off in the window -> settings file records it, next capture 403 with the reason, nothing written, port reports captures:false; switched on in the same pane -> accepted; Keep conversations off -> chip says Vault off and a typed message is answered but written nowhere; on -> next conversation kept; console clean"
+        "desktop_e2e_agent_access": "outside the repo: a capture through the extension port lands in the vault; Browser extension switched off in the window -> settings file records it, next capture 403 with the reason, nothing written, port reports captures:false; switched on in the same pane -> accepted; Keep conversations off -> chip says Vault off and a typed message is answered but written nowhere; on -> next conversation kept; console clean",
+        "desktop_e2e_memory_map": "outside the repo: a vault seeded like a week of capture (7 entries incl. a deliberately half-written jsonl line) -> Browsing Maps in the real app shows exactly 7, the four titles, docs.example as the busiest site, no half.example; site click -> 2 and the header count follows, search -> 1, Visits -> 3, a visit says it is not reading, and a vault moved away underneath the app is reported; console clean"
       },
       "build_cmd": "npm install && npm run build",
       "run_cmd": "npm run dev (desktop) | npm run build:web && npm run preview:web (browser preview)"

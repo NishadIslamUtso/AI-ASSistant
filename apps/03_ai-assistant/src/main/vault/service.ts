@@ -526,6 +526,13 @@ export function createVaultService({
     capsules,
     context,
     exportZip,
+    /**
+     * The store itself, for the map of sources: it walks and reads heads, and it
+     * must do both through the same path rules as everything else in this app. A
+     * function rather than the store, because a vault that is not there yet must
+     * be reported by the caller rather than thrown at import.
+     */
+    files: vault,
   }
 }
 

@@ -22,6 +22,7 @@ export const LOCAL_API_ROUTES = new Map<string, string[]>([
   ['/api/vault/', ['GET']],
   ['/api/vault/health', ['GET']],
   ['/api/vault/context', ['GET']],
+  ['/api/vault/sources', ['GET']],
   ['/api/vault/capsules', ['GET']],
   ['/api/vault/status', ['GET']],
   ['/api/vault/today', ['GET']],

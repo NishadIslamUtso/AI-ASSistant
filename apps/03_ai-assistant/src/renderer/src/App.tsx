@@ -15,6 +15,7 @@ import useModels from './hooks/useModels'
 import usePersistentState from './hooks/usePersistentState'
 import useVault from './hooks/useVault'
 import SettingsView from './components/SettingsView'
+import MemoryMap from './components/MemoryMap'
 import {
   APPEARANCE_KEY,
   DEFAULT_APPEARANCE,
@@ -67,6 +68,7 @@ export default function App() {
     [chats.chats, chats.currentChat]
   )
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [memoryOpen, setMemoryOpen] = useState(false)
   // Bumped when Settings moves the vault, so the chip and the dialog both re-read it.
   const [vaultRevision, setVaultRevision] = useState(0)
   // Re-checked whenever the current conversation is kept or the vault moves: a
@@ -262,7 +264,11 @@ export default function App() {
             setNotice('')
           }}
           onDelete={chats.remove}
-          onOpenSettings={() => setSettingsOpen(true)}
+          onOpenSettings={() => {
+            setMemoryOpen(false)
+            setSettingsOpen(true)
+          }}
+          onOpenMemory={() => setMemoryOpen(true)}
           profileName={profile.name}
         />
         <ChatView
@@ -294,6 +300,13 @@ export default function App() {
             onJump={item => jumpToArtifact(item.id)}
           />
         ) : null}
+
+        {/* What was read and when, from the vault. One surface at a time: opening
+            the map closes Settings, so the window is never two overlays deep. */}
+        <MemoryMap
+          open={memoryOpen && !settingsOpen}
+          onClose={() => setMemoryOpen(false)}
+        />
 
         <SettingsView
           open={settingsOpen}

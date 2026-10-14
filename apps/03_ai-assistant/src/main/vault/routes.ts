@@ -14,6 +14,7 @@
  *         save that did not happen
  */
 import { InputError, VaultMissingError } from './errors'
+import { createSourceMap } from './sources'
 import type { VaultService } from './service'
 
 export type VaultRouteRequest = {
@@ -34,6 +35,7 @@ const ROUTES: Record<string, string[]> = {
   '/blacklist': ['GET', 'POST'],
   '/capsules': ['GET'],
   '/context': ['GET'],
+  '/sources': ['GET'],
   '/capture': ['POST'],
   '/export-zip': ['POST'],
 }
@@ -63,6 +65,26 @@ export function handleVaultRequest(service: VaultService, request: VaultRouteReq
       if (route === '/blacklist') return { status: 200, body: { excluded_patterns: service.blacklist() } }
       if (route === '/capsules') return { status: 200, body: { capsules: service.capsules(query) } }
       if (route === '/context') return { status: 200, body: service.context(query) }
+      if (route === '/sources') {
+        // The map of what was read and when: the vault's own sources, read for
+        // exactly what each one says. `days` is a window, 0 or absent means all.
+        const kind = String(request.query.get('kind') || '')
+        const days = Number(request.query.get('days') || 0)
+        const map = createSourceMap(service.files()).read({
+          q: query,
+          kind,
+          days: Number.isFinite(days) && days > 0 ? days : 0,
+        })
+        return {
+          status: 200,
+          body: {
+            ok: true,
+            vault: service.root,
+            available: service.available(),
+            ...map,
+          },
+        }
+      }
       return fallback(route, request.method)
     }
     if (request.method === 'POST') {

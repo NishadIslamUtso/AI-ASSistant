@@ -1,7 +1,59 @@
 # CHANGELOG.md — What Changed Each Session (Living)
 
-**Last Updated:** 2026-10-14 (late night) Asia/Dhaka
+**Last Updated:** 2026-10-15 (early) Asia/Dhaka
 **Rule:** Log every change with date, what, why. This is memory for next AI.
+
+## 2026-10-15 (early) — Browsing Maps: what was read and when
+
+The vault has been holding the record for a while — conversations the app kept, pages
+the extension captured, visits it logged — and nothing in the app could *see* it. Now
+there is a surface for it: **Browsing Maps**, opened from the sidebar.
+
+### What it is
+A timeline of days on the right, the controls and the sites on the left: search by
+title, site or provider; kind filters (conversations / pages / visits) that carry
+their own counts; a 7-day / 30-day / everything window; and the sites that appear
+most, with a bar whose length is the count against the busiest site. Clicking a site
+filters to it. Clicking an entry opens it in place — where it is on disk, when it
+happened, how much was kept, and whether it is a capture or only a visit.
+
+### The rules it was built to
+- **The map is the vault.** `src/main/vault/sources.ts` reads the three shapes the
+  vault already writes (conversation and page frontmatter, monthly activity jsonl) and
+  invents nothing. A capture that has no `captured_at` is not on the map; a half-written
+  jsonl line is not a visit; a jsonl line with a `source_id` is the *record of a page
+  that already has a file*, so a capture is one entry instead of two.
+- **The numbers describe the list.** Filtering happens in the app's process, so the
+  count in the header is the count of the rows on screen. A total that disagreed with
+  its own list would be worse than no total.
+- **A visit is not reading.** The vault writes "visit metadata is not proof of reading
+  or agreement" beside every visit; the row is badged `visit` and the opened entry says
+  a visit means the page was opened, not that it was read. No claim is upgraded.
+- **Reading is bounded.** Up to 4,000 files are walked and only the head of each is
+  read (8 KB), so a huge vault produces a capped map that says so rather than a spinner.
+- **Nothing is retried at the person.** No vault: one sentence and a pointer at
+  Settings. Unreadable: one sentence, nothing changed.
+
+### Verified
+- `npm test` → 27 files / 255 tests. `tests/sources-map.test.ts` (10): the three kinds
+  newest-first, one entry per captured page, a visit that keeps the vault's own
+  sentence, Dhaka days, hosts grouped without `www`, search by title/site/provider, the
+  summary following its filter, an empty vault as an empty map, a missing vault
+  reported and never created, a truncated line excluded until it is completed, and the
+  route over the real API including the 503 for a missing vault.
+- **Desktop end-to-end** (`shot-tools/check-memory-map.cjs`, 9.4 s, green): a vault
+  seeded the way a week would leave it — two conversations from different providers,
+  two pages, three visits across three Dhaka days, plus a deliberately half-written
+  line — then in the real app: **7 entries** (not 8: the broken line is not a visit),
+  the four titles on screen, `docs.example 2` as the busiest site and no `half.example`
+  anywhere, the site click narrowing to 2 with the header count following, the search
+  narrowing to 1, Visits 3, a visit's own entry saying it is not reading, and the map
+  saying "Point the app at a vault in Settings" when the vault is moved away underneath
+  the running app. **0 console problems**
+- Browser check now 40/40, console 0 (the preview opens the map, says there is no
+  vault behind the window, and offers no filter that could not answer)
+- Vault (6.1 s), cloud (3.9 s), extension port (1.4 s) and agent access (8 s) checks
+  all still green on the same build
 
 ## 2026-10-14 (late night) — Agent access: switches that actually govern something
 
