@@ -1,3 +1,4 @@
+import { resolveInference } from './inference.js'
 const API = '/api/ollama'
 export async function apiJson(path, options = {}) {
   const response = await fetch(path, options)
@@ -43,10 +44,14 @@ export async function* readNdjson(body) {
     if (buffer.trim()) yield JSON.parse(buffer)
   } finally { reader.releaseLock() }
 }
-export async function streamChat(payload, signal, onRecord) {
+export async function streamChat(payload, signal, onRecord, inference) {
+  // Inference options are the caller's business, so the memory profile can be
+  // changed in Settings without touching this file. Anything unresolvable
+  // degrades to the 4 GB profile rather than sending undefined to Ollama.
+  const { options, keepAlive } = resolveInference(inference)
   const response = await fetch(`${API}/chat`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...payload, stream: true, keep_alive: '5m', options: { num_ctx: 4096 } }), signal,
+    body: JSON.stringify({ ...payload, stream: true, keep_alive: keepAlive, options }), signal,
   })
   if (!response.ok) {
     let data = {}

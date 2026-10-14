@@ -20,6 +20,7 @@ import useSubAgents from './hooks/useSubAgents.js'
 import { DEFAULT_CHATS, DEFAULT_MODEL, DEFAULT_SETTINGS, newId, normalizeChats, normalizeSettings } from './lib/storage.js'
 import { capsuleText, vaultGet } from './lib/vault.js'
 import { DEFAULT_PROFILE, normalizeProfile } from './lib/profile.js'
+import { DEFAULT_PROFILE_ID, resolveInference } from './lib/inference.js'
 
 function ProjectsView({ projects, chats, onCreate, onOpen, focused, onBack, onChat, onNew }) {
   if (focused) return <main className="library-view"><button className="back-button" onClick={onBack}><ArrowLeft size={14} />Projects</button><header><h1>{focused.name}</h1><button className="secondary-button" onClick={() => onNew(focused.id)}><Plus size={15} />New chat</button></header><div className="project-chat-list">{chats.filter(chat => chat.projectId === focused.id).map(chat => <button key={chat.id} onClick={() => onChat(chat.id)}>{chat.title}</button>)}</div>{!chats.some(chat => chat.projectId === focused.id) && <p className="library-description">No chats in this project yet.</p>}</main>
@@ -41,6 +42,9 @@ export default function App() {
   const [chats, setChats] = usePersistentState('claude_exact_chats', DEFAULT_CHATS, normalizeChats, notify)
   // Whoever is using the app. Neutral defaults so a fresh clone makes sense.
   const [profile, setProfile] = usePersistentState('ai_assistant_profile', DEFAULT_PROFILE, normalizeProfile, notify)
+  // Memory profile for the local model. Defaults to 4 GB VRAM because that is
+  // the target machine, and a wrong guess there means a machine that crawls.
+  const [inference, setInference] = usePersistentState('ai_assistant_inference', { profile: DEFAULT_PROFILE_ID }, resolveInference, notify)
   const [settings, setSettings] = usePersistentState('claude_exact_settings', DEFAULT_SETTINGS, normalizeSettings, notify)
   const [model, setModel] = usePersistentState('claude_exact_model', DEFAULT_MODEL, value => typeof value === 'string' ? value : DEFAULT_MODEL, notify)
   const [projects, setProjects] = usePersistentState('claude_exact_projects', [], value => Array.isArray(value) ? value.filter(project => typeof project?.id === 'string' && typeof project?.name === 'string') : [], notify)
@@ -65,7 +69,7 @@ export default function App() {
   const [visionModel, setVisionModel] = usePersistentState('claude_exact_vision_model', '', value => typeof value === 'string' ? value : '', notify)
   const models = useModels(model, setModel)
   const vision = useVisionBridge({ models: models.models, status: models.status, selected: model, preferred: visionModel })
-  const subAgents = useSubAgents({ models, notify })
+  const subAgents = useSubAgents({ models, notify, inference })
   const autoOpenedLive = useRef('')
   const chat = chats.find(item => item.id === currentChat)
   const navigate = useCallback(id => {
@@ -74,7 +78,7 @@ export default function App() {
     window.history.pushState({}, '', url)
     setCurrentChat(id); setView('chat'); setContextBundle(null); setProjectId(null)
   }, [])
-  const chatRuntime = useChat({ chats, setChats, currentChat, navigate, models, vision, notify })
+  const chatRuntime = useChat({ chats, setChats, currentChat, navigate, models, vision, notify, inference })
   const liveArtifacts = chatRuntime.live.artifacts
   // Cherry Studio's TopicBranchPanel, translated: instead of a bare "this is a
   // branch" label, every chat that shares a root is listed so you can jump
@@ -226,11 +230,11 @@ export default function App() {
       <Sidebar chats={chats} currentChat={currentChat} navigate={navigate} view={view} onView={setView} onNew={() => newChat()} onAction={chatAction} onSettings={() => setModal('settings')} onApps={() => setModal('apps')} onVault={() => setRightPanel(rightPanel === 'vault' ? null : 'vault')} onAgents={() => setRightPanel(rightPanel === 'agents' ? null : 'agents')} agentsActive={rightPanel === 'agents'} collapsed={collapsed} onCollapse={() => setCollapsed(!collapsed)} busyChatId={chatRuntime.busyChatId} notify={notify} artifactCount={artifacts.length} onToday={() => setToday(true)} />
       {view === 'artifacts' ? <ArtifactsLibrary artifacts={artifacts} onOpen={openArtifact} onImport={item => { setImports(previous => [item, ...previous]); notify('Artifact imported locally. Open its card to run the isolated preview.') }} notify={notify} /> : view === 'projects' ? <ProjectsView projects={projects} chats={chats} onCreate={() => setAction({ type: 'createProject' })} focused={projects.find(item => item.id === focusedProject)} onOpen={setFocusedProject} onBack={() => setFocusedProject(null)} onChat={navigate} onNew={newChat} /> : <Center key={currentChat || `new-${draftNonce}`} chat={chat} models={models} onArtifact={openArtifact} onRetryCapture={chatRuntime.retryCapture} settings={settings} notify={notify} busyChatId={chatRuntime.busyChatId} onSend={chatRuntime.send} onStop={chatRuntime.stop} projects={projects} projectId={projectId} setProjectId={selectProject} onVault={() => setRightPanel('vault')} onContextPreview={previewCapsule} contextBundle={contextBundle} clearContext={() => setContextBundle(null)} onCook={cook} onExternalLink={setExternalLink} seed={seed} vision={vision} onBranch={branchFrom} liveArtifacts={liveArtifacts} branchFamily={branchFamily} onNavigateBranch={navigate} profile={profile} />}
       {rightPanel === 'vault' && <VaultPanel onClose={() => setRightPanel(null)} onPreview={previewCapsule} />}
-      {rightPanel === 'agents' && <SubAgentPanel subAgents={subAgents} models={models} onClose={() => setRightPanel(null)} onInsert={insertFromAgent} notify={notify} onExternalLink={setExternalLink} />}
+      {rightPanel === 'agents' && <SubAgentPanel subAgents={subAgents} models={models} onClose={() => setRightPanel(null)} onInsert={insertFromAgent} notify={notify} onExternalLink={setExternalLink} inference={inference} />}
       {rightPanel === 'artifact' && artifact && <ArtifactPanel key={artifact.id} artifact={artifact} live={artifactLive} models={models} onClose={() => setRightPanel(null)} onSave={saveArtifact} notify={notify} onExternalLink={setExternalLink} />}
     </div>
     {today && <TodayView onClose={() => setToday(false)} onAsk={topic => { setToday(false); setView('chat'); setSeed(previous => ({ text: topic, n: previous.n + 1 })) }} />}
-    {modal === 'settings' && <SettingsModal settings={settings} setSettings={setSettings} onClose={() => setModal(null)} onApps={() => setModal('apps')} onVault={() => setRightPanel('vault')} models={models} vision={vision} visionModel={visionModel} setVisionModel={setVisionModel} vaultOk={vaultOk} vaultPath={vaultPath} onRecheck={models.refresh} profile={profile} setProfile={setProfile} notify={notify} />}
+    {modal === 'settings' && <SettingsModal settings={settings} setSettings={setSettings} onClose={() => setModal(null)} onApps={() => setModal('apps')} onVault={() => setRightPanel('vault')} models={models} vision={vision} visionModel={visionModel} setVisionModel={setVisionModel} vaultOk={vaultOk} vaultPath={vaultPath} onRecheck={models.refresh} profile={profile} setProfile={setProfile} inference={inference} setInference={setInference} notify={notify} />}
     {modal === 'apps' && <AppsExtensionsModal onClose={() => setModal(null)} notify={notify} models={models} vision={vision} vaultOk={vaultOk} vaultPath={vaultPath} subAgents={subAgents} onAgents={() => setRightPanel('agents')} />}
     {action && <ActionDialog action={action} projects={projects} onClose={() => setAction(null)} onApply={applyAction} />}
     {previewContext && <Dialog title="Preview vault context" onClose={() => setPreviewContext(null)} className="context-dialog" labelledBy="context-title"><div className="context-preview"><h3>{previewContext.title}</h3><p>Exact excerpt for the local model <strong>{model}</strong>. Adding it does not send your message or contact an external AI.</p><pre>{previewContext.content}</pre><footer><button className="secondary-button" onClick={() => setPreviewContext(null)}>Cancel</button><button className="white-button" onClick={() => { setContextBundle(previewContext); setPreviewContext(null); setView('chat') }}>Add to composer</button></footer></div></Dialog>}

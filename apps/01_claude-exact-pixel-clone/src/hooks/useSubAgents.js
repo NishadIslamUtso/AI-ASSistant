@@ -56,7 +56,7 @@ const normalize = value => Array.isArray(value)
   ? value.filter(agent => agent && typeof agent.id === 'string' && typeof agent.task === 'string').slice(0, 40).map(agent => ({ ...agent, status: ['running', 'waiting'].includes(agent.status) ? 'idle' : agent.status }))
   : []
 
-export default function useSubAgents({ models, notify }) {
+export default function useSubAgents({ models, notify, inference }) {
   const [agents, setAgents] = useState(() => {
     const stored = readStored(KEY, [], normalize)
     return stored.value
@@ -130,7 +130,7 @@ export default function useSubAgents({ models, notify }) {
         { role: 'user', content: `Task:\n${agent.task.trim()}${vaultContext}` },
       ]
       const { content, thinking } = await askLocal({
-        model, messages, signal: controller.signal, budgetLabel: 'This sub-agent task',
+        model, messages, signal: controller.signal, budgetLabel: 'This sub-agent task', inference,
         onChunk: piece => onProgress?.(piece),
       })
       patch(id, { status: 'done', output: content, thinking, ms: Date.now() - startedAt, vaultSources, finishedAt: new Date().toISOString() })

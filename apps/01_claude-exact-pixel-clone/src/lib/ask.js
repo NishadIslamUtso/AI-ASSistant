@@ -28,7 +28,7 @@ export function assertBudget(messages, label = 'This request') {
  * `onChunk` receives { content, thinking } as they grow, so a caller can show
  * progress; nothing is written to the chat transcript unless the caller does it.
  */
-export async function askLocal({ model, messages, think = false, signal, onChunk, timeoutMs = 300_000, budgetLabel }) {
+export async function askLocal({ model, messages, think = false, signal, onChunk, timeoutMs = 300_000, budgetLabel, inference }) {
   assertBudget(messages, budgetLabel)
   let raw = ''
   let nativeThinking = ''
@@ -41,7 +41,7 @@ export async function askLocal({ model, messages, think = false, signal, onChunk
         raw += record.message?.content || ''
         nativeThinking += record.message?.thinking || ''
         if (onChunk) onChunk(splitThinking(raw, nativeThinking))
-      }),
+      }, inference),
       new Promise((_, reject) => setTimeout(() => reject(new Error(`The model did not finish within ${Math.round(timeoutMs / 1000)} seconds.`)), timeoutMs)),
     ])
     void piece

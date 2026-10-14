@@ -12,7 +12,7 @@ const LIVE_INTERVAL = 700
 
 const REWRITE_SYSTEM = 'You are a precise HTML editor. You change exactly one element and return only that element, with no markdown fence and no explanation. You never rewrite the whole document and you never rename ids or classes you were not asked to change.'
 
-export default function ArtifactPanel({ artifact, onClose, onSave, notify, models, live = false, onExternalLink }) {
+export default function ArtifactPanel({ artifact, onClose, onSave, notify, models, live = false, onExternalLink, inference }) {
   const [view, setView] = useState('preview')
   const [version, setVersion] = useState(artifact.versions.length - 1)
   const [draft, setDraft] = useState(artifactSource(artifact))
@@ -120,7 +120,7 @@ export default function ArtifactPanel({ artifact, onClose, onSave, notify, model
         { role: 'user', content: rewritePrompt({ pick: pin, comment, source: draft, type: artifact.type }) },
       ]
       const { content } = await askLocal({
-        model: models.model, messages, signal: controller.signal, budgetLabel: 'This region rewrite', timeoutMs: 240_000,
+        model: models.model, messages, signal: controller.signal, budgetLabel: 'This region rewrite', timeoutMs: 240_000, inference,
         onChunk: piece => setRewritePreview(piece.content),
       })
       const next = applyElementRewrite(draft, pin.path, content)

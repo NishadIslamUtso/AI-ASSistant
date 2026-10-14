@@ -1,12 +1,13 @@
 import { useState } from 'react'
-import { Settings, CircleUserRound, Shield, CreditCard, Briefcase, History, Bell, MoonStar, Code2, Monitor, Plug, Wrench, ScrollText, Blocks, Search, X, Sun, Moon, Eye } from 'lucide-react'
+import { Settings, CircleUserRound, Shield, CreditCard, Briefcase, History, Bell, MoonStar, Code2, Monitor, Plug, Wrench, ScrollText, Blocks, Search, X, Sun, Moon, Eye, Gauge } from 'lucide-react'
 import Dialog from './Dialog.jsx'
 import BlacklistManager from './BlacklistManager.jsx'
 import Connectors from './Connectors.jsx'
 import { DEFAULT_PROFILE } from '../lib/profile.js'
+import { INFERENCE_PROFILES, vramWarning } from '../lib/inference.js'
 const navigation = [
   ['Settings', [['General', Settings], ['Account', CircleUserRound], ['Privacy', Shield], ['Billing', CreditCard], ['Capabilities', Briefcase], ['Memory', History], ['Reflect', Bell], ['Time and focus', MoonStar], ['AI ASSistant Code', Code2]]],
-  ['This computer', [['System', Monitor], ['Vision', Eye], ['Extensions', Plug], ['Developer', Wrench]]],
+  ['This computer', [['System', Monitor], ['Performance', Gauge], ['Vision', Eye], ['Extensions', Plug], ['Developer', Wrench]]],
   ['Customize', [['Skills', ScrollText], ['Connectors', Blocks]]],
 ]
 function Segments({ label, options, value, onChange, icons }) {
@@ -18,7 +19,7 @@ function Row({ label, description, children }) {
 function Select({ label, value, options, onChange }) {
   return <select aria-label={label} value={value} onChange={event => onChange(event.target.value)}>{options.map(option => <option key={option}>{option}</option>)}</select>
 }
-export default function SettingsModal({ settings, setSettings, onClose, onApps, onVault, models, vision, visionModel, setVisionModel, vaultOk, vaultPath, onRecheck, profile, setProfile, notify }) {
+export default function SettingsModal({ settings, setSettings, onClose, onApps, onVault, models, vision, visionModel, setVisionModel, vaultOk, vaultPath, onRecheck, profile, setProfile, inference, setInference, notify }) {
   const [active, setActive] = useState('General')
   const [search, setSearch] = useState('')
   const update = (key, value) => setSettings(previous => ({ ...previous, [key]: value }))
@@ -62,8 +63,24 @@ export default function SettingsModal({ settings, setSettings, onClose, onApps, 
         {active === 'System' && <div className="settings-copy"><p>AI ASSistant 0.2.0 · Vite web build</p><p>Ollama: 127.0.0.1:11434</p><p>Vault driver: 127.0.0.1:8765</p><p>Browser requests are proxied through this app. A native Windows title bar and menu will require the pending Electron wrapper.</p></div>}
         {active === 'Extensions' && <div className="settings-copy"><p>The local MV3 collector lives in the repository’s extension folder. Chrome installation and capture still require Windows/Chrome testing.</p><button className="secondary-button" onClick={onApps}>Apps and extensions</button></div>}
         {active === 'Developer' && <div className="settings-copy"><p>npm test · npm run build · npm run test:e2e</p><p>No native build tools or model downloads are needed. If Ollama is offline, run your existing Ollama installation and refresh the model list.</p></div>}
+        {active === 'Performance' && <div className="settings-copy">
+          <h3>Memory profile</h3>
+          <p>How much of your graphics card the local model is allowed to use. The right context size matters more than anything else: too large and the model spills out of VRAM and every token crawls.</p>
+          <div className="settings-form">
+            <label><span>Profile</span><select aria-label="Memory profile" value={inference.profile} onChange={event => {
+              const next = INFERENCE_PROFILES.find(entry => entry.id === event.target.value)
+              setInference(next.id === 'custom' ? { profile: 'custom', customOptions: {}, keepAlive: next.keepAlive } : { profile: next.id })
+            }}>{INFERENCE_PROFILES.map(entry => <option key={entry.id} value={entry.id}>{entry.label}</option>)}</select></label>
+            {INFERENCE_PROFILES.find(entry => entry.id === inference.profile)?.hint && <p className="settings-hint">{INFERENCE_PROFILES.find(entry => entry.id === inference.profile).hint}</p>}
+            {inference.profile === 'custom' && <div className="settings-form">
+              {[['num_ctx', 'Context size (tokens)'], ['num_batch', 'Batch size'], ['num_predict', 'Max reply tokens'], ['num_gpu', 'GPU layers (0 = CPU only)']].map(([key, text]) => <label key={key}><span>{text}</span><input aria-label={text} type="number" inputMode="numeric" value={inference.options[key] ?? ''} onChange={event => setInference({ ...inference, profile: 'custom', customOptions: { ...(inference.customOptions || {}), [key]: event.target.value } })} /></label>)}
+            </div>}
+            <p className="settings-hint">In use: {Object.entries(inference.options).map(([key, value]) => `${key}=${value}`).join(', ') || 'Ollama defaults'}</p>
+            {vramWarning(inference) && <p className="settings-warning">{vramWarning(inference)}</p>}
+          </div>
+        </div>}
         {active === 'Connectors' && <Connectors models={models} vaultOk={vaultOk} vaultPath={vaultPath} onRecheck={onRecheck} onVault={onVault} />}
-        {!['Account', 'Privacy', 'Billing', 'Capabilities', 'Memory', 'System', 'Extensions', 'Developer', 'Connectors'].includes(active) && <p className="settings-copy">{active} is a screenshot-matched navigation entry. Its runtime integration is not implemented yet; no background action is enabled.</p>}
+        {!['Account', 'Privacy', 'Billing', 'Capabilities', 'Memory', 'System', 'Performance', 'Extensions', 'Developer', 'Connectors'].includes(active) && <p className="settings-copy">{active} is a screenshot-matched navigation entry. Its runtime integration is not implemented yet; no background action is enabled.</p>}
       </>}
     </div>
   </Dialog>

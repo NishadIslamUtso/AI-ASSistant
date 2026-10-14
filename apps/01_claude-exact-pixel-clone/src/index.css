@@ -432,3 +432,5 @@ h1, h2, h3, h4, p { margin: 0; }
 .settings-form input { background: var(--composer, #242424); color: var(--text, #e8e8e8); border: 1px solid var(--border, #333); border-radius: 7px; padding: 7px 9px; font: 13px 'Segoe UI', sans-serif; }
 .settings-form input:focus-visible { outline: 2px solid var(--accent, #c96442); outline-offset: 1px; }
 .settings-form footer { display: flex; gap: 8px; margin-top: 2px; }
+.settings-hint { font-size: 11.5px; color: var(--faint, #8a8a8a); margin: 2px 0 0; line-height: 1.5; }
+.settings-warning { font-size: 11.5px; color: #e0a458; background: rgba(224, 164, 88, .1); border: 1px solid rgba(224, 164, 88, .3); border-radius: 6px; padding: 7px 9px; margin: 6px 0 0; line-height: 1.5; }

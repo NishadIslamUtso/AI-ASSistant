@@ -9,7 +9,7 @@ import { vaultPost } from '../lib/vault.js'
 import { extractCitations } from '../lib/citations.js'
 import { wantsChart } from '../lib/chart.js'
 
-export default function useChat({ chats, setChats, currentChat, navigate, models, vision, notify }) {
+export default function useChat({ chats, setChats, currentChat, navigate, models, vision, notify, inference }) {
   const [busyChatId, setBusyChatId] = useState(null)
   const [live, setLive] = useState({ chatId: '', messageId: '', artifacts: [] })
   const jobRef = useRef(null)
@@ -54,7 +54,7 @@ export default function useChat({ chats, setChats, currentChat, navigate, models
     const images = await Promise.all(attachments.filter(file => file.kind === 'image').map(loadImage))
     const { content } = await askLocal({
       model: bridge, messages: buildBridgeMessages({ images, userText, language: 'English' }),
-      signal, budgetLabel: 'The image', timeoutMs: 180_000,
+      signal, budgetLabel: 'The image', timeoutMs: 180_000, inference,
       onChunk: piece => onStage?.(`${bridge} is looking at your image… ${piece.content.length} characters read`),
     })
     const description = cleanDescription(content)
@@ -144,7 +144,7 @@ export default function useChat({ chats, setChats, currentChat, navigate, models
         final = { ...final, ...piece, stage: '' }
         patch(chat.id, assistant.id, final)
         sweep(piece.content)
-      })
+      }, inference)
       final.status = 'complete'
       final.stage = ''
       final.artifacts = extractArtifacts(final.content, { requested, messageId: assistant.id, chatId: chat.id, title: userMessage.content })
