@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef } from 'react'
 import ChartBlock from './ChartBlock.jsx'
 import { extractChartBlocks, extractSvgBlock } from '../lib/inlineBlocks.js'
 import { Code2, FileText, Image, RefreshCw, GitBranch, Copy, Loader2, Eye } from 'lucide-react'
-import ClaudeMark from './ClaudeMark.jsx'
+import BrainMark from './BrainMark.jsx'
+import { firstName } from '../lib/profile.js'
 import Composer from './Composer.jsx'
 import Markdown from './Markdown.jsx'
 import ThinkingDisplay from './ThinkingDisplay.jsx'
@@ -17,7 +18,7 @@ function LiveArtifactCard({ artifact, onArtifact }) {
     <Eye size={14} />
   </button>
 }
-export default function Center({ seed, chat, onArtifact, onRetryCapture, settings, notify, onExternalLink, onBranch, liveArtifacts = [], branchFamily = [], onNavigateBranch, ...composerProps }) {
+export default function Center({ seed, chat, onArtifact, onRetryCapture, settings, notify, onExternalLink, onBranch, liveArtifacts = [], branchFamily = [], onNavigateBranch, profile, ...composerProps }) {
   const transcript = useRef(null)
   const messages = chat?.messages || []
   useEffect(() => {
@@ -30,7 +31,7 @@ export default function Center({ seed, chat, onArtifact, onRetryCapture, setting
     try { await navigator.clipboard.writeText(message.content); notify('Message copied.') } catch { notify('Clipboard permission is unavailable. Select the text and copy it instead.') }
   }
   return <main className={`center ${hasMessages ? 'has-messages' : 'home'}`} data-model-ready={composerProps.models.available}>
-    {!hasMessages && <div className="free-plan"><span>Free plan</span><span>·</span><button onClick={() => notify('This is a free local Ollama app. Claude plans and billing are not connected.')}>Upgrade</button></div>}
+    {!hasMessages && <div className="free-plan"><span>Free plan</span><span>·</span><button onClick={() => notify('This is a free local Ollama app. Hosted plans and billing are not connected.')}>Upgrade</button></div>}
     {hasMessages ? <>
       <header className="chat-header"><h1>{chat.title}</h1><small>{chat.branchedFrom ? 'Branch · ' : 'Local · '}{composerProps.models.model}{composerProps.models.capabilities.vision ? ' · vision' : ''}</small>
         {branchFamily.length > 1 && <label className="branch-picker" title="Jump between branches of this conversation">
@@ -42,7 +43,7 @@ export default function Center({ seed, chat, onArtifact, onRetryCapture, setting
       </header>
       <div className="transcript-scroll" ref={transcript}><div className="transcript" key={chat.id}>
         {messages.map(message => <article key={message.id} className={`message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`} aria-label={message.role === 'user' ? 'Your message' : 'Assistant response'}>
-          {message.role === 'assistant' && <ClaudeMark size={23} />}
+          {message.role === 'assistant' && <BrainMark size={23} />}
           <div className="message-body"><ThinkingDisplay thinking={message.thinking} streaming={message.status === 'streaming'} />
             {message.stage && <p className="message-stage"><Loader2 size={12} className="spin" />{message.stage}</p>}
             {message.role === 'user' ? <div className="user-text">{message.content}</div> : <Markdown onExternalLink={onExternalLink}>{message.content}</Markdown>}
@@ -66,7 +67,7 @@ export default function Center({ seed, chat, onArtifact, onRetryCapture, setting
       <div className="reply-composer"><Composer chat={chat} notify={notify} seed={seed} {...composerProps} />
         <div className="chat-save-status">{chat.vaultStatus === 'saved' ? 'Saved in local chat history and AI-Brain' : chat.vaultStatus === 'saving' ? 'Saving to AI-Brain…' : chat.vaultStatus === 'error' ? <><span title={chat.vaultError}>Local chat kept · vault capture failed</span><button onClick={() => onRetryCapture(chat)}><RefreshCw size={11} />Retry</button></> : 'Local chat history · check important answers'}</div>
       </div>
-    </> : <div className="home-content"><div className="greeting"><ClaudeMark size={28} /><h1>{getGreeting()}, Utso</h1></div><Composer chat={chat} notify={notify} seed={seed} {...composerProps} /></div>}
+    </> : <div className="home-content"><div className="greeting"><ClaudeMark size={28} /><h1>{getGreeting()}, {firstName(profile)}</h1></div><Composer chat={chat} notify={notify} seed={seed} {...composerProps} /></div>}
   </main>
 }
 

@@ -1,4 +1,4 @@
-import ClaudeMark from './ClaudeMark.jsx'
+import BrainMark from './BrainMark.jsx'
 import { useEffect, useRef, useState } from 'react'
 
 /**
@@ -93,7 +93,7 @@ export default function TitleBar({ onAction, ollamaOk, vaultOk, title = 'AI ASSi
       ref={ref}
       className="title-bar"
     >
-      <ClaudeMark size={13} className="mr-2 pl-1 text-[var(--accent)]" />
+      <BrainMark size={13} className="mr-2 pl-1" />
 
       {MENUS.map((m) => (
         <div key={m.label} className="relative">

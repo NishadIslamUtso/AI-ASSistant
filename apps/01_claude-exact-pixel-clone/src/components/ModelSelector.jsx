@@ -14,7 +14,7 @@ export default function ModelSelector({ models, disabled }) {
       {models.status === 'online' && !models.models.length && <p className="model-description">No installed models returned by Ollama. Nothing is downloaded automatically.</p>}
       {models.models.map(model => <button key={model.name} role="menuitemradio" aria-checked={model.name === models.model} onClick={() => { models.select(model.name); setOpen(false) }}><span>{model.name}<small>{model.details?.parameter_size || 'Installed'}{model.size ? ` · ${(model.size / 1024 ** 3).toFixed(1)} GB` : ''}</small></span>{model.name === models.model && <Check size={15} />}</button>)}
       <div className="model-capabilities"><span><Eye size={12} />Vision {models.capabilities.vision ? 'verified' : 'not verified'}</span><span><Brain size={12} />Thinking {models.capabilities.thinking ? 'verified' : 'not verified'}</span></div>
-      <p className="model-footnote">Uses only your installed models. The Claude-style interface does not use Sonnet.</p>
+      <p className="model-footnote">Uses only your installed models. This interface does not use Sonnet or any hosted model.</p>
     </div>}
   </div>
 }

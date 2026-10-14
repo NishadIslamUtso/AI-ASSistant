@@ -426,3 +426,9 @@ h1, h2, h3, h4, p { margin: 0; }
 .agent-skill-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 8px 0; }
 .agent-skill-row input { flex: 1; min-width: 130px; background: var(--composer, #242424); color: var(--text, #e8e8e8); border: 1px solid var(--border, #333); border-radius: 6px; padding: 4px 7px; font: 12px 'Segoe UI', sans-serif; }
 .agent-skill-row .secondary-button { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; }
+.settings-form { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; max-width: 420px; }
+.settings-form label { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--faint, #8a8a8a); }
+.settings-form label small { color: var(--faint, #8a8a8a); opacity: .8; font-size: 11px; }
+.settings-form input { background: var(--composer, #242424); color: var(--text, #e8e8e8); border: 1px solid var(--border, #333); border-radius: 7px; padding: 7px 9px; font: 13px 'Segoe UI', sans-serif; }
+.settings-form input:focus-visible { outline: 2px solid var(--accent, #c96442); outline-offset: 1px; }
+.settings-form footer { display: flex; gap: 8px; margin-top: 2px; }

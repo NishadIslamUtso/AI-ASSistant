@@ -3,8 +3,9 @@ import { Settings, CircleUserRound, Shield, CreditCard, Briefcase, History, Bell
 import Dialog from './Dialog.jsx'
 import BlacklistManager from './BlacklistManager.jsx'
 import Connectors from './Connectors.jsx'
+import { DEFAULT_PROFILE } from '../lib/profile.js'
 const navigation = [
-  ['Settings', [['General', Settings], ['Account', CircleUserRound], ['Privacy', Shield], ['Billing', CreditCard], ['Capabilities', Briefcase], ['Memory', History], ['Reflect', Bell], ['Time and focus', MoonStar], ['Claude Code', Code2]]],
+  ['Settings', [['General', Settings], ['Account', CircleUserRound], ['Privacy', Shield], ['Billing', CreditCard], ['Capabilities', Briefcase], ['Memory', History], ['Reflect', Bell], ['Time and focus', MoonStar], ['AI ASSistant Code', Code2]]],
   ['This computer', [['System', Monitor], ['Vision', Eye], ['Extensions', Plug], ['Developer', Wrench]]],
   ['Customize', [['Skills', ScrollText], ['Connectors', Blocks]]],
 ]
@@ -17,7 +18,7 @@ function Row({ label, description, children }) {
 function Select({ label, value, options, onChange }) {
   return <select aria-label={label} value={value} onChange={event => onChange(event.target.value)}>{options.map(option => <option key={option}>{option}</option>)}</select>
 }
-export default function SettingsModal({ settings, setSettings, onClose, onApps, onVault, models, vision, visionModel, setVisionModel, vaultOk, vaultPath, onRecheck }) {
+export default function SettingsModal({ settings, setSettings, onClose, onApps, onVault, models, vision, visionModel, setVisionModel, vaultOk, vaultPath, onRecheck, profile, setProfile, notify }) {
   const [active, setActive] = useState('General')
   const [search, setSearch] = useState('')
   const update = (key, value) => setSettings(previous => ({ ...previous, [key]: value }))
@@ -42,10 +43,16 @@ export default function SettingsModal({ settings, setSettings, onClose, onApps, 
         <p className="settings-footnote">Voice preferences are saved locally. A speech engine is not connected in this build.</p>
       </> : <>
         <h2 id="settings-title">{active}</h2>
-        {active === 'Account' && <div className="settings-copy"><h3>Utso</h3><p>nishadislamutso@gmail.com</p><p>This is the profile from your screenshot, not an authenticated Claude account. No external sign-in is used.</p></div>}
+        {active === 'Account' && <div className="settings-copy"><h3>{profile.name}</h3><p>{profile.email || 'No email set — nothing is sent anywhere.'}</p><p>This is your local profile. It is how AI ASSistant greets you. No external sign-in is used.</p>
+          <div className="settings-form">
+            <label><span>Your name</span><input aria-label="Your name" value={profile.name} maxLength={40} placeholder="Friend" onChange={event => setProfile({ ...profile, name: event.target.value })} /></label>
+            <label><span>Email <small>optional</small></span><input aria-label="Email" type="email" value={profile.email} maxLength={120} placeholder="you@example.com" onChange={event => setProfile({ ...profile, email: event.target.value })} /></label>
+            <label><span>Tagline <small>optional, shown under the greeting</small></span><input aria-label="Tagline" value={profile.tagline} maxLength={80} placeholder="What are you working on?" onChange={event => setProfile({ ...profile, tagline: event.target.value })} /></label>
+            <footer><button className="secondary-button" onClick={() => { setProfile(DEFAULT_PROFILE); notify('Profile reset to defaults.') }}>Reset</button></footer>
+          </div></div>}
         {active === 'Privacy' && <><p className="settings-copy">Local-first. Excluded sources are denied at the vault API. Passwords, cookies, tokens, payment fields and unsent drafts must never be captured. Browser-side scope sync still needs end-to-end verification.</p><BlacklistManager /></>}
-        {active === 'Billing' && <p className="settings-copy">Local mode is free. There is no Claude subscription, billing connection or upgrade in this app.</p>}
-        {active === 'Capabilities' && <div className="settings-copy"><p>Selected model: <strong>{models.model}</strong></p><p>Text chat and text/code attachments run locally.</p><p>Vision: {models.capabilities.vision ? 'verified by Ollama /api/show' : 'unavailable or not verified'}</p><p>Thinking: {models.capabilities.thinking ? 'verified by Ollama /api/show' : 'unavailable or not verified'}</p><p>Model capabilities are not inferred from names. This UI does not make qwen2.5:3b as capable as Claude.</p></div>}
+        {active === 'Billing' && <p className="settings-copy">Local mode is free. There is no subscription, billing connection or upgrade in this app.</p>}
+        {active === 'Capabilities' && <div className="settings-copy"><p>Selected model: <strong>{models.model}</strong></p><p>Text chat and text/code attachments run locally.</p><p>Vision: {models.capabilities.vision ? 'verified by Ollama /api/show' : 'unavailable or not verified'}</p><p>Thinking: {models.capabilities.thinking ? 'verified by Ollama /api/show' : 'unavailable or not verified'}</p><p>Model capabilities are not inferred from names. This UI does not make a small local model as capable as a large hosted one.</p></div>}
         {active === 'Vision' && <><p className="settings-copy">A text-only model cannot see a picture. With the bridge, an installed <em>vision</em> model describes the image first and the description is what {models.model} reads. The picture never leaves this computer and the transcript always names the model that looked at it.</p>
           <Row label="Bridge model" description="Only models that reported vision through Ollama /api/show are listed."><Select label="Vision bridge model" value={visionModel} options={['auto', ...vision.visionModels.map(entry => entry.name)]} onChange={value => setVisionModel(value === 'auto' ? '' : value)} /></Row>
           <div className="settings-copy"><p>{vision.probing ? 'Checking installed models…' : vision.visionModels.length ? `Verified vision models: ${vision.visionModels.map(entry => entry.name).join(', ')}` : 'No installed model has reported vision support yet.'}</p>
