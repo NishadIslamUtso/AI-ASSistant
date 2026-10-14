@@ -50,9 +50,37 @@ same commands work behind a tunnel or a preview proxy.
 ## Deploying
 
 1. On Vercel: **Add New → Project → import this repository.** Deploy.
-2. That is the whole setup. Root directory, build command, output directory and
-   framework preset all come from `vercel.json`.
+2. That is the whole setup. Build command, output directory and framework preset
+   all come from `vercel.json`.
+
+### Root Directory — both settings work
+
+Vercel's **Root Directory** setting decides the working directory the build runs
+in, and everything in `vercel.json` is relative to it. This project supports both
+choices, so you cannot get it wrong:
+
+- **Leave it empty** (the repository root), or
+- **Set it to `apps/03_ai-assistant`** — convenient, because the Vercel dashboard
+  then deals with this app alone.
+
+The install and build commands detect which folder they are in by looking for the
+app's own package name, and both write the built site to `dist-web` inside the
+Root Directory. There is a copy of `vercel.json` in the app folder as well as at
+the repository root for the same reason: Vercel reads the config from the Root
+Directory, the two files are identical, and both settings therefore do exactly
+the same thing.
+
+An earlier version of this file assumed the repository root, and failed with
+`cd: apps/03_ai-assistant: No such file or directory` when the Root Directory was
+set to the app — it tried to descend into the folder it was already standing in.
+If you set the Root Directory in the dashboard, clear any custom Install or Build
+Command left over from that attempt, so the ones in `vercel.json` apply.
+
+The install runs with `ELECTRON_SKIP_BINARY_DOWNLOAD=1`. That is deliberately not
+`--ignore-scripts`: skipping every lifecycle script can leave esbuild and rollup
+without their native binaries and the build then fails, while this variable skips
+only the ~100 MB Electron binary that a web host can never run.
 
 To deploy only when this app changes, set the project's **Ignored Build Step** to
-`git diff --quiet HEAD^ HEAD -- apps/03_ai-assistant`. That is a dashboard
+`git diff --quiet HEAD^ HEAD -- apps/03_ai_assistant`. That is a dashboard
 setting, not something this file can set for you.

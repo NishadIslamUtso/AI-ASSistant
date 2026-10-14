@@ -1,0 +1,37 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "if grep -q '\"name\": \"ai-assistant\"' package.json 2>/dev/null; then ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm install; else cd apps/03_ai-assistant && ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm install; fi",
+  "buildCommand": "ROOT=\"$PWD\"; if grep -q '\"name\": \"ai-assistant\"' package.json 2>/dev/null; then APP=\"$ROOT\"; else APP=\"$ROOT/apps/03_ai-assistant\"; fi; cd \"$APP\" && npm run build:web && if [ \"$APP\" != \"$ROOT\" ]; then rm -rf \"$ROOT/dist-web\" && cp -r \"$APP/dist-web\" \"$ROOT/dist-web\"; fi",
+  "outputDirectory": "dist-web",
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ]
+}
