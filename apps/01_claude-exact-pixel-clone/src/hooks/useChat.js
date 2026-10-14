@@ -193,8 +193,81 @@ export default function useChat({ chats, setChats, currentChat, navigate, models
     return chat.id
   }
 
+  /**
+   * Re-run the reply that produced `assistantMessageId`, as if it had never
+   * been generated. Everything after it is dropped, because a reply made in a
+   * different context is not a correction of this one — it is a different
+   * answer to the same question, and keeping both would be confusing.
+   */
+  async function regenerate(assistantMessageId) {
+    if (jobRef.current) { notify('Wait for the current reply to finish.'); return false }
+    if (!models.available) { notify(models.error || 'Ollama is offline.'); return false }
+    const chat = chatsRef.current.find(entry => entry.id === currentChat)
+    if (!chat) return false
+    const index = chat.messages.findIndex(message => message.id === assistantMessageId)
+    if (index === -1) return false
+    const before = chat.messages.slice(0, index)
+    const userMessage = [...before].reverse().find(message => message.role === 'user')
+    if (!userMessage) { notify('There is no question before this reply to regenerate.'); return false }
+
+    const controller = new AbortController()
+    jobRef.current = { controller, chatId: chat.id }
+    setBusyChatId(chat.id)
+    const assistant = {
+      id: newId(), role: 'assistant', content: '', thinking: '', status: 'streaming',
+      timestamp: new Date().toISOString(), model: models.model, regenerated: true,
+    }
+    const next = { ...chat, messages: [...before, assistant] }
+    setChats(previous => previous.map(item => item.id === chat.id ? next : item))
+    setLive({ chatId: chat.id, messageId: assistant.id, artifacts: [] })
+    void run({
+      chat: next, userMessage, assistant, controller,
+      requested: wantsArtifact(userMessage.content, false),
+      wantsBridge: false, thinking: Boolean(assistant.thinking),
+      history: [...before],
+    })
+    return true
+  }
+
+  /**
+   * Replace a question and re-answer it. Editing is how a conversation gets
+   * corrected without losing the thread — the old wording goes, and the reply
+   * is regenerated against the new one.
+   */
+  async function editAndResend(userMessageId, content) {
+    const text = String(content || '').trim()
+    if (!text) { notify('A message needs some text.'); return false }
+    if (jobRef.current) { notify('Wait for the current reply to finish.'); return false }
+    if (!models.available) { notify(models.error || 'Ollama is offline.'); return false }
+    const chat = chatsRef.current.find(entry => entry.id === currentChat)
+    if (!chat) return false
+    const index = chat.messages.findIndex(message => message.id === userMessageId)
+    if (index === -1) return false
+    // Keep the edit where it was and drop the old answer, which no longer
+    // corresponds to the question above it.
+    const before = chat.messages.slice(0, index)
+    const edited = { ...chat.messages[index], content: text, editedAt: new Date().toISOString() }
+    const controller = new AbortController()
+    jobRef.current = { controller, chatId: chat.id }
+    setBusyChatId(chat.id)
+    const assistant = {
+      id: newId(), role: 'assistant', content: '', thinking: '', status: 'streaming',
+      timestamp: new Date().toISOString(), model: models.model, regenerated: true,
+    }
+    const next = { ...chat, messages: [...before, edited, assistant] }
+    setChats(previous => previous.map(item => item.id === chat.id ? next : item))
+    setLive({ chatId: chat.id, messageId: assistant.id, artifacts: [] })
+    void run({
+      chat: next, userMessage: edited, assistant, controller,
+      requested: wantsArtifact(text, false),
+      wantsBridge: false, thinking: false,
+      history: [...before, edited],
+    })
+    return true
+  }
+
   return {
-    send, busyChatId, live, branch,
+    send, busyChatId, live, branch, regenerate, editAndResend,
     stop: () => jobRef.current?.controller.abort(),
     retryCapture: chat => capture(chat),
   }

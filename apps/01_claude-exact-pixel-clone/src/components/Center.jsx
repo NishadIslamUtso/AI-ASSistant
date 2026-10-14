@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import ChartBlock from './ChartBlock.jsx'
 import { extractChartBlocks, extractSvgBlock } from '../lib/inlineBlocks.js'
-import { Code2, FileText, Image, RefreshCw, GitBranch, Copy, Loader2, Eye } from 'lucide-react'
+import { Code2, FileText, Image, RefreshCw, GitBranch, Copy, Loader2, Eye, Pencil } from 'lucide-react'
 import BrainMark from './BrainMark.jsx'
 import { firstName } from '../lib/profile.js'
 import Composer from './Composer.jsx'
@@ -18,7 +18,9 @@ function LiveArtifactCard({ artifact, onArtifact }) {
     <Eye size={14} />
   </button>
 }
-export default function Center({ seed, chat, onArtifact, onRetryCapture, settings, notify, onExternalLink, onBranch, liveArtifacts = [], branchFamily = [], onNavigateBranch, profile, ...composerProps }) {
+export default function Center({ seed, chat, onArtifact, onRetryCapture, settings, notify, onExternalLink, onBranch, liveArtifacts = [], branchFamily = [], onNavigateBranch, profile, onRegenerate, onEditResend, busyChatId, ...composerProps }) {
+  const [editingId, setEditingId] = useState(null)
+  const [editText, setEditText] = useState('')
   const transcript = useRef(null)
   const messages = chat?.messages || []
   useEffect(() => {
@@ -46,13 +48,22 @@ export default function Center({ seed, chat, onArtifact, onRetryCapture, setting
           {message.role === 'assistant' && <BrainMark size={23} />}
           <div className="message-body"><ThinkingDisplay thinking={message.thinking} streaming={message.status === 'streaming'} />
             {message.stage && <p className="message-stage"><Loader2 size={12} className="spin" />{message.stage}</p>}
-            {message.role === 'user' ? <div className="user-text">{message.content}</div> : <Markdown onExternalLink={onExternalLink}>{message.content}</Markdown>}
+            {message.role === 'user' ? (editingId === message.id
+              ? <form className="message-edit" onSubmit={event => { event.preventDefault(); const value = editText.trim(); if (!value) return; setEditingId(null); onEditResend?.(message.id, value) }}>
+                  <textarea aria-label="Edit your message" value={editText} rows={3} autoFocus onChange={event => setEditText(event.target.value)} onKeyDown={event => { if (event.key === 'Escape') setEditingId(null) }} />
+                  <footer><button type="button" className="secondary-button" onClick={() => setEditingId(null)}>Cancel</button><button className="white-button" disabled={!editText.trim()}>Send</button></footer>
+                  <small>Editing replaces this question and re-answers it. The old reply is dropped.</small>
+                </form>
+              : <div className="user-text">{message.content}{message.editedAt && <span className="edited-flag" title={`Edited ${new Date(message.editedAt).toLocaleString()}`}>edited</span>}</div>
+            ) : <Markdown onExternalLink={onExternalLink}>{message.content}</Markdown>}
             {message.role === 'assistant' && <InlineSvg text={message.content} />}
             {message.role === 'assistant' && <ChartBlocks text={message.content} />}
             {message.role === 'assistant' && message.status !== 'streaming' && message.content && <div className="message-actions">
               <button onClick={() => copyMessage(message)} title="Copy this response"><Copy size={12} />Copy</button>
               <button onClick={() => onBranch?.(message.id)} title="Start a new chat from this point; the original stays as it is"><GitBranch size={12} />Branch from here</button>
+              <button onClick={() => onRegenerate?.(message.id)} disabled={busyChatId === chat.id} title="Ask again and replace this reply"><RefreshCw size={12} />Regenerate</button>
             </div>}
+            {message.role === 'user' && !message.status && editingId !== message.id && <div className="message-actions user-actions"><button onClick={() => { setEditingId(message.id); setEditText(message.content) }} title="Edit this question and get a new answer"><Pencil size={12} />Edit</button></div>}
             {message.bridge && <details className="sent-context vision-bridge"><summary>Image described by {message.bridge.model} for {message.model}</summary><p>{message.bridge.description}</p><small>{message.model} never received the picture itself, only this description.</small></details>}
             {message.attachments?.length > 0 && <div className="sent-attachments">{message.attachments.map(file => <span key={file.id}>{file.kind === 'image' ? <Image size={13} /> : <FileText size={13} />}{file.name}{file.seenBy === 'direct' ? '' : file.kind === 'image' && file.seenBy ? ` · via ${file.seenBy}` : ''}</span>)}</div>}
             {message.context && <details className="sent-context"><summary>Included vault context</summary><pre>{message.context}</pre></details>}

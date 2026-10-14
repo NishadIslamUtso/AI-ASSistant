@@ -437,3 +437,9 @@ h1, h2, h3, h4, p { margin: 0; }
 .chat-search-snippet { margin: 2px 0 0; padding: 0 8px 2px 26px; font-size: 11px; line-height: 1.45; color: var(--faint, #8a8a8a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chat-search-snippet mark { background: rgba(201, 100, 66, .28); color: inherit; border-radius: 2px; padding: 0 1px; }
 .chat-title mark { background: rgba(201, 100, 66, .28); color: inherit; border-radius: 2px; }
+.message-edit { display: flex; flex-direction: column; gap: 7px; background: var(--composer, #242424); border: 1px solid var(--border, #333); border-radius: 9px; padding: 9px; }
+.message-edit textarea { width: 100%; resize: vertical; background: var(--main, #1a1a1a); color: var(--text, #e8e8e8); border: 1px solid var(--border, #333); border-radius: 6px; padding: 7px 9px; font: 13px/1.5 'Segoe UI', sans-serif; }
+.message-edit footer { display: flex; gap: 7px; justify-content: flex-end; }
+.message-edit small { color: var(--faint, #8a8a8a); font-size: 10.5px; }
+.user-actions { margin-top: 5px; }
+.edited-flag { margin-left: 7px; font-size: 10px; color: var(--faint, #8a8a8a); font-style: italic; }
