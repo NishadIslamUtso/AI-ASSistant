@@ -2,10 +2,15 @@
 
 Driver: **AI ASSistant** desktop app (Electron, `apps/03_ai-assistant/`).
 
-**This extension cannot reach the app yet.** The app's vault API runs inside its own
-process (`src/main/vault/`) and opens no port, so `lib/vault-writer.js` has nothing to
-POST to. The intended contract is below; the port is the missing piece, and opening it
-for `chrome-extension://` origins is the work that unblocks the whole capture feature.
+**The app now answers this extension.** It listens on **127.0.0.1:8765**
+(`AI_ASSISTANT_EXTENSION_PORT` moves it), only for `chrome-extension://` origins, and only
+for the capture side of the vault: `/health`, `/status`, `/context`, `/capsules`,
+`/blacklist` (GET, POST) and `/capture` (POST). No chat route — an extension must never be
+able to spend a saved key — and no settings or export. A web page cannot reach it at all.
+
+What is still missing is the extension itself: this folder is a starter, it has not been
+loaded into a browser and run against the app yet, and no page is captured until it is
+(see the app's `00_LIVING_DOCS/TODO_NEXT.md`).
 Vault: AI-Brain/ Obsidian
 Extension: collector + context suggester, local-only, no external account
 
@@ -47,10 +52,11 @@ Extension (MV3) -> Local App API (**not open yet** — planned on a loopback por
 - popup/: Capsule library, search, blacklist manager, activity log
 - lib/: capsule.js (Capsule data model), blacklist.js (pattern matching), vault-writer.js (POST to local API)
 
-## Local API — intended contract, not implemented yet
+## Local API — live on 127.0.0.1:8765
 
-The app reads and writes the vault in-process today. Nothing below answers at the moment;
-it is written down so the extension and the app can be built to the same shape.
+The app answers these on its extension port. `lib/vault-writer.js` and `lib/blacklist.js` are
+written against exactly this contract, and the app tests the contract from its side
+(`apps/03_ai-assistant/tests/extension-port.test.ts`).
 
 POST http://127.0.0.1:8765/capture
 {

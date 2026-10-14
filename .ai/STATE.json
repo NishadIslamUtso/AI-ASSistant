@@ -31,6 +31,7 @@
         "tests": "22 files / 208 tests; tests/pending/ holds three parked suites + README"
       },
       "features_implemented": [
+        "Extension port on 127.0.0.1:8765: the browser extension can post captures, read context and capsules, and round-trip the never-check list \u2014 capture side only, chrome-extension:// origins only, visible in Settings > System",
         "Real chat against Ollama at 127.0.0.1:11434 with streaming, abort, regenerate, edit-and-resend, branching",
         "Artifacts: extracted from replies, sandboxed preview, code view, version history, ZIP export",
         "Comment mode: append-only rewrite of one artifact at a time with versions",
@@ -44,11 +45,11 @@
         "Browser preview build that states plainly it is the interface only"
       ],
       "known_gaps": [
-        "The browser extension cannot reach the app yet: the vault API is in-process and no loopback port is open",
-        "Agent access (what the local or cloud agent may touch: Vault, Files, Shell, Web, MCP) is not built yet \u2014 the keys are in place for it"
+        "The extension itself is still a starter: it is not loaded, not ported into this app's flow, and captures nothing until it is",
+        "Agent access (what the local or cloud agent may touch: Vault, Files, Shell, Web, MCP) is not built yet \u2014 the keys and the port are in place for it"
       ],
       "verified": {
-        "tests": "npm test -> 25 files / 228 tests pass",
+        "tests": "npm test -> 26 files / 242 tests pass",
         "typecheck": "npm run typecheck -> clean",
         "web_build": "npm run build:web -> clean",
         "desktop_build": "npm run build -> clean (main, preload, renderer)",
@@ -56,7 +57,8 @@
         "browser_check": "outside the repo: 33 assertions including the Models pane, tokenised width, reload persistence, search, reset, 0 console problems",
         "desktop_e2e_vault": "outside the repo: typed into the app -> answered -> conversation found in the vault -> 09 Activity & Undo appended -> vault moved from Settings -> second conversation in the new vault, console clean",
         "desktop_e2e_cloud": "outside the repo: provider-shaped server -> Settings > Models -> endpoint typed, key saved, Test answered 1 model -> model picked from the composer menu -> the provider\u2019s own answer; provider asked exactly once with Bearer <key>, nothing plaintext on disk, console clean",
-        "user_windows_test": "NOT DONE"
+        "user_windows_test": "NOT DONE",
+        "desktop_e2e_extension": "outside the repo: the app opens the port; a script playing the extension captures a conversation that lands in the vault as Markdown, reads and writes the never-check list, is refused as a page, is refused with no origin, finds no chat route, and sees the port named in Settings > System; console clean"
       },
       "build_cmd": "npm install && npm run build",
       "run_cmd": "npm run dev (desktop) | npm run build:web && npm run preview:web (browser preview)"

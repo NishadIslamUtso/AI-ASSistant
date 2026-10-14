@@ -1,6 +1,6 @@
 # TODO_NEXT.md — Immediate Next Actions (Living)
 
-**Last Updated:** 2026-10-14 (late) Asia/Dhaka
+**Last Updated:** 2026-10-14 (night) Asia/Dhaka
 **Rule:** Priority order. Update after each session, check off when done.
 
 ---
@@ -22,8 +22,6 @@ Nothing below matters until the app has run on the TUF A15.
 
 - [ ] **Settings > Agent access** — the single permission surface (Local / Cloud × Vault, Files, Shell, Web,
       MCP). Built when something real can be granted; cloud off by default
-- [ ] **Open a loopback port for the extension** — the app's vault API is in-process today, so the extension
-      has nothing to POST to. This is the blocker for the whole browser-capture feature
 - [ ] **Browsing Maps** — the memory map of what was read and when
 - [ ] A Windows installer (nothing exists yet; `npm run dev` is the way in)
 
@@ -40,6 +38,10 @@ Nothing below matters until the app has run on the TUF A15.
 - [x] Memory warning measured against the chosen profile; no more "6 GB answered with 4 GB"
 - [x] Vercel deployment files removed
 - [x] Every living doc, `.ai/` file and the extension docs brought to the current state
+- [x] **The extension port** — 127.0.0.1:8765, loopback only, `chrome-extension://` origins only, carrying the
+      capture side of the vault (health, status, context, capsules, blacklist, capture) and nothing that could
+      spend a key, change a setting or export the vault. What is left of browser capture is the extension itself:
+      it is still a starter and has not been run against the app
 - [x] **Online providers** — Claude (Anthropic), GPT, Gemini, OpenRouter, Groq, DeepSeek, Grok and any
       OpenAI-compatible endpoint. Keys pasted in Settings > Models, sealed by the machine's own keychain,
       never handed to the interface; a cloud model is `provider/model` and answers through the same

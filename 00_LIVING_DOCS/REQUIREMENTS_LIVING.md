@@ -39,7 +39,11 @@
   machine's own keychain, and never crosses into the interface. A cloud model is named `provider/model`
   and is answered through the same `/api/ollama/chat` address, as the same records, so the interface has
   one streaming path; no key means no request, and a model list is whatever the key can actually reach.
-- **Verified on 2026-10-14:** 25 test files / 228 tests, clean typecheck, clean web build, desktop smoke
+- **The browser extension has a port to post to** — 127.0.0.1:8765, loopback only, answered
+  for `chrome-extension://` origins, carrying the capture side of the vault and nothing that
+  could spend a key, change a setting or export the vault. The extension itself is still a
+  starter: it has not been loaded or run against the app yet, and nothing is captured until it is.
+- **Verified on 2026-10-14:** 26 test files / 242 tests, clean typecheck, clean web build, desktop smoke
   `errors=0 warnings=0`, browser check 33/33 with 0 console problems, the desktop vault end-to-end green
   (message → answer → Markdown in the vault → vault moved from Settings), and the desktop cloud end-to-end
   green (key pasted → Test → model in the composer menu → the provider's own answer, provider asked exactly
@@ -417,6 +421,22 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - **Why:** the user compared the branches and preferred that one's look and feel.
 - **Verified:** 48 unit/integration tests, 5 jsdom UI tests, clean build, all
   endpoints checked live through the preview proxy.
+
+### [2026-10-14 night] The extension port: the app opens one socket for the browser extension
+- **Added:** `src/main/extension/server.ts` — a second listener on 127.0.0.1:8765
+  (`AI_ASSISTANT_EXTENSION_PORT` overrides it), loopback only, with its own origin rule and its
+  own route table: health, status, context, capsules, blacklist, capture. Nothing else exists
+  there, and each omission has a test.
+- **Added:** the rule the port is built on — a browser extension's id is unknown until installed,
+  so any `chrome-extension://` origin is answered, while a web page cannot pass at all (script
+  cannot set its own `Origin`, and a refusal sends no CORS headers).
+- **Added:** the port's state in Settings > System (`Listening at 127.0.0.1:8765`, or why not), and
+  a log line at startup, because an open socket nobody can see would be a secret.
+- **Changed:** the body reader moved to `src/main/api/body.ts`, so the app's API and the extension
+  port share one "too big" behaviour.
+- **Verified:** 242 tests; desktop end-to-end with the script playing the extension (capture lands
+  on disk, never-check list round-trips, page origin refused, chat route absent, port shown in
+  Settings, console clean); the browser, vault and cloud checks still green.
 
 ### [2026-10-14 late] Online providers: real, reachable, and off until a key is saved
 - **Added:** `src/shared/lib/providers.ts` (the provider table, both request shapes, the SSE parser and the

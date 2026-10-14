@@ -13,10 +13,10 @@ grants it, from Settings.
 
 | Path | What it is | State |
 |---|---|---|
-| `apps/03_ai-assistant/` | **THE APP.** Electron + React + TypeScript + Tailwind 4. Real chat, artifacts, comment mode, vault writes, online providers, Settings. | Active. 228 tests, typecheck, both builds, desktop smoke and both end-to-end checks green in the sandbox. **Not yet run on the user's Windows machine.** |
+| `apps/03_ai-assistant/` | **THE APP.** Electron + React + TypeScript + Tailwind 4. Real chat, artifacts, comment mode, vault writes, online providers, an extension port, Settings. | Active. 242 tests, typecheck, both builds, desktop smoke and all three end-to-end checks (vault, cloud, extension port) green in the sandbox. **Not yet run on the user's Windows machine.** |
 | `apps/01_claude-exact-pixel-clone/` | The first clone, built to match six Claude screenshots. | Historical. Kept as the port source for libs/hooks/server logic. Not the app. |
 | `apps/02_electron-claude-clone-v6/` | An older Electron fork with more features. | Historical reference. |
-| `extension/` | MV3 browser extension: collector + context suggester. | Starter + spec. **It cannot talk to the app yet** — the app's vault API is in-process and opens no port (see the gap in `extension/README.md`). |
+| `extension/` | MV3 browser extension: collector + context suggester. | Starter + spec. **The app now has the port it needs** (127.0.0.1:8765, capture side only), but the extension itself has not been loaded or run against it yet. |
 | `vault/AI-Brain/` | The canonical Obsidian vault (63 tracked files). | Canonical memory. Read/edited by a person as easily as by the app. |
 | `spec/`, `docs/` | The old clone's specs and the original requirement files. | Historical. |
 

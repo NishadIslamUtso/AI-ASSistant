@@ -38,6 +38,8 @@ import {
  *   Memory is measured against the profile that was chosen — choosing a profile
  *   IS the answer to "how much video memory is there", so picking 6 GB is never
  *   answered with a warning about 4.
+ * - System: what is running — and that includes the port the browser extension
+ *   posts to, because an open port the person cannot see would be a secret.
  * - Models: the online providers, one row each. A key is pasted here and never
  *   comes back — the main process holds it, sealed by the machine's keychain.
  *   Saving a key is what makes that provider's models appear in the composer, and
@@ -155,6 +157,7 @@ export default function SettingsView({
   const [providerProblems, setProviderProblems] = useState<Record<string, string>>({})
   const [customBase, setCustomBase] = useState('')
   const [customModel, setCustomModel] = useState('')
+  const [extension, setExtension] = useState({ listening: false, port: 8765, url: '', error: '' })
   const [query, setQuery] = useState('')
   const [typed, setTyped] = useState('')
   const [problem, setProblem] = useState('')
@@ -187,6 +190,11 @@ export default function SettingsView({
         setKeyEncryption(view.encryption)
       })
       .catch(() => setProvidersError('This app could not read the providers.'))
+    // Where the browser extension posts to. Read once per opening of Settings.
+    void bridge.extension
+      .status()
+      .then(status => setExtension(status))
+      .catch(() => {})
     // A provider that cannot be reached is a sentence beside that provider, in the
     // provider's own words — never a console message.
     void bridge.cloud
@@ -368,6 +376,35 @@ export default function SettingsView({
           <span className="text-[12.5px]">
             {isDemo ? 'Not in this window' : models.status === 'online' ? '127.0.0.1:11434' : models.status === 'loading' ? 'Looking…' : 'Not running'}
           </span>
+        ),
+      },
+      {
+        label: 'Extension',
+        terms: 'browser extension chrome capture port 8765 posts',
+        body: (
+          <div className="flex items-start gap-2">
+            <span
+              className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${
+                isDemo ? 'bg-muted' : extension.listening ? 'bg-ok' : 'bg-warn'
+              }`}
+            />
+            <div className="min-w-0">
+              <div className="text-[12.5px]">
+                {isDemo
+                  ? 'Not in this window'
+                  : extension.listening
+                    ? `Listening at ${extension.url.replace(/^https?:\/\//, '')}`
+                    : 'Not listening'}
+              </div>
+              <div className="mt-0.5 break-all text-[11.5px] text-muted">
+                {isDemo
+                  ? 'The port the browser extension posts to belongs to the desktop app.'
+                  : extension.listening
+                    ? 'The extension posts pages and conversations here. Nothing else answers on that port.'
+                    : extension.error || 'The extension cannot reach this app at the moment.'}
+              </div>
+            </div>
+          </div>
         ),
       },
       {

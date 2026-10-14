@@ -1,7 +1,58 @@
 # CHANGELOG.md — What Changed Each Session (Living)
 
-**Last Updated:** 2026-10-14 (late) Asia/Dhaka
+**Last Updated:** 2026-10-14 (night) Asia/Dhaka
 **Rule:** Log every change with date, what, why. This is memory for next AI.
+
+## 2026-10-14 (night) — the port the browser extension posts to
+
+The blocker for every browser-capture feature was this: the extension is a
+separate program, and the app's own API answers only its own window, on purpose.
+So the app now opens a socket for it — narrow, fixed, and visible.
+
+### What it is
+`src/main/extension/server.ts`, on **127.0.0.1:8765** (`AI_ASSISTANT_EXTENSION_PORT`
+moves it). Fixed, because an extension cannot discover a moving port.
+
+### Why opening a port is acceptable here
+Not because of who asks, but because of what the port can do. The route table is
+the whole surface (`EXTENSION_ROUTES`), and the tests keep it that way:
+
+- `/`, `/health` — is the app there, and which vault is it keeping
+- `/status`, `/context`, `/capsules` — reading, for the popup and for injection
+- `/blacklist` (GET, POST) and `/capture` (POST) — the never-check list and captures
+
+Nothing else exists on it: no chat route (an extension must never be able to spend
+a saved key), no settings, no export, no model routes. Each is asserted as a 404.
+
+### Who it answers
+A browser extension's id does not exist until somebody installs it, so any
+`chrome-extension://` origin is answered, plus this machine's own loopback on this
+port for development. A web page can never pass: script cannot set its own `Origin`
+header, and a page sending one gets a 403 with no CORS headers — the browser is not
+even told the port is there. A local program could forge the header, and a local
+program on this machine can already read the vault's files directly.
+
+Also kept: JSON writes only (a browser form is refused even when it parses), the
+same 20 MB ceiling as the app, loopback-only binding, and a refusal the caller can
+read. A busy port is reported in the log and in Settings, never fatal: the app
+keeps running and says the extension cannot reach it.
+
+### Verified
+- `npm test` → 26 files / 242 tests. `tests/extension-port.test.ts` (14): the origin
+  rule as a pure function, the narrow surface as a 404 per route, the refusals, the
+  preflight, the 20 MB ceiling, a non-existent vault reported and never created, and
+  a busy port answered instead of thrown
+- **Desktop end-to-end** (`shot-tools/check-extension-port.cjs`, 1.6 s, green): the
+  real app with a throwaway vault, and this script playing the extension — `/health`
+  names the app and the vault, a captured conversation lands on disk as Markdown,
+  `/blacklist` reads, the extension's own writer shape (`type: 'blacklist_update'`)
+  is accepted and stored, `/context` answers, a page origin and a request with no
+  origin are both 403, `/chat` on that port is 404, and Settings > System says
+  `Listening at 127.0.0.1:<port>`. **0 console problems**
+- The other three checks still green on the same build: browser 33/33 console 0,
+  vault end-to-end 6.3 s, cloud end-to-end 4.1 s
+- `src/main/api/body.ts` — the body reader both local servers use, so "too big" is
+  one behaviour instead of two
 
 ## 2026-10-14 (late) — online providers, off until a key is saved
 
