@@ -1,17 +1,41 @@
-import { useMemo, useState } from 'react'
-import { MessageSquare, Plus, Search, Trash2, X } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { PanelLeftClose, PanelLeftOpen, Plus, Search, Trash2, X } from 'lucide-react'
 import type { Chat } from '@shared/types'
 import { searchChats } from '@shared/lib/search'
 import { initials } from '@shared/lib/profile'
 import { groupChats } from '@/state/useChats'
+import usePersistentState from '@/hooks/usePersistentState'
+import AppNav, { type View } from './AppNav'
 
 /**
- * The list of conversations.
+ * The list of conversations, and the app's own sections above them.
  *
  * Search is the search from the shared library: it looks inside message text, not
  * just titles, so a conversation you remember the contents of is reachable even
  * when you do not remember what you called it.
+ *
+ * Two things here are the person's, not the app's: the sidebar collapses to a
+ * strip of icons, and its width can be dragged. Both are remembered, because a
+ * layout that resets itself every launch is a layout that was never really
+ * theirs. The one exception is on a narrow window: the collapse state is kept as
+ * it was, but the grip is only offered while there is room to use it.
  */
+
+const MIN_WIDTH = 200
+const MAX_WIDTH = 420
+const RAIL_WIDTH = 56
+
+type SidebarPrefs = { collapsed: boolean; width: number }
+
+function normalizePrefs(value: unknown): SidebarPrefs {
+  const raw = (value || {}) as Partial<SidebarPrefs>
+  const width = Number(raw.width)
+  return {
+    collapsed: raw.collapsed === true,
+    width: Number.isFinite(width) ? Math.min(Math.max(width, MIN_WIDTH), MAX_WIDTH) : 264,
+  }
+}
+
 export default function Sidebar({
   chats,
   currentChat,
@@ -21,6 +45,11 @@ export default function Sidebar({
   onOpenSettings,
   onOpenMemory,
   profileName,
+  view,
+  onView,
+  artifactQuery,
+  onArtifactQuery,
+  artifactCount,
 }: {
   chats: Chat[]
   currentChat: string
@@ -32,14 +61,105 @@ export default function Sidebar({
   /** Browsing Maps: what was read and when, drawn from the vault. */
   onOpenMemory: () => void
   profileName: string
+  /** Which screen is showing, so the sidebar can serve it. */
+  view: View
+  onView: (view: View) => void
+  /** The library's search text — the Artifacts screen owns what it filters. */
+  artifactQuery: string
+  onArtifactQuery: (value: string) => void
+  artifactCount: number
 }) {
   const [query, setQuery] = useState('')
+  const [prefs, setPrefs] = usePersistentState<SidebarPrefs>('ai-assistant.sidebar', { collapsed: false, width: 264 }, normalizePrefs)
+  const [dragging, setDragging] = useState(false)
+  const aside = useRef<HTMLElement | null>(null)
+
   const results = useMemo(() => searchChats(chats, query), [chats, query])
   const groups = useMemo(() => groupChats(chats), [chats])
-  const searching = query.trim().length > 0
+  const searching = view === 'chat' && query.trim().length > 0
+  // One box, two screens: it filters whatever is on show.
+  const searchValue = view === 'artifacts' ? artifactQuery : query
+  const setSearchValue = view === 'artifacts' ? onArtifactQuery : setQuery
+  const placeholder = view === 'artifacts' ? 'Search artifacts' : 'Search'
+
+  // Dragging the edge resizes; the width is written when the drag ends so the
+  // storage is not written on every pixel of movement.
+  useEffect(() => {
+    if (!dragging) return
+    const move = (event: PointerEvent): void => {
+      const left = aside.current?.getBoundingClientRect().left ?? 0
+      const width = Math.min(Math.max(event.clientX - left, MIN_WIDTH), MAX_WIDTH)
+      setPrefs(previous => ({ ...previous, width }))
+    }
+    const stop = (): void => setDragging(false)
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', stop)
+    return () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', stop)
+    }
+  }, [dragging, setPrefs])
+
+  if (prefs.collapsed) {
+    return (
+      <aside
+        ref={aside}
+        className="flex shrink-0 flex-col items-center gap-1.5 border-r border-line bg-panel py-3"
+        style={{ width: RAIL_WIDTH }}
+      >
+        <button
+          type="button"
+          onClick={() => setPrefs(previous => ({ ...previous, collapsed: false }))}
+          aria-label="Show the sidebar"
+          title="Show the sidebar"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-white/[0.06] hover:text-ink"
+        >
+          <PanelLeftOpen size={15} />
+        </button>
+        <button
+          type="button"
+          onClick={onNew}
+          aria-label="New chat"
+          title="New chat"
+          className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-white transition-colors hover:bg-accent/90"
+        >
+          <Plus size={15} />
+        </button>
+        <AppNav view={view} onView={onView} collapsed artifactCount={artifactCount} />
+        <span className="flex-1" />
+        <button
+          type="button"
+          onClick={onOpenMemory}
+          aria-label="Browsing Maps"
+          title="Browsing Maps — what was read and when"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-white/[0.06] hover:text-ink"
+        >
+          <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="9" cy="9" r="6" />
+            <path d="M6.6 9h4.8M9 6.6v4.8" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          onClick={onOpenSettings}
+          aria-label="Settings"
+          title="Settings"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-white/[0.06] hover:text-ink"
+        >
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand/25 text-[11px] font-semibold text-brand">
+            {initials(profileName)}
+          </span>
+        </button>
+      </aside>
+    )
+  }
 
   return (
-    <aside className="flex w-[264px] shrink-0 flex-col border-r border-line bg-panel">
+    <aside
+      ref={aside}
+      className="relative flex shrink-0 flex-col border-r border-line bg-panel"
+      style={{ width: prefs.width }}
+    >
       <div className="flex flex-col gap-2 p-3">
         <label className="relative block">
           <Search
@@ -48,22 +168,31 @@ export default function Sidebar({
             className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted"
           />
           <input
-            value={query}
-            onChange={event => setQuery(event.target.value)}
-            placeholder="Search"
-            aria-label="Search conversations"
-            className="h-9 w-full rounded-lg border border-line bg-card pl-8 pr-8 text-[13px] text-ink outline-none placeholder:text-muted focus:border-accent/60"
+            value={searchValue}
+            onChange={event => setSearchValue(event.target.value)}
+            placeholder={placeholder}
+            aria-label={placeholder}
+            className="h-9 w-full rounded-lg border border-line bg-card pl-8 pr-16 text-[13px] text-ink outline-none placeholder:text-muted focus:border-accent/60"
           />
-          {searching && (
+          {searchValue ? (
             <button
               type="button"
-              onClick={() => setQuery('')}
+              onClick={() => setSearchValue('')}
               aria-label="Clear search"
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted hover:text-ink"
+              className="absolute right-8 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted hover:text-ink"
             >
               <X size={13} />
             </button>
-          )}
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setPrefs(previous => ({ ...previous, collapsed: true }))}
+            aria-label="Hide the sidebar"
+            title="Hide the sidebar"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-muted transition-colors hover:bg-white/[0.06] hover:text-ink"
+          >
+            <PanelLeftClose size={14} />
+          </button>
         </label>
 
         <button
@@ -75,14 +204,17 @@ export default function Sidebar({
           New chat
         </button>
 
-        <div className="mt-1 flex h-9 items-center gap-2 rounded-lg bg-card px-2.5 text-[13px] text-ink">
-          <MessageSquare size={14} className="text-muted" />
-          Chat
-        </div>
+        <AppNav view={view} onView={onView} artifactCount={artifactCount} />
       </div>
 
-      <nav className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
-        {searching ? (
+      <nav className="min-h-0 flex-1 overflow-y-auto px-3 pb-3" aria-label="Conversations">
+        {view === 'artifacts' ? (
+          <p className="px-1 py-2 text-[12px] leading-relaxed text-muted">
+            {artifactCount
+              ? 'Search narrows the library. The conversations themselves are on the Chat screen.'
+              : 'The library is empty so far. Anything you make in a chat appears on the Artifacts screen.'}
+          </p>
+        ) : searching ? (
           <SearchResults results={results} currentChat={currentChat} onOpen={onOpen} />
         ) : chats.length === 0 ? (
           <p className="px-1 py-2 text-[12px] leading-relaxed text-muted">
@@ -137,6 +269,21 @@ export default function Sidebar({
           Local
         </span>
       </button>
+
+      {/* The grip on the edge. Invisible until pointed at, so the sidebar does
+          not look like it is wearing a handle. */}
+      <div
+        onPointerDown={event => {
+          event.preventDefault()
+          setDragging(true)
+        }}
+        onDoubleClick={() => setPrefs(previous => ({ ...previous, width: 264 }))}
+        title="Drag to resize · double-click to reset"
+        aria-hidden="true"
+        className={`absolute right-0 top-0 z-10 h-full w-1 cursor-col-resize transition-colors ${
+          dragging ? 'bg-accent/60' : 'hover:bg-accent/40'
+        }`}
+      />
     </aside>
   )
 }

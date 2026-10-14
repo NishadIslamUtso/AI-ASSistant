@@ -48,6 +48,18 @@
   Browser extension, Keeping conversations, and one switch per provider that has a key. Capabilities that
   do not exist (Files, Shell, Web, MCP) are stated as not built, never offered as switches. Every reply is
   labelled `local` or `online · <provider>`.
+- **The Artifacts screen exists and the library behind it is real.** Every artifact the app makes is a folder
+  of append-only version files plus a row in an atomic index, in the app's own data folder (not the vault —
+  the vault is the person's curated notes, and the artifact's content already reaches it inside the
+  conversation). The screen shows real thumbnails (script-less, loaded only near the viewport), version chips
+  that preview and re-save an older version, rename/duplicate/copy-out/export-folder, and a remove that **moves
+  the files to the library's `.trash/`** and says where. Artifacts already in saved conversations are adopted
+  once, silently. **Import and Tweaks (the mockup's sliders) are the next increment inside this screen.**
+- **The mockups are the target, and the nav only names what works.** Eight screens in the design: Chat,
+  Settings and Artifacts exist; **Today, Vault, Projects, Code and first-run do not yet**, and the nav states
+  that in one muted line instead of drawing entries that do nothing.
+- **The sidebar collapses (56px rail) and can be dragged wider (200–420px)**; both are remembered. The chat's
+  artifacts rail hides and returns.
 - **Browsing Maps** reads the record the vault already holds — conversations, captured pages and visits —
   as a timeline with site grouping, kind filters, search and a time window, over the app's own API. It
   invents nothing: a visit is labelled a visit (the vault's own "not proof of reading" is repeated, never
@@ -59,6 +71,12 @@
   it does and does not mean, and carries the reproducible build recipe. Verified by listing the installer's own
   payload and by booting the same configuration's Linux bundle; the install on Windows itself is the owner's
   own test, not something the sandbox can prove.
+- **Verified on 2026-10-14 (late evening):** 28 test files / 269 tests, clean typecheck, clean desktop and web
+  builds, `SMOKE OK … errors=0 warnings=0`, and all seven end-to-end checks green on the same build — adding
+  the artifacts library (files read off disk before the screen is trusted; rename lands on disk; remove moves to
+  `.trash/`; the logo's 12 `url(#…)` references resolve; the sidebar rail measures 56px). Note for future
+  work: the desktop checkers were emulating an 800×600 viewport over a 1280×820 window (`defaultViewport`), which
+  is why older screenshots looked cramped — fixed, and the Xvfb screen is pinned to 1280×1024.
 - **Verified on 2026-10-14:** 27 test files / 255 tests, clean typecheck, clean web build, desktop smoke
   `errors=0 warnings=0`, browser check 33/33 with 0 console problems, the desktop vault end-to-end green
   (message → answer → Markdown in the vault → vault moved from Settings), and the desktop cloud end-to-end
@@ -521,6 +539,16 @@ honest size trims (95,963,305 → 87,748,105 bytes). Verified: the payload liste
 (`app.asar` 31.9 MB, the exe, the uninstaller, `en-US.pak` only — 21 entries) and the same configuration's
 Linux bundle boots clean (`errors=0 warnings=0`). Not verified anywhere: an actual Windows install — that is
 Priority 1, the owner's own test.
+
+### [2026-10-14 late evening] The Artifacts screen, the sidebar collapse, and the logo
+The owner's verdict — "where are those? this is a plain chatbot" — was correct and reset the order of work to
+screens-first. First screen landed: **Artifacts** (a real library on disk with append-only versions, the grid,
+version chips, rename/duplicate/export, remove-moves-to-trash, adoption of what the conversations already
+held). Also: the sidebar now **collapses to a 56px rail and resizes by dragging** (remembered), the chat's
+artifacts rail hides and returns, and the **logo's id namespacing was hardened** (`useId()` punctuation
+stripped before it enters `url(#…)` references) with the window icon wired for development. Import and
+Tweaks are the next increment inside the Artifacts screen. Also found and fixed: every desktop checker had
+been emulating an 800×600 viewport over the real window.
 
 ### [NEXT] Add when changed:
 - Use format: ### [YYYY-MM-DD HH:MM] Added/Changed/Fixed: description + why + who requested

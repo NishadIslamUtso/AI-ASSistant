@@ -1,6 +1,6 @@
 # CHANGELOG.md — What Changed Each Session (Living)
 
-**Last Updated:** 2026-10-14 (evening) Asia/Dhaka
+**Last Updated:** 2026-10-14 (late evening) Asia/Dhaka
 **Rule:** Log every change with date, what, why. This is memory for next AI.
 
 ## 2026-10-14 (evening) — the Windows installer
@@ -53,6 +53,77 @@ The install on a real Windows machine is the owner's own test, and it is Priorit
 | `apps/03_ai-assistant/package.json` / `package-lock.json` | electron-builder 26.15.3 as a devDependency; `dist:win`, `dist:win:dir`, `dist:linux` |
 | `apps/03_ai-assistant/RELEASE-WINDOWS.md` | release notes: the SmartScreen text in advance, what installs where, first run, the reproducible build recipe, known gaps |
 | `.gitignore` | `build/` stays ignored except the app icon |
+
+### Landing
+This commit on `arena/3c06e1bf-ai-assistant-v3`, merged into `main`.
+
+## 2026-10-14 (late evening) — the Artifacts screen, and two things the owner saw
+
+The owner's verdict on the app as it stood was blunt and correct: "this is not what was promised. even on the
+pics you showed there were alot of features, where are those? this is a plain chatbot". The mockups have eight
+screens; two existed (Chat and Settings). The fix starts here, and the order is now screens-first with one
+rule: **a nav item appears only when its screen actually works.**
+
+### The Artifacts screen (mockup 03)
+An artifact used to live only inside the conversation that made it — no record, nothing on disk, gone once the
+chat scrolled away — while the Today mockup promises a count of "artifacts made today". So the library came
+first: `src/main/artifacts/store.ts` keeps every artifact as a folder of version files (`v1.html`, `v2.html`,
+…) plus one row in an atomic `index.json`, and `src/renderer/src/components/ArtifactsView.tsx` is the screen.
+
+- **Versions are the rule already used in the renderer**: append-only. Putting an old version back **saves it
+  as a new version** and says so; nothing is ever truncated. Saving identical content reports `unchanged`
+  rather than filling the history with versions that say nothing.
+- **Remove moves, never deletes.** The files go to the library's own `.trash/` and the message names where.
+- **A damaged index is repaired from the files**, because the files are the truth; documents copied into the
+  folder by hand appear rather than vanish; an id that could walk out of the folder is refused before it is a
+  path.
+- **Thumbnails are pictures, not pages**: a script-less sandbox at 640×440 scaled to the card, loaded only when
+  the card is nearly on screen. Twenty cards are twenty still images, never twenty Chromium documents on a
+  4 GB machine — and the right-hand pane is where the real, working document runs.
+- **Artifacts already in saved conversations are adopted once**, silently, on the first open of the screen —
+  nothing in a conversation is changed, and the line says how many were brought in.
+- Search in the sidebar now filters whichever screen is showing; the nav has **Chat and Artifacts** and says in
+  one muted line that Code, Projects, Vault and Today are being built. No dead nav entries.
+- **Import and Tweaks are step 1b**, stated in the plan so they cannot quietly vanish: Import is the file
+  picker in the main process (a file that is not a page or a drawing is refused with a sentence), Tweaks are
+  the mockup's design-token sliders over the `withDesignTokens` machinery that already exists.
+
+### The two things the owner reported
+- **The logo.** The BrainMark namespaces its internal ids with React's `useId()` and points at them with
+  `url(#…)`. React 19 returns ids wrapped in punctuation, which is legal in an id attribute but **not** safe
+  inside a `url()` reference — and if those references miss, the mark renders in pieces. The ids are now
+  stripped to letters and digits, and the desktop check counts every clip-path/use reference and fails if any
+  one of them does not resolve (12 checked, 0 broken). **The window icon is also wired up** for the development
+  build, so the taskbar shows the mark rather than Electron's default.
+- **The chat side panel had no collapse.** Now: a one-click collapse to a 56px rail (expand, new chat, the
+  sections, Browsing Maps, profile), and the full sidebar can be dragged to any width between 200 and 420px
+  — double-click the edge to reset. Both are remembered across launches. The artifacts rail in a chat has its
+  own hide button and a small button that brings it back. Preferences live in the window's own storage, which
+  is the same place the appearance settings live.
+
+### Found while proving it — worth writing down
+Every desktop checker had been running the app through `puppeteer.connect()` **with puppeteer's default
+800×600 viewport applied to a window it did not create**, so every screenshot for weeks showed a cramped
+window nobody has ever seen. `defaultViewport: null` fixed all six checkers, and the Xvfb screen is now pinned
+to 1280×1024 so the app gets the size it is designed for. That is why the layouts in the new screenshots look
+right and the old ones looked squeezed — the app was fine, the camera was wrong.
+
+### Verified
+- `npm test` → **28 files / 269 tests** (14 new: version append, restore-as-append, identical-save, rename
+  refusal, duplicate independence, remove-moves-not-deletes, adopt-by-id idempotence, adopt refuses junk,
+  path traversal refused, damaged-index repair, hand-copied folders, empty library, newest-first ordering,
+  empty/oversized refusals).
+- typecheck clean, desktop and web builds clean, `SMOKE OK … errors=0 warnings=0`.
+- **New desktop end-to-end** (`shot-tools/check-artifact-library.cjs`, 7.5 s, green): the app starts with an
+  empty app-data folder; a message is sent; the mock model answers with a real HTML document; then — before the
+  screen is trusted — `index.json` and `items/<id>/v1.html` are read **off disk** and must contain the document.
+  The screen then shows one card with the real title, date and `v1`; the thumbnail's own `srcdoc` carries the
+  document and its sandbox is empty (no scripts); rename changes the name **on disk**; remove empties the grid,
+  shows the empty state, and the files are found in `.trash/` while the item folder is gone. The same run also
+  counts the logo's `url(#…)` references (0 broken) and collapses/expands the sidebar (rail measures 56px).
+  Console clean throughout.
+- The other five desktop checks and the browser check (40 assertions, 0 console problems) all still green on
+  the same build.
 
 ### Landing
 This commit on `arena/3c06e1bf-ai-assistant-v3`, merged into `main`.

@@ -1,6 +1,6 @@
 # TODO_NEXT.md — Immediate Next Actions (Living)
 
-**Last Updated:** 2026-10-14 (evening) Asia/Dhaka
+**Last Updated:** 2026-10-14 (late evening) Asia/Dhaka
 **Rule:** Priority order. Update after each session, check off when done.
 
 ---
@@ -29,8 +29,24 @@ Nothing below matters until the app has run on the TUF A15.
 
 Honest details about the installer (including the SmartScreen text, in advance): `apps/03_ai-assistant/RELEASE-WINDOWS.md`.
 
-## Priority 2 — The next build step (one step per turn, verified, then reported)
+## Priority 2 — The screens, in order (the owner's verdict was "this is a plain chatbot"; screens first)
 
+The mockups have eight screens. Chat, Settings and now **Artifacts** exist. Each step below is one landing:
+built, verified, merged, reported. The rule: **a nav item appears only when its screen works.**
+
+- [x] **Artifacts** — done 2026-10-14 (late evening): a real library on disk (append-only versions, remove moves
+      to `.trash`, damaged index repaired from the files), the grid with real thumbnails, version chips,
+      rename/duplicate/copy-out/remove, the folder named in a footer, adoption of what was already in
+      conversations, and the sidebar search filtering the library. 14 new tests; a new desktop check that reads
+      the files off disk before it trusts the screen. **Step 1b is Import and Tweaks** (the mockup's file picker
+      and the accent/radius sliders) — deferred by ordering, not dropped
+- [ ] **Today** (mockup 07) — the landing screen: conversations today, vault notes touched, artifacts made
+      today (the library now makes this number honest), worth-doing-next from the vault's open loops, recent
+      sources, quick actions — **next**
+- [ ] **Vault** (mockup 05) — the real file tree, search, preview, reindex, add-to-composer
+- [ ] **Projects** (mockup 04) — projects with chats, instructions, context and memory
+- [ ] **Code** (mockup 06) — read the mockup when this step starts
+- [ ] **First-run** (mockup 08) and the composer chips (project · model · effort · local/online)
 - [ ] **Port the extension itself.** The app has carried the port it needs since `8e589a0`
       (`127.0.0.1:8765`, capture side only); the extension is still the starter it was. Load it in a real
       browser, wire the collector + context suggester + popup, and prove a real page capture lands in the
@@ -67,6 +83,11 @@ Honest details about the installer (including the SmartScreen text, in advance):
       OpenAI-compatible endpoint. Keys pasted in Settings > Models, sealed by the machine's own keychain,
       never handed to the interface; a cloud model is `provider/model` and answers through the same
       address as a local one. Off by default: no key, no request
+- [x] **The Artifacts screen** — the library on disk, the grid, versions, and the nav entry (see Priority 2)
+- [x] **The sidebar collapses and resizes** — a 56px rail and a drag handle, both remembered; the chat's
+      artifacts rail hides and returns
+- [x] **The logo's id namespacing hardened** — `useId()` punctuation is stripped before it goes into
+      `url(#…)` references, and the window icon is wired for the development build
 - [x] **The Windows installer** — `AI-ASSistant-Setup-0.1.0.exe` (NSIS, assisted, per-user, unsigned) built
       from `electron-builder.yml`, icon from the app's own BrainMark; payload listed and the same config's
       Linux bundle boots clean. Installing it on Windows is the owner's own test (Priority 1)

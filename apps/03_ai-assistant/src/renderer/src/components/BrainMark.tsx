@@ -12,13 +12,24 @@ import { useId, type SVGProps } from 'react'
  * steal each other's shapes — the sidebar mark would silently clip the one in
  * the settings header.
  */
+/** Only used if a React version ever returns an id that sanitises to nothing. */
+let markCount = 0
+
 type BrainMarkProps = {
   size?: number
   title?: string
 } & SVGProps<SVGSVGElement>
 
 export default function BrainMark({ size = 20, className = '', title = 'AI ASSistant', ...rest }: BrainMarkProps) {
-  const uid = useId().replace(/:/g, '')
+  // React's useId has changed shape between versions — React 19 returns ids
+  // wrapped in punctuation, older ones return `:r0:`. Punctuation is legal in an
+  // id attribute but NOT safe inside `url(#…)` references, which is how this
+  // artwork points at its own body, clip paths and lens highlights. If those
+  // references miss, the mark renders in pieces — a pink blob with no glasses.
+  // So the id is stripped to letters and digits, which both are safe in every
+  // reference context. The fallback covers a useId that sanitises to nothing.
+  const raw = useId().replace(/[^a-zA-Z0-9]/g, '')
+  const uid = raw || `bm${markCount++}`
   const id = (name: string) => `${uid}-${name}`
   const body = id('body')
   const bodyClip = `url(#${id('body-clip')})`

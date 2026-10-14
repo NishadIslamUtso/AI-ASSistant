@@ -1,6 +1,6 @@
 {
   "date": "2026-10-14",
-  "time_updated": "2026-10-14 (evening) Asia/Dhaka",
+  "time_updated": "2026-10-14 (late evening) Asia/Dhaka",
   "timezone": "Asia/Dhaka",
   "repo_version": "2.0.0-ai-assistant",
   "canonical_repo": "https://github.com/NishadIslamUtso/AI-ASSistant",
@@ -9,29 +9,28 @@
     "integration_branch": "main",
     "rule": "Finished, verified work lands as a commit on the branch, is merged --no-ff into main, both are pushed, then it is reported. Never merge anything the user did not ask for.",
     "last_landed": [
-      "e453dd4  Browsing Maps: the memory map of what was read and when",
-      "2b46b46  merge: Browsing Maps (into main)",
-      "b1a84a4  Agent access - permissions that are enforced, not drawn",
-      "93f2e5c  merge: Agent access (into main)",
-      "1ad5f92 -> 7a5e8f4  online providers (into main)",
-      "this session: the Windows installer (electron-builder + NSIS) - see CHANGELOG.md"
+      "this session: the Artifacts screen (library + nav entry), the sidebar collapse, the logo id fix",
+      "75aa731  merge: Windows installer (into main)",
+      "06157c7  Windows installer: AI-ASSistant-Setup-0.1.0.exe, and the docs that go with it",
+      "2b46b46  merge: Browsing Maps (into main)"
     ],
     "verify_with": "git log --oneline -6 && git diff --stat main arena/3c06e1bf-ai-assistant-v3"
   },
-  "note_for_next_ai": "The repo is the source of truth, not any handover text. Verify a file exists before trusting a status list. ALWAYS run `git rev-list --left-right --count HEAD...origin/<branch>` before committing: the sandbox has been silently reset to an old base more than once. The app is AI ASSistant, NOT a Claude clone - do not reintroduce Claude branding. Nothing fake goes in front of the user: a screen may not exist without working.",
+  "note_for_next_ai": "The repo is the source of truth, not any handover text. Verify a file exists before trusting a status list. ALWAYS run `git rev-list --left-right --count HEAD...origin/<branch>` before committing: the sandbox has been silently reset to an old base more than once. The app is AI ASSistant, NOT a Claude clone - do not reintroduce Claude branding. Nothing fake goes in front of the user: a screen may not exist without working. NOTE 2026-10-14: the desktop checkers had been running the app through puppeteer.connect() with the default 800x600 viewport applied to a window it did not create, so every screenshot showed a cramped window nobody sees; `defaultViewport: null` fixed all of them. Use it in any new checker.",
   "apps": {
     "03_ai-assistant": {
       "path": "apps/03_ai-assistant",
-      "status": "ACTIVE - the app. Built and verified in the sandbox (27 files / 255 tests, typecheck, both builds, desktop smoke, five end-to-end desktop checks). Ships as a Windows installer; the install on the user's Windows machine is NOT DONE (Priority 1).",
+      "status": "ACTIVE - the app. Verified in the sandbox (28 files / 269 tests, typecheck, both builds, desktop smoke, seven end-to-end desktop checks, browser check). Three of the mockups' eight screens exist (Chat, Settings, Artifacts); Today, Vault, Projects, Code and first-run are next.",
       "tech": "Electron 40 + electron-vite 5 + Vite 6 + React 19 + TypeScript 5.7 + Tailwind 4 + Vitest 2; yaml for frontmatter; no other runtime dependency",
       "layout": {
         "src/main": "main process: settings.ts (atomic writes), vault/ (service, routes, files, text, blacklist, zip, errors), api/ (loopback guard + server for future use)",
         "src/preload": "index.ts - the ONLY bridge: settings.read/update, vault.chooseFolder",
-        "src/renderer/src": "components (Sidebar, TitleBar, ChatView, MessageRow, Composer, SettingsView, ArtifactsRail, ArtifactCard/Preview, BrainMark), hooks (useChat, useModels, useVault, useArtifactRewrite, usePersistentState, useDesignTokens, useDismiss), state (appearance, performance, chats, artifactEdits, artifactView), platform/bridge.ts, styles/globals.css",
+        "src/renderer/src": "components (AppNav, Sidebar (collapsible/resizable), TitleBar, ChatView, MessageRow, Composer, ArtifactsView, ArtifactThumb, SettingsView, ArtifactsRail, ArtifactCard/Preview, BrainMark), hooks (useChat, useModels, useVault, useArtifactRewrite, usePersistentState, useDesignTokens, useDismiss), state (appearance, performance, chats, artifactEdits, artifactView), platform/bridge.ts, styles/globals.css",
         "src/shared": "lib (capture, chat, inference, markdown, prompts, skills, storage, vault, zip, design-systems/), types.ts",
-        "tests": "27 files / 255 tests; tests/pending/ holds three parked suites + README"
+        "tests": "28 files / 269 tests; tests/pending/ holds three parked suites + README"
       },
       "features_implemented": [
+        "The Artifacts screen: a real library on disk (append-only versions, atomic index, remove moves files to the library's own .trash and names where, a damaged index is repaired from the files, path traversal refused before it is a path), with real thumbnails (script-less sandbox, loaded only near the viewport), version chips that preview and re-save an older version, rename/duplicate/copy-out/export-folder, adoption of artifacts already in saved conversations, and the folder named in a footer",
         "Browsing Maps: a timeline of what the vault holds (conversations, captured pages, visits) with site grouping, kind filters, search and a time window, read from the vault through /api/vault/sources \u2014 a visit is labelled a visit, never reading",
         "Settings > Agent access: switches for the local model, browser captures, keeping conversations and each keyed provider \u2014 every one enforced in the main process (refused before anything leaves or is written), with the not-built capabilities stated as such",
         "Every reply labelled where it came from: local, or online \u00b7 <provider>",
@@ -47,14 +46,18 @@
         "Online providers (Claude/Anthropic, GPT/OpenAI, Gemini, OpenRouter, Groq, DeepSeek, Grok, any OpenAI-compatible endpoint): off until a key is saved in Settings > Models, key sealed by the machine and never handed to the interface",
         "Cloud models named provider/model and answered through the same /api/ollama/chat address, as the same NDJSON records \u2014 one streaming path for local and online alike",
         "Browser preview build that states plainly it is the interface only",
-        "Windows installer (NSIS, assisted, per-user, unsigned): AI-ASSistant-Setup-0.1.0.exe (~84 MB) built by electron-builder 26.15.3 from electron-builder.yml, icon rendered from the app's own BrainMark, en-US locale only, maximum compression; release notes in apps/03_ai-assistant/RELEASE-WINDOWS.md"
+        "Windows installer (NSIS, assisted, per-user, unsigned): AI-ASSistant-Setup-0.1.0.exe (~84 MB) built by electron-builder 26.15.3 from electron-builder.yml, icon rendered from the app's own BrainMark, en-US locale only, maximum compression; release notes in apps/03_ai-assistant/RELEASE-WINDOWS.md",
+        "The sidebar collapses to a 56px rail and can be dragged 200-420px wide (double-click resets); both remembered. The chat's artifacts rail hides and returns",
+        "The logo's internal ids are stripped to letters and digits before entering url(#...) references (React 19 wraps useId in punctuation, which is unsafe there), and the window icon is wired for the development build"
       ],
       "known_gaps": [
-        "The extension itself is still a starter: it is not loaded, not ported into this app's flow, and captures nothing until it is \u2014 so the map is mostly what the app itself kept",
+        "Most of the mockups' screens do not exist yet: Today, Vault, Projects, Code and the first-run welcome screen. The nav names only what works, in one muted line, rather than drawing dead entries",
+        "Artifacts step 1b: the Import button (file picker in the main process) and Tweaks (design-token sliders over the existing withDesignTokens machinery)",
+        "The extension itself is still a starter: it is not loaded, not ported into this app's flow, and captures nothing until it is - so Browsing Maps is mostly what the app itself kept",
         "Agent access governs what exists (models, captures, keeping, provider keys); Files, Shell, Web and MCP appear as \"not built yet\" until each one exists"
       ],
       "verified": {
-        "tests": "npm test -> 27 files / 255 tests pass",
+        "tests": "npm test -> 28 files / 269 tests pass",
         "typecheck": "npm run typecheck -> clean",
         "web_build": "npm run build:web -> clean",
         "desktop_build": "npm run build -> clean (main, preload, renderer)",
@@ -69,7 +72,8 @@
         "installer_build": "electron-builder: dist:linux dir + Windows NSIS installer both produced after a clean typecheck + build",
         "installer_payload": "listed out of the installer's own $PLUGINSDIR/app-64.7z: AI ASSistant.exe, resources/app.asar 31.9 MB, Uninstall AI ASSistant.exe, elevate.exe, en-US.pak only (21 entries)",
         "installer_linux_boot": "the same config's linux-unpacked bundle: SMOKE OK title=\"AI ASSistant\" size=1280x820 errors=0 warnings=0",
-        "installer_windows_install": "NOT DONE - no Windows machine in the sandbox; a Wine silent install proves nothing (extraction outruns the timeout). Installing it on the TUF A15 is the owner's own test."
+        "installer_windows_install": "NOT DONE - no Windows machine in the sandbox; a Wine silent install proves nothing (extraction outruns the timeout). Installing it on the TUF A15 is the owner's own test.",
+        "desktop_e2e_artifacts": "outside the repo (shot-tools/check-artifact-library.cjs, 7.5 s, green): the app starts with an empty app-data folder; a message is sent; the mock model answers with a real HTML document; index.json and items/<id>/v1.html are read OFF DISK before the screen is trusted; the grid shows one card with the real title/date/v1; the thumbnail's srcdoc carries the document and its sandbox is empty; rename changes the name on disk; remove empties the grid, shows the empty state, and the files are found in .trash/ while the item folder is gone; 12 logo url(#...) references resolve, 0 broken; the collapsed sidebar rail measures 56px; console clean"
       },
       "build_cmd": "npm install && npm run build | npm run dist:win (installer) | npm run dist:win:dir (unpacked) | npm run dist:linux",
       "run_cmd": "npm run dev (desktop) | npm run build:web && npm run preview:web (browser preview) | the installer, on Windows"
