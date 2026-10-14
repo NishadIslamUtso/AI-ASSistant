@@ -39,23 +39,23 @@
         "Appearance rewrites the theme tokens themselves (accent, conversation width) and survives reload",
         "Performance: Ollama options from profile presets or custom values, measured against the chosen profile",
         "Vault folder chosen through the main process; missing folders are refused and never replaced",
+        "Online providers (Claude/Anthropic, GPT/OpenAI, Gemini, OpenRouter, Groq, DeepSeek, Grok, any OpenAI-compatible endpoint): off until a key is saved in Settings > Models, key sealed by the machine and never handed to the interface",
+        "Cloud models named provider/model and answered through the same /api/ollama/chat address, as the same NDJSON records \u2014 one streaming path for local and online alike",
         "Browser preview build that states plainly it is the interface only"
       ],
       "known_gaps": [
-        "Not yet run on the user's Windows machine (top priority; also no installer)",
-        "Cloud providers (Claude/GPT/Gemini APIs) are not implemented",
-        "Settings > Agent access does not exist yet (spec is in the workspace plan; built when something real can be granted)",
-        "The extension cannot reach the app: the vault API is in-process and no loopback port is open",
-        "The browser extension's capture is a starter, not wired end-to-end",
-        "No wake word / voice (Jarvis) - parked by the user until better hardware"
+        "The browser extension cannot reach the app yet: the vault API is in-process and no loopback port is open",
+        "Agent access (what the local or cloud agent may touch: Vault, Files, Shell, Web, MCP) is not built yet \u2014 the keys are in place for it"
       ],
       "verified": {
-        "tests": "npm test -> 22 files / 208 tests pass",
+        "tests": "npm test -> 25 files / 228 tests pass",
         "typecheck": "npm run typecheck -> clean",
         "web_build": "npm run build:web -> clean",
+        "desktop_build": "npm run build -> clean (main, preload, renderer)",
         "desktop_smoke": "npm run smoke -> SMOKE OK title=\"AI ASSistant\" size=1280x820 errors=0 warnings=0",
-        "browser_check": "outside the repo: 28 assertions including tokenised width, reload persistence, search, reset, 0 console problems",
-        "desktop_e2e": "outside the repo: typed into the app -> answered -> conversation found in the vault -> vault moved from Settings -> second conversation in the new vault, console clean",
+        "browser_check": "outside the repo: 33 assertions including the Models pane, tokenised width, reload persistence, search, reset, 0 console problems",
+        "desktop_e2e_vault": "outside the repo: typed into the app -> answered -> conversation found in the vault -> 09 Activity & Undo appended -> vault moved from Settings -> second conversation in the new vault, console clean",
+        "desktop_e2e_cloud": "outside the repo: provider-shaped server -> Settings > Models -> endpoint typed, key saved, Test answered 1 model -> model picked from the composer menu -> the provider\u2019s own answer; provider asked exactly once with Bearer <key>, nothing plaintext on disk, console clean",
         "user_windows_test": "NOT DONE"
       },
       "build_cmd": "npm install && npm run build",

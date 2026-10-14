@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { EMPTY_SETTINGS, folderProblem, readSettings, writeSettings } from '../src/main/settings'
+import { EMPTY_SETTINGS, folderProblem, readSettings, vaultCandidates, writeSettings } from '../src/main/settings'
 import { createVaultService } from '../src/main/vault/service'
 import { startLocalApi } from '../src/main/api/server'
 
@@ -33,9 +33,18 @@ test('settings round-trip, and unknown keys are dropped rather than kept', (t) =
   t.after(() => rmSync(dir, { recursive: true, force: true }))
   const file = join(dir, 'nested', 'settings.json')
 
-  const written = writeSettings(file, { vaultPath: '  /tmp/some vault  ' } as { vaultPath: string })
+  const written = writeSettings(file, {
+    vaultPath: '  /tmp/some vault  ',
+    cloud: { baseUrl: ' https://example.test/v1 ', model: ' my-model ' },
+  })
   assert.equal(written.vaultPath, '/tmp/some vault', 'the stored path is trimmed')
-  assert.deepEqual(readSettings(file), { vaultPath: '/tmp/some vault' })
+  // The custom provider's endpoint is not secret: it is a machine setting, and a
+  // person can read and edit it in the same small file.
+  assert.deepEqual(written.cloud, { baseUrl: 'https://example.test/v1', model: 'my-model' })
+  assert.deepEqual(readSettings(file), {
+    vaultPath: '/tmp/some vault',
+    cloud: { baseUrl: 'https://example.test/v1', model: 'my-model' },
+  })
   assert.equal(readdirSync(join(dir, 'nested')).includes('settings.json.tmp'), false, 'no half-written file is left')
 
   // A file someone edited by hand, with a stray key and a wrong type.
@@ -51,6 +60,38 @@ test('a damaged settings file is treated as empty, never as a failed launch', (t
   assert.deepEqual(readSettings(file), EMPTY_SETTINGS)
   // And it is not "repaired" behind the person's back.
   assert.equal(readFileSync(file, 'utf8'), '{ this is not json')
+})
+
+test('a hand-edited endpoint is capped, never trusted, and never a launch failure', (t) => {
+  const dir = tempDir('ai-assistant-settings-')
+  t.after(() => rmSync(dir, { recursive: true, force: true }))
+  const file = join(dir, 'settings.json')
+
+  writeSettings(file, {
+    vaultPath: '',
+    cloud: { baseUrl: 'https://example.test/v1', model: 'x'.repeat(5000) },
+  })
+  const stored = readSettings(file)
+  assert.equal(stored.cloud.baseUrl, 'https://example.test/v1')
+  assert.equal(stored.cloud.model.length, 300, 'the model id is capped rather than stored whole')
+
+  // A cloud object of the wrong shape degrades to empty, field by field.
+  writeFileSync(file, JSON.stringify({ vaultPath: '/tmp', cloud: 'nonsense' }), 'utf8')
+  assert.deepEqual(readSettings(file).cloud, { baseUrl: '', model: '' })
+})
+
+test('a folder chosen in Settings is the only candidate, so a missing one is reported', () => {
+  // The decision wins outright: a chosen folder that has since gone missing must
+  // be reported, not quietly replaced by the checkout's vault.
+  assert.deepEqual(
+    vaultCandidates({ chosen: '/tmp/notes', env: { AI_ASSISTANT_VAULT: '/env' }, checkout: '/co' }),
+    ['/tmp/notes']
+  )
+  // With nothing chosen, the order is the fresh-install one.
+  assert.deepEqual(
+    vaultCandidates({ chosen: '  ', env: { AI_ASSISTANT_VAULT: '/env', AI_BRAIN_VAULT: '/brain' }, checkout: '/co', userData: '/ud' }),
+    ['/env', '/brain', '', '/co', '/ud']
+  )
 })
 
 test('a folder that cannot be used says why, and nothing is created', (t) => {

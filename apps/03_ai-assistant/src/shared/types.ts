@@ -194,11 +194,13 @@ export type ModelCapabilities = {
 /** One turn as the model API expects it. */
 export type OllamaMessage = { role: string; content: string; images?: string[] }
 
-/** One record from Ollama's NDJSON stream. */
+/** One record from the streaming path (Ollama locally, translated providers in the cloud). */
 export type OllamaRecord = {
   message?: { content?: string; thinking?: string }
   done?: boolean
   error?: string
+  /** Present when a provider reports token counts. Ollama's local API does not. */
+  usage?: { input_tokens?: number; output_tokens?: number }
 }
 
 export type ChartSpec = {

@@ -13,7 +13,7 @@ grants it, from Settings.
 
 | Path | What it is | State |
 |---|---|---|
-| `apps/03_ai-assistant/` | **THE APP.** Electron + React + TypeScript + Tailwind 4. Real chat, artifacts, comment mode, vault writes, Settings. | Active. 208 tests, typecheck, web build, desktop smoke and both end-to-end checks green in the sandbox. **Not yet run on the user's Windows machine.** |
+| `apps/03_ai-assistant/` | **THE APP.** Electron + React + TypeScript + Tailwind 4. Real chat, artifacts, comment mode, vault writes, online providers, Settings. | Active. 228 tests, typecheck, both builds, desktop smoke and both end-to-end checks green in the sandbox. **Not yet run on the user's Windows machine.** |
 | `apps/01_claude-exact-pixel-clone/` | The first clone, built to match six Claude screenshots. | Historical. Kept as the port source for libs/hooks/server logic. Not the app. |
 | `apps/02_electron-claude-clone-v6/` | An older Electron fork with more features. | Historical reference. |
 | `extension/` | MV3 browser extension: collector + context suggester. | Starter + spec. **It cannot talk to the app yet** — the app's vault API is in-process and opens no port (see the gap in `extension/README.md`). |
@@ -77,6 +77,8 @@ These are the owner's own words and corrections. They outrank anything a later A
 - "Leave vercel delete all vercel files. It isn't helping like i thought." — the deployment files are gone and
   must not come back. (The Vercel *design theme* and the `vercel.json` inside exported site ZIPs are separate
   things and stay.)
+- Online APIs (Claude and the rest) are a feature, not an afterthought — but nothing is sent anywhere until a
+  key is saved by hand. Keys belong to the machine, not to the interface.
 - App name is **AI ASSistant**; no Claude branding in user-facing copy.
 - Do not look at other branches for design. From other branches take only finished logic, never JSX.
 - Open-source ready for anyone's machine: no hardcoded names, emails, paths or model tags.

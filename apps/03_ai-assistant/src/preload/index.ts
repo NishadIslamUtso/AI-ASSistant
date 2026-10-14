@@ -1,4 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron'
+import type {
+  CloudModelsAnswer,
+  CloudTestAnswer,
+  CloudView,
+} from '../shared/lib/providers'
 
 /**
  * The only bridge between the window and the machine.
@@ -17,19 +22,38 @@ const api = {
   },
   settings: {
     /** What the app has been told to do, as the main process holds it. */
-    read: (): Promise<{ vaultPath: string }> => ipcRenderer.invoke('settings:read'),
+    read: (): Promise<{ vaultPath: string; cloud: { baseUrl: string; model: string } }> =>
+      ipcRenderer.invoke('settings:read'),
     /**
      * Save a change. The main process decides whether it is possible and says
      * what happened; the renderer is told the result rather than assuming one.
      */
     update: (
-      patch: { vaultPath?: string }
+      patch: { vaultPath?: string; cloud?: { baseUrl?: string; model?: string } }
     ): Promise<{
       ok: boolean
       error?: string
-      settings?: { vaultPath: string }
+      settings?: { vaultPath: string; cloud: { baseUrl: string; model: string } }
       status?: { ok: boolean; available: boolean; vault: string; error?: string; counts?: { files: number; entities: number } }
     }> => ipcRenderer.invoke('settings:update', patch),
+  },
+  /**
+   * Online providers. The key is handed over once and never comes back: what the
+   * interface can ask is which providers are enabled, which models they offer,
+   * and whether one of them answers — never the key itself.
+   */
+  cloud: {
+    /** The providers and whether a key is saved for each. Never the key. */
+    providers: (): Promise<CloudView> => ipcRenderer.invoke('cloud:providers'),
+    /** Every model the saved keys can reach, with each provider's own problem. */
+    models: (): Promise<CloudModelsAnswer> => ipcRenderer.invoke('cloud:models'),
+    /** Save a key. It is sealed by the machine's keychain, or held for this run. */
+    saveKey: (id: string, key: string): Promise<CloudView> =>
+      ipcRenderer.invoke('cloud:save-key', id, key),
+    /** Take a key away. Nothing else about that provider is touched. */
+    clearKey: (id: string): Promise<CloudView> => ipcRenderer.invoke('cloud:clear-key', id),
+    /** Ask one provider for its model list, which is what the Test button does. */
+    test: (id: string): Promise<CloudTestAnswer> => ipcRenderer.invoke('cloud:test', id),
   },
   vault: {
     /** The operating system's folder picker. null when the person closed it. */

@@ -1,7 +1,59 @@
 # CHANGELOG.md — What Changed Each Session (Living)
 
-**Last Updated:** 2026-10-14 (night) Asia/Dhaka
+**Last Updated:** 2026-10-14 (late) Asia/Dhaka
 **Rule:** Log every change with date, what, why. This is memory for next AI.
+
+## 2026-10-14 (late) — online providers, off until a key is saved
+
+The gap the owner flagged twice: Claude and the other online APIs were missing. They are in,
+and they change nothing for anybody who does not want them.
+
+### One address, Whoever answers
+The interface asks for a reply at `/api/ollama/chat` and nowhere else. What decides who
+answers is the model's name: `provider/model` for a provider whose key is saved, everything
+else to Ollama, byte for byte as before. Server-sent events from Anthropic and from
+OpenAI-compatible endpoints are translated in the main process into the same NDJSON records
+Ollama produces, so the interface kept exactly one streaming path, one parser and one
+error-shaped failure — no new fetch, no provider branch anywhere in the UI.
+
+Claude (Anthropic), GPT (OpenAI), Gemini, OpenRouter, Groq, DeepSeek, Grok (xAI) and a
+custom OpenAI-compatible endpoint (a gateway, llama.cpp, vLLM, LM Studio). The list of models
+is never a hardcoded catalogue: it is whatever the key can actually reach, asked for at that
+moment, and a provider that fails reports its own problem in its own words.
+
+### The key never leaves the main process
+`src/main/cloud/keys.ts` seals a key with the machine's own facility — Electron's safeStorage,
+which is the keychain on macOS and Windows and the desktop's secret store on Linux — writes
+only the sealed form, mode 0600. When a machine gives the app nothing to seal with, the key is
+held for that run and the pane says exactly that, out loud, rather than writing a plaintext key
+to disk to keep a checkbox green. A key sealed by another machine is dropped, never kept as a
+key that fails later. The renderer can ask which providers have keys and what they can reach;
+it is never handed a key, and there is no code path that reaches a provider without one.
+
+### Settings > Models
+A fifth section: one row per provider — no key, key saved, or key saved for this run only —
+with Add key (a form, so the browser stays silent), Save, Test, Remove, and where to get a key.
+The custom endpoint's address and model are typed in right there. Saving a key refreshes the
+composer's model list, so the models it reaches appear immediately; they are marked `online`,
+and a model that is online does not need Ollama to be running.
+
+### Verified
+- `npm test` → 25 files / 228 tests: provider shapes and both wire translations, SSE split one
+  character at a time, the key store with and without something to seal with, and the four
+  routing rules (cloud model → provider; local model → Ollama; no key → refused before anything
+  is sent; a name that only looks like a provider → Ollama's business, never a provider's)
+- Desktop end-to-end (`shot-tools/check-cloud.cjs`, 4 s, green): a provider-shaped server on a
+  loopback port, then in the real window — Settings > Models, endpoint typed, key saved, Test
+  pressed ("answered: 1 model"), the model picked from the composer's menu, a question sent, the
+  provider's own text answered. The provider was asked exactly once, with `Bearer <key>` and the
+  model name; nothing plaintext was written to disk; **0 console problems**
+- Browser check now 33/33 with 0 console problems (the Models pane in the preview names the
+  providers, explains that keys live in the keychain, and offers no field it cannot honour)
+- Desktop vault check still green (6.3 s), smoke `errors=0 warnings=0`, typecheck and both builds clean
+- One check was made hermetic while proving this: the desktop checks now run with their own
+  app-data directory, because a chosen vault folder from a previous run is remembered — and a
+  folder that has gone missing is reported, not replaced, which is exactly what made a
+  second run start out saying "No vault".
 
 ## 2026-10-14 (night) — Settings becomes the full window; memory stops nagging
 

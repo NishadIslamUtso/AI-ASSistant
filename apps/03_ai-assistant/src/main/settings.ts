@@ -18,17 +18,30 @@ export type AppSettings = {
    * environment", which is what a fresh install or a fresh clone does.
    */
   vaultPath: string
+  /**
+   * The custom OpenAI-compatible endpoint: a self-hosted server, a gateway, or a
+   * provider this app ships no default for. Not secret, so it lives here rather
+   * than with the keys — a person can read and edit it.
+   */
+  cloud: { baseUrl: string; model: string }
 }
 
-export const EMPTY_SETTINGS: AppSettings = { vaultPath: '' }
+export const EMPTY_SETTINGS: AppSettings = { vaultPath: '', cloud: { baseUrl: '', model: '' } }
 
 export function readSettings(file: string): AppSettings {
   try {
     if (!existsSync(file)) return { ...EMPTY_SETTINGS }
     const parsed = JSON.parse(readFileSync(file, 'utf8')) as Record<string, unknown>
+    const cloud = (parsed.cloud && typeof parsed.cloud === 'object' ? parsed.cloud : {}) as Record<string, unknown>
+    const text = (value: unknown, limit: number): string =>
+      typeof value === 'string' ? value.trim().slice(0, limit) : ''
     return {
       vaultPath:
         typeof parsed.vaultPath === 'string' && parsed.vaultPath.length <= 4096 ? parsed.vaultPath : '',
+      cloud: {
+        baseUrl: text(cloud.baseUrl, 2048),
+        model: text(cloud.model, 300),
+      },
     }
   } catch {
     return { ...EMPTY_SETTINGS }
@@ -36,8 +49,13 @@ export function readSettings(file: string): AppSettings {
 }
 
 export function writeSettings(file: string, settings: AppSettings): AppSettings {
+  const cloud = settings.cloud || { baseUrl: '', model: '' }
   const clean: AppSettings = {
     vaultPath: typeof settings.vaultPath === 'string' ? settings.vaultPath.trim().slice(0, 4096) : '',
+    cloud: {
+      baseUrl: String(cloud.baseUrl || '').trim().slice(0, 2048),
+      model: String(cloud.model || '').trim().slice(0, 300),
+    },
   }
   mkdirSync(dirname(file), { recursive: true })
   // Write beside the file and rename over it: a crash mid-write cannot leave a
@@ -46,6 +64,33 @@ export function writeSettings(file: string, settings: AppSettings): AppSettings 
   writeFileSync(temporary, `${JSON.stringify(clean, null, 2)}\n`, 'utf8')
   renameSync(temporary, file)
   return clean
+}
+
+/**
+ * Where to look for the vault, in order.
+ *
+ * A folder chosen in Settings is a decision, so it is the ONLY candidate: if it
+ * has gone missing, the app says so rather than quietly keeping notes in some
+ * other vault. Everything after that order is for a fresh install, where nobody
+ * has decided anything yet — an environment variable, the checkout's vault, then
+ * this user's app data folder.
+ */
+export function vaultCandidates(input: {
+  chosen: string
+  env?: Record<string, string | undefined>
+  checkout?: string
+  userData?: string
+}): string[] {
+  const chosen = String(input.chosen || '').trim()
+  if (chosen) return [chosen]
+  const env = input.env || {}
+  return [
+    env.AI_ASSISTANT_VAULT || '',
+    env.AI_BRAIN_VAULT || '',
+    env.AI_BRAIN_PATH || '',
+    input.checkout || '',
+    input.userData || '',
+  ]
 }
 
 /**
