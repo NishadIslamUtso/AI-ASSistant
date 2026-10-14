@@ -4,6 +4,8 @@ import { extname, join, normalize, resolve } from 'node:path'
 import { localTarget, protectLocalApi } from './guard'
 import { handleVaultRequest } from '../vault/routes'
 import type { VaultService } from '../vault/service'
+import { parseCloudModel } from '../../shared/lib/providers'
+import type { OllamaMessage, OllamaRecord } from '../../shared/types'
 
 /**
  * The local API, inside the app.
@@ -29,6 +31,26 @@ export type LocalApiOptions = {
    * server: captures are written by the same process that serves this API.
    */
   vault?: VaultService
+  /**
+   * Cloud providers, in this process and holding the keys. Absent until a key is
+   * saved, and absent in tests that only exercise Ollama — a machine with no keys
+   * has no cloud code path at all.
+   */
+  cloud?: CloudStream
+}
+
+/**
+ * What the API needs from the cloud client: a reply as the same records Ollama
+ * produces. Deliberately narrow, so the server cannot reach a provider's key
+ * material or its model list.
+ */
+export type CloudStream = {
+  stream: (input: {
+    model: string
+    messages: OllamaMessage[]
+    maxTokens: number
+    signal?: AbortSignal
+  }) => AsyncGenerator<OllamaRecord>
 }
 
 export type LocalApi = {
@@ -47,6 +69,9 @@ const OLLAMA_DEFAULT = 'http://127.0.0.1:11434'
 
 /** A capture carries conversation text and attachment bytes; this is the ceiling. */
 const BODY_LIMIT = 20 * 1024 * 1024
+
+/** How much of a reply a cloud provider is asked for. They all require a ceiling. */
+const CLOUD_MAX_TOKENS = 4096
 
 /**
  * Read a request body with a hard limit. Over the limit the socket is destroyed
@@ -101,7 +126,8 @@ function forward(
   response: ServerResponse,
   target: string,
   toTargetPath: (rest: string) => string,
-  label: string
+  label: string,
+  bodyText?: string
 ): void {
   // request.url is a path ('/api/ollama/tags'), not an absolute URL, so it has
   // to be parsed against a base. Without one this throws inside the request
@@ -114,7 +140,13 @@ function forward(
       port: new URL(target).port,
       path: toTargetPath(url.pathname.replace(/^\/api\/ollama/, '') + url.search),
       method: request.method,
-      headers: { ...request.headers, host: new URL(target).host },
+      headers: {
+        ...request.headers,
+        host: new URL(target).host,
+        // A body that was read here (so the model could be looked at) is sent on
+        // explicitly; the length is this body's, not the original's.
+        ...(bodyText !== undefined ? { 'content-length': String(Buffer.byteLength(bodyText)) } : {}),
+      },
     },
     upstreamResponse => {
       response.writeHead(upstreamResponse.statusCode || 502, {
@@ -140,7 +172,8 @@ function forward(
   })
   // If the interface stops the request (a stopped reply), stop asking upstream.
   request.on('aborted', () => upstream.destroy())
-  request.pipe(upstream)
+  if (bodyText !== undefined) upstream.end(bodyText)
+  else request.pipe(upstream)
 }
 
 function serveStatic(file: string, response: ServerResponse): void {
@@ -173,6 +206,7 @@ function handleStatic(
 /** Start the API. Resolves once it is listening so the caller can load the window. */
 export function startLocalApi(options: LocalApiOptions): Promise<LocalApi> {
   const ollama = localTarget(options.ollamaUrl || OLLAMA_DEFAULT, 'OLLAMA_API_URL')
+  const cloud = options.cloud
   let vault = options.vault
 
   const server = createServer((request, response) => {
@@ -199,7 +233,7 @@ export function startLocalApi(options: LocalApiOptions): Promise<LocalApi> {
       response,
       () => {
         if (pathname.startsWith('/api/ollama')) {
-          forward(request, response, ollama, rest => `/api${rest}`, 'Ollama')
+          void handleOllama(request, response)
           return
         }
         if (pathname.startsWith('/api/vault')) {
@@ -217,6 +251,98 @@ export function startLocalApi(options: LocalApiOptions): Promise<LocalApi> {
         response.end('Not found.')
       }
     )
+  }
+
+  /**
+   * Everything the interface asks of a model arrives here, and there is exactly
+   * one address for it (`/api/ollama/...`) no matter who answers.
+   *
+   * A chat's model decides: `provider/model` for a provider whose key is saved,
+   * anything else is Ollama's, unchanged. That is why the interface needed no new
+   * streaming path and no new fetch — and why a cloud answer arrives as the same
+   * records a local one does.
+   */
+  async function handleOllama(request: IncomingMessage, response: ServerResponse): Promise<void> {
+    const url = new URL(request.url || '/', 'http://127.0.0.1')
+    const pass = (): void => forward(request, response, ollama, rest => `/api${rest}`, 'Ollama')
+    if (request.method !== 'POST' || !url.pathname.endsWith('/chat') || !cloud) {
+      pass()
+      return
+    }
+    let text: string
+    try {
+      text = await readBody(request, BODY_LIMIT)
+    } catch (error) {
+      response.writeHead(413, { 'Content-Type': 'application/json' })
+      response.end(JSON.stringify({ error: (error as Error).message }))
+      return
+    }
+    let body: { model?: string; messages?: OllamaMessage[] }
+    try {
+      body = text ? (JSON.parse(text) as { model?: string; messages?: OllamaMessage[] }) : {}
+    } catch {
+      response.writeHead(400, { 'Content-Type': 'application/json' })
+      response.end(JSON.stringify({ error: 'That request was not valid JSON.' }))
+      return
+    }
+    // Only a model that names a known provider with a saved key goes anywhere but
+    // Ollama; everything else is forwarded byte for byte, as it always was.
+    if (!parseCloudModel(body.model)) {
+      forward(request, response, ollama, rest => `/api${rest}`, 'Ollama', text)
+      return
+    }
+    await streamCloud(response, request, String(body.model), Array.isArray(body.messages) ? body.messages : [])
+  }
+
+  /**
+   * One cloud reply, written as NDJSON records.
+   *
+   * The first record is awaited before the response starts, so a key that was
+   * refused or a provider that cannot be reached still answers with a status and
+   * a sentence — not a 200 that then dribbles an error. Once the reply has begun,
+   * a later failure travels as a record, so the text already on screen is kept.
+   */
+  async function streamCloud(
+    response: ServerResponse,
+    request: IncomingMessage,
+    model: string,
+    messages: OllamaMessage[]
+  ): Promise<void> {
+    const controller = new AbortController()
+    request.on('aborted', () => controller.abort())
+    const stream = cloud!.stream({ model, messages, maxTokens: CLOUD_MAX_TOKENS, signal: controller.signal })
+    const write = (record: OllamaRecord): void => {
+      if (response.writableEnded || response.destroyed) return
+      response.write(`${JSON.stringify(record)}\n`)
+    }
+    let first: IteratorResult<OllamaRecord>
+    try {
+      first = await stream.next()
+    } catch (error) {
+      if (response.destroyed) return
+      const message = (error as Error).name === 'AbortError' ? 'The reply was stopped.' : (error as Error).message
+      response.writeHead(502, { 'Content-Type': 'application/json' })
+      response.end(JSON.stringify({ error: message }))
+      return
+    }
+    if (response.destroyed) return
+    response.writeHead(200, {
+      'Content-Type': 'application/x-ndjson; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'X-Accel-Buffering': 'no',
+    })
+    try {
+      if (!first.done) write(first.value)
+      for (;;) {
+        const next = await stream.next()
+        if (next.done) break
+        write(next.value)
+      }
+      response.end()
+    } catch (error) {
+      write({ error: (error as Error).message })
+      response.end()
+    }
   }
 
   /**

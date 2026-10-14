@@ -1,9 +1,19 @@
-import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, safeStorage, shell } from 'electron'
 import { join } from 'node:path'
 import { writeFileSync } from 'node:fs'
 import { startLocalApi, type LocalApi } from './api/server'
 import { createVaultService, resolveVaultRoot } from './vault/service'
-import { EMPTY_SETTINGS, folderProblem, readSettings, writeSettings, type AppSettings } from './settings'
+import { createKeyStore, type KeyStore } from './cloud/keys'
+import { createCloudClient, type CloudClient } from './cloud/client'
+import { providerById } from '../shared/lib/providers'
+import {
+  EMPTY_SETTINGS,
+  folderProblem,
+  readSettings,
+  vaultCandidates,
+  writeSettings,
+  type AppSettings,
+} from './settings'
 
 /**
  * The main process. Everything that touches the machine lives on this side:
@@ -33,30 +43,112 @@ const API_PORT = Number(process.env.AI_ASSISTANT_API_PORT || 41979)
  */
 function vaultRoot(): string {
   const checkout = app.isPackaged ? '' : join(app.getAppPath(), '..', '..', 'vault', 'AI-Brain')
-  return resolveVaultRoot([
-    settings.vaultPath,
-    process.env.AI_ASSISTANT_VAULT || '',
-    process.env.AI_BRAIN_VAULT || '',
-    process.env.AI_BRAIN_PATH || '',
-    checkout,
-    join(app.getPath('userData'), 'vault'),
-  ]).root
+  return resolveVaultRoot(
+    vaultCandidates({
+      chosen: settings.vaultPath,
+      env: process.env,
+      checkout,
+      userData: join(app.getPath('userData'), 'vault'),
+    })
+  ).root
+}
+
+/**
+ * The providers, as the interface may see them: a label, where a key comes from,
+ * whether one is saved, and whether it is only in this run. The key itself never
+ * crosses into the renderer — this process is the only one that holds it.
+ */
+function cloudView(): {
+  ok: boolean
+  encryption: 'os' | 'none'
+  providers: ReturnType<CloudClient['providers']>
+} {
+  return {
+    ok: true,
+    encryption: keyStore?.encryption || 'none',
+    providers: cloud?.providers() || [],
+  }
 }
 
 /** Everything the renderer is allowed to ask about settings and the folder. */
-function registerSettingsBridge(): void {
+/** Settings, the folder picker and the providers — everything the renderer asks the machine. */
+function registerBridges(): void {
   ipcMain.handle('settings:read', () => settings)
 
-  ipcMain.handle('settings:update', (_event, patch: { vaultPath?: string }) => {
-    const wanted = typeof patch?.vaultPath === 'string' ? patch.vaultPath : settings.vaultPath
-    const problem = folderProblem(wanted)
-    if (problem) return { ok: false, error: problem }
-    settings = writeSettings(settingsFile, { ...settings, vaultPath: wanted.trim() })
+  ipcMain.handle(
+    'settings:update',
+    (
+      _event,
+      patch: { vaultPath?: string; cloud?: { baseUrl?: string; model?: string } }
+    ): { ok: boolean; error?: string; settings: AppSettings; status?: unknown } => {
+      // A provider endpoint is a plain preference, so it is written first: a
+      // folder problem must never lose what somebody just typed into the other
+      // pane of the same window.
+      if (patch?.cloud && typeof patch.cloud === 'object') {
+        const cloud = settings.cloud
+        settings = writeSettings(settingsFile, {
+          ...settings,
+          cloud: {
+            baseUrl: typeof patch.cloud.baseUrl === 'string' ? patch.cloud.baseUrl : cloud.baseUrl,
+            model: typeof patch.cloud.model === 'string' ? patch.cloud.model : cloud.model,
+          },
+        })
+      }
+      // No vault path in the patch means the caller is not moving the vault, so
+      // there is nothing to check and nothing to reconsider.
+      if (typeof patch?.vaultPath !== 'string') return { ok: true, settings }
+      const wanted = patch.vaultPath
+      const problem = folderProblem(wanted)
+      if (problem) return { ok: false, error: problem, settings }
+      settings = writeSettings(settingsFile, { ...settings, vaultPath: wanted.trim() })
     // Point the running service at the new folder. No restart, and the interface
     // is told the result instead of assuming it worked.
-    const next = createVaultService({ vaultPath: vaultRoot() })
-    api?.setVault(next)
-    return { ok: true, settings, status: next.status() }
+      const next = createVaultService({ vaultPath: vaultRoot() })
+      api?.setVault(next)
+      return { ok: true, settings, status: next.status() }
+    }
+  )
+
+  ipcMain.handle('cloud:providers', () => cloudView())
+
+  /**
+   * Every model the saved keys can reach, with each provider's own problem
+   * reported against it. A provider that is slow or down never holds up the
+   * others, and a failure is a sentence here, never a thrown error in the
+   * interface.
+   */
+  ipcMain.handle('cloud:models', async () => {
+    if (!cloud) return { ok: false, error: 'Cloud providers are not running in this process.', models: [], problems: [] }
+    try {
+      const { models, problems } = await cloud.models()
+      return { ok: true, models, problems }
+    } catch (error) {
+      return { ok: false, error: (error as Error).message, models: [], problems: [] }
+    }
+  })
+
+  ipcMain.handle('cloud:save-key', (_event, id: string, key: string) => {
+    const provider = providerById(String(id || ''))
+    if (!provider || !keyStore) return { ok: false, error: 'That is not a provider this app knows.' }
+    if (!String(key || '').trim()) return { ok: false, error: 'Paste a key first.' }
+    keyStore.set(provider.id, String(key))
+    return cloudView()
+  })
+
+  ipcMain.handle('cloud:clear-key', (_event, id: string) => {
+    keyStore?.clear(String(id || ''))
+    return cloudView()
+  })
+
+  /** The Test button: one provider, asked for its own model list. */
+  ipcMain.handle('cloud:test', async (_event, id: string) => {
+    if (!cloud) return { ok: false, error: 'Cloud providers are not running in this process.' }
+    try {
+      const models = await cloud.listModels(String(id || ''))
+      return { ok: true, count: models.length, first: models[0]?.label || '' }
+    } catch (error) {
+      return { ok: false, error: (error as Error).message }
+    }
   })
 
   ipcMain.handle('vault:choose-folder', async () => {
@@ -81,6 +173,8 @@ const consoleWarnings: string[] = []
 let api: LocalApi | null = null
 let settings: AppSettings = { ...EMPTY_SETTINGS }
 let settingsFile = ''
+let keyStore: KeyStore | null = null
+let cloud: CloudClient | null = null
 
 function createWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -204,7 +298,32 @@ if (!gotLock) {
     // file means "nothing chosen yet", never a failed launch.
     settingsFile = join(app.getPath('userData'), 'settings.json')
     settings = readSettings(settingsFile)
-    registerSettingsBridge()
+    registerBridges()
+
+    // Keys are sealed by the operating system — safeStorage is the keychain on
+    // macOS and Windows and the desktop's own secret store on Linux. When a
+    // machine gives the app nothing to seal with, the key is held for this run
+    // and the app says so, rather than writing it to disk in the clear.
+    let seal: ((value: string) => string) | undefined
+    let unseal: ((value: string) => string) | undefined
+    try {
+      if (safeStorage.isEncryptionAvailable()) {
+        seal = value => safeStorage.encryptString(value).toString('base64')
+        unseal = value => safeStorage.decryptString(Buffer.from(value, 'base64'))
+      }
+    } catch {
+      // No keychain here: the store below keeps keys in memory for this run.
+    }
+    keyStore = createKeyStore({ file: join(app.getPath('userData'), 'keys.json'), encrypt: seal, decrypt: unseal })
+    // `custom` is the provider whose address and model a person types in
+    // themselves; the client reads it fresh on every request, so changing it in
+    // Settings needs no restart.
+    cloud = createCloudClient({ keys: keyStore, config: () => ({ custom: settings.cloud }), env: process.env })
+    const enabled = keyStore.ids().length
+    console.log(
+      `[cloud] keys ${keyStore.encryption === 'os' ? 'sealed by this machine' : 'held for this run only'}; ` +
+        `${enabled} provider${enabled === 1 ? '' : 's'} enabled`
+    )
 
     // The vault lives in this process: no companion server to start, no port to
     // find, and the interface's /api/vault calls land on these files.
@@ -215,7 +334,10 @@ if (!gotLock) {
         : `[vault] nothing at ${vault.root}; captures will report that rather than create one.`
     )
     try {
-      api = await startLocalApi({ port: API_PORT, rendererDir, vault })
+      // The API is handed the cloud client, so a chat whose model names a
+      // provider streams from there — through the same address, as the same
+      // records, with no second path for the interface to know about.
+      api = await startLocalApi({ port: API_PORT, rendererDir, vault, cloud: cloud || undefined })
       if (api.port !== API_PORT) {
         console.log(`[api] port ${API_PORT} was busy; listening on ${api.port} instead.`)
       }

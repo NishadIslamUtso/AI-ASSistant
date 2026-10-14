@@ -1,6 +1,6 @@
 # TODO_NEXT.md — Immediate Next Actions (Living)
 
-**Last Updated:** 2026-10-14 (night) Asia/Dhaka
+**Last Updated:** 2026-10-14 (late) Asia/Dhaka
 **Rule:** Priority order. Update after each session, check off when done.
 
 ---
@@ -13,12 +13,13 @@ Nothing below matters until the app has run on the TUF A15.
 - [ ] `cd apps\03_ai-assistant` → `npm install` → `npm run dev` (Ollama must be running)
 - [ ] Ask something ordinary: it must answer, and must not open an artifact
 - [ ] Confirm the conversation appeared in the vault as Markdown
-- [ ] Open Settings (bottom left) and walk the four sections; report anything that looks off
+- [ ] Open Settings (bottom left) and walk the five sections; report anything that looks off
+- [ ] If you have an API key you are willing to paste: Settings > Models > Add key, press Test, then pick
+      that model in the composer and ask it something. Nothing is sent anywhere until a key is saved.
 - [ ] Report back: what worked, what looked wrong, any red text in the terminal
 
 ## Priority 2 — What the owner has already asked for
 
-- [ ] **Cloud providers** — Claude, GPT and Gemini APIs as real options, keys in the OS keychain
 - [ ] **Settings > Agent access** — the single permission surface (Local / Cloud × Vault, Files, Shell, Web,
       MCP). Built when something real can be granted; cloud off by default
 - [ ] **Open a loopback port for the extension** — the app's vault API is in-process today, so the extension
@@ -39,3 +40,7 @@ Nothing below matters until the app has run on the TUF A15.
 - [x] Memory warning measured against the chosen profile; no more "6 GB answered with 4 GB"
 - [x] Vercel deployment files removed
 - [x] Every living doc, `.ai/` file and the extension docs brought to the current state
+- [x] **Online providers** — Claude (Anthropic), GPT, Gemini, OpenRouter, Groq, DeepSeek, Grok and any
+      OpenAI-compatible endpoint. Keys pasted in Settings > Models, sealed by the machine's own keychain,
+      never handed to the interface; a cloud model is `provider/model` and answers through the same
+      address as a local one. Off by default: no key, no request

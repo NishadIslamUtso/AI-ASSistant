@@ -18,6 +18,7 @@
  *      model output — it returns empty, or a sentence saying what is missing,
  *      so the UI's own empty state is what the person sees.
  */
+import type { CloudModelsAnswer, CloudTestAnswer, CloudView } from '@shared/lib/providers'
 
 /** What the preload script exposes today. It grows as the main process does. */
 export type DesktopBridge = {
@@ -27,12 +28,12 @@ export type DesktopBridge = {
   }
   settings: {
     /** What the app has been told to do. */
-    read: () => Promise<{ vaultPath: string }>
+    read: () => Promise<{ vaultPath: string; cloud: { baseUrl: string; model: string } }>
     /** Save a change; the main process decides and reports what happened. */
-    update: (patch: { vaultPath?: string }) => Promise<{
+    update: (patch: { vaultPath?: string; cloud?: { baseUrl?: string; model?: string } }) => Promise<{
       ok: boolean
       error?: string
-      settings?: { vaultPath: string }
+      settings?: { vaultPath: string; cloud?: { baseUrl: string; model: string } }
       status?: {
         ok: boolean
         available: boolean
@@ -45,6 +46,19 @@ export type DesktopBridge = {
   vault: {
     /** The operating system's folder picker. null when the person closed it. */
     chooseFolder: () => Promise<string | null>
+  }
+  /**
+   * Online providers. In the desktop app these are questions for the main
+   * process, which holds the keys; the interface is never handed one.
+   */
+  cloud: {
+    /** The providers and whether a key is saved for each. Never the key. */
+    providers: () => Promise<CloudView>
+    /** Every model the saved keys can reach, with each provider's own problem. */
+    models: () => Promise<CloudModelsAnswer>
+    saveKey: (id: string, key: string) => Promise<CloudView>
+    clearKey: (id: string) => Promise<CloudView>
+    test: (id: string) => Promise<CloudTestAnswer>
   }
 }
 
@@ -65,13 +79,47 @@ export const hasDesktopBridge = (): boolean =>
 const demoBridge: DesktopBridge = {
   app: { version: 'web preview', platform: 'web' },
   settings: {
-    read: async () => ({ vaultPath: '' }),
+    read: async () => ({ vaultPath: '', cloud: { baseUrl: '', model: '' } }),
     update: async () => ({
       ok: false,
       error: 'Settings are part of the desktop app. This window is the interface only, so there is no folder to change.',
     }),
   },
   vault: { chooseFolder: async () => null },
+  /**
+   * No keychain, no main process, no key: every answer says that rather than
+   * pretending a provider was reached.
+   */
+  cloud: {
+    providers: async (): Promise<CloudView> => ({
+      ok: false,
+      error: 'Keys are kept by the machine’s own keychain, in the desktop app.',
+      encryption: 'none',
+      providers: [],
+    }),
+    models: async (): Promise<CloudModelsAnswer> => ({
+      ok: false,
+      error: 'There is no main process behind this window, so no provider can be asked for its models.',
+      models: [],
+      problems: [],
+    }),
+    saveKey: async (): Promise<CloudView> => ({
+      ok: false,
+      error: 'A key is kept by the desktop app, where the keychain is.',
+      encryption: 'none',
+      providers: [],
+    }),
+    clearKey: async (): Promise<CloudView> => ({
+      ok: false,
+      error: 'There is no saved key in this window.',
+      encryption: 'none',
+      providers: [],
+    }),
+    test: async (): Promise<CloudTestAnswer> => ({
+      ok: false,
+      error: 'Testing a key needs the desktop app: this window is the interface only.',
+    }),
+  },
 }
 
 export const bridge: DesktopBridge = hasDesktopBridge() ? (window.api as DesktopBridge) : demoBridge

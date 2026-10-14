@@ -32,9 +32,18 @@
   never warned about; when a preset really cannot hold the loaded model, one sentence names the numbers and
   one button fixes it.
 - **No Vercel deployment files** (removed at the owner's request on 2026-10-14; they are not coming back).
-- **Verified on 2026-10-14:** 22 test files / 208 tests, clean typecheck, clean web build, desktop smoke
-  `errors=0 warnings=0`, browser check 28/28 with 0 console problems, and the desktop end-to-end check
-  (message → answer → Markdown in the vault → vault moved from Settings) green.
+- **Vault writes are real**, in the app's own process: conversations, activity log, blacklist, and a
+  folder chosen in Settings that is honoured — and reported if it has since gone missing.
+- **Online providers work and are off by default** — Claude (Anthropic), GPT, Gemini, OpenRouter, Groq,
+  DeepSeek, Grok and any OpenAI-compatible endpoint. A key is pasted in Settings > Models, sealed by the
+  machine's own keychain, and never crosses into the interface. A cloud model is named `provider/model`
+  and is answered through the same `/api/ollama/chat` address, as the same records, so the interface has
+  one streaming path; no key means no request, and a model list is whatever the key can actually reach.
+- **Verified on 2026-10-14:** 25 test files / 228 tests, clean typecheck, clean web build, desktop smoke
+  `errors=0 warnings=0`, browser check 33/33 with 0 console problems, the desktop vault end-to-end green
+  (message → answer → Markdown in the vault → vault moved from Settings), and the desktop cloud end-to-end
+  green (key pasted → Test → model in the composer menu → the provider's own answer, provider asked exactly
+  once, console clean).
 
 ## 1. Product Goal (One Sentence)
 
@@ -408,6 +417,21 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - **Why:** the user compared the branches and preferred that one's look and feel.
 - **Verified:** 48 unit/integration tests, 5 jsdom UI tests, clean build, all
   endpoints checked live through the preview proxy.
+
+### [2026-10-14 late] Online providers: real, reachable, and off until a key is saved
+- **Added:** `src/shared/lib/providers.ts` (the provider table, both request shapes, the SSE parser and the
+  translation of both wires into one delta), `src/main/cloud/keys.ts` (sealed keys, or this-run-only keys
+  with the app saying so), `src/main/cloud/client.ts` (model lists and a streamed reply as the same records
+  Ollama produces).
+- **Added:** routing in the app's own API — a chat whose model names a known provider with a saved key
+  streams from there; every other request is forwarded to Ollama unchanged. No key means the request is
+  refused before anything leaves the machine.
+- **Added:** Settings > Models: one row per provider (Add key / Save / Test / Remove, and where to get a
+  key), the custom endpoint's address and model, and a plain sentence about where keys are kept.
+- **Changed:** the composer's model menu lists the models a saved key reaches, marked `online`; an online
+  model is not reported as a problem when Ollama is not running.
+- **Verified:** 228 tests; desktop end-to-end with a provider-shaped server (Settings → key → Test → model →
+  answer, one request, `Bearer` header, nothing plaintext on disk, console clean); 33 browser assertions.
 
 ### [2026-10-14 night] Vault writes, Settings, and the full-window Settings surface
 - **Added:** the vault service in the app's main process — conversations become Markdown in

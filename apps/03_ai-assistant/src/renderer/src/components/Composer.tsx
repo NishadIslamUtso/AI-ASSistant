@@ -100,10 +100,9 @@ export default function Composer({
 
       {preview ? <p className="px-1 pt-2 text-[12px] text-muted">{preview}</p> : null}
       {notice ? <p className="px-1 pt-2 text-[12px] text-warn">{notice}</p> : null}
-      {!notice && models.status === 'offline' && models.error ? (
-        <p className="px-1 pt-2 text-[12px] text-muted">{models.error}</p>
-      ) : null}
-      {!notice && models.status === 'online' && !models.available && models.error ? (
+      {/* One line, and only when the model that is selected cannot answer. An
+          online model an a machine without Ollama is not a problem to report. */}
+      {!notice && !models.available && models.error ? (
         <p className="px-1 pt-2 text-[12px] text-muted">{models.error}</p>
       ) : null}
     </div>
@@ -136,13 +135,7 @@ function ModelMenu({
       >
         <span
           className={`h-1.5 w-1.5 rounded-full ${
-            models.status === 'online'
-              ? models.available
-                ? 'bg-ok'
-                : 'bg-warn'
-              : models.status === 'loading'
-                ? 'bg-warn'
-                : 'bg-muted'
+            models.available ? 'bg-ok' : models.status === 'loading' ? 'bg-warn' : models.status === 'online' ? 'bg-warn' : 'bg-muted'
           }`}
         />
         {models.model}
@@ -152,14 +145,14 @@ function ModelMenu({
       {open ? (
         <div
           role="menu"
-          aria-label="Models installed on this machine"
+          aria-label="Models this app can use"
           className="absolute bottom-10 left-0 z-20 w-[260px] rounded-xl border border-line bg-card p-1.5 shadow-xl"
         >
           {models.models.length === 0 ? (
             <p className="px-2.5 py-2 text-[12px] leading-relaxed text-muted">
               {models.status === 'loading'
                 ? 'Asking Ollama what is installed…'
-                : 'No local models found. Ollama is not running, or has none installed. Nothing is downloaded automatically.'}
+                : 'No models yet. Ollama is not running or has none installed, and no provider key is saved — Settings > Models is where a key goes. Nothing is downloaded automatically.'}
             </p>
           ) : (
             models.models.map(entry => (
@@ -177,7 +170,11 @@ function ModelMenu({
                 }`}
               >
                 <span className="min-w-0 flex-1 truncate">{entry.name}</span>
-                {typeof entry.size === 'number' ? (
+                {entry.cloud ? (
+                  <span className="shrink-0 rounded-md border border-line px-1.5 text-[10.5px] text-muted">
+                    online
+                  </span>
+                ) : typeof entry.size === 'number' ? (
                   <span className="shrink-0 text-[11px] text-muted">
                     {(entry.size / 1e9).toFixed(1)} GB
                   </span>

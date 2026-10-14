@@ -10,6 +10,7 @@ import {
   vramWarning,
   type InferenceSettings,
 } from '@shared/lib/inference'
+import { CLOUD_PROVIDERS, type CloudProviderView } from '@shared/lib/providers'
 import { ACCENTS, DEFAULT_APPEARANCE, WIDTHS, type Appearance } from '../state/appearance'
 import {
   CUSTOM_FIELDS,
@@ -37,6 +38,10 @@ import {
  *   Memory is measured against the profile that was chosen — choosing a profile
  *   IS the answer to "how much video memory is there", so picking 6 GB is never
  *   answered with a warning about 4.
+ * - Models: the online providers, one row each. A key is pasted here and never
+ *   comes back — the main process holds it, sealed by the machine's keychain.
+ *   Saving a key is what makes that provider's models appear in the composer, and
+ *   a provider stays off until somebody does exactly that.
  * - Vault: the folder, chosen through the main process, which reports what
  *   happened. Nothing here creates a folder, and the path shown is the one the
  *   vault itself reported.
@@ -45,7 +50,7 @@ import {
  * browser preview there is no folder to choose and no model to run.
  */
 
-type SectionId = 'system' | 'appearance' | 'performance' | 'vault'
+type SectionId = 'system' | 'appearance' | 'models' | 'performance' | 'vault'
 
 type Row = {
   /** What the row is called, and what the rail's search matches on. */
@@ -64,6 +69,7 @@ const SECTIONS: readonly {
 }[] = Object.freeze([
   { id: 'system', title: 'System', group: 'This computer' },
   { id: 'appearance', title: 'Appearance', group: 'This app', resettable: true },
+  { id: 'models', title: 'Models', group: 'This app' },
   { id: 'performance', title: 'Performance', group: 'This app', resettable: true },
   { id: 'vault', title: 'Vault', group: 'This app' },
 ])
@@ -83,6 +89,12 @@ function SectionIcon({ id }: { id: SectionId }) {
       <>
         <circle cx="10" cy="10" r="7" />
         <path d="M10 6.5v3.5l2.5 1.5" />
+      </>
+    ),
+    models: (
+      <>
+        <circle cx="7.5" cy="12.5" r="3.5" />
+        <path d="M10.2 10 16 4.2M13.6 4.2H16v2.4" />
       </>
     ),
     performance: <path d="M3 14.5 7.5 8l3 3.5L14 4l3 10.5" />,
@@ -133,6 +145,16 @@ export default function SettingsView({
   models: ModelState
 }) {
   const [section, setSection] = useState<SectionId>('system')
+  const [providers, setProviders] = useState<CloudProviderView[]>([])
+  const [providersError, setProvidersError] = useState('')
+  const [keyEncryption, setKeyEncryption] = useState<'os' | 'none'>('none')
+  const [keyDraft, setKeyDraft] = useState<Record<string, string>>({})
+  const [editing, setEditing] = useState('')
+  const [testing, setTesting] = useState('')
+  const [verdict, setVerdict] = useState<Record<string, string>>({})
+  const [providerProblems, setProviderProblems] = useState<Record<string, string>>({})
+  const [customBase, setCustomBase] = useState('')
+  const [customModel, setCustomModel] = useState('')
   const [query, setQuery] = useState('')
   const [typed, setTyped] = useState('')
   const [problem, setProblem] = useState('')
@@ -142,7 +164,39 @@ export default function SettingsView({
     if (!open) return
     setProblem('')
     // The field starts at the folder that is actually in use rather than blank.
-    bridge.settings.read().then(settings => setTyped(settings.vaultPath || '')).catch(() => {})
+    bridge.settings
+      .read()
+      .then(settings => {
+        setTyped(settings.vaultPath || '')
+        setCustomBase(settings.cloud?.baseUrl || '')
+        setCustomModel(settings.cloud?.model || '')
+      })
+      .catch(() => {})
+    // Which providers have a key, and whether this machine can seal one. Both are
+    // answers from the main process; when it cannot say, the pane says that.
+    void bridge.cloud
+      .providers()
+      .then(view => {
+        if (!view?.ok) {
+          setProviders([])
+          setProvidersError(view?.error || 'This app could not read the providers.')
+          return
+        }
+        setProvidersError('')
+        setProviders(view.providers)
+        setKeyEncryption(view.encryption)
+      })
+      .catch(() => setProvidersError('This app could not read the providers.'))
+    // A provider that cannot be reached is a sentence beside that provider, in the
+    // provider's own words — never a console message.
+    void bridge.cloud
+      .models()
+      .then(answer => {
+        setProviderProblems(
+          Object.fromEntries((answer?.problems || []).map(item => [item.provider, item.error]))
+        )
+      })
+      .catch(() => setProviderProblems({}))
   }, [open])
 
   useEffect(() => {
@@ -178,6 +232,65 @@ export default function SettingsView({
     if (!folder) return
     setTyped(folder)
     await apply(folder)
+  }
+
+  /**
+   * Saving a key hands it over and keeps nothing: what comes back is the provider
+   * list and whether the machine could seal it. A key typed for this run only is
+   * said out loud, because it will be gone at the next launch.
+   */
+  async function saveKey(id: string, label: string): Promise<void> {
+    const key = (keyDraft[id] || '').trim()
+    if (!key) return
+    const view = await bridge.cloud.saveKey(id, key)
+    if (!view?.ok) {
+      setVerdict(current => ({ ...current, [id]: view?.error || 'That key could not be saved.' }))
+      return
+    }
+    setProviders(view.providers)
+    setKeyEncryption(view.encryption)
+    setKeyDraft(current => ({ ...current, [id]: '' }))
+    setEditing('')
+    setVerdict(current => ({ ...current, [id]: `Key saved for ${label}.` }))
+    // The composer's model list is what just changed: the models this key reaches
+    // belong in it now, not at the next launch.
+    models.refresh()
+  }
+
+  async function removeKey(id: string, label: string): Promise<void> {
+    const view = await bridge.cloud.clearKey(id)
+    if (view?.ok) {
+      setProviders(view.providers)
+      setKeyEncryption(view.encryption)
+      setVerdict(current => ({ ...current, [id]: `The key for ${label} is gone.` }))
+      models.refresh()
+      return
+    }
+    setVerdict(current => ({ ...current, [id]: view?.error || 'That key could not be removed.' }))
+  }
+
+  /** The Test button: one provider, asked for its own list of models. */
+  async function testKey(id: string, label: string): Promise<void> {
+    setTesting(id)
+    setVerdict(current => ({ ...current, [id]: '' }))
+    const answer = await bridge.cloud.test(id)
+    setTesting('')
+    setVerdict(current => ({
+      ...current,
+      [id]: answer?.ok
+        ? `${label} answered: ${answer.count} model${answer.count === 1 ? '' : 's'}${answer.first ? `, including ${answer.first}` : ''}.`
+        : answer?.error || `${label} did not answer.`,
+    }))
+  }
+
+  /** The custom endpoint: an address and a model name, kept in the settings file. */
+  async function saveCustom(baseUrl: string, model: string): Promise<void> {
+    const result = await bridge.settings.update({ cloud: { baseUrl, model } })
+    setVerdict(current => ({
+      ...current,
+      custom: result?.ok ? 'Saved. The custom endpoint is used for its own models.' : result?.error || 'That could not be saved.',
+    }))
+    if (result?.ok) models.refresh()
   }
 
   // What is loaded right now, from what Ollama reported — never a guess. In the
@@ -337,6 +450,175 @@ export default function SettingsView({
         ),
       },
     ],
+    models: isDemo
+      ? [
+          {
+            label: 'Providers',
+            terms: 'claude anthropic gpt openai gemini openrouter groq deepseek grok xai custom key',
+            body: (
+              <div className="flex flex-col gap-1">
+                <span className="text-[12.5px]">{CLOUD_PROVIDERS.map(provider => provider.label).join(' · ')}</span>
+                <span className="text-[11.5px] text-muted">
+                  Keys are kept by your machine’s own keychain, in the desktop app. This window is the interface only, so
+                  there is no keychain behind it and no provider to ask.
+                </span>
+              </div>
+            ),
+          },
+        ]
+      : [
+          {
+            label: 'Keys',
+            terms: 'keychain encryption sealed safe storage',
+            body: (
+              <span className="text-[12.5px]">
+                {keyEncryption === 'os'
+                  ? 'Sealed by this machine’s keychain.'
+                  : 'Held for this run only — this machine gave the app nothing to seal a key with.'}
+              </span>
+            ),
+          },
+          ...providers.map(provider => ({
+            label: provider.label,
+            terms: `${provider.custom ? 'custom openai compatible endpoint self hosted lm studio llama.cpp vllm ' : ''}key api token ${provider.id}`,
+            body: (
+              <div className="flex flex-col gap-1.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={`h-1.5 w-1.5 shrink-0 rounded-full ${provider.hasKey ? 'bg-ok' : 'bg-muted'}`}
+                  />
+                  <span className="text-[12.5px]">
+                    {provider.hasKey
+                      ? provider.sessionOnly
+                        ? 'Key saved for this run only'
+                        : 'Key saved'
+                      : 'No key'}
+                  </span>
+                  <span className="ml-auto flex shrink-0 gap-2">
+                    {provider.hasKey ? (
+                      <>
+                        <button
+                          type="button"
+                          className="rounded-lg border border-line px-2.5 py-1 text-[12px] hover:bg-white/[0.06] disabled:opacity-50"
+                          onClick={() => void testKey(provider.id, provider.label)}
+                          disabled={testing === provider.id}
+                          aria-label={`Test ${provider.label}`}
+                        >
+                          {testing === provider.id ? 'Testing…' : 'Test'}
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-lg border border-line px-2.5 py-1 text-[12px] hover:bg-white/[0.06]"
+                          onClick={() => void removeKey(provider.id, provider.label)}
+                          aria-label={`Remove key for ${provider.label}`}
+                        >
+                          Remove
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        className="rounded-lg border border-line px-2.5 py-1 text-[12px] hover:bg-white/[0.06]"
+                        onClick={() => setEditing(editing === provider.id ? '' : provider.id)}
+                        aria-label={`Add key for ${provider.label}`}
+                      >
+                        {editing === provider.id ? 'Cancel' : 'Add key'}
+                      </button>
+                    )}
+                  </span>
+                </div>
+
+                {editing === provider.id && !provider.hasKey ? (
+                  // A form, not a bare field: a password input outside one is a
+                  // console warning in the browser, and this window must stay silent.
+                  <form
+                    className="flex gap-2"
+                    onSubmit={event => {
+                      event.preventDefault()
+                      void saveKey(provider.id, provider.label)
+                    }}
+                  >
+                    <input
+                      type="password"
+                      name={`key-${provider.id}`}
+                      autoComplete="off"
+                      className="min-w-0 flex-1 rounded-lg border border-line bg-card px-3 py-2 text-[12.5px] outline-none focus:border-accent"
+                      placeholder="Paste the key"
+                      aria-label={`Key for ${provider.label}`}
+                      value={keyDraft[provider.id] || ''}
+                      onChange={event =>
+                        setKeyDraft(current => ({ ...current, [provider.id]: event.target.value }))
+                      }
+                    />
+                    <button
+                      type="submit"
+                      className="rounded-lg border border-line px-3 py-2 text-[12.5px] hover:bg-white/[0.06] disabled:opacity-50"
+                      disabled={!(keyDraft[provider.id] || '').trim()}
+                      aria-label={`Save key for ${provider.label}`}
+                    >
+                      Save
+                    </button>
+                  </form>
+                ) : null}
+
+                {provider.custom ? (
+                  <div className="flex flex-col gap-2">
+                    {([
+                      ['Base URL', customBase, setCustomBase, 'http://127.0.0.1:1234/v1', 'baseUrl'],
+                      ['Model', customModel, setCustomModel, 'the model name that endpoint expects', 'model'],
+                    ] as const).map(([label, value, setter, placeholder, field]) => (
+                      <label key={field} className="flex items-center gap-2">
+                        <span className="w-[74px] shrink-0 text-[11.5px] text-muted">{label}</span>
+                        <input
+                          className="min-w-0 flex-1 rounded-lg border border-line bg-card px-3 py-2 text-[12.5px] outline-none focus:border-accent"
+                          placeholder={placeholder}
+                          aria-label={`Custom ${field}`}
+                          spellCheck={false}
+                          value={value}
+                          onChange={event => setter(event.target.value)}
+                          onBlur={() =>
+                            void saveCustom(
+                              field === 'baseUrl' ? value : customBase,
+                              field === 'model' ? value : customModel
+                            )
+                          }
+                        />
+                      </label>
+                    ))}
+                  </div>
+                ) : null}
+
+                {providerProblems[provider.id] ? (
+                  <p className="text-[11.5px] text-warn">{providerProblems[provider.id]}</p>
+                ) : null}
+                {verdict[provider.id] ? (
+                  <p className="text-[11.5px] text-muted" role="status">
+                    {verdict[provider.id]}
+                  </p>
+                ) : null}
+                {!provider.custom && provider.keysUrl ? (
+                  <a
+                    className="w-fit text-[11.5px] text-muted underline hover:text-ink"
+                    href={provider.keysUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {provider.keysUrl.replace(/^https:\/\//, '')}
+                  </a>
+                ) : null}
+              </div>
+            ),
+          })),
+          ...(providersError
+            ? [
+                {
+                  label: 'Providers',
+                  terms: 'error unavailable read',
+                  body: <p className="text-[12px] text-warn">{providersError}</p>,
+                },
+              ]
+            : []),
+        ],
     performance: [
       {
         label: 'Memory profile',
