@@ -15,6 +15,8 @@ import usePersistentState from './hooks/usePersistentState.js'
 import useModels from './hooks/useModels.js'
 import useChat from './hooks/useChat.js'
 import { DEFAULT_CHATS, DEFAULT_MODEL, DEFAULT_SETTINGS, newId, normalizeChats, normalizeSettings } from './lib/storage.js'
+import { DEFAULT_PROFILE, PROFILE_KEY, normalizeProfile } from './lib/profile.js'
+import { DEFAULT_INFERENCE, INFERENCE_KEY, resolveInference } from './lib/inference.js'
 import { capsuleText, vaultGet } from './lib/vault.js'
 
 function ProjectsView({ projects, chats, onCreate, onOpen, focused, onBack, onChat, onNew }) {
@@ -37,6 +39,8 @@ export default function App() {
   const [chats, setChats] = usePersistentState('claude_exact_chats', DEFAULT_CHATS, normalizeChats, notify)
   const [settings, setSettings] = usePersistentState('claude_exact_settings', DEFAULT_SETTINGS, normalizeSettings, notify)
   const [model, setModel] = usePersistentState('claude_exact_model', DEFAULT_MODEL, value => typeof value === 'string' ? value : DEFAULT_MODEL, notify)
+  const [profile, setProfile] = usePersistentState(PROFILE_KEY, DEFAULT_PROFILE, normalizeProfile, notify)
+  const [inference, setInference] = usePersistentState(INFERENCE_KEY, DEFAULT_INFERENCE, resolveInference, notify)
   const [projects, setProjects] = usePersistentState('claude_exact_projects', [], value => Array.isArray(value) ? value.filter(project => typeof project?.id === 'string' && typeof project?.name === 'string') : [], notify)
   const [imports, setImports] = usePersistentState('claude_exact_artifacts', [], value => Array.isArray(value) ? value.filter(artifact => typeof artifact?.id === 'string' && Array.isArray(artifact.versions) && artifact.versions.length) : [], notify)
   const [currentChat, setCurrentChat] = useState(() => new URLSearchParams(window.location.search).get('chat'))
@@ -57,6 +61,7 @@ export default function App() {
   const [vaultPath, setVaultPath] = useState('')
   const [externalLink, setExternalLink] = useState(null)
   const models = useModels(model, setModel)
+  const resolvedInference = resolveInference(inference)
   const chat = chats.find(item => item.id === currentChat)
   // Branch switcher: every chat sharing a parentId (or itself, if it is
   // the root) is an alternate path through the same conversation.
@@ -74,7 +79,7 @@ export default function App() {
     window.history.pushState({}, '', url)
     setCurrentChat(id); setView('chat'); setContextBundle(null); setProjectId(null)
   }, [])
-  const chatRuntime = useChat({ chats, setChats, currentChat, navigate, models, notify })
+  const chatRuntime = useChat({ chats, setChats, currentChat, navigate, models, notify, inference: resolvedInference })
   const artifacts = useMemo(() => [...imports, ...chats.flatMap(chat => chat.messages.flatMap(message => message.artifacts || []))], [imports, chats])
   const artifact = artifacts.find(item => item.id === activeArtifact)
   useEffect(() => {
@@ -191,13 +196,13 @@ export default function App() {
   return <>
     <TitleBar onAction={titleAction} ollamaOk={models.status === 'online'} vaultOk={vaultOk} title={chat?.title || 'AI ASSistant'} />
     <div className="app-shell">
-      <Sidebar chats={chats} currentChat={currentChat} navigate={navigate} view={view} onView={setView} onNew={() => newChat()} onAction={chatAction} onSettings={() => setModal('settings')} onApps={() => setModal('apps')} onVault={() => setRightPanel(rightPanel === 'vault' ? null : 'vault')} collapsed={collapsed} onCollapse={() => setCollapsed(!collapsed)} busyChatId={chatRuntime.busyChatId} notify={notify} artifactCount={artifacts.length} onToday={() => setToday(true)} />
-      {view === 'artifacts' ? <ArtifactsLibrary artifacts={artifacts} onOpen={openArtifact} onImport={item => { setImports(previous => [item, ...previous]); notify('Artifact imported locally. Open its card to run the isolated preview.') }} notify={notify} /> : view === 'projects' ? <ProjectsView projects={projects} chats={chats} onCreate={() => setAction({ type: 'createProject' })} focused={projects.find(item => item.id === focusedProject)} onOpen={setFocusedProject} onBack={() => setFocusedProject(null)} onChat={navigate} onNew={newChat} /> : <Center key={currentChat || `new-${draftNonce}`} chat={chatView} models={models} onArtifact={openArtifact} onRetryCapture={chatRuntime.retryCapture} settings={settings} notify={notify} busyChatId={chatRuntime.busyChatId} onSend={chatRuntime.send} onStop={chatRuntime.stop} projects={projects} projectId={projectId} setProjectId={selectProject} onVault={() => setRightPanel('vault')} onContextPreview={previewCapsule} contextBundle={contextBundle} clearContext={() => setContextBundle(null)} onCook={cook} onExternalLink={setExternalLink} seed={seed} onBranch={messageId => branchFrom(chat.id, messageId)} onNavigateBranch={navigate} />}
+      <Sidebar chats={chats} currentChat={currentChat} navigate={navigate} view={view} onView={setView} onNew={() => newChat()} onAction={chatAction} onSettings={() => setModal('settings')} onApps={() => setModal('apps')} onVault={() => setRightPanel(rightPanel === 'vault' ? null : 'vault')} collapsed={collapsed} onCollapse={() => setCollapsed(!collapsed)} busyChatId={chatRuntime.busyChatId} notify={notify} artifactCount={artifacts.length} onToday={() => setToday(true)} profile={profile} />
+      {view === 'artifacts' ? <ArtifactsLibrary artifacts={artifacts} onOpen={openArtifact} onImport={item => { setImports(previous => [item, ...previous]); notify('Artifact imported locally. Open its card to run the isolated preview.') }} notify={notify} /> : view === 'projects' ? <ProjectsView projects={projects} chats={chats} onCreate={() => setAction({ type: 'createProject' })} focused={projects.find(item => item.id === focusedProject)} onOpen={setFocusedProject} onBack={() => setFocusedProject(null)} onChat={navigate} onNew={newChat} /> : <Center key={currentChat || `new-${draftNonce}`} chat={chatView} models={models} onArtifact={openArtifact} onRetryCapture={chatRuntime.retryCapture} settings={settings} notify={notify} busyChatId={chatRuntime.busyChatId} onSend={chatRuntime.send} onStop={chatRuntime.stop} projects={projects} projectId={projectId} setProjectId={selectProject} onVault={() => setRightPanel('vault')} onContextPreview={previewCapsule} contextBundle={contextBundle} clearContext={() => setContextBundle(null)} onCook={cook} onExternalLink={setExternalLink} seed={seed} onBranch={messageId => branchFrom(chat.id, messageId)} onNavigateBranch={navigate} profile={profile} />}
       {rightPanel === 'vault' && <VaultPanel onClose={() => setRightPanel(null)} onPreview={previewCapsule} />}
       {rightPanel === 'artifact' && artifact && <ArtifactPanel key={artifact.id} artifact={artifact} onClose={() => setRightPanel(null)} onSave={saveArtifact} notify={notify} />}
     </div>
     {today && <TodayView onClose={() => setToday(false)} onAsk={topic => { setToday(false); setView('chat'); setSeed(previous => ({ text: topic, n: previous.n + 1 })) }} />}
-    {modal === 'settings' && <SettingsModal settings={settings} setSettings={setSettings} onClose={() => setModal(null)} onApps={() => setModal('apps')} onVault={() => setRightPanel('vault')} models={models} />}
+    {modal === 'settings' && <SettingsModal settings={settings} setSettings={setSettings} onClose={() => setModal(null)} onApps={() => setModal('apps')} onVault={() => setRightPanel('vault')} models={models} profile={profile} setProfile={setProfile} notify={notify} inference={resolvedInference} setInference={setInference} />}
     {modal === 'apps' && <AppsExtensionsModal onClose={() => setModal(null)} notify={notify} />}
     {action && <ActionDialog action={action} projects={projects} onClose={() => setAction(null)} onApply={applyAction} />}
     {previewContext && <Dialog title="Preview vault context" onClose={() => setPreviewContext(null)} className="context-dialog" labelledBy="context-title"><div className="context-preview"><h3>{previewContext.title}</h3><p>Exact excerpt for the local model <strong>{model}</strong>. Adding it does not send your message or contact an external AI.</p><pre>{previewContext.content}</pre><footer><button className="secondary-button" onClick={() => setPreviewContext(null)}>Cancel</button><button className="white-button" onClick={() => { setContextBundle(previewContext); setPreviewContext(null); setView('chat') }}>Add to composer</button></footer></div></Dialog>}

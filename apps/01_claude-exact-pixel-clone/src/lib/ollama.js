@@ -43,10 +43,14 @@ export async function* readNdjson(body) {
     if (buffer.trim()) yield JSON.parse(buffer)
   } finally { reader.releaseLock() }
 }
-export async function streamChat(payload, signal, onRecord) {
+export async function streamChat(payload, signal, onRecord, inference = null) {
+  // `inference` is the resolved profile from lib/inference.js. Without it the
+  // previous hardcoded default is used, so callers that predate profiles work.
+  const options = inference?.options || { num_ctx: 4096 }
+  const keepAlive = inference?.keepAlive || '5m'
   const response = await fetch(`${API}/chat`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...payload, stream: true, keep_alive: '5m', options: { num_ctx: 4096 } }), signal,
+    body: JSON.stringify({ ...payload, stream: true, keep_alive: keepAlive, options }), signal,
   })
   if (!response.ok) {
     let data = {}

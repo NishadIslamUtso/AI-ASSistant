@@ -1,5 +1,5 @@
 /**
- * Citation extraction — Claude-style source chips under a reply.
+ * Citation extraction — source chips under a reply.
  * Only links that actually appear in the answer text are shown; nothing is
  * invented and no search is performed.
  */

@@ -3,6 +3,7 @@ import { CalendarDays } from 'lucide-react'
 import { PanelLeft, ArrowLeft, ArrowRight, MessagesSquare, Code2, Search, Plus, FolderClosed, Shapes, Briefcase, ChevronDown, SlidersHorizontal, ArrowUpRight, Blocks, MoreVertical, Pin, Pencil, Trash2, PanelsTopLeft, ChevronRight } from 'lucide-react'
 import UserMenu from './UserMenu.jsx'
 import useDismiss from '../hooks/useDismiss.js'
+import { initials } from '../lib/profile.js'
 
 function ChatMenu({ menu, close, action, busy }) {
   const ref = useRef(null)
@@ -21,7 +22,7 @@ function ChatMenu({ menu, close, action, busy }) {
     </div>)}
   </div>
 }
-export default function Sidebar({ chats, currentChat, navigate, view, onView, onNew, onAction, onSettings, onApps, onVault, collapsed, onCollapse, busyChatId, notify, artifactCount, onToday }) {
+export default function Sidebar({ chats, currentChat, navigate, view, onView, onNew, onAction, onSettings, onApps, onVault, collapsed, onCollapse, busyChatId, notify, artifactCount, onToday, profile }) {
   const [search, setSearch] = useState('')
   const [menu, setMenu] = useState(null)
   const [userMenu, setUserMenu] = useState(false)
@@ -67,10 +68,15 @@ export default function Sidebar({ chats, currentChat, navigate, view, onView, on
       </div>
     </div>
     <footer className="sidebar-footer">
-      <button ref={accountRef} className="account-button" aria-label="Utso account menu" aria-expanded={userMenu} onPointerDown={event => event.stopPropagation()} onClick={() => { setMenu(null); setUserMenu(!userMenu) }}><span className="avatar">NU</span><span>Utso <small>· Free</small></span><ChevronDown size={12} /></button>
+      <button ref={accountRef} className="account-button" aria-label={`${profile.name} account menu`} aria-expanded={userMenu} onPointerDown={event => event.stopPropagation()} onClick={() => { setMenu(null); setUserMenu(!userMenu) }}>
+        {profile.avatar
+          ? <img className="avatar avatar-image" src={profile.avatar} alt="" width="18" height="18" />
+          : <span className="avatar">{initials(profile.name)}</span>}
+        <span>{profile.name} <small>· Local</small></span><ChevronDown size={12} />
+      </button>
       <button className="icon-button" aria-label="Open AI-Brain vault" title="AI-Brain vault" onClick={onVault}><Blocks size={16} /></button>
     </footer>
-    {userMenu && <UserMenu onClose={() => { setUserMenu(false); accountRef.current?.focus() }} onSettings={onSettings} onApps={onApps} notify={notify} />}
+    {userMenu && <UserMenu onClose={() => { setUserMenu(false); accountRef.current?.focus() }} onSettings={onSettings} onApps={onApps} notify={notify} profile={profile} />}
     {menu && <ChatMenu menu={menu} close={() => setMenu(null)} action={onAction} busy={busyChatId === menu.chat.id} />}
   </aside>
 }

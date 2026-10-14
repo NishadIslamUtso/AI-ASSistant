@@ -1,9 +1,9 @@
 {
-  "name": "ai-assistant-claude-exact",
+  "name": "ai-assistant",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
-  "description": "AI ASSistant - Exact pixel-perfect Claude desktop clone",
+  "description": "AI ASSistant - local-first AI chat with a Markdown vault for memory. Runs your own Ollama models.",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5173",
     "dev:server": "node server/vault-api.cjs",

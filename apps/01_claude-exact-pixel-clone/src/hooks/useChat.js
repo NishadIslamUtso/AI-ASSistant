@@ -5,7 +5,7 @@ import { chooseTurnModel, splitThinking, streamChat, systemPrompt } from '../lib
 import { extractArtifacts, wantsArtifact } from '../lib/artifacts.js'
 import { vaultPost } from '../lib/vault.js'
 
-export default function useChat({ chats, setChats, currentChat, navigate, models, notify }) {
+export default function useChat({ chats, setChats, currentChat, navigate, models, notify, inference }) {
   const [busyChatId, setBusyChatId] = useState(null)
   const jobRef = useRef(null)
   const chatsRef = useRef(chats)
@@ -76,13 +76,15 @@ export default function useChat({ chats, setChats, currentChat, navigate, models
     let final = { ...assistant }
     const timer = setTimeout(() => controller.abort('timeout'), 300_000)
     try {
-      await streamChat({ model: turnModel, messages: requestMessages,
+      // assistant.model is the model chosen for THIS turn in send(); using the
+      // send()-scoped local here was a ReferenceError that broke every reply.
+      await streamChat({ model: assistant.model, messages: requestMessages,
         ...(models.capabilities.thinking ? { think: Boolean(thinking) } : {}) }, controller.signal, record => {
         raw += record.message?.content || ''
         nativeThinking += record.message?.thinking || ''
         final = { ...final, ...splitThinking(raw, nativeThinking) }
         patch(chat.id, assistant.id, final)
-      })
+      }, inference)
       final.status = 'complete'
       final.artifacts = extractArtifacts(final.content, { requested, messageId: assistant.id, chatId: chat.id, title: chat.messages.at(-2).content })
       final.citations = extractCitations(final.content)

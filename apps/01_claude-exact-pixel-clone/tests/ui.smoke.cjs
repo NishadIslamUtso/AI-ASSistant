@@ -129,7 +129,8 @@ function makeDom() {
   const txt = () => doc.getElementById('root').textContent || ''
   const allText = () => doc.body.textContent || '' // dialogs are portalled to <body>
   const type = (el, value) => {
-    const setter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set
+    const proto = el.tagName === 'INPUT' ? window.HTMLInputElement.prototype : window.HTMLTextAreaElement.prototype
+    const setter = Object.getOwnPropertyDescriptor(proto, 'value').set
     setter.call(el, value)
     el.dispatchEvent(new window.Event('input', { bubbles: true }))
   }
@@ -180,7 +181,7 @@ test('app renders the full shell without console errors', async () => {
     window.eval(CODE)
     await sleep(700)
     const text = txt()
-    for (const needle of ['New', 'Projects', 'Artifacts', 'Today', 'Utso']) {
+    for (const needle of ['New', 'Projects', 'Artifacts', 'Today', 'Friend']) {
       assert.ok(text.includes(needle), `missing ${needle}`)
     }
     assert.ok(doc.querySelector('textarea'), 'composer missing')
@@ -221,9 +222,9 @@ test('user menu, settings and the theme switch all work', async () => {
     window.eval(CODE)
     await sleep(600)
 
-    click(byText('button', /Utso/))
+    click(byText('button', /Friend/))
     await sleep(200)
-    assert.match(allText(), /nishadislamutso@gmail\.com/)
+    assert.match(allText(), /Friend · this browser only/)
     assert.match(allText(), /Get API keys/)
 
     click(byText('button', /^Settings/))
@@ -287,6 +288,52 @@ test('sidebar chat context menu offers the documented actions', async () => {
     click(byText('button', /^Pin[Pp]?$/))
     await sleep(300)
     assert.match(doc.getElementById('root').textContent, /Pinned/)
+    assert.deepEqual(errors, [])
+  } finally {
+    close()
+  }
+})
+
+test('the account name is editable and no native file control is ever visible', async () => {
+  const { window, doc, sleep, allText, click, byText, type, close } = makeDom()
+  try {
+    window.eval(CODE)
+    await sleep(700)
+
+    // Open Settings via the account menu.
+    click(byText('button', /Friend/))
+    await sleep(200)
+    click(byText('button', /^Settings/))
+    await sleep(300)
+
+    // The Account section holds the profile editor.
+    click(byText('button', /^Account$/))
+    await sleep(300)
+
+    const nameInput = doc.querySelector('input[aria-label="Name"]')
+    assert.ok(nameInput, 'Account section has no Name field')
+    assert.equal(nameInput.value, 'Friend', 'Name should default to the neutral profile')
+
+    const emailInput = doc.querySelector('input[aria-label="Email"]')
+    assert.ok(emailInput, 'Account section has no Email field')
+    assert.equal(emailInput.placeholder, 'you@example.com')
+
+    // The whole point of the custom picker: the browser's own control, which
+    // renders the words "No file chosen", must never be on screen.
+    const fileInputs = [...doc.querySelectorAll('input[type="file"]')]
+    assert.ok(fileInputs.length > 0, 'expected a hidden file input backing the picker')
+    for (const el of fileInputs) {
+      assert.ok(el.hasAttribute('hidden'), 'a file input is visible — the browser will render "No file chosen"')
+    }
+    assert.ok(allText().includes('Choose image…'), 'the styled picker button is missing')
+    assert.ok(!allText().includes('No file chosen'), 'native file-control text leaked into the UI')
+
+    // Renaming updates the greeting and the sidebar without a reload.
+    type(nameInput, 'Nishad Islam Utso')
+    await sleep(400)
+    assert.match(allText(), /Nishad/, 'renaming did not update the account button')
+    assert.match(doc.body.textContent, /Utso/, 'renaming did not propagate')
+
     assert.deepEqual(errors, [])
   } finally {
     close()
