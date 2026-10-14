@@ -5,6 +5,14 @@ import type {
   CloudView,
 } from '../shared/lib/providers'
 import type { Permissions } from '../shared/lib/permissions'
+import type {
+  AdoptInput,
+  ItemAnswer,
+  ListAnswer,
+  ReadAnswer,
+  RemoveAnswer,
+  SaveInput,
+} from '../main/artifacts/store'
 
 /**
  * The only bridge between the window and the machine.
@@ -71,6 +79,32 @@ const api = {
      */
     status: (): Promise<{ ok: boolean; listening: boolean; port: number; url: string; error: string }> =>
       ipcRenderer.invoke('extension:status'),
+  },
+  /**
+   * The artifact library, on disk in this user's own app-data folder.
+   *
+   * Every call answers rather than throws: a library that cannot be read says
+   * so in a sentence the screen can show, because an exception here would be a
+   * blank grid with no explanation.
+   */
+  artifacts: {
+    list: (): Promise<ListAnswer> => ipcRenderer.invoke('artifacts:list'),
+    /** One document. `version` is 1-based, the number the chips show. */
+    read: (id: string, version?: number): Promise<ReadAnswer> => ipcRenderer.invoke('artifacts:read', id, version),
+    /** Create, or append a version to an existing artifact. */
+    save: (input: SaveInput): Promise<ItemAnswer> => ipcRenderer.invoke('artifacts:save', input),
+    rename: (id: string, title: string): Promise<ItemAnswer> => ipcRenderer.invoke('artifacts:rename', id, title),
+    duplicate: (id: string): Promise<ItemAnswer> => ipcRenderer.invoke('artifacts:duplicate', id),
+    /** Put an older version back — by appending it, never by truncating. */
+    restore: (id: string, version: number): Promise<ItemAnswer> => ipcRenderer.invoke('artifacts:restore', id, version),
+    /** Take it out of the library; the folder moves to the library's trash. */
+    remove: (id: string): Promise<RemoveAnswer> => ipcRenderer.invoke('artifacts:remove', id),
+    /** Write artifacts found in saved conversations in, once each. */
+    adopt: (records: AdoptInput[]): Promise<{ ok: true; adopted: number; skipped: number; refused: number }> =>
+      ipcRenderer.invoke('artifacts:adopt', records),
+    /** The operating system's file picker, for a page or a drawing to bring in. */
+    import: (): Promise<{ ok: boolean; item?: unknown; error?: string; canceled?: boolean }> =>
+      ipcRenderer.invoke('artifacts:import'),
   },
 }
 

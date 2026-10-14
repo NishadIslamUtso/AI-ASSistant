@@ -1,6 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, safeStorage, shell } from 'electron'
 import { join } from 'node:path'
-import { writeFileSync } from 'node:fs'
+import { existsSync, writeFileSync } from 'node:fs'
 import { startLocalApi, type LocalApi } from './api/server'
 import { DEFAULT_EXTENSION_PORT, startExtensionApi, type ExtensionApi } from './extension/server'
 import { createVaultService, resolveVaultRoot } from './vault/service'
@@ -16,6 +16,7 @@ import {
   type AppSettings,
 } from './settings'
 import { normalizePermissions } from '../shared/lib/permissions'
+import { registerArtifactIpc } from './artifacts/ipc'
 
 /**
  * The main process. Everything that touches the machine lives on this side:
@@ -197,6 +198,11 @@ function registerBridges(): void {
     })
     return chosen.canceled || !chosen.filePaths.length ? null : chosen.filePaths[0]
   })
+
+  // The artifact library, in this user's own app-data folder. Not the vault:
+  // the vault is the person's curated notes, and the app does not scatter its
+  // own working files through it without being asked.
+  registerArtifactIpc(join(app.getPath('userData'), 'artifacts'))
 }
 
 const isSmoke = process.argv.includes('--smoke')
@@ -214,13 +220,34 @@ let settingsFile = ''
 let keyStore: KeyStore | null = null
 let cloud: CloudClient | null = null
 
+/**
+ * The icon file, when this build has one.
+ *
+ * In a packaged Windows build the icon comes from the executable itself, so
+ * nothing is passed; in the checkout the repo's own BrainMark is used, which is
+ * what the taskbar shows during development. An absent file is not an error —
+ * it just means the operating system's default stands.
+ */
+function windowIcon(): string | undefined {
+  for (const candidate of [join(app.getAppPath(), 'build', 'icon.png'), join(process.resourcesPath || '', 'icon.png')]) {
+    try {
+      if (candidate && existsSync(candidate)) return candidate
+    } catch {
+      // process.resourcesPath is undefined outside a package; keep looking.
+    }
+  }
+  return undefined
+}
+
 function createWindow(): BrowserWindow {
+  const icon = windowIcon()
   const window = new BrowserWindow({
     width: 1280,
     height: 820,
     minWidth: 940,
     minHeight: 620,
     show: false,
+    ...(icon ? { icon } : {}),
     // The window paints this before the renderer draws, so there is never a white flash.
     backgroundColor: '#141417',
     title: 'AI ASSistant',

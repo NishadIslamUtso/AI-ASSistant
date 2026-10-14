@@ -71,7 +71,7 @@ Every change updates `00_LIVING_DOCS/REQUIREMENTS_LIVING.md`, `CHANGELOG.md`, `H
 ```bash
 cd apps/03_ai-assistant
 npm install
-npm test              # 27 files / 255 tests
+npm test              # 28 files / 269 tests
 npm run typecheck     # clean
 npm run build:web     # browser preview build -> dist-web/
 npm run preview:web   # http://localhost:4174 (interface only, and it says so)

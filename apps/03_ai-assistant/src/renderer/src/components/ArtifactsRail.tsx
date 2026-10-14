@@ -1,4 +1,4 @@
-import { FileCode2, Package } from 'lucide-react'
+import { FileCode2, Package, PanelRightClose } from 'lucide-react'
 import type { Artifact } from '@shared/types'
 
 /**
@@ -11,15 +11,29 @@ import type { Artifact } from '@shared/types'
 export default function ArtifactsRail({
   items,
   onJump,
+  onClose,
 }: {
   items: Array<{ artifact: Artifact; messageId: string }>
   onJump: (artifact: Artifact) => void
+  /** Collapse this rail; the chat widens and a small button brings it back. */
+  onClose?: () => void
 }) {
   return (
     <aside className="flex w-[212px] shrink-0 flex-col border-l border-line bg-panel">
-      <h2 className="px-3.5 pb-1 pt-3.5 text-[11px] font-medium uppercase tracking-wide text-muted">
-        Artifacts
-      </h2>
+      <div className="flex items-center gap-1 px-3.5 pb-1 pt-2.5">
+        <h2 className="min-w-0 flex-1 text-[11px] font-medium uppercase tracking-wide text-muted">Artifacts</h2>
+        {onClose ? (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Hide the artifacts panel"
+            title="Hide this panel"
+            className="rounded p-1 text-muted transition-colors hover:bg-white/[0.06] hover:text-ink"
+          >
+            <PanelRightClose size={13} />
+          </button>
+        ) : null}
+      </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-3 pt-1.5">
         <ul className="flex flex-col gap-2">
           {items.map(({ artifact }) => (

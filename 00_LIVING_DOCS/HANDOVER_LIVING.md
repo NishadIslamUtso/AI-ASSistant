@@ -1,6 +1,6 @@
 # HANDOVER_LIVING.md — Current State + Gaps (Living)
 
-**Last Updated:** 2026-10-14 (evening) Asia/Dhaka
+**Last Updated:** 2026-10-14 (late evening) Asia/Dhaka
 **Purpose:** everything a new AI or developer needs to continue, without trusting anybody's memory.
 
 ## 1. Executive Summary
@@ -16,12 +16,12 @@ the first item on the list.
 ## 2. Where the code stands (2026-10-14)
 
 **Branch:** `arena/3c06e1bf-ai-assistant-v3` → merged into `main`. Both pushed.
-Last landed: `2b46b46` (merge: Browsing Maps, on top of `e453dd4`), after `93f2e5c` (merge: Agent access,
-on top of `b1a84a4`) and `7a5e8f4` (merge: online providers).
+Last landed: the **Artifacts screen** this session (on top of `75aa731`, the Windows installer merge, after
+`2b46b46` Browsing Maps, `93f2e5c` Agent access and `7a5e8f4` online providers).
 
 **Verified in the sandbox — this is evidence, not a plan:**
 
-- [x] `npm test` → 27 files / 255 tests pass
+- [x] `npm test` → 28 files / 269 tests pass
 - [x] `npm run typecheck` → clean
 - [x] `npm run build` (desktop) and `npm run build:web` → clean
 - [x] `npm run smoke` → `SMOKE OK title="AI ASSistant" size=1280x820 errors=0 warnings=0`
@@ -34,6 +34,10 @@ on top of `b1a84a4`) and `7a5e8f4` (merge: online providers).
       with the reason and nothing written; `Keep conversations` off → the chip says `Vault off` and nothing is
       kept), and Browsing Maps (a seeded week → exactly 7 entries, a torn line is not an 8th, counts follow
       the filter) — console clean throughout
+- [x] **The Artifacts screen**: a library on disk that the desktop check reads **before** it trusts the
+      interface — the app makes an artifact, `index.json` + `items/<id>/v1.html` appear, the grid shows it with
+      a real thumbnail, rename changes the name on disk, remove moves the files to `.trash/` and says so; the
+      logo's 12 `url(#…)` references all resolve and the sidebar collapses to a 56px rail
 - [x] **The Windows installer**: built, its payload listed out of the installer itself (`app.asar`, the exe, the
       uninstaller, `en-US.pak` only), and the same configuration packaged for Linux boots clean —
       `SMOKE OK … errors=0 warnings=0`
@@ -43,6 +47,12 @@ on top of `b1a84a4`) and `7a5e8f4` (merge: online providers).
 ## 3. What works, in the owner's terms
 
 - **Chat**: streaming answers from Ollama, stop keeps the partial reply, regenerate, edit-and-resend, branches.
+- **Artifacts** (a screen of its own, in the nav): everything the app has made, with real thumbnails, dates and
+  version counts; version chips that preview an older version and put it back as a new one; rename, duplicate,
+  copy-out, export as a folder, and a remove that **moves the files to the library's own `.trash/`** and names
+  where they went. The footer names the folder they live in.
+- **The sidebar** collapses to a 56px rail and can be dragged wider (200–420px, double-click to reset), both
+  remembered; the chat's artifacts rail hides and comes back.
 - **Artifacts**: extracted from replies, sandboxed preview, code view, version history, ZIP export.
 - **Comment mode**: point at something in a preview, describe the change, one append-only rewrite at a time.
 - **Memory**: every finished conversation becomes Markdown in the vault; nothing is invented; a failed write
@@ -71,9 +81,9 @@ on top of `b1a84a4`) and `7a5e8f4` (merge: online providers).
 
 ## 4. What is honestly missing
 
-1. **It has not run on the owner's Windows machine.** The installer exists now
-   (`AI-ASSistant-Setup-0.1.0.exe`); installing it and using it is the owner's own test, and the first item on
-   the list.
+1. **Most of the mockups' screens do not exist yet.** Chat, Settings and Artifacts do. **Today, Vault,
+   Projects, Code and the first-run screen do not** — that is the work in order from here, and the nav names
+   only what works. Artifacts' own **Import** and **Tweaks** are the next increment inside that screen.
 2. **The browser extension itself is still a starter.** The app has carried the port it needs since `8e589a0`,
    but the extension has not been loaded or run against it — nothing is captured from a browser yet, so
    Browsing Maps is mostly the app's own conversations.
@@ -103,6 +113,10 @@ on top of `b1a84a4`) and `7a5e8f4` (merge: online providers).
 - **2026-10-14 — it became an app.** Vault writes through the main process; Settings with Appearance and
   Performance; the Vercel deployment files deleted at the owner's request; Settings rebuilt as the full
   window; and the memory warning fixed to measure against the profile the owner chose.
+- **2026-10-14 (late evening) — the screens begin.** The owner said plainly that the app was "a plain chatbot"
+  against mockups with eight screens, and he was right. The Artifacts library and screen land first (with the
+  sidebar collapse and the logo fix he reported), then Today, Vault, Projects, Code and first-run — one landing
+  each.
 - **2026-10-14 (evening) — it became shippable.** Online providers behind Settings > Agent access, the loopback
   port for the browser extension, Browsing Maps over the vault's own record, and finally a Windows installer
   (`AI-ASSistant-Setup-0.1.0.exe`) — the first file a person can double-click.

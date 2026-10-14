@@ -20,6 +20,14 @@
  */
 import type { CloudModelsAnswer, CloudTestAnswer, CloudView } from '@shared/lib/providers'
 import { DEFAULT_PERMISSIONS, type Permissions } from '@shared/lib/permissions'
+import type {
+  AdoptInput,
+  ItemAnswer,
+  ListAnswer,
+  ReadAnswer,
+  RemoveAnswer,
+  SaveInput,
+} from '../../../main/artifacts/store'
 
 /** What the preload script exposes today. It grows as the main process does. */
 export type DesktopBridge = {
@@ -69,6 +77,18 @@ export type DesktopBridge = {
     clearKey: (id: string) => Promise<CloudView>
     test: (id: string) => Promise<CloudTestAnswer>
   }
+  /** The artifact library: the record of everything the app has made. */
+  artifacts: {
+    list: () => Promise<ListAnswer>
+    read: (id: string, version?: number) => Promise<ReadAnswer>
+    save: (input: SaveInput) => Promise<ItemAnswer>
+    rename: (id: string, title: string) => Promise<ItemAnswer>
+    duplicate: (id: string) => Promise<ItemAnswer>
+    restore: (id: string, version: number) => Promise<ItemAnswer>
+    remove: (id: string) => Promise<RemoveAnswer>
+    adopt: (records: AdoptInput[]) => Promise<{ ok: true; adopted: number; skipped: number; refused: number }>
+    import: () => Promise<{ ok: boolean; item?: unknown; error?: string; canceled?: boolean }>
+  }
 }
 
 declare global {
@@ -110,6 +130,30 @@ const demoBridge: DesktopBridge = {
       url: 'http://127.0.0.1:8765',
       error: 'The port the browser extension posts to belongs to the desktop app, not to this window.',
     }),
+  },
+  /**
+   * No disk, no library. Every answer says that rather than showing an empty
+   * grid that implies nothing was ever made.
+   */
+  artifacts: {
+    list: async (): Promise<ListAnswer> => ({
+      ok: false,
+      error: 'The artifact library is part of the desktop app: this window has no folder to keep documents in.',
+    }),
+    read: async (): Promise<ReadAnswer> => ({
+      ok: false,
+      error: 'The artifact library is part of the desktop app: this window has no folder to keep documents in.',
+    }),
+    save: async (): Promise<ItemAnswer> => ({
+      ok: false,
+      error: 'Documents are saved by the desktop app, which has somewhere to put them.',
+    }),
+    rename: async (): Promise<ItemAnswer> => ({ ok: false, error: 'There is no library in this window to rename in.' }),
+    duplicate: async (): Promise<ItemAnswer> => ({ ok: false, error: 'There is no library in this window to copy in.' }),
+    restore: async (): Promise<ItemAnswer> => ({ ok: false, error: 'There is no library in this window to restore in.' }),
+    remove: async (): Promise<RemoveAnswer> => ({ ok: false, error: 'There is no library in this window to take anything out of.' }),
+    adopt: async () => ({ ok: true as const, adopted: 0, skipped: 0, refused: 0 }),
+    import: async () => ({ ok: false, error: 'Importing needs the desktop app: the file picker belongs to it.', canceled: false }),
   },
   /**
    * No keychain, no main process, no key: every answer says that rather than

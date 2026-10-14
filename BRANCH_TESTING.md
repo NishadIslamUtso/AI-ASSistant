@@ -19,7 +19,7 @@ git fetch origin
 git checkout <branch>
 cd apps/03_ai-assistant
 npm install
-npm test                 # 255 tests, 27 files — the whole automated suite
+npm test                 # 269 tests, 28 files — the whole automated suite
 npm run typecheck        # strict TypeScript, no output means clean
 npm run build:web        # browser preview build
 npm run preview:web      # http://localhost:4174 — the interface, honestly labelled as preview-only
@@ -49,7 +49,13 @@ npm run dist:win         # Windows installer -> dist/AI-ASSistant-Setup-<version
    `Vault off` and a new conversation is not written.
 8. **Browsing Maps** (sidebar) — it shows the vault's own record, the counts follow the filters, and a visit
    says it is a visit.
-9. **No console errors or warnings anywhere.** This is a hard rule, not a nicety.
+9. **Artifacts** (nav) — ask a chat for something like "make me a pomodoro timer", then open Artifacts: one
+   card with a real thumbnail, its date and `v1`. Rename it, and the name changes in the card. Remove it: the
+   grid empties and the message says the files moved to the library's `.trash/` folder — they are still on disk.
+10. **The sidebar** collapses to a 56px rail and back (button at the top of the sidebar), and its edge can be
+   dragged wider; both survive a restart. A chat with artifacts has a rail on the right that can be hidden and
+   brought back.
+11. **No console errors or warnings anywhere.** This is a hard rule, not a nicety.
 
 ## Windows notes
 

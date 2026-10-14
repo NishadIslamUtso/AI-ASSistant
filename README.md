@@ -13,7 +13,7 @@ grants it, from Settings.
 
 | Path | What it is | State |
 |---|---|---|
-| `apps/03_ai-assistant/` | **THE APP.** Electron + React + TypeScript + Tailwind 4. Real chat, artifacts, comment mode, vault writes, online providers, an extension port, agent permissions, Browsing Maps, Settings. | Active. 255 tests, typecheck, both builds, desktop smoke and all five end-to-end checks (vault, cloud, extension port, agent access, browsing maps) green in the sandbox. A Windows installer exists (`AI-ASSistant-Setup-0.1.0.exe`, unsigned → SmartScreen warning; notes in `apps/03_ai-assistant/RELEASE-WINDOWS.md`). **Installing it on the user's Windows machine is the open item.** |
+| `apps/03_ai-assistant/` | **THE APP.** Electron + React + TypeScript + Tailwind 4. Real chat, artifacts, comment mode, vault writes, online providers, an extension port, agent permissions, Browsing Maps, Settings. | Active. 269 tests, typecheck, both builds, desktop smoke and all six end-to-end checks (vault, cloud, extension port, agent access, browsing maps, artifacts library) green in the sandbox. Chat, Settings and **Artifacts** exist; Today, Vault, Projects, Code and first-run are next. A Windows installer exists (`AI-ASSistant-Setup-0.1.0.exe`, unsigned → SmartScreen warning; notes in `apps/03_ai-assistant/RELEASE-WINDOWS.md`). **Installing it on the user's Windows machine is the open item.** |
 | `apps/01_claude-exact-pixel-clone/` | The first clone, built to match six Claude screenshots. | Historical. Kept as the port source for libs/hooks/server logic. Not the app. |
 | `apps/02_electron-claude-clone-v6/` | An older Electron fork with more features. | Historical reference. |
 | `extension/` | MV3 browser extension: collector + context suggester. | Starter + spec. **The app now has the port it needs** (127.0.0.1:8765, capture side only), but the extension itself has not been loaded or run against it yet. |
@@ -46,7 +46,7 @@ docs/originals/               <- The original requirement files (historical)
 
 **Tests** (no machine required, this is what CI would run):
 ```bash
-cd apps/03_ai-assistant && npm install && npm test        # 255 tests, 27 files
+cd apps/03_ai-assistant && npm install && npm test        # 269 tests, 28 files
 ```
 
 **Desktop app** (needs Ollama running with a model pulled):

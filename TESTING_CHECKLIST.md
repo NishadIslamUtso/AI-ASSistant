@@ -5,7 +5,7 @@ Run it in this order; each line is a thing you can see with your own eyes.
 ## 1. Automated (no machine required)
 
 - [ ] `cd apps/03_ai-assistant && npm install` completes
-- [ ] `npm test` → **255 tests, 27 files, all passing**
+- [ ] `npm test` → **269 tests, 28 files, all passing**
 - [ ] `npm run typecheck` → no output
 - [ ] `npm run build:web` → clean, writes `dist-web/`
 - [ ] `npm run preview:web` → the preview opens on http://localhost:4174
@@ -36,7 +36,16 @@ Run it in this order; each line is a thing you can see with your own eyes.
 - [ ] Settings closes with the X and with Escape, and the app is exactly as it was
 - [ ] **Zero console errors and zero warnings** in the desktop window too
 
-## 4. Browsing Maps (sidebar)
+## 4. Artifacts (nav) and the sidebar
+
+- [ ] A chat that produces a document ("make me a pomodoro timer") puts it in the Artifacts screen
+- [ ] The card shows a real thumbnail, the date, and `v1`; the footer names the folder the files are in
+- [ ] Rename changes the name **in the card**; Duplicate makes a `… copy` that can be edited independently
+- [ ] Remove empties the grid and the message names the `.trash` folder — the files are still on disk there
+- [ ] The sidebar collapses to a rail (top button) and comes back; the edge drags wider; both survive a reload
+- [ ] A chat with artifacts has a right-hand rail that can be hidden and brought back
+
+## 5. Browsing Maps (sidebar)
 
 - [ ] It opens over the app, lists what the vault holds (conversations, captured pages, visits, newest first)
 - [ ] The kind chips carry counts, and the count in the header always matches the rows on screen
@@ -44,7 +53,7 @@ Run it in this order; each line is a thing you can see with your own eyes.
 - [ ] Search narrows to the rows it names; `7 days` / `30 days` / `everything` change the window
 - [ ] Its banner line says where the map came from — the vault, not an index
 
-## 5. Extension and the port it posts to
+## 6. Extension and the port it posts to
 
 - [ ] `chrome://extensions` → load unpacked → `extension/`
 - [ ] The blacklist matches hosts the way `tests/blacklist-parity.test.ts` says it does
@@ -52,7 +61,7 @@ Run it in this order; each line is a thing you can see with your own eyes.
 - [ ] **The extension itself is still a starter** — it has not been loaded or run against the app, so nothing is
       captured from a browser yet (the port and its rules are proven by `tests/extension-port.test.ts`)
 
-## 6. The Windows installer
+## 7. The Windows installer
 
 - [ ] `npm run dist:win` → `dist/AI-ASSistant-Setup-<version>.exe` (~84 MB)
 - [ ] SmartScreen says *unknown publisher* — expected, not a failure (`apps/03_ai-assistant/RELEASE-WINDOWS.md`
@@ -60,7 +69,7 @@ Run it in this order; each line is a thing you can see with your own eyes.
 - [ ] Installing needs no admin rights; **uninstalling leaves the vault and settings in place**
 - [ ] **The install itself has not been run on Windows** — it is the owner's own test
 
-## 7. Before merging
+## 8. Before merging
 
 - [ ] `00_LIVING_DOCS/REQUIREMENTS_LIVING.md`, `CHANGELOG.md`, `HANDOVER_LIVING.md` updated
 - [ ] `.ai/STATE.json` updated

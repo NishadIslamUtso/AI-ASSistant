@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { PanelRightOpen } from 'lucide-react'
 import { DEFAULT_MODEL } from '@shared/lib/storage'
 import { DEFAULT_PROFILE, normalizeProfile } from '@shared/lib/profile'
 import TitleBar from './components/TitleBar'
@@ -8,7 +9,11 @@ import { restoredInPlace, withNewVersion } from './state/artifactEdits'
 import type { Artifact } from '@shared/types'
 import type { ElementPick } from '@shared/lib/artifacts'
 import Sidebar from './components/Sidebar'
+import { type View } from './components/AppNav'
 import ChatView from './components/ChatView'
+import ArtifactsView from './components/ArtifactsView'
+import useArtifactLibrary, { adoptionRecords } from './state/artifactLibrary'
+import type { ArtifactSummary } from '../../main/artifacts/store'
 import useChat from './hooks/useChat'
 import useArtifactRewrite from './hooks/useArtifactRewrite'
 import useModels from './hooks/useModels'
@@ -69,6 +74,16 @@ export default function App() {
   )
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [memoryOpen, setMemoryOpen] = useState(false)
+  // Which screen is showing, remembered so the app opens where it was left.
+  const [view, setView] = usePersistentState<View>(
+    'ai-assistant.view',
+    'chat',
+    value => (value === 'artifacts' ? 'artifacts' : 'chat')
+  )
+  const [artifactQuery, setArtifactQuery] = useState('')
+  const [libraryNote, setLibraryNote] = useState('')
+  // The right-hand rail of this conversation's artifacts collapses, like the sidebar.
+  const [railOpen, setRailOpen] = usePersistentState('ai-assistant.artifact-rail', true, value => value !== false)
   // Bumped when Settings moves the vault, so the chip and the dialog both re-read it.
   const [vaultRevision, setVaultRevision] = useState(0)
   // Re-checked whenever the current conversation is kept or the vault moves: a
@@ -130,10 +145,25 @@ export default function App() {
     // appears in the console — the preview stays quiet, as it must.
     // Nothing is attempted when keeping conversations is switched off, so nothing
     // fails and no request appears anywhere: the switch is the whole behaviour.
-    capture:
-      isDemo || !permissions.keepConversations
-        ? undefined
-        : chat => vaultPost('/capture', conversationCapture(chat)).then(() => undefined),
+    capture: isDemo
+      ? undefined
+      : chat => {
+          // The library is the app's own record, and it is fed every time a turn
+          // ends. `save` reports `unchanged` for a document that has not moved,
+          // so a chat that produced nothing new writes nothing.
+          for (const record of adoptionRecords(chat.messages, chat.id)) {
+            void bridge.artifacts.save({
+              id: record.id,
+              title: record.title,
+              type: record.type,
+              content: record.content,
+              chatId: record.chatId,
+              messageId: record.messageId,
+            })
+          }
+          if (!permissions.keepConversations) return Promise.resolve(undefined)
+          return vaultPost('/capture', conversationCapture(chat)).then(() => undefined)
+        },
   })
 
   const artifacts = useMemo(
@@ -141,11 +171,51 @@ export default function App() {
     [chat?.messages]
   )
 
+  /** The library, loaded when the Artifacts screen is showing. */
+  const library = useArtifactLibrary(view === 'artifacts')
+
+  /**
+   * Artifacts already sitting in saved conversations are written into the
+   * library once, the first time the screen opens — so it starts with what this
+   * app has actually made rather than empty, without asking and without changing
+   * a single conversation.
+   */
+  const adopted = useRef(false)
+  useEffect(() => {
+    if (view !== 'artifacts' || adopted.current || library.loading || library.error) return
+    adopted.current = true
+    const records = chats.chats.flatMap(entry => adoptionRecords(entry.messages, entry.id))
+    if (!records.length) {
+      setLibraryNote('')
+      return
+    }
+    void library.adopt(records).then(count => {
+      if (count) setLibraryNote(`${count} artifact${count === 1 ? '' : 's'} already in your conversations were added to the library.`)
+    })
+  }, [view, library, chats.chats])
+
   useEffect(() => {
     if (!highlight) return
     const timer = setTimeout(() => setHighlight(''), 1600)
     return () => clearTimeout(timer)
   }, [highlight])
+
+  /** From the library back to the conversation and the message that made it. */
+  const openArtifactInChat = (item: ArtifactSummary): void => {
+    if (!item.chatId) {
+      setNotice('That artifact was not made in a chat, so there is no conversation to open.')
+      return
+    }
+    if (!chats.chats.some(entry => entry.id === item.chatId)) {
+      setNotice('The conversation that made this artifact is no longer in the list.')
+      return
+    }
+    setView('chat')
+    chats.open(item.chatId)
+    setNotice('')
+    // The card is scrolled to once the chat has had a frame to render.
+    setTimeout(() => jumpToArtifact(item.id), 120)
+  }
 
   const jumpToArtifact = (artifactId: string): void => {
     setHighlight(artifactId)
@@ -256,6 +326,11 @@ export default function App() {
           its own header and the operating system keeps the window frame. */}
       <div className="relative flex min-h-0 flex-1">
         <Sidebar
+          view={view}
+          onView={setView}
+          artifactQuery={artifactQuery}
+          onArtifactQuery={setArtifactQuery}
+          artifactCount={library.items.length}
           chats={chats.chats}
           currentChat={chats.currentChat}
           onOpen={chats.open}
@@ -271,6 +346,22 @@ export default function App() {
           onOpenMemory={() => setMemoryOpen(true)}
           profileName={profile.name}
         />
+        {view === 'artifacts' ? (
+          <ArtifactsView
+            items={library.items}
+            loading={library.loading}
+            error={library.error}
+            where={library.where}
+            query={artifactQuery}
+            note={libraryNote}
+            onRename={library.rename}
+            onDuplicate={library.duplicate}
+            onRemove={library.remove}
+            onRestore={library.restore}
+            onImport={library.importFile}
+            onOpenInChat={openArtifactInChat}
+          />
+        ) : (
         <ChatView
           chat={chat}
           draft={draft}
@@ -294,11 +385,24 @@ export default function App() {
               : ''
           }
         />
-        {artifacts.length > 0 ? (
+        )}
+        {artifacts.length > 0 && railOpen ? (
           <ArtifactsRail
             items={artifacts}
             onJump={item => jumpToArtifact(item.id)}
+            onClose={() => setRailOpen(false)}
           />
+        ) : null}
+        {artifacts.length > 0 && !railOpen ? (
+          <button
+            type="button"
+            onClick={() => setRailOpen(true)}
+            aria-label="Show the artifacts panel"
+            title="Show this conversation's artifacts"
+            className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-card text-muted transition-colors hover:text-ink"
+          >
+            <PanelRightOpen size={14} />
+          </button>
         ) : null}
 
         {/* What was read and when, from the vault. One surface at a time: opening
