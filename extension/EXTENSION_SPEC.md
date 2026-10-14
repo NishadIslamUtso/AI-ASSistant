@@ -95,6 +95,10 @@ If layout changes -> log wasnt-accessible with reason "layout changed", no popup
 ## Vault Writer (lib/vault-writer.js)
 
 ```js
+// NOTE (2026-10-14): no port is open today. The app's vault API is in-process
+// (apps/03_ai-assistant/src/main/vault/), so both calls below fail until the app
+// opens a loopback port for chrome-extension:// origins (see tests/pending/README.md
+// in the app). Until then the queue path is the only path, and nothing is captured.
 async function postCapture(data):
   try fetch http://127.0.0.1:8765/capture POST
   catch -> queue

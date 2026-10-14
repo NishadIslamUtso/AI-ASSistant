@@ -1,55 +1,50 @@
 # Testing Checklist — Before Merging Any Branch
 
-Use this checklist when testing a branch ZIP downloaded from GitHub.
+Run it in this order; each line is a thing you can see with your own eyes.
 
-## Exact Clone (apps/01_claude-exact-pixel-clone)
+## 1. Automated (no machine required)
 
-- [ ] start-app.bat runs without error
-- [ ] Handles already-running Ollama (doesn't try to start second)
-- [ ] npm install succeeds (including @rollup/rollup-win32-x64-msvc)
-- [ ] Vault API starts at http://127.0.0.1:8765/context
-- [ ] Vite starts at http://127.0.0.1:5173
-- [ ] UI matches screenshots: Sidebar 260px #202020 Search +New Projects Artifacts Customize Oct8 Older, Center #1a1a1a Evening Utso + orange *, composer #242424 How can I help you today?, Free plan Upgrade top, NU Utso Free bottom
-- [ ] Search filters chat list
-- [ ] Context menu Open in new window Pin Rename Add to project Move to group Delete appears on right-click
-- [ ] Chat sends and qwen2.5:3b replies streaming without Tic Tac Toe loop
-- [ ] If loop, localStorage.clear() fixes it
-- [ ] Vault context fetch works (no CORS error)
-- [ ] If CORS error, setx OLLAMA_ORIGINS "*" and restart ollama serve
+- [ ] `cd apps/03_ai-assistant && npm install` completes
+- [ ] `npm test` → **208 tests, 22 files, all passing**
+- [ ] `npm run typecheck` → no output
+- [ ] `npm run build:web` → clean, writes `dist-web/`
+- [ ] `npm run preview:web` → the preview opens on http://localhost:4174
 
-## Electron Clone (apps/02_electron-claude-clone-v6) — Optional
+## 2. The browser preview (interface only — it says so)
 
-- [ ] npm install succeeds
-- [ ] dev:server starts vault API
-- [ ] dev starts Vite
-- [ ] electron:dev starts Electron with title bar visible
-- [ ] Artifacts panel works
-- [ ] Thinking display works
+- [ ] Header shows `AI ASSistant`, a `Preview` chip, and the preview line above the composer
+- [ ] Sending a message explains that models run in the desktop app (no invented answers)
+- [ ] Settings opens as the full window with a rail: System, Appearance, Performance, Vault
+- [ ] The search box narrows the rail, and clearing it brings everything back
+- [ ] Accent + conversation width apply immediately and survive a reload
+- [ ] `Vault` explains there is no folder to choose in this window
+- [ ] **Zero console errors and zero warnings** (open DevTools and look)
 
-## Extension (extension/)
+## 3. Desktop app (Ollama running)
 
-- [ ] Loads as unpacked in chrome://extensions without errors
-- [ ] manifest host_permissions <all_urls> + history
-- [ ] Popup shows Capsule library + blacklist manager
-- [ ] background.js history listener logs to 02 Sources/Browser Activity/
-- [ ] ai-capture.js captures ChatGPT/Claude chats to 02 Sources/Conversations/
-- [ ] generic-capture.js captures readable text to 02 Sources/Web Pages/
-- [ ] wasn't accessible logs to 09 Activity & Undo + 01 Inbox/Processing Errors
-- [ ] Blacklist bank.com/* skips collection and logs skipped - blacklist
+- [ ] `npm run smoke` → `SMOKE OK ... errors=0 warnings=0`
+- [ ] `npm run dev` opens the window; header shows green `Ollama` and green `Vault`
+- [ ] A question answers and streams; the stop button keeps the partial reply
+- [ ] The conversation is in the vault as Markdown; `09 Activity & Undo/<year>/<month>.md` is appended
+- [ ] Settings → System shows the running model and the folder conversations are kept in
+- [ ] Settings → Performance: choosing `6 GB VRAM` shows `num_ctx=8192 · num_batch=512 · num_predict=2048`
+      and **no warning**; the options line follows the profile
+- [ ] Settings → Performance → Custom opens four real number fields (Context window, Prompt batch,
+      Longest reply, Layers on the GPU) with no written-out descriptions under them
+- [ ] Settings → Vault: a folder that exists is accepted and reported back by the vault itself
+- [ ] Settings → Vault: a folder that does not exist is refused and nothing is created
+- [ ] Settings closes with the X and with Escape, and the app is exactly as it was
+- [ ] **Zero console errors and zero warnings** in the desktop window too
 
-## Vault (vault/AI-Brain/)
+## 4. Extension (not wired to the app yet)
 
-- [ ] Obsidian opens AI-Brain folder as vault without errors
-- [ ] 00 System/ templates exist
-- [ ] 02 Sources/ writes work from app and extension
-- [ ] 09 Activity & Undo/ logs created
+- [ ] `chrome://extensions` → load unpacked → `extension/`
+- [ ] The blacklist matches hosts the way `tests/blacklist-parity.test.ts` says it does
+- [ ] It does **not** claim to have captured anything: no port is open for it yet
 
-## Living Docs
+## 5. Before merging
 
-- [ ] 00_LIVING_DOCS/REQUIREMENTS_LIVING.md updated with this branch changes
-- [ ] 00_LIVING_DOCS/CHANGELOG.md updated
-- [ ] 00_LIVING_DOCS/HANDOVER_LIVING.md updated with current state + gaps
-- [ ] .ai/STATE.json updated
-- [ ] memory/sessions/ new session log created
-
-If all checked, safe to merge.
+- [ ] `00_LIVING_DOCS/REQUIREMENTS_LIVING.md`, `CHANGELOG.md`, `HANDOVER_LIVING.md` updated
+- [ ] `.ai/STATE.json` updated
+- [ ] `memory/sessions/<date>-session.md` written
+- [ ] The commit names every file it touched (untracked additions included)

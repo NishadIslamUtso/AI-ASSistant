@@ -1,241 +1,114 @@
 {
   "date": "2026-10-14",
-  "time_updated": "2026-10-14 (evening) Asia/Dhaka",
+  "time_updated": "2026-10-14 (night) Asia/Dhaka",
   "timezone": "Asia/Dhaka",
-  "repo_version": "1.2.0-best-of",
+  "repo_version": "2.0.0-ai-assistant",
   "canonical_repo": "https://github.com/NishadIslamUtso/AI-ASSistant",
-  "note_for_next_ai": "The repo is the source of truth, not any handover text. Verify file existence before trusting a status list - claimed files have been absent three times. ALWAYS run `git rev-list --left-right --count HEAD...origin/<branch>` BEFORE committing: the sandbox can be silently reset to an old base while the remote has moved on, twice now by 18 commits. The app is AI ASSistant, NOT a Claude clone - do not reintroduce Claude branding.",
+  "workflow": {
+    "active_branch": "arena/3c06e1bf-ai-assistant-v3",
+    "integration_branch": "main",
+    "rule": "Finished, verified work lands as a commit on the branch, is merged --no-ff into main, both are pushed, then it is reported. Never merge anything the user did not ask for.",
+    "last_landed": [
+      "a52f2bf  merge: Settings as the full window (into main)",
+      "4731756  Settings: the full window, and memory measured against the profile you chose",
+      "5b371b4  Settings: Appearance and Performance",
+      "110a80b  Remove the Vercel deployment files",
+      "9be8a2a  merge: Settings > Appearance and Performance"
+    ],
+    "verify_with": "git log --oneline -6 && git diff --stat main arena/3c06e1bf-ai-assistant-v3"
+  },
+  "note_for_next_ai": "The repo is the source of truth, not any handover text. Verify a file exists before trusting a status list. ALWAYS run `git rev-list --left-right --count HEAD...origin/<branch>` before committing: the sandbox has been silently reset to an old base more than once. The app is AI ASSistant, NOT a Claude clone - do not reintroduce Claude branding. Nothing fake goes in front of the user: a screen may not exist without working.",
   "apps": {
-    "01_claude-exact-pixel-clone": {
-      "path": "apps/01_claude-exact-pixel-clone",
-      "status": "built-compiled-tested-by-214-automated-checks-NOT-tested-on-user-windows",
-      "tech": "Vite 5 + React 18 + Tailwind + Express vault API, direct Ollama",
-      "files": [
-        "src/App.jsx (state, sending, streaming, artifacts, shortcuts)",
-        "src/context/SettingsContext.jsx (settings + theme/motion/font applied to <html>)",
-        "src/lib/ollama.js (ping, listModels, chatStream, <think> split, vision detection)",
-        "src/lib/vault.js (vault API client, fails soft)",
-        "src/lib/artifacts.js (artifact extraction + explicit-request gate)",
-        "src/lib/markdown.jsx (dependency-free markdown renderer)",
-        "src/lib/demo.js (offline demo responder, off unless ?demo=1)",
-        "src/components/Sidebar.jsx (260px sidebar + working context menu 191646)",
-        "src/components/Center.jsx (greeting, transcript, composer placement)",
-        "src/components/Composer.jsx (model/effort/thinking/project, uploads, drops)",
-        "src/components/Message.jsx",
-        "src/components/SettingsModal.jsx (191707)",
-        "src/components/AppsExtensionsModal.jsx (191636)",
-        "src/components/UserMenu.jsx (191608)",
-        "src/components/ArtifactPanel.jsx",
-        "src/components/ThinkingDisplay.jsx",
-        "src/components/VaultPanel.jsx (capsules / blacklist / today)",
-        "src/components/TitleBar.jsx (191558)",
-        "src/components/Dropdown.jsx, src/components/ContextMenu.jsx",
-        "server/vault-api.cjs (the only writer to the vault)",
-        "start-app.bat, check-ollama.bat, build-windows.bat, README.md",
-        "src/design-systems/ (16 token sets, lazy-loaded, from open-design Apache-2.0)",
-        "src/lib/skills.js (named reusable sub-agent instructions)",
-        "THIRD_PARTY_NOTICES.md (Apache-2.0 attribution)",
-        "tests/design-tokens.test.js (9 checks)",
-        "src/components/BrainMark.jsx (the AI ASSistant logo)",
-        "src/lib/profile.js (customizable name, neutral defaults for open source)",
-        "src/lib/inference.js (VRAM/memory profiles for Ollama)",
-        "src/lib/search.js (full-text chat search)",
-        "src/lib/prompts.js (slash-menu prompt library)",
-        "tests/props.test.js (every declared prop must be passed)"
-      ],
+    "03_ai-assistant": {
+      "path": "apps/03_ai-assistant",
+      "status": "ACTIVE - the app. Built and verified in the sandbox (tests, typecheck, web build, desktop smoke, two end-to-end checks). NOT yet run on the user's Windows machine.",
+      "tech": "Electron 40 + electron-vite 5 + Vite 6 + React 19 + TypeScript 5.7 + Tailwind 4 + Vitest 2; yaml for frontmatter; no other runtime dependency",
+      "layout": {
+        "src/main": "main process: settings.ts (atomic writes), vault/ (service, routes, files, text, blacklist, zip, errors), api/ (loopback guard + server for future use)",
+        "src/preload": "index.ts - the ONLY bridge: settings.read/update, vault.chooseFolder",
+        "src/renderer/src": "components (Sidebar, TitleBar, ChatView, MessageRow, Composer, SettingsView, ArtifactsRail, ArtifactCard/Preview, BrainMark), hooks (useChat, useModels, useVault, useArtifactRewrite, usePersistentState, useDesignTokens, useDismiss), state (appearance, performance, chats, artifactEdits, artifactView), platform/bridge.ts, styles/globals.css",
+        "src/shared": "lib (capture, chat, inference, markdown, prompts, skills, storage, vault, zip, design-systems/), types.ts",
+        "tests": "22 files / 208 tests; tests/pending/ holds three parked suites + README"
+      },
       "features_implemented": [
-        "Sidebar 260px #202020: Search, New chat, Projects, Artifacts (n), Customize, Pinned/Today/Oct 8/Older groups, NU Utso Free -> user menu",
-        "Context menu 191646 fully functional: open in new window, pin/unpin, inline rename, add to project, move to group, delete",
-        "Center #1a1a1a: 'Evening, Utso.' greeting with orange asterisk, composer #242424 'How can I help you today?'",
-        "Composer bottom row: attach (+), Project dropdown, model selector, effort, thinking, send",
-        "Settings modal 191707 with Appearance (Theme/Chat font/Transcript size/Width/Motion/Voice) + Account/Privacy/Capabilities/Memory/System/Extensions",
-        "User menu 191608",
-        "Apps and extensions modal 191636",
-        "File/Edit/View/Go/Help menu bar 191558 with live Ollama + Vault status dots",
-        "Model selector lists Ollama /api/tags, remembers choice, marks vision models",
-        "Artifact runner: HTML/SVG sandboxed preview, code tab, copy, download, save-to-vault, version bump",
-        "Artifacts created ONLY when the user explicitly asks (Tic Tac Toe loop fix)",
-        "File + image upload; images only sent to vision-capable models, otherwise a model-aware warning",
-        "Thinking display for <think> blocks",
-        "AI-Brain panel: capsule library with drag-drop injection, never-check blacklist manager, Today tab (snapshot/open loops/journal path)",
-        "Cook This Prompt (Capsule Hub style prompt enhancer)",
-        "Direct Ollama streaming with abort; vault capture of every turn",
-        "Vite proxies /ollama and /vault -> Ollama CORS no longer required",
-        "Light/dark/system theme, reduced motion, transcript size, width, chat font — all really applied",
-        "Keyboard: Ctrl+B sidebar, Ctrl+J AI-Brain, Ctrl+Shift+A artifacts, Ctrl+N new chat",
-        "Measured theme: sidebar 384px #111111, main #151515, composer #20201f, active row #343434, text #f0efec, accent #d97757, link #4099ec (replaces the wrong estimates)",
-        "Spark.jsx - real Claude starburst SVG (ported from abc0197f) used for greeting + assistant avatar",
-        "Dialog.jsx - accessible modal primitive with focus trap, inert root, portal (ported from 01199af1)",
-        "buildPreviewHtml - artifact preview wrapped in a strict CSP: no network, forms, frames or external scripts",
-        "wantsArtifact - intent detection that also matches NEGATIVE intent (explain how to build..., do not create...)",
-        "TodayView - Current Snapshot, Open Loops, due follow-ups with answer/skip/snooze/stop, journal draft (ported from brain01)",
-        "server/mock-ollama.cjs - Ollama-compatible stub for sandbox previews; never started by start-app.bat, labels every reply as a mock",
-        "vault API /today now returns parsed follow-ups, today's journal and the vault path",
-        "20 unit + vault-integration tests (node --test, no new dependencies) and 4 jsdom UI smoke tests behind npm run test:ui"
+        "Real chat against Ollama at 127.0.0.1:11434 with streaming, abort, regenerate, edit-and-resend, branching",
+        "Artifacts: extracted from replies, sandboxed preview, code view, version history, ZIP export",
+        "Comment mode: append-only rewrite of one artifact at a time with versions",
+        "Vault writes: every finished conversation becomes Markdown in the vault, with 09 Activity & Undo appended",
+        "Settings as a full window (rail + panes): System, Appearance, Performance, Vault, plus search and per-section Reset",
+        "Appearance rewrites the theme tokens themselves (accent, conversation width) and survives reload",
+        "Performance: Ollama options from profile presets or custom values, measured against the chosen profile",
+        "Vault folder chosen through the main process; missing folders are refused and never replaced",
+        "Browser preview build that states plainly it is the interface only"
       ],
-      "features_missing": [
-        "End-to-end test on the user's Windows machine (top priority)",
-        "Journal auto-generation from captured sources",
-        "Windows installer (Electron/Tauri)",
-        "Full Claude feature-parity audit in 00 System/Claude Feature Audit.md"
-      ],
-      "known_bugs": [
-        "None currently reproducible. The Tic Tac Toe loop is fixed structurally: plain system prompt with no code example + artifacts only on explicit request; Settings > System > Reset local data clears any old looped chat."
+      "known_gaps": [
+        "Not yet run on the user's Windows machine (top priority; also no installer)",
+        "Cloud providers (Claude/GPT/Gemini APIs) are not implemented",
+        "Settings > Agent access does not exist yet (spec is in the workspace plan; built when something real can be granted)",
+        "The extension cannot reach the app: the vault API is in-process and no loopback port is open",
+        "The browser extension's capture is a starter, not wired end-to-end",
+        "No wake word / voice (Jarvis) - parked by the user until better hardware"
       ],
       "verified": {
-        "vite_build": "clean",
-        "unit_tests": "20/20 pass (node --test tests/*.test.js tests/*.test.cjs)",
-        "ui_smoke": "4/4 pass in jsdom (npm run test:ui, needs jsdom installed)",
-        "pixel_measurements": "re-verified against the PNGs with tools/pngread.py",
+        "tests": "npm test -> 22 files / 208 tests pass",
+        "typecheck": "npm run typecheck -> clean",
+        "web_build": "npm run build:web -> clean",
+        "desktop_smoke": "npm run smoke -> SMOKE OK title=\"AI ASSistant\" size=1280x820 errors=0 warnings=0",
+        "browser_check": "outside the repo: 28 assertions including tokenised width, reload persistence, search, reset, 0 console problems",
+        "desktop_e2e": "outside the repo: typed into the app -> answered -> conversation found in the vault -> vault moved from Settings -> second conversation in the new vault, console clean",
         "user_windows_test": "NOT DONE"
       },
-      "build_cmd": "npm install && npm run dev:server & npm run dev",
-      "run_cmd_windows": "start-app.bat",
-      "best_of_cherry_picks": {
-        "c4f75cce + cb0eb781": "measured pixel colours/geometry - adopted and re-verified, now in spec/MEASURED_PIXELS.md",
-        "abc0197f": "Spark.jsx Claude starburst - adopted",
-        "01199af1": "Dialog.jsx focus-trap modal, buildPreviewHtml CSP, wantsArtifact negative intent, regression-test idea - adopted",
-        "brain01": "TodayView.jsx, server/mock-ollama.cjs - adopted",
-        "1e3d04e4": "vite preview host - already covered by host 0.0.0.0 + allowedHosts:true",
-        "00aa9faf": "context-menu submenus + hash deep-links - NOT adopted (needs a router; the six menu items already work)"
-      },
-      "branch": "arena/3c06e1bf-ai-assistant",
-      "head": "c2cdf3f",
-      "identity": "AI ASSistant - not a Claude clone; logo is BrainMark, name is customizable"
+      "build_cmd": "npm install && npm run build",
+      "run_cmd": "npm run dev (desktop) | npm run build:web && npm run preview:web (browser preview)"
+    },
+    "01_claude-exact-pixel-clone": {
+      "path": "apps/01_claude-exact-pixel-clone",
+      "status": "HISTORICAL - the first clone, built to match six Claude screenshots (191547-191707). Kept as the port source for libs/hooks/server logic only, never for JSX.",
+      "tech": "Vite + React + Tailwind + Express vault API on 127.0.0.1:8765 + start-app.bat",
+      "tests": "16 files / 235 tests, 15 pre-existing failures",
+      "note": "Its vault API (server/vault-api.cjs, port 8765) is NOT part of the app. The app's vault service is in-process."
     },
     "02_electron-claude-clone-v6": {
       "path": "apps/02_electron-claude-clone-v6",
-      "status": "reference-only, superseded by 01 for pixel accuracy",
-      "tech": "React 18 + Vite 5 + Electron 31 + Express + Tailwind, fork of Damienchakma/Open-claude MIT",
-      "use_for": "ArtifactPanel/Workbench/ThinkingDisplay reference code",
-      "known_bugs": [
-        "Not pixel-accurate to 191547-191707",
-        "Old system prompt caused the Tic Tac Toe loop"
-      ]
+      "status": "HISTORICAL reference - artifacts/workbench/thinking implementations",
+      "note": "Not pixel-accurate to the old screenshots; superseded."
     }
   },
   "extension": {
     "path": "extension/",
-    "status": "starter-spec-implemented, not tested end-to-end in a browser",
+    "status": "starter + spec implemented, NOT wired to the app",
+    "blocking_gap": "the app's vault API is in-process with no listening port, so extension/lib/vault-writer.js has nothing to POST to; opening a loopback port for chrome-extension:// origins is the work (see tests/pending/README.md in the app and extension/README.md)",
     "features_implemented": [
-      "MV3 manifest with <all_urls> + history + storage + scripting + contextMenus",
-      "background.js history listener + blacklist check + failure logging + context menu",
-      "lib/blacklist.js pattern matching",
-      "lib/capsule.js data model",
-      "lib/vault-writer.js POST to 127.0.0.1:8765",
-      "content-scripts: ai-capture, generic-capture, capsule-inject, quillbot-suggestions",
-      "popup: capsule library, search, blacklist manager"
-    ],
-    "features_missing": [
-      "End-to-end test extension -> vault API -> Obsidian files",
-      "Offline queue flush test",
-      "Real Readability integration",
-      "Capsule version/branch/rollback"
+      "manifest.json (MV3), lib/blacklist.js pattern matching (host-aware), lib/capsule.js data model, lib/vault-writer.js",
+      "spec for Capsule Hub + Quillbot behaviour, default-check-everything policy, never-check blacklist, failure logging"
     ]
   },
   "vault": {
     "path": "vault/AI-Brain/",
-    "status": "structure-complete, 60 files, starter content only, no real user data yet",
-    "api_endpoints": [
-      "GET /status",
-      "GET /context?q=",
-      "GET /capsules",
-      "GET /today",
-      "GET /blacklist",
-      "POST /blacklist",
-      "POST /capture (browser_visit, web_page, conversation, capsule, artifact, journal, wasnt_accessible, blacklist_update)"
+    "status": "canonical memory - 63 tracked Markdown files, 00 System to 90 Archive",
+    "rules": [
+      "Conversations land in 02 Sources/Conversations/AI ASSistant/<year>/<id>.md",
+      "Entity files are never created by conversations",
+      "Days are Asia/Dhaka days",
+      "The app never creates a replacement vault when the configured folder is missing"
     ]
   },
-  "current_gaps": [
-    "Exact clone not yet run on the user's Windows machine",
-    "Today view partial (snapshot + open loops only, no journal generation or follow-ups)",
-    "Extension -> vault end-to-end untested",
-    "No installer",
-    "Quillbot inline suggestions live only in the extension, cannot be wired into the desktop app"
-  ],
-  "last_session": "2026-10-11 — UI/UX adopted wholesale from arena/01199af1 at the user's request; title bar + Today view kept; vault API adopted with /today,/status,artifact,journal ported back; 48+5 tests pass; no branch merged",
-  "palette_ruling": {
-    "authoritative": "user-supplied",
-    "shipped": {
-      "bg_main": "#1a1a1a",
-      "bg_side": "#202020",
-      "sidebar_width": "260px",
-      "bg_elev": "#242424",
-      "bg_hover": "#2a2a2a",
-      "bg_active": "#303030",
-      "text": "#e0e0e0",
-      "accent": "#ff8c00",
-      "btn": "#ffffff",
-      "code_bg": "#141414"
-    },
-    "measured_but_reverted": {
-      "bg_main": "#151515",
-      "bg_side": "#111111",
-      "sidebar_width": "384px",
-      "bg_elev": "#20201f",
-      "bg_hover": "#1d1d1d",
-      "bg_active": "#343434",
-      "text": "#f0efec",
-      "accent": "#d97757"
-    },
-    "geometry_still_from_measurement": [
-      "toolbar 48px",
-      "top bar 52px",
-      "composer radius 18px",
-      "greeting 44px",
-      "transcript widths 880/1040/1200",
-      "grouped settings nav"
-    ],
-    "rule": "Where a pixel measurement disagrees with a value the user stated, use the user's value and flag the difference — never silently override."
-  },
-  "ui_lineage": {
-    "adopted_from": "arena/01199af1-ai-assistant (de6ddc9)",
-    "adopted": [
-      "all components",
-      "hooks (useChat/useModels/useDismiss/usePersistentState)",
-      "index.css (38 KB)",
-      "vite.config.js /api/ollama + /api/vault",
-      "server/vault-api.cjs",
-      "server/proxy-policy.cjs"
-    ],
-    "kept_from_this_branch": [
-      "TitleBar.jsx (Windows title bar — required, absent in 01199af1)",
-      "TodayView.jsx (Alt+T, P8)",
-      "server/mock-ollama.cjs"
-    ],
-    "ported_back_into_adopted_server": [
-      "GET /today",
-      "GET /status",
-      "capture type: artifact",
-      "capture type: journal"
-    ],
-    "palette": {
-      "main": "#1a1a1a",
-      "sidebar": "#202020",
-      "sidebar_width": "260px",
-      "composer": "#242424",
-      "accent": "#d48264"
-    },
-    "tests": {
-      "unit_integration": 48,
-      "ui_jsdom": 5
-    },
-    "merged": false,
-    "pr": "#8 open"
-  },
   "docs": {
-    "prd": "docs/claude-exact-pixel-clone-PRD.md",
-    "app_design": "docs/claude-exact-pixel-clone-APP-DESIGN.md"
+    "living": "00_LIVING_DOCS/ (REQUIREMENTS, HANDOVER, ARCHITECTURE, DECISIONS_LOG, CHANGELOG, TODO_NEXT)",
+    "machine": ".ai/ (AGENT_INSTRUCTIONS.md, STATE.json, CONTEXT.json, INDEX.json) mirrored in ai/",
+    "root": "README.md, BRANCH_TESTING.md, TESTING_CHECKLIST.md",
+    "app": "apps/03_ai-assistant/WEB-PREVIEW.md, apps/03_ai-assistant/tests/pending/README.md",
+    "historical": "spec/ (old clone specs), docs/originals/ (the original requirement files), memory/sessions/"
   },
   "external_sources": {
     "open-design": {
       "url": "https://github.com/nexu-io/open-design",
       "license": "Apache-2.0",
-      "taken": "design-system token :root blocks (16 of 152) and the skills mechanism (idea only, no skill text copied)",
+      "taken": "design-system token sets and the skills mechanism (idea only)",
       "attribution": "apps/01_claude-exact-pixel-clone/THIRD_PARTY_NOTICES.md"
     }
   },
   "open_source": {
-    "ready": "Profile is customizable with neutral defaults. Screenshots must never be bundled into a distributable (spec/screenshots/ is local reference only)."
+    "ready": "No hardcoded names, emails, paths or model tags. Profile values are neutral defaults. Screenshots are local reference only and must never be bundled into a distributable."
   }
 }

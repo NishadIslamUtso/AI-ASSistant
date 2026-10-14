@@ -1,7 +1,8 @@
 # REQUIREMENTS_LIVING.md — Single Source of Truth (Living)
 
-**Last Updated:** 2026-10-11 22:10 Asia/Dhaka
-**Version:** 1.0.0-master
+**Last Updated:** 2026-10-14 (night) Asia/Dhaka
+**Version:** 2.0.0-ai-assistant
+**Current app:** `apps/03_ai-assistant/` — read section 0.5 before anything else
 **Rule:** UPDATE THIS FILE EVERY TIME SOMETHING CHANGES. This repo is memory for AIs. If you don't update, next session loses context.
 
 ## 0. Meta
@@ -11,8 +12,29 @@
 - Timezone: Asia/Dhaka
 - App name: `AI ASSistant` (preserve double S casing)
 - Current model: qwen2.5:3b via Ollama http://127.0.0.1:11434, already downloaded, use directly no download
-- Vault API: http://127.0.0.1:8765
-- Dev server: http://127.0.0.1:5173
+- Vault API: **in-process** (`apps/03_ai-assistant/src/main/vault/`). No port is open; the old 8765 server belonged to the historical clone.
+- Dev: `npm run dev` (desktop) or `npm run build:web && npm run preview:web` (browser preview on 4174)
+
+## 0.5 Where the app actually is — 2026-10-14 (supersedes older sections below)
+
+- **The app is `apps/03_ai-assistant/`** — Electron + React + TypeScript. `apps/01_claude-exact-pixel-clone/`
+  is history (the first screenshot-matched clone; a source for porting *logic* only, never JSX) and
+  `apps/02_electron-claude-clone-v6/` is history too.
+- **The design authority is the owner's approved mockups** — the chat shell, the appearance pane, and the
+  **full-window settings rail**. Section 2 below describes the old Claude clone and is kept for history.
+- **Settings is one full-window surface**: a rail (System, Appearance, Performance, Vault) with one section
+  at a time on the right, a search box that finds settings by name, and a per-section Reset. Terse rows:
+  a label and the control, no descriptions underneath.
+- **The vault API is in-process.** The old `server/vault-api.cjs` on 127.0.0.1:8765 is not part of this app,
+  and no port is open for the extension yet — that is a known gap, not a feature.
+- **Memory is measured against the profile the owner chose**, never against a hardcoded 4 GB. Choosing a
+  profile IS the answer to "how much video memory is there". CPU-only and Custom claim nothing and are
+  never warned about; when a preset really cannot hold the loaded model, one sentence names the numbers and
+  one button fixes it.
+- **No Vercel deployment files** (removed at the owner's request on 2026-10-14; they are not coming back).
+- **Verified on 2026-10-14:** 22 test files / 208 tests, clean typecheck, clean web build, desktop smoke
+  `errors=0 warnings=0`, browser check 28/28 with 0 console problems, and the desktop end-to-end check
+  (message → answer → Markdown in the vault → vault moved from Settings) green.
 
 ## 1. Product Goal (One Sentence)
 
@@ -386,6 +408,21 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - **Why:** the user compared the branches and preferred that one's look and feel.
 - **Verified:** 48 unit/integration tests, 5 jsdom UI tests, clean build, all
   endpoints checked live through the preview proxy.
+
+### [2026-10-14 night] Vault writes, Settings, and the full-window Settings surface
+- **Added:** the vault service in the app's main process — conversations become Markdown in
+  `02 Sources/Conversations/AI ASSistant/<year>/`, activity is appended to `09 Activity & Undo/`, and the
+  folder is chosen from Settings through the main process.
+- **Added:** Settings as a **full window**: rail (System, Appearance, Performance, Vault), search, per-section
+  Reset, and a Vault pane that refuses a folder that does not exist without creating anything in its place.
+- **Changed (the owner's correction):** the Performance warning is now measured against **the profile that
+  was chosen**. It used to be computed against a hardcoded 4 GB, so answering "6 GB VRAM" produced a warning
+  about a 4 GB card. That is gone, with tests that pin it.
+- **Changed:** the written-out descriptions under each option were removed. A label and the control.
+- **Changed:** the app is `apps/03_ai-assistant/`; the old clone is history (section 0.5).
+- **Removed:** the Vercel deployment files, at the owner's request.
+- **Verified:** 208 tests, typecheck, web build, desktop smoke, browser check, desktop end-to-end.
+- **Where:** branch `arena/3c06e1bf-ai-assistant-v3`, merged into `main`.
 
 ### [NEXT] Add when changed:
 - Use format: ### [YYYY-MM-DD HH:MM] Added/Changed/Fixed: description + why + who requested

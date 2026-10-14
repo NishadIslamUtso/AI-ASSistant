@@ -2,6 +2,10 @@
 
 **Date:** 2026-10-12 · based on verified code inspection, not the advisor report.
 
+**Status (2026-10-14): historical.** This plan decided which parts of which app were merged into
+`apps/03_ai-assistant/`. That work is done and the app is now maintained in its own right; this file is kept
+as the record of why the pieces were chosen. Current state: `00_LIVING_DOCS/HANDOVER_LIVING.md`.
+
 ---
 
 ## The principle that decides everything
