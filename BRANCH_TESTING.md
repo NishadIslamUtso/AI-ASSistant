@@ -1,78 +1,56 @@
 # Branch Testing Guide — How to Test Before Merging
 
-This repo is designed so any branch is fully testable.
+This repo is designed so any branch is fully testable, by a person or by an AI, without the owner's machine.
 
-## What This Repo Contains (Everything)
+## What a branch contains
 
-- `apps/01_claude-exact-pixel-clone/` — Latest exact pixel-perfect Claude clone from 6 screenshots, Vite+React+Tailwind, direct Ollama qwen2.5:3b, vault driver 8765, start-app.bat
-- `apps/02_electron-claude-clone-v6/` — Previous Electron clone with more features (artifacts, workbench, thinking, vision), reference
-- `extension/` — MV3 extension, default check everything, Capsule Hub + Quillbot UX, blacklist, failure logging
-- `vault/AI-Brain/` — Obsidian vault canonical memory 61 files starter
-- `spec/screenshots/` — 6 Claude desktop screenshots that ARE spec + CLAUDE_SPEC_FROM_SCREENSHOTS.md
-- `00_LIVING_DOCS/` — Living requirements, handover, architecture, decisions, changelog, todo (UPDATED EVERY CHANGE)
-- `.ai/` — Machine-readable context for any AI agent (CONTEXT.json, STATE.json, INDEX.json, AGENT_INSTRUCTIONS.md)
-- `docs/originals/` — Original requirement files historical
-- `archive_zips/` — Previous zips for reference (optional, excluded from GitHub push by .gitignore but included in FULL zip)
-- `scripts/` — build-master-zip.sh/.bat
-- `memory/sessions/` — Session logs
+- `apps/03_ai-assistant/` — **the app**: Electron + React + TypeScript. Main process (files, settings, vault
+  service), preload bridge, renderer (chat, artifacts, comment mode, Settings), shared logic, tests.
+- `apps/01_claude-exact-pixel-clone/`, `apps/02_electron-claude-clone-v6/` — historical; not the target.
+- `extension/` — MV3 starter + spec (cannot POST to the app yet: no loopback port exists).
+- `vault/AI-Brain/` — the canonical Obsidian vault.
+- `00_LIVING_DOCS/`, `.ai/` — living docs and machine-readable context. **Both must be updated in the branch.**
 
-## How to Test From a Branch (Your Workflow)
+## How to test a branch
 
-1. Create branch on GitHub:
-   ```
-   git checkout -b feature/settings-modal
-   # make changes
-   git add .
-   git commit -m "feat: add Settings modal from 191707.png"
-   git push -u origin feature/settings-modal
-   ```
+```bash
+git fetch origin
+git checkout <branch>
+cd apps/03_ai-assistant
+npm install
+npm test                 # 208 tests, 22 files — the whole automated suite
+npm run typecheck        # strict TypeScript, no output means clean
+npm run build:web        # browser preview build
+npm run preview:web      # http://localhost:4174 — the interface, honestly labelled as preview-only
+```
 
-2. On GitHub, go to your repo -> Branch dropdown -> select `feature/settings-modal` -> Code -> Download ZIP
+Then, with Ollama running (`ollama serve`, and a model pulled):
 
-3. Extract ZIP on your TUF A15 Windows machine
+```bash
+npm run dev              # the real desktop app
+npm run smoke            # builds, opens, closes — prints "SMOKE OK ... errors=0 warnings=0"
+```
 
-4. Test exact clone:
-   ```
-   cd apps\01_claude-exact-pixel-clone
-   .\start-app.bat
-   ```
-   - Handles already-running Ollama
-   - Installs @rollup/rollup-win32-x64-msvc
-   - Starts vault API 8765 + Vite 5173
-   - Open http://127.0.0.1:5173
-   - If Tic Tac Toe loop, clear localStorage: F12 console -> localStorage.clear() -> refresh
+## What to check by hand
 
-5. Test Electron clone:
-   ```
-   cd apps\02_electron-claude-clone-v6
-   npm install
-   npm run dev:server
-   npm run dev
-   ```
+1. A conversation answers, streams, and **stops** when you press stop (a stopped answer keeps its partial text).
+2. The conversation appears in the vault as Markdown under `02 Sources/Conversations/AI ASSistant/<year>/`.
+3. **Settings** (sidebar, bottom left) opens as the full window: rail on the left, `System`, `Appearance`,
+   `Performance`, `Vault`. The search box finds settings by name.
+4. `Appearance` → accent and conversation width change the app immediately and survive a reload.
+5. `Performance` → the numbers under the profile are the numbers Ollama is given. Choosing a bigger profile
+   **must not** produce a warning about a smaller card.
+6. `Vault` → point it at a folder that exists: it is accepted, and the path shown is the one the vault reports.
+   Point it at a folder that does not exist: it is refused, and nothing is created in its place.
+7. **No console errors or warnings anywhere.** This is a hard rule, not a nicety.
 
-6. Test extension:
-   - Chrome -> chrome://extensions -> Load unpacked -> select `extension/` folder
-   - Ensure vault API running at 8765
-   - Visit any site, check `vault/AI-Brain/02 Sources/Browser Activity/`
+## Windows notes
 
-7. If works, merge:
-   ```
-   git checkout main
-   git merge feature/settings-modal
-   git push
-   ```
+- `npm install` then `npm run dev`. There is no `.bat` installer for the app yet — that is still a gap.
+- If Ollama is not answering, the app says so in its header rather than pretending.
+- If the model list is empty, pull a model (`ollama pull qwen2.5:3b`) and reopen Settings.
 
-## Why This Works
+## Report back
 
-- No node_modules in repo (installed via npm install on test machine)
-- No dist/build in repo (built via npm run build)
-- Bat files handle Windows TUF A15 8GB RAM 4GB VRAM, existing Ollama, no native build tools
-- All source included, not just md files
-- Living docs updated every change so next AI knows state
-
-## What .gitignore Excludes
-
-- node_modules/, dist/, build/, .git/, logs, .cache, etc. (heavy, rebuildable)
-- archive_zips/ (nested zips, optional history) — excluded from GitHub push but included in FULL zip for local backup
-
-If you WANT archive_zips on GitHub too, remove `archive_zips/` line from .gitignore
+State plainly: what worked, what looked wrong, which step produced red text, and the console output if
+anything failed. Do not report a feature as working because it appears in a plan — say what you saw.

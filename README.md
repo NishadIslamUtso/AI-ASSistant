@@ -3,101 +3,109 @@
 **THIS REPO IS MEMORY FOR AIS, NOT FOR HUMANS.** Human polish is secondary. Structure is optimized for LLM handover, continuity, and RAG.
 
 **Owner:** Utso (nishadislamutso@gmail.com) — Dhaka, BD — TUF A15 — 8GB RAM / 4GB VRAM / 500GB storage
-**Date:** 2026-10-10 Asia/Dhaka
-**App Name:** `AI ASSistant` (preserve casing double S)
-**Goal:** Native Windows Claude-exact clone that is DRIVER of Obsidian vault (vault is organizer, extension is collector+suggester). Local-first, qwen2.5:3b via Ollama at 127.0.0.1:11434, vault API at 127.0.0.1:8765.
+**Date:** 2026-10-14 Asia/Dhaka
+**App Name:** `AI ASSistant` (preserve the double S). It is its own application, not a Claude clone.
+**Goal:** a local-first desktop assistant that drives an Obsidian vault (the vault is the memory that outlives
+the app), runs local models through Ollama at 127.0.0.1:11434, and reaches the network only when the user
+grants it, from Settings.
+
+## Where the app actually is
+
+| Path | What it is | State |
+|---|---|---|
+| `apps/03_ai-assistant/` | **THE APP.** Electron + React + TypeScript + Tailwind 4. Real chat, artifacts, comment mode, vault writes, Settings. | Active. 208 tests, typecheck, web build, desktop smoke and both end-to-end checks green in the sandbox. **Not yet run on the user's Windows machine.** |
+| `apps/01_claude-exact-pixel-clone/` | The first clone, built to match six Claude screenshots. | Historical. Kept as the port source for libs/hooks/server logic. Not the app. |
+| `apps/02_electron-claude-clone-v6/` | An older Electron fork with more features. | Historical reference. |
+| `extension/` | MV3 browser extension: collector + context suggester. | Starter + spec. **It cannot talk to the app yet** — the app's vault API is in-process and opens no port (see the gap in `extension/README.md`). |
+| `vault/AI-Brain/` | The canonical Obsidian vault (63 tracked files). | Canonical memory. Read/edited by a person as easily as by the app. |
+| `spec/`, `docs/` | The old clone's specs and the original requirement files. | Historical. |
 
 ## Repo Map for AI Agents — Read This First
 
 ```
 .ai/                          <- MACHINE READABLE - START HERE
   AGENT_INSTRUCTIONS.md       <- How to continue work, how to update living docs
-  STATE.json                  <- Current build state, what works/broken
-  CONTEXT.json                <- Who user is, hardware, constraints
-  INDEX.json                  <- Full file index with purpose per file
+  STATE.json                  <- Current build state, what works / what is missing
+  CONTEXT.json                <- Who the user is, hardware, capture policy, UX rules
+  INDEX.json                  <- File index with purpose per file
 00_LIVING_DOCS/               <- LIVING SOURCE OF TRUTH - UPDATE EVERY CHANGE
-  REQUIREMENTS_LIVING.md      <- Living requirements, updated on every change (YOU MUST UPDATE)
-  HANDOVER_LIVING.md          <- Current state + gaps + next steps
-  ARCHITECTURE_LIVING.md      <- Driver/Vault/Extension architecture
-  DECISIONS_LOG.md            <- All decisions with dates
+  REQUIREMENTS_LIVING.md      <- Living requirements + acceptance checklist
+  HANDOVER_LIVING.md          <- Current state, gaps, next steps
+  ARCHITECTURE_LIVING.md      <- How the app, vault and extension fit together
+  DECISIONS_LOG.md            <- Decisions with dates and reasons
   CHANGELOG.md                <- What changed each session
   TODO_NEXT.md                <- Immediate next actions
-apps/
-  01_claude-exact-pixel-clone/ <- LATEST: Pixel-perfect clone from 6 screenshots (191547-191707.png). Vite+React+Tailwind, direct Ollama qwen2.5:3b streaming, vault driver. THIS IS CURRENT TARGET.
-  02_electron-claude-clone-v6/ <- PREVIOUS: Electron+React Open-claude fork, more features (artifacts, vision, workbench). Use as reference for features.
-extension/                    <- Browser extension MV3: default check everything, Capsule Hub + Quillbot UX
-vault/AI-Brain/               <- Obsidian vault canonical memory - 00 System, 01 Inbox, 02 Sources, 03 Memory, 04 Working Memory, 05 Knowledge, 06 Review, 07 Sharing Receipts, 08 Journal, 09 Activity & Undo, 90 Archive, .brain
-spec/
-  screenshots/                <- 6 Claude desktop screenshots that ARE the spec for exact clone
-  CLAUDE_SPEC_FROM_SCREENSHOTS.md <- Extracted spec from screenshots
-docs/originals/               <- Original requirement files, master plan, blueprint (historical)
-archive_zips/                 <- Previous zips for reference
-memory/sessions/              <- Session logs for handover
+apps/03_ai-assistant/         <- THE APP (src/main, src/preload, src/renderer, src/shared, tests)
+extension/                    <- MV3 extension + spec
+vault/AI-Brain/               <- Obsidian vault, canonical memory
+memory/sessions/              <- Session logs, chronological
+docs/originals/               <- The original requirement files (historical)
 ```
 
-## Quick Start for AI (not human)
+## Quick Start
 
-1. Read `.ai/AGENT_INSTRUCTIONS.md`
-2. Read `00_LIVING_DOCS/REQUIREMENTS_LIVING.md` (living)
-3. Read `00_LIVING_DOCS/HANDOVER_LIVING.md` (current gaps)
-4. Read `.ai/STATE.json`
-5. Check `spec/screenshots/` — those 6 images ARE the UI spec for apps/01_claude-exact-pixel-clone
-6. Continue work, then UPDATE living docs
-
-## Quick Start for Human (Windows)
-
-### Latest Exact Clone (Recommended)
-```bat
-cd apps\01_claude-exact-pixel-clone
-.\start-app.bat
-```
-Requires: Ollama running, qwen2.5:3b pulled (`ollama pull qwen2.5:3b`), Node.js 20+
-- start-app.bat handles already-running Ollama, installs @rollup/rollup-win32-x64-msvc, starts vault API 8765 + Vite 5173
-- Open http://127.0.0.1:5173
-- Uses http://127.0.0.1:11434/api/chat directly, no download
-- Vault driver at http://127.0.0.1:8765/context + /capture
-
-### Electron Clone (More Features)
-```bat
-cd apps\02_electron-claude-clone-v6
-npm install
-npm run dev:server
-npm run dev
+**Tests** (no machine required, this is what CI would run):
+```bash
+cd apps/03_ai-assistant && npm install && npm test        # 208 tests, 22 files
 ```
 
-### Extension
-Load `extension/` as unpacked in chrome://extensions, ensure vault API running at 8765.
+**Desktop app** (needs Ollama running with a model pulled):
+```bash
+cd apps/03_ai-assistant && npm install
+npm run dev          # Electron window
+npm run smoke        # builds, opens, closes, prints SMOKE OK / errors=0 warnings=0
+```
+
+**Browser preview** (the interface only — no models, no vault, and it says so):
+```bash
+cd apps/03_ai-assistant
+npm run build:web && npm run preview:web   # http://localhost:4174
+```
+
+## What the user has asked for (standing instructions)
+
+These are the owner's own words and corrections. They outrank anything a later AI prefers.
+
+- Build the frontend as the approved mockups show, **but where a mockup would produce a broken or dishonest
+  UI, infer the intent and fix it** — nothing fake in front of the user, ever ("existing without working" is
+  forbidden).
+- Settings is **one full-window surface** — a rail of sections on the left, one section at a time on the right
+  (the owner's words: "the one with full screen settings, like Windows settings"). Not a modal.
+- Do not warn about memory *after* asking which GPU the machine has: the chosen profile **is** the answer.
+  Measure against it, stay quiet when it fits.
+- Settings are terse: a label and the control. No written-out descriptions under options.
+- "Leave vercel delete all vercel files. It isn't helping like i thought." — the deployment files are gone and
+  must not come back. (The Vercel *design theme* and the `vercel.json` inside exported site ZIPs are separate
+  things and stay.)
+- App name is **AI ASSistant**; no Claude branding in user-facing copy.
+- Do not look at other branches for design. From other branches take only finished logic, never JSX.
+- Open-source ready for anyone's machine: no hardcoded names, emails, paths or model tags.
+- As customizable as possible; smooth and seamless.
+- Work lands on `arena/3c06e1bf-ai-assistant-v3` and is merged into `main`, verified, then reported.
+- Do not rush a step and break it: one thing at a time, verified, then stop.
 
 ## Living Docs Rule
 
-**YOU MUST UPDATE `00_LIVING_DOCS/REQUIREMENTS_LIVING.md` EVERY TIME SOMETHING CHANGES.** This repo is memory. If you don't update it, next AI session loses context.
+**UPDATE `00_LIVING_DOCS/REQUIREMENTS_LIVING.md` EVERY TIME SOMETHING CHANGES.** This repo is memory.
+If it is not updated, the next session loses context.
 
 - Add new requirements as `### [DATE] Added: ...`
-- Mark completed as `[x]` in acceptance checklist
-- Log decisions in `DECISIONS_LOG.md`
-- Log changes in `CHANGELOG.md`
+- Mark completed work as `[x]` in the acceptance checklist
+- Log decisions in `DECISIONS_LOG.md`, changes in `CHANGELOG.md`
+- Update `.ai/STATE.json` and `memory/sessions/<date>-session.md`
 
 ## GitHub Push
 
-```bat
-git init
-git add .
-git commit -m "AI ASSistant master repo - 2026-10-10 - exact clone + extension + vault"
-git branch -M main
-git remote add origin https://github.com/YOURUSERNAME/AI-ASSistant.git
+```bash
+git remote add origin https://github.com/NishadIslamUtso/AI-ASSistant.git
 git push -u origin main
 ```
 
-No secrets in repo. Ollama local, vault local. No API keys committed.
+No secrets in the repo. Ollama is local, the vault is local, no API keys are committed.
 
 ## Hardware Truth
 
-- ASUS TUF A15, 8GB RAM, 4GB VRAM RTX 3050, 500GB, slow downloads
-- qwen2.5:3b is baseline, small model limits: misreads "slow" as "Solow", generic answers, claims amnesia. Don't promise Claude parity in intelligence, only UI.
-- Bat files must handle existing Ollama process, no native build tools needed, Windows-friendly.
-
-## Latest User Instruction
-
-> "give me one zip file with all we did so far. also that zip file will have the requirement list which will be updated by you every time something changes. basically the repo will also work as a memory and a handover file for other AI/agents/sessions too, i will be one seeing it, s n need to make it lok like human made, make the structure that suits you and ais best for the purpose"
-
-This repo IS that zip's source.
+- ASUS TUF A15: 8GB RAM, 4GB VRAM (RTX 3050), 500GB, slow downloads, Windows 11.
+- `qwen2.5:3b` is the baseline and it is small: it misreads words, gives generic answers and claims amnesia.
+  Never promise Claude-level intelligence — the goal is a better interface, better memory and real control.
+- Everything must run without native build tools, and must not fight an already-running Ollama.

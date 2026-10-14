@@ -1,7 +1,51 @@
 # CHANGELOG.md — What Changed Each Session (Living)
 
-**Last Updated:** 2026-10-14 (evening) Asia/Dhaka
+**Last Updated:** 2026-10-14 (night) Asia/Dhaka
 **Rule:** Log every change with date, what, why. This is memory for next AI.
+
+## 2026-10-14 (night) — Settings becomes the full window; memory stops nagging
+
+The owner's corrections, all four of them, in one commit.
+
+### Settings is now the whole window
+A rail on the left — `This computer: System`; `This app: Appearance, Performance, Vault` — one section at a
+time on the right, a search box that finds a setting by name and opens its section, and a per-section Reset
+that puts a section back to the app's own defaults. `SettingsDialog.tsx` was deleted; `SettingsView.tsx`
+replaced it, and the surface fills the content row so the app keeps its own header.
+
+Only sections that work are listed. The mockup's rail has fifteen entries; the rest are not built, so they
+are not shown.
+
+### The memory warning was measuring the wrong thing
+`vramWarning()` compared every choice against a hardcoded 4 GB. So a person who answered "6 GB VRAM" was
+warned about a 4 GB card — the exact complaint. Now `fitCheck()` measures against **the chosen profile's own
+budget** (`PROFILE_BUDGET_GB`: 4 GB → 3.6, 6 GB → 5.4, 8 GB → 7.2), stays silent whenever it fits, and makes
+no claim at all for CPU-only and Custom. When a profile genuinely cannot hold the loaded model, one sentence
+names the real numbers and one button fixes it: `fitToProfile()` (the context snapping to a recognisable
+size) or CPU-only when nothing fits.
+
+The estimate itself was wrong too: it charged 0.5 MB per token of context, three times too much for these
+models, which made the app's own default profile warn at itself. It is now 0.08 MB/token, documented as a
+deliberate over-estimate.
+
+### The verbosity went
+No more written-out descriptions under each option. A label, the control, and Ollama's own option values on
+one line (`num_ctx=4096 · num_batch=256 · num_predict=1024`).
+
+### Verified
+- `npm test` → 22 files / 208 tests (9 new ones pin the memory behaviour, including "6 GB is never answered
+  with 4")
+- `npm run typecheck` clean; `npm run build:web` clean
+- Browser check: 28 assertions (rail, search, accent, width token actually painted, reload persistence,
+  reset, no false warning) and **0 console problems**
+- Desktop smoke: `SMOKE OK ... errors=0 warnings=0`
+- Desktop end-to-end: message → answer → conversation in the vault → vault moved from Settings → second
+  conversation in the chosen vault, console clean
+
+### Documentation
+Every doc that still described `apps/01` as the app, or the vault API on 127.0.0.1:8765, was brought to the
+current state: `README.md`, `BRANCH_TESTING.md`, `TESTING_CHECKLIST.md`, `.ai/*` (and the `ai/` mirror),
+`00_LIVING_DOCS/*`, and the extension docs (which now say plainly that it cannot reach the app yet).
 
 ## 2026-10-14 — Rebrand to AI ASSistant, plus four features from other apps
 

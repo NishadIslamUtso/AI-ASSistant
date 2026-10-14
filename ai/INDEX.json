@@ -1,46 +1,66 @@
 {
-  "repo": "AI-ASSistant-Github-Repo",
-  "generated": "2026-10-10T13:23:00+06:00",
+  "repo": "AI-ASSistant",
+  "generated": "2026-10-14T23:30:00+06:00",
   "file_index": [
     {
       "path": ".ai/AGENT_INSTRUCTIONS.md",
-      "purpose": "Instructions for any AI taking over, mandatory read first, update rules",
+      "purpose": "Instructions for any AI taking over this repo; mandatory read first",
       "type": "ai-instruction"
     },
     {
       "path": ".ai/CONTEXT.json",
-      "purpose": "Machine-readable user, hardware, capture policy, UX, model constraints",
+      "purpose": "Machine-readable user, hardware, capture policy, extension UX, model constraints",
       "type": "ai-context"
     },
     {
       "path": ".ai/STATE.json",
-      "purpose": "Current build status per app, features implemented/missing, known bugs, last session",
+      "purpose": "Current build state: the app, its verified checks, its gaps, the historical apps",
       "type": "ai-state"
     },
     {
       "path": ".ai/INDEX.json",
-      "purpose": "This file, full index for RAG",
+      "purpose": "This file: the index an AI uses to find things",
       "type": "ai-index"
     },
     {
+      "path": "ai/",
+      "purpose": "Visible mirror of .ai/ for the GitHub web upload",
+      "type": "ai-mirror"
+    },
+    {
+      "path": "README.md",
+      "purpose": "Where the app actually is, quick start, the owner's standing instructions",
+      "type": "readme"
+    },
+    {
+      "path": "BRANCH_TESTING.md",
+      "purpose": "How to test any branch, by hand and automatically",
+      "type": "testing"
+    },
+    {
+      "path": "TESTING_CHECKLIST.md",
+      "purpose": "The checklist to run before merging",
+      "type": "testing"
+    },
+    {
       "path": "00_LIVING_DOCS/REQUIREMENTS_LIVING.md",
-      "purpose": "LIVING source of truth, updated every change, acceptance checklist, requirements",
+      "purpose": "Living requirements + acceptance checklist; updated on every change",
       "type": "living-requirement"
     },
     {
       "path": "00_LIVING_DOCS/HANDOVER_LIVING.md",
-      "purpose": "Current state, gaps, next steps, honest status, for handover",
+      "purpose": "Current state, gaps, next steps",
       "type": "living-handover"
     },
     {
       "path": "00_LIVING_DOCS/ARCHITECTURE_LIVING.md",
-      "purpose": "Driver/Vault/Extension architecture, data flows, APIs",
+      "purpose": "App / vault / extension architecture and data flows",
       "type": "living-architecture"
     },
     {
       "path": "00_LIVING_DOCS/DECISIONS_LOG.md",
-      "purpose": "All decisions with dates, why",
-      "type": "living-decision"
+      "purpose": "Every decision with date, reason, alternatives",
+      "type": "living-decisions"
     },
     {
       "path": "00_LIVING_DOCS/CHANGELOG.md",
@@ -49,111 +69,65 @@
     },
     {
       "path": "00_LIVING_DOCS/TODO_NEXT.md",
-      "purpose": "Immediate next actions, priority order",
+      "purpose": "Immediate next actions, in priority order",
       "type": "living-todo"
     },
     {
-      "path": "README.md",
-      "purpose": "Root README, repo map, quick start for AI and human, GitHub push instructions",
-      "type": "readme"
+      "path": "apps/03_ai-assistant/",
+      "purpose": "THE APP: Electron + React + TypeScript, vault service, settings, tests, browser preview",
+      "type": "app"
+    },
+    {
+      "path": "apps/03_ai-assistant/tests/pending/",
+      "purpose": "Parked suites (composer menu, props, wiring) with a README explaining what unblocks each",
+      "type": "app-tests"
     },
     {
       "path": "apps/01_claude-exact-pixel-clone/",
-      "purpose": "LATEST TARGET: Pixel-perfect Claude desktop clone from 6 screenshots, Vite+React+Tailwind, direct Ollama qwen2.5:3b, vault driver 8765",
-      "type": "app",
-      "key_files": [
-        "src/App.jsx - state chats localStorage claude_exact_chats",
-        "src/components/Sidebar.jsx - Search +New Projects Artifacts Customize Oct8 Older + context menu",
-        "src/components/Center.jsx - Evening Utso greeting + composer + vault context + Ollama streaming",
-        "src/components/VaultPanel.jsx - toggleable vault panel",
-        "server/vault-api.cjs - vault driver API 8765",
-        "start-app.bat - Windows one-click handling existing Ollama",
-        "build-windows.bat"
-      ]
+      "purpose": "HISTORICAL: the first screenshot-matched clone; port source for logic only",
+      "type": "app-historical"
     },
     {
       "path": "apps/02_electron-claude-clone-v6/",
-      "purpose": "Previous Electron clone, more features (artifacts, workbench, thinking, vision), fork of Open-claude MIT, reference for features",
-      "type": "app-legacy",
-      "key_files": [
-        "src/App.jsx",
-        "src/components/ChatMode.jsx - main chat",
-        "src/components/VaultPanel.jsx",
-        "src/lib/llm/ModelService.js - Ollama + OpenAI + Claude + Gemini",
-        "server/vault-api.cjs",
-        "electron/main.js, preload.js"
-      ]
+      "purpose": "HISTORICAL: older Electron fork used as a feature reference",
+      "type": "app-historical"
     },
     {
       "path": "extension/",
-      "purpose": "Browser extension MV3, default check everything, Capsule Hub + Quillbot UX, local-only",
-      "type": "extension",
-      "key_files": [
-        "manifest.json - <all_urls> + history",
-        "background.js - history listener + blacklist + failure logging",
-        "lib/blacklist.js - pattern matching",
-        "lib/capsule.js - Capsule model",
-        "lib/vault-writer.js - POST to 8765",
-        "content-scripts/ai-capture.js - AI chat adapters",
-        "content-scripts/generic-capture.js - readable text",
-        "content-scripts/capsule-inject.js - drag-drop inject",
-        "content-scripts/quillbot-suggestions.js - inline suggestions",
-        "popup/popup.html/js/css - Capsule library + blacklist manager"
-      ]
+      "purpose": "MV3 extension starter + spec; cannot reach the app until a loopback port exists",
+      "type": "extension"
     },
     {
       "path": "vault/AI-Brain/",
-      "purpose": "Obsidian vault canonical memory, 61 files starter, templates, system docs",
-      "type": "vault",
-      "structure": "00 System, 01 Inbox, 02 Sources, 03 Memory, 04 Working Memory, 05 Knowledge, 06 Review, 07 Sharing Receipts, 08 Journal, 09 Activity & Undo, 90 Archive, .brain"
-    },
-    {
-      "path": "spec/screenshots/",
-      "purpose": "6 Claude desktop screenshots that ARE UI spec for exact clone",
-      "type": "spec-visual",
-      "files": [
-        "191547.png - main greeting Evening Utso + composer",
-        "191558.png - File Edit View Go Help menu",
-        "191608.png - user menu nishadislamutso@gmail.com",
-        "191636.png - Apps and extensions modal",
-        "191646.png - context menu Open in new window Pin Rename etc",
-        "191707.png - Settings Appearance Theme Chat font etc"
-      ]
-    },
-    {
-      "path": "spec/CLAUDE_SPEC_FROM_SCREENSHOTS.md",
-      "purpose": "Extracted spec from screenshots, pixel measurements, colors, layout",
-      "type": "spec-text"
-    },
-    {
-      "path": "docs/originals/",
-      "purpose": "Original requirement files, master plan, blueprint, handover historical",
-      "type": "docs-archive"
-    },
-    {
-      "path": "archive_zips/",
-      "purpose": "Previous zips for reference",
-      "type": "archive",
-      "files": [
-        "AI_ASSistant_Exact_Claude_Clone.zip 13K - latest exact clone",
-        "AI_ASSistant_App_Claude_Clone_qwen2.5_3b_FIXED6.zip - electron clone",
-        "AI_ASSistant_Extension_v1.2_Fixed.zip",
-        "AI_ASSistant_Obsidian_Vault_v4_Clean.zip"
-      ]
+      "purpose": "The canonical Obsidian vault: 00 System to 90 Archive, templates, system docs",
+      "type": "vault"
     },
     {
       "path": "memory/sessions/",
-      "purpose": "Session logs for handover, chronological",
-      "type": "memory-session"
+      "purpose": "Session logs, chronological, for handover",
+      "type": "memory"
+    },
+    {
+      "path": "spec/",
+      "purpose": "HISTORICAL: the old clone's specs, pixel measurements, merge plan, audits",
+      "type": "spec-historical"
+    },
+    {
+      "path": "docs/originals/",
+      "purpose": "HISTORICAL: the original requirement files, master plan, blueprint",
+      "type": "docs-archive"
     }
   ],
   "search_hints_for_ai": {
-    "where_is_claude_ui_spec": "spec/screenshots/ + spec/CLAUDE_SPEC_FROM_SCREENSHOTS.md",
-    "where_is_latest_app": "apps/01_claude-exact-pixel-clone/",
+    "where_is_the_app": "apps/03_ai-assistant/ - src/main, src/preload, src/renderer/src, src/shared",
+    "where_is_the_vault_write": "apps/03_ai-assistant/src/main/vault/ (service, routes, files, text, blacklist)",
+    "where_are_the_settings": "apps/03_ai-assistant/src/renderer/src/components/SettingsView.tsx + state/appearance.ts + state/performance.ts",
+    "where_is_the_memory_math": "apps/03_ai-assistant/src/shared/lib/inference.ts (fitCheck, fitToProfile, PROFILE_BUDGET_GB)",
     "where_is_requirements": "00_LIVING_DOCS/REQUIREMENTS_LIVING.md",
     "where_is_handover": "00_LIVING_DOCS/HANDOVER_LIVING.md",
     "where_is_vault_structure": "vault/AI-Brain/00 System/",
     "where_is_extension_spec": "extension/README.md + extension/EXTENSION_SPEC.md",
-    "where_to_log_changes": "00_LIVING_DOCS/CHANGELOG.md + memory/sessions/"
+    "where_to_log_changes": "00_LIVING_DOCS/CHANGELOG.md + memory/sessions/",
+    "what_does_the_owner_want": "README.md section 'What the user has asked for (standing instructions)'"
   }
 }

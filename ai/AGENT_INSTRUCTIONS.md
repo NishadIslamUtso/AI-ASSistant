@@ -4,123 +4,108 @@
 
 ## 1. What This Repo Is
 
-This is NOT a normal human GitHub repo. It is **memory + handover + living requirements** for project AI ASSistant. Owner is Utso, single user, wants structure optimized for AIs, not human aesthetics. Human-readable polish secondary.
+This is not a normal GitHub repo. It is **memory + handover + living requirements** for project
+**AI ASSistant**: a local-first desktop assistant that drives an Obsidian vault and, one day, collects
+from the browser through an extension.
 
-- **App = driver** (Claude exact UI, controls everything)
-- **Vault = organizer** (Obsidian Markdown canonical memory, AI-Brain/)
-- **Extension = collector + suggester** (browser, default check everything, Capsule Hub + Quillbot UX)
+- **App** — `apps/03_ai-assistant/` (Electron + React + TypeScript). It is the product.
+- **Vault** — `vault/AI-Brain/`, Obsidian Markdown. The memory that outlives the app.
+- **Extension** — `extension/`, MV3. Spec + starter; it cannot reach the app yet.
+
+The owner is Utso, one person, on a 4GB-VRAM laptop. The repo is written for AIs to continue from, not to
+look human-made.
 
 ## 2. Mandatory Read Order
 
-1. `.ai/CONTEXT.json` — who user is, hardware, constraints
-2. `.ai/STATE.json` — what is built, what is broken, current bugs
-3. `00_LIVING_DOCS/REQUIREMENTS_LIVING.md` — living truth, acceptance checklist
-4. `00_LIVING_DOCS/HANDOVER_LIVING.md` — gaps, next steps
-5. `00_LIVING_DOCS/ARCHITECTURE_LIVING.md` — driver/vault/extension flow
-6. `spec/CLAUDE_SPEC_FROM_SCREENSHOTS.md` — pixel-perfect UI spec from 6 screenshots
-7. `spec/screenshots/` — view the 6 actual screenshots (191547 to 191707)
+1. `README.md` — where the app is, and **the owner's standing instructions in his own words**
+2. `.ai/CONTEXT.json` — who the owner is, the hardware, capture policy, model constraints
+3. `.ai/STATE.json` — what is built, what is verified, what is missing
+4. `00_LIVING_DOCS/REQUIREMENTS_LIVING.md` — the living truth and its acceptance checklist
+5. `00_LIVING_DOCS/HANDOVER_LIVING.md` — current state and next steps
+6. `00_LIVING_DOCS/ARCHITECTURE_LIVING.md` — how the pieces fit
 
 ## 3. Rules You MUST Follow
 
-### Living Docs Update Rule (CRITICAL)
-- **EVERY TIME you change code, requirements, architecture, or fix bug, you MUST update:**
-  - `00_LIVING_DOCS/REQUIREMENTS_LIVING.md` — add dated entry, update checklist
-  - `00_LIVING_DOCS/CHANGELOG.md` — log what you changed
-  - `00_LIVING_DOCS/HANDOVER_LIVING.md` — update current state + gaps
-  - `.ai/STATE.json` — update build status
-  - `memory/sessions/<date>-session.md` — log session
+### The no-fake rule (the strictest one)
+Nothing goes in front of the owner that does not work. No placeholder screens, no invented data, no
+"coming soon" rows, no mock replies in the real app. If something is missing, the interface says so in
+plain words. Every automated check that runs the UI fails the build on **any console error or warning**.
 
-If you don't update living docs, next AI loses memory. This is the whole purpose of repo.
+### Living docs rule
+Every change updates `00_LIVING_DOCS/REQUIREMENTS_LIVING.md`, `CHANGELOG.md`, `HANDOVER_LIVING.md`,
+`.ai/STATE.json`, and writes `memory/sessions/<date>-session.md`. This is the whole point of the repo.
 
-### Constraints From User (Never Violate)
-- Default capture = check everything by default across all sites + all AIs after one-time permission; if inaccessible, log "wasn't accessible - reason" in 09 Activity & Undo + 01 Inbox/Processing Errors, no popup/ask; explicit collect only when user instructs (right-click "Collect this page now" or paste URL to force).
-- Never-check blacklist: user can paste URL/domain/pattern (e.g., bank.com/*) into Privacy & Access / Source Scope excluded_patterns to never check any data from that URL ever again; editable, revocable; default allow, explicit deny; stored in 00 System/Privacy & Access.md and 00 System/Connectors scope files.
-- Extension UX = provide contexts like Capsule Hub by Tilantra (capture once as reusable Capsule with goals/constraints/background/decisions/attachments, library, drag-drop inject into any AI chat box, version/branch/rollback, transfer attachments, prompt enhancer "Cook This Prompt") and Quillbot (works in background ready when needed, works in any text field across web, highlight text or open toolbar for instant suggestions, real-time suggestions as you type, inline dropdown, no tab switching), local-only no external account required.
-- Use already downloaded qwen2.5:3b directly, no download. Bat files must work on Windows TUF A15 8GB RAM 4GB VRAM, handle already-running Ollama, no native build tools.
-- Dark default #1a1a1a, Windows title bar visible, Claude exact layout from screenshots, not loosely inspired.
-- Never infer user name from Windows path. Arena.ai chats not auto-imported. No passwords/cookies/tokens/payment/unsent drafts collection.
+### The owner's standing instructions (do not relitigate)
+- Build to the approved mockups; **where a mockup would be broken or dishonest, infer the intent and fix it**.
+- **Settings is one full-window surface** (rail + panes), the way Windows' own settings work.
+- **Never warn about memory after asking which GPU the machine has.** The chosen profile is the answer;
+  measure against it, stay quiet when it fits, and offer a one-click fix when it does not.
+- Settings are terse: a label and the control. No written-out descriptions under options.
+- **No Vercel deployment files.** Deleted on request; do not re-add. (The Vercel design theme and the
+  `vercel.json` written into exported site ZIPs are different things and stay.)
+- The app name is **AI ASSistant**. No Claude branding in anything a person reads.
+- Never take JSX/UI from other branches. Logic only.
+- Open-source ready: no hardcoded names, emails, paths or model tags.
+- Work on `arena/3c06e1bf-ai-assistant-v3`, merge into `main` when the step is finished and verified.
+- One step at a time, verified, then stop. "Don't rush it and don't destroy it."
+- Voice/Jarvis is parked until the owner has better hardware.
 
-### Code Rules
-- Don't ask user to repeat requirements already in REQUIREMENTS_LIVING.md
-- Give Windows instructions one step at a time, beginner-friendly
-- Don't claim feature implemented because it appears in plan — mark planned/in source/compiled/tested/user-confirmed
-- Keep original conversations/sources until user deletes, never auto-delete
-- Local-first: no external upload without exact-content/destination preview + approval
+### Code rules
+- Don't ask the owner to repeat requirements that are in `REQUIREMENTS_LIVING.md`.
+- Do not claim a feature works because it appears in a plan. Mark things planned / in source / tested.
+- TypeScript is strict; `npm run typecheck` must be clean. Tests are Vitest, run with `npm test`.
+- The vault is written through `src/main/vault/` only. Nothing outside it writes to the vault.
+- Keep original sources until the owner deletes them.
+- Everything network-facing is granted by the owner from Settings, off by default.
 
-## 4. Repo Structure Logic (Why AI-Optimized)
+## 4. Repo Structure Logic
 
-- `.ai/` = machine-readable JSON for fast context injection (RAG-friendly)
-- `00_LIVING_DOCS/` = prefix 00 ensures it sorts first, living docs are single source of truth
-- `apps/01_...` = numbered for priority, 01 is latest target
-- `vault/` = full Obsidian vault copy, canonical memory
-- `spec/screenshots/` = visual spec, ground truth for UI
-- `memory/sessions/` = chronological logs for temporal memory
+- `.ai/` — machine-readable context (JSON) for fast injection; `ai/` is the same files, visible mirror.
+- `00_LIVING_DOCS/` — `00` so it sorts first; these are the source of truth.
+- `apps/03_ai-assistant/` — the app; `01` and `02` are history kept for porting logic.
+- `spec/`, `docs/originals/` — historical; useful for pixel history, not for current work.
+- `memory/sessions/` — one log per session.
 
-This is NOT human portfolio structure. It's for AI continuity.
+## 5. How to Build and Test
 
-## 5. How to Build/Test
-
-Latest exact clone:
-```
-cd apps/01_claude-exact-pixel-clone
-start-app.bat  # handles Ollama already running, installs rollup win32, starts vault API 8765 + Vite 5173
-```
-Open http://127.0.0.1:5173
-Ollama at http://127.0.0.1:11434/api/chat qwen2.5:3b streaming
-Vault API at http://127.0.0.1:8765/context + /capture
-
-Electron clone:
-```
-cd apps/02_electron-claude-clone-v6
+```bash
+cd apps/03_ai-assistant
 npm install
-npm run dev:server
-npm run dev
+npm test              # 22 files / 208 tests
+npm run typecheck     # clean
+npm run build:web     # browser preview build -> dist-web/
+npm run preview:web   # http://localhost:4174 (interface only, and it says so)
+npm run build         # desktop bundle
+npm run smoke         # opens the real window: "SMOKE OK ... errors=0 warnings=0"
+npm run dev           # the desktop app (needs Ollama on 11434)
 ```
 
-Extension: load unpacked extension/ in Chrome, needs vault API running.
+The desktop end-to-end check (mock model server + real window over the DevTools protocol) lives outside
+this repo, in the workspace's `shot-tools/`. It is what proves a conversation reaches the vault.
 
-## 6. Current Known Bugs (From STATE.json)
+## 6. Current Known Gaps
 
-- No reply bug: custom ChatMode called sendMessage from useChat which doesn't exist — fixed by restoring original LLMFactory streaming in v6, but exact clone uses direct Ollama fetch which works.
-- Tic Tac Toe loop: systemPrompt for isOpenSourceModel includes Flappy Bird game example, qwen2.5:3b interprets as must create game every reply. Fix: override systemPrompt for qwen2.5:3b to simple assistant, only create artifacts when explicitly asked. Also clear localStorage chat_history that contains looped artifact context.
-- Ollama CORS: fetch http://localhost:11434/api/tags may fail if OLLAMA_ORIGINS not * — requires setx OLLAMA_ORIGINS "*" and restart ollama serve.
+- Not yet run on the owner's Windows machine. No installer.
+- Cloud providers (Claude / GPT / Gemini APIs) are not implemented — they are a required feature.
+- `Settings > Agent access` does not exist yet; it is built when something real can be granted.
+- The extension cannot POST to the app: the vault API is in-process and no loopback port is open.
+- No voice, no wake word (parked by the owner).
 
-## 7. What To Do Next (From TODO_NEXT.md)
+## 7. What To Do Next
 
-Read TODO_NEXT.md for immediate next steps. Typically:
-- Test exact clone on Windows
-- Add Settings modal from screenshot 191707 (Appearance Theme Chat font Transcript size Width Motion Voice Language Style Speed)
-- Implement VaultPanel drag-drop capsules
-- Wire extension -> vault API -> Obsidian files
-- Add blacklist UI
+`00_LIVING_DOCS/TODO_NEXT.md`, in priority order. The first item is the owner's own Windows test.
 
-## 8. When User Says "Update Zip"
+## 8. Handover Format
 
-When user asks for zip again, run:
-```
-cd /home/user
-zip -r AI-ASSistant-Master-Github-Repo.zip AI-ASSistant-Github-Repo -x "*node_modules/*" "*dist/*" "*.git/*" "*archive_zips/*"
-```
-But keep archive_zips excluded from inner to avoid recursion? Actually include archive_zips as reference but exclude node_modules.
+When a session ends, write `memory/sessions/YYYY-MM-DD-session.md` with what was done, what broke, what is
+next, and the commit SHAs. Then update `CHANGELOG.md`, `HANDOVER_LIVING.md`, `REQUIREMENTS_LIVING.md` and
+`.ai/STATE.json`.
 
-Better: use script in repo root `scripts/build-master-zip.bat` and `.sh`
+## 9. Don'ts
 
-## 9. Handover Format
-
-When you finish session, write:
-- memory/sessions/YYYY-MM-DD-session.md with what you did, what broke, what next
-- Update CHANGELOG.md
-- Update HANDOVER_LIVING.md
-- Update STATE.json
-- Update REQUIREMENTS_LIVING.md if requirements changed
-
-This ensures next AI can continue without asking user to repeat.
-
-## 10. Don'ts
-
-- Don't make it look human-made, keep AI-optimized structure
-- Don't ask user to reinstall Ollama/qwen2.5:3b unless necessary — use existing
-- Don't create separate SQLite as authoritative memory — Obsidian vault is canonical
-- Don't claim universal access without honest scope
-- Don't silently retrain model or assume preferences
-- Don't invent personal facts, offline events, feelings
+- Don't make the repo look human-made; the structure is for AIs on purpose.
+- Don't re-add the Vercel deployment files.
+- Don't reintroduce Claude branding, in the UI or the docs.
+- Don't create a second source of truth for memory: the Obsidian vault is canonical.
+- Don't invent personal facts, offline events, or feelings.
+- Don't merge anything the owner did not ask to be merged.

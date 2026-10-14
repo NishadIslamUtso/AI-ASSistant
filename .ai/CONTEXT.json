@@ -28,10 +28,9 @@
     "ollama_installed": true,
     "ollama_model": "qwen2.5:3b",
     "ollama_api": "http://127.0.0.1:11434",
-    "vault_api": "http://127.0.0.1:8765",
-    "vite_dev": "http://127.0.0.1:5173",
-    "ollama_origins_needed": "*",
-    "fix_cors": "setx OLLAMA_ORIGINS \"*\" and restart ollama serve"
+    "vault_api": "in-process in the desktop app (src/main/vault/) - there is NO port 8765 in this app and the extension cannot reach it yet",
+    "dev_server": "npm run dev (Electron) | npm run preview:web (browser preview on 4174)",
+    "ollama_origins": "not needed by the Electron app; Ollama is called from the main/app side, not a browser page"
   },
   "app_identity": {
     "name": "AI ASSistant",
@@ -39,9 +38,9 @@
     "role": "driver of vault and extension",
     "vault_role": "organizer / keeper, Obsidian Markdown canonical",
     "extension_role": "collector + context suggester, local-only",
-    "theme_default": "dark #1a1a1a #202020 sidebar #242424 composer",
+    "theme_default": "dark, tokenised: accent #7c5cff by default, conversation width 760px, both changeable in Settings > Appearance",
     "window": "fully on-screen, Windows title bar + close controls visible",
-    "chat_target": "copy Claude desktop exactly from screenshots 191547-191707"
+    "chat_target": "the owner's own approved mockups (chat shell, appearance, the full-window settings rail) - not Claude pixel parity"
   },
   "capture_policy": {
     "default": "check everything by default across all sites + all AIs after one-time permission",
@@ -110,6 +109,11 @@
       "191646.png - context menu Open in new window Pin Rename Add to project Move to group Delete on CSE220 MID",
       "191707.png - Settings Appearance Theme system/sun/moon Chat font Anthropic Serif Transcript size Small/Medium/Large Width Narrow/Medium/Wide Motion System/Reduced Voice Language English Style Buttery Speed Normal left nav General Account Privacy Billing Capabilities Memory Reflect Time and focus Claude Code System Extensions Developer Skills Connectors"
     ],
-    "exact_clone_target": "apps/01_claude-exact-pixel-clone"
+    "exact_clone_target": "apps/01_claude-exact-pixel-clone (historical; apps/03_ai-assistant is the app)"
+  },
+  "current_app": {
+    "path": "apps/03_ai-assistant",
+    "what": "Electron + React + TypeScript desktop assistant, vault writes, artifacts, comment mode, full-window Settings",
+    "not": "not a Claude clone; built from the owner's approved mockups"
   }
 }

@@ -2,6 +2,9 @@
 
 **Date:** 2026-10-12 · **Method:** every repo cloned and grepped. "Partial" is defined below and applied consistently.
 
+**Status (2026-10-14): historical.** The grading below describes those apps as they were on 2026-10-12. The
+app has moved on since — see `.ai/STATE.json` for what exists today.
+
 ---
 
 ## What "partial" means

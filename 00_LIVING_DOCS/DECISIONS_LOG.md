@@ -1,7 +1,41 @@
 # DECISIONS_LOG.md — All Decisions With Dates
 
-**Last Updated:** 2026-10-10 19:20 Asia/Dhaka
+**Last Updated:** 2026-10-14 (night) Asia/Dhaka
 **Rule:** Log every decision with date, what, why, who requested, alternatives considered.
+
+## 2026-10-14 Decisions
+
+### [2026-10-14 night] Settings is a full window, not a modal
+- **What:** Settings became a full-window surface with a section rail, one section at a time, a search and a
+  per-section Reset. `SettingsView.tsx` replaced `SettingsDialog.tsx`.
+- **Why:** the owner asked for it in his own words — "i want to choose the other one you showed me … the one
+  with full screen settings. like window's settings ig".
+- **Alternatives:** keep the centred dialog (rejected: not what he pointed at); a separate OS window
+  (rejected for now: it would work differently in the browser preview, and no part of the app needs two windows yet).
+
+### [2026-10-14 night] Memory is measured against the profile the owner chose
+- **What:** `fitCheck()` compares the model plus its context against the budget of the **selected** profile.
+  CPU-only and Custom claim nothing and are never warned about. A preset that cannot hold the loaded model
+  gets one sentence with real numbers and a one-click fix; the context snaps to a recognisable size.
+- **Why:** the owner's complaint — "why does it warn after deliberately asking how much vram one has, if the
+  context take 4.3 then why mannage it according to the device". The profile IS the answer to the question
+  Settings asked, so answering it must not produce a warning about a smaller card.
+- **Alternatives:** no memory maths at all (rejected: a machine that appears to hang is worse than a
+  sentence); a hardcoded 4 GB (rejected: that was the bug); silent auto-adjustment of a person's own Custom
+  numbers (rejected: it would change what they typed without telling them).
+
+### [2026-10-14] No Vercel deployment files, ever
+- **What:** the four deployment files were deleted and must not be re-added.
+- **Why:** the owner — "Leave vercel delete all vercel files. It isn't helping like i thought."
+- **Not included:** the Vercel *design theme* and the `vercel.json` written into an exported site ZIP, which
+  are different things entirely.
+
+### [2026-10-14] The vault API lives inside the app
+- **What:** vault reads and writes run in the Electron main process (`src/main/vault/`) instead of a server on
+  a loopback port. Resolution order: settings → env → the checkout's vault → the app's own data folder.
+- **Why:** one process, no port to defend, no origin rules to get wrong, and the extension is not ready to be
+  wired yet. The old clone's Express server (`apps/01`, port 8765) stays only as reference.
+- **Consequence (a real gap):** the extension cannot POST to the app until a loopback port exists for it.
 
 ## 2026-10-10 Decisions
 
