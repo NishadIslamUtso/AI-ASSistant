@@ -7,6 +7,8 @@ node_modules/
 
 # Builds
 dist/
+/dist-web/
+/apps/*/dist-web/
 build/
 out/
 .next/
