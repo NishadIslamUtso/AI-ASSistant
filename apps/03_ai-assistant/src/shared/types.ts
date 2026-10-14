@@ -160,7 +160,6 @@ export type InferenceOptions = {
 export type InferenceProfile = {
   id: string
   label: string
-  hint: string
   options: InferenceOptions
   keepAlive: string
 }

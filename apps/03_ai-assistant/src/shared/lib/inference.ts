@@ -33,35 +33,30 @@ export const INFERENCE_PROFILES: readonly InferenceProfile[] = Object.freeze([
   {
     id: '4gb',
     label: '4 GB VRAM (recommended)',
-    hint: 'For a GTX/RTX 3050 laptop. Small context, small batch — fits alongside the weights.',
     options: { num_ctx: 4096, num_batch: 256, num_predict: 1024 },
     keepAlive: '5m',
   },
   {
     id: '6gb',
     label: '6 GB VRAM',
-    hint: 'Mid-range cards. A larger context without spilling into shared memory.',
     options: { num_ctx: 8192, num_batch: 512, num_predict: 2048 },
     keepAlive: '10m',
   },
   {
     id: '8gb',
     label: '8 GB VRAM',
-    hint: 'Comfortable. Long conversations stay on the card.',
     options: { num_ctx: 16384, num_batch: 512, num_predict: 2048 },
     keepAlive: '15m',
   },
   {
     id: 'cpu',
     label: 'CPU only (safest)',
-    hint: 'No GPU layers at all. Slow, but it runs on anything and cannot run out of VRAM.',
     options: { num_ctx: 2048, num_batch: 128, num_predict: 1024, num_gpu: 0 },
     keepAlive: '5m',
   },
   {
     id: 'custom',
     label: 'Custom',
-    hint: 'Your own values.',
     options: { num_ctx: 4096, num_batch: 256, num_predict: 1024 },
     keepAlive: '5m',
   },
@@ -116,17 +111,101 @@ export function resolveInference(settings?: InferenceSettings | string): Inferen
 }
 
 /**
- * A plain-language warning when the chosen context is likely to exceed the
- * card. Deliberately conservative: on this hardware a false warning costs a
- * sentence, and a missed one costs a machine that appears to hang.
+ * What each profile's number actually leaves for weights and context. The card's
+ * figure is not the budget: the display, the desktop and Ollama's own buffers
+ * take a cut, so a "4 GB" profile budgets 3.6 GB for the model to sit in.
+ *
+ * `cpu` and `custom` make no claim about a card, so there is nothing to measure
+ * them against — see fitCheck below.
+ */
+export const PROFILE_BUDGET_GB: Record<string, number> = Object.freeze({
+  '4gb': 3.6,
+  '6gb': 5.4,
+  '8gb': 7.2,
+  cpu: 0,
+})
+
+/**
+ * Rough cost of one token of context, in GB, for the small dense models this app
+ * runs (grouped-query attention, fp16 KV cache). An estimate, and deliberately a
+ * high one: over-estimating costs one sentence offering to lower the context,
+ * under-estimating costs a machine that appears to hang.
+ */
+const GB_PER_TOKEN = 0.08 / 1024
+
+/** Everything Ollama needs besides the weights and the context. */
+const MODEL_OVERHEAD_GB = 0.4
+
+/** Used only when the size of the running model is not known yet. */
+const UNKNOWN_MODEL_GB = 1.9
+
+/** The context sizes worth offering: ones somebody would recognise, smallest last. */
+const CONTEXT_LADDER = Object.freeze([512, 2048, 4096, 8192, 16384, 32768])
+
+export type FitCheck = {
+  /** What the model plus this context will ask the card for. */
+  needGb: number
+  /** What the chosen profile budgets for it; 0 when the choice claims nothing. */
+  budgetGb: number
+  /** True when the choice needs no attention at all. */
+  fits: boolean
+}
+
+/**
+ * The one place memory is worked out, so the sentence in Settings and the button
+ * that fixes it can never disagree.
+ */
+export function fitCheck(settings?: InferenceSettings | string, modelSizeBytes = 0): FitCheck {
+  const { profile, options } = resolveInference(settings)
+  const needGb = (modelSizeBytes ? modelSizeBytes / 1e9 : UNKNOWN_MODEL_GB)
+    + (options.num_ctx ?? 0) * GB_PER_TOKEN
+    + MODEL_OVERHEAD_GB
+  if (options.num_gpu === 0) return { needGb, budgetGb: 0, fits: true }
+  const budgetGb = PROFILE_BUDGET_GB[profile] || 0
+  return { needGb, budgetGb, fits: budgetGb === 0 || needGb <= budgetGb }
+}
+
+/**
+ * A plain-language warning, and only when the profile that was chosen cannot
+ * hold what is loaded in it. Choosing a profile IS the answer to "how much video
+ * memory is there", so a person who picked 6 GB is never told about 4.
  */
 export function vramWarning(settings?: InferenceSettings | string, modelSizeBytes = 0): string {
-  const { options } = resolveInference(settings)
-  if (options.num_gpu === 0) return ''
-  const weightsGb = modelSizeBytes ? modelSizeBytes / 1e9 : 1.9
-  // Rough KV-cache cost: ~0.5 MB per token of context for a small dense model.
-  const contextGb = ((options.num_ctx ?? 0) * 0.5) / 1024
-  const total = weightsGb + contextGb + 0.4
-  if (total <= 3.6) return ''
-  return `This context needs roughly ${total.toFixed(1)} GB with the model loaded, which may not fit in 4 GB of VRAM. If replies stall, lower the context or switch to the CPU-only profile.`
+  const { needGb, budgetGb, fits } = fitCheck(settings, modelSizeBytes)
+  if (fits) return ''
+  const what = modelSizeBytes ? 'the loaded model' : 'a 3B model'
+  return `About ${needGb.toFixed(1)} GB is needed with ${what}, and this profile budgets ${budgetGb} GB.`
+}
+
+/**
+ * The numbers that would fit the profile that is already chosen, for the button
+ * that fixes this in one click: a smaller context, everything else left alone.
+ *
+ * The context snaps down to a size a person would have typed themselves rather
+ * than to the largest number that happens to fit, and it never goes below the
+ * floor the request itself is held to.
+ *
+ * null means no context is small enough — the weights themselves do not fit, and
+ * the honest answer then is the CPU-only profile rather than a pretend one.
+ */
+export function fitToProfile(
+  settings?: InferenceSettings | string,
+  modelSizeBytes = 0
+): InferenceSettings | null {
+  const { profile, options } = resolveInference(settings)
+  if (options.num_gpu === 0) return null
+  const budgetGb = PROFILE_BUDGET_GB[profile] || 0
+  if (budgetGb === 0) return null
+  const weightsGb = modelSizeBytes ? modelSizeBytes / 1e9 : UNKNOWN_MODEL_GB
+  const roomGb = budgetGb - weightsGb - MODEL_OVERHEAD_GB
+  const allowed = Math.floor(roomGb / GB_PER_TOKEN)
+  const [minCtx, maxCtx] = LIMITS.num_ctx
+  const fits = CONTEXT_LADDER.filter(ctx => ctx <= allowed && ctx <= maxCtx)
+  if (allowed < minCtx || !fits.length) return null
+  const customOptions: Record<string, string> = { num_ctx: String(fits[fits.length - 1]) }
+  for (const key of ['num_batch', 'num_predict', 'num_gpu'] as const) {
+    const value = options[key]
+    if (typeof value === 'number') customOptions[key] = String(value)
+  }
+  return { profile: 'custom', customOptions }
 }
