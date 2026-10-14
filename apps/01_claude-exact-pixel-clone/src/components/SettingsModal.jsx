@@ -4,7 +4,8 @@ import Dialog from './Dialog.jsx'
 import BlacklistManager from './BlacklistManager.jsx'
 import Connectors from './Connectors.jsx'
 import { DEFAULT_PROFILE } from '../lib/profile.js'
-import { INFERENCE_PROFILES, vramWarning } from '../lib/inference.js'
+import AvatarPicker from './AvatarPicker.jsx'
+import { INFERENCE_PROFILES, resolveInference, vramWarning } from '../lib/inference.js'
 const navigation = [
   ['Settings', [['General', Settings], ['Account', CircleUserRound], ['Privacy', Shield], ['Billing', CreditCard], ['Capabilities', Briefcase], ['Memory', History], ['Reflect', Bell], ['Time and focus', MoonStar], ['AI ASSistant Code', Code2]]],
   ['This computer', [['System', Monitor], ['Performance', Gauge], ['Vision', Eye], ['Extensions', Plug], ['Developer', Wrench]]],
@@ -46,6 +47,7 @@ export default function SettingsModal({ settings, setSettings, onClose, onApps, 
         <h2 id="settings-title">{active}</h2>
         {active === 'Account' && <div className="settings-copy"><h3>{profile.name}</h3><p>{profile.email || 'No email set — nothing is sent anywhere.'}</p><p>This is your local profile. It is how AI ASSistant greets you. No external sign-in is used.</p>
           <div className="settings-form">
+            <AvatarPicker profile={profile} onChange={patch => setProfile({ ...profile, ...patch })} notify={notify} />
             <label><span>Your name</span><input aria-label="Your name" value={profile.name} maxLength={40} placeholder="Friend" onChange={event => setProfile({ ...profile, name: event.target.value })} /></label>
             <label><span>Email <small>optional</small></span><input aria-label="Email" type="email" value={profile.email} maxLength={120} placeholder="you@example.com" onChange={event => setProfile({ ...profile, email: event.target.value })} /></label>
             <label><span>Tagline <small>optional, shown under the greeting</small></span><input aria-label="Tagline" value={profile.tagline} maxLength={80} placeholder="What are you working on?" onChange={event => setProfile({ ...profile, tagline: event.target.value })} /></label>
@@ -73,9 +75,9 @@ export default function SettingsModal({ settings, setSettings, onClose, onApps, 
             }}>{INFERENCE_PROFILES.map(entry => <option key={entry.id} value={entry.id}>{entry.label}</option>)}</select></label>
             {INFERENCE_PROFILES.find(entry => entry.id === inference.profile)?.hint && <p className="settings-hint">{INFERENCE_PROFILES.find(entry => entry.id === inference.profile).hint}</p>}
             {inference.profile === 'custom' && <div className="settings-form">
-              {[['num_ctx', 'Context size (tokens)'], ['num_batch', 'Batch size'], ['num_predict', 'Max reply tokens'], ['num_gpu', 'GPU layers (0 = CPU only)']].map(([key, text]) => <label key={key}><span>{text}</span><input aria-label={text} type="number" inputMode="numeric" value={inference.options[key] ?? ''} onChange={event => setInference({ ...inference, profile: 'custom', customOptions: { ...(inference.customOptions || {}), [key]: event.target.value } })} /></label>)}
+              {[['num_ctx', 'Context size (tokens)'], ['num_batch', 'Batch size'], ['num_predict', 'Max reply tokens'], ['num_gpu', 'GPU layers (0 = CPU only)']].map(([key, text]) => <label key={key}><span>{text}</span><input aria-label={text} type="number" inputMode="numeric" value={resolveInference(inference).options[key] ?? ''} onChange={event => setInference({ ...inference, profile: 'custom', customOptions: { ...(inference.customOptions || {}), [key]: event.target.value } })} /></label>)}
             </div>}
-            <p className="settings-hint">In use: {Object.entries(inference.options).map(([key, value]) => `${key}=${value}`).join(', ') || 'Ollama defaults'}</p>
+            <p className="settings-hint">In use: {Object.entries(resolveInference(inference).options).map(([key, value]) => `${key}=${value}`).join(', ') || 'Ollama defaults'}</p>
             {vramWarning(inference) && <p className="settings-warning">{vramWarning(inference)}</p>}
           </div>
         </div>}

@@ -29,7 +29,7 @@ const GLOBALS = new Set([
   'Uint8Array', 'Uint32Array', 'Int32Array', 'Float64Array', 'ArrayBuffer', 'DataView', 'TextEncoder', 'TextDecoder',
   'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'requestAnimationFrame', 'queueMicrotask',
   'console', 'window', 'document', 'navigator', 'localStorage', 'sessionStorage', 'indexedDB', 'location', 'history',
-  'fetch', 'Request', 'Response', 'Headers', 'URL', 'URLSearchParams', 'Blob', 'File', 'FileReader', 'FormData',
+  'fetch', 'Request', 'Response', 'Headers', 'URL', 'URLSearchParams', 'Blob', 'File', 'FileReader', 'FormData', 'Image',
   'AbortController', 'Event', 'CustomEvent', 'MutationObserver', 'ResizeObserver', 'IntersectionObserver',
   'parseInt', 'parseFloat', 'isNaN', 'isFinite', 'encodeURIComponent', 'decodeURIComponent', 'encodeURI', 'decodeURI',
   'structuredClone', 'crypto', 'atob', 'btoa', 'alert', 'confirm', 'prompt', 'performance', 'process', 'require',

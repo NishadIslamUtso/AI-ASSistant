@@ -1,13 +1,13 @@
 import { useRef, useState } from 'react'
 import { Settings, Globe, HelpCircle, ArrowUpCircle, Blocks, Info, KeyRound, LogOut, ChevronRight, ExternalLink, Check } from 'lucide-react'
 import useDismiss from '../hooks/useDismiss.js'
-export default function UserMenu({ onClose, onSettings, onApps, notify }) {
+export default function UserMenu({ onClose, onSettings, onApps, notify, profile }) {
   const ref = useRef(null)
   const [language, setLanguage] = useState(false)
   useDismiss(ref, onClose)
   function action(callback) { onClose(); callback() }
   return <div ref={ref} className="user-menu popup" role="menu" aria-label="Account menu">
-    <div className="menu-email">nishadislamutso@gmail.com</div>
+    <div className="menu-email">{profile?.email || `${profile?.name || 'Friend'} · this browser only`}</div>
     <button role="menuitem" autoFocus onClick={() => action(onSettings)}><Settings size={15} /><span>Settings</span><kbd>Ctrl+,</kbd></button>
     <button role="menuitem" onClick={() => setLanguage(!language)}><Globe size={15} /><span>Language</span><small>English</small></button>
     {language && <div className="language-option"><Check size={13} /> English <small>Local interface</small></div>}

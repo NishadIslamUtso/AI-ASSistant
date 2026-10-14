@@ -165,8 +165,10 @@ function makeDom() {
   const txt = () => doc.getElementById('root').textContent || ''
   const allText = () => doc.body.textContent || '' // dialogs are portalled to <body>
   const type = (el, value) => {
-    const setter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set
-    setter.call(el, value)
+    // The composer is a textarea, but settings fields are <input>. React listens
+    // for the native setter of the right prototype, so pick it by tag.
+    const proto = el.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype
+    Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, value)
     el.dispatchEvent(new window.Event('input', { bubbles: true }))
   }
   const key = (el, k, o = {}) =>
@@ -216,7 +218,7 @@ test('app renders the full shell without console errors', async () => {
     window.eval(CODE)
     await sleep(700)
     const text = txt()
-    for (const needle of ['New', 'Projects', 'Artifacts', 'Today', 'Utso']) {
+    for (const needle of ['New', 'Projects', 'Artifacts', 'Today', 'Friend']) {
       assert.ok(text.includes(needle), `missing ${needle}`)
     }
     assert.ok(doc.querySelector('textarea'), 'composer missing')
@@ -257,9 +259,9 @@ test('user menu, settings and the theme switch all work', async () => {
     window.eval(CODE)
     await sleep(600)
 
-    click(byText('button', /Utso/))
+    click(byText('button', /Friend/))
     await sleep(200)
-    assert.match(allText(), /nishadislamutso@gmail\.com/)
+    assert.match(allText(), /Friend · this browser only/)
     assert.match(allText(), /Get API keys/)
 
     click(byText('button', /^Settings/))
@@ -439,6 +441,77 @@ test('a reply can be branched without touching the original chat', async () => {
     assert.ok([...doc.querySelectorAll('.chat-item')].some((item) => /\(branch/.test(item.textContent || '')), 'the branch is not in the sidebar')
     assert.match(allText(), /Branched into a new chat/)
     assert.deepEqual(errors, [])
+  } finally {
+    close()
+  }
+})
+
+test('the name is customizable and no native file control is ever visible', async () => {
+  const { window, doc, sleep, click, byText, type, close } = makeDom()
+  try {
+    window.eval(CODE)
+    await sleep(700)
+
+    // Account menu -> Settings -> Account
+    click(byText('button', /Friend/))
+    await sleep(200)
+    click(byText('button', /^Settings/))
+    await sleep(300)
+    click(byText('button', /^Account$/))
+    await sleep(300)
+
+    const name = doc.querySelector('input[aria-label="Your name"]')
+    assert.ok(name, 'the Account section has no name field')
+    type(name, 'Ada Lovelace')
+    await sleep(300)
+
+    // A fresh clone must never show the previous owner's name: the sidebar is the proof.
+    const button = doc.querySelector('.account-button')
+    assert.ok(button, 'no account button in the sidebar')
+    assert.match(button.textContent, /Ada/, 'the sidebar did not pick the new name up')
+    assert.match(button.getAttribute('aria-label') || '', /Ada/, 'the account button aria-label still carries the old name')
+    assert.match(button.textContent, /· Local/, 'the account button should describe local mode')
+
+    // The real file input is hidden, so the browser's own "No file chosen" text
+    // can never render. Anything visible would be a regression.
+    for (const input of doc.querySelectorAll('input[type="file"]')) {
+      assert.ok(input.hasAttribute('hidden'), 'a native file input is visible to the user')
+    }
+    assert.ok(!doc.body.textContent.includes('No file chosen'), 'the browser file-control text leaked into the UI')
+
+    assert.deepEqual(errors, [])
+  } finally {
+    close()
+  }
+})
+
+test('every settings section renders without taking the app down', async () => {
+  const { window, doc, sleep, click, byText, close } = makeDom()
+  try {
+    window.eval(CODE)
+    await sleep(600)
+    click(byText('button', /Friend/))
+    await sleep(200)
+    click(byText('button', /^Settings/))
+    await sleep(400)
+
+    const names = () => [...doc.querySelectorAll('nav button')].map(button => button.textContent.trim())
+    const sections = names()
+    assert.ok(sections.length > 8, `expected a full settings nav, found ${sections.length}`)
+
+    for (const name of sections) {
+      const button = [...doc.querySelectorAll('nav button')].find(item => item.textContent.trim() === name)
+      if (!button) continue
+      click(button)
+      await sleep(160)
+      assert.ok(!/failed to start/i.test(doc.body.textContent || ''), `opening "${name}" crashed the app`)
+      assert.deepEqual(errors, [], `opening "${name}" logged an error`)
+    }
+
+    // The memory profile must show real values on a first run, not undefined.
+    click([...doc.querySelectorAll('nav button')].find(item => item.textContent.trim() === 'Performance'))
+    await sleep(200)
+    assert.match(doc.body.textContent, /num_ctx=4096/, 'the Performance section did not show the resolved Ollama options')
   } finally {
     close()
   }

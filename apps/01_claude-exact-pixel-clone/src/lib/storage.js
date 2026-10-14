@@ -45,7 +45,14 @@ export const DEFAULT_CHATS = [
 export function readStored(key, fallback, normalize = value => value, storage = localStorage) {
   try {
     const raw = storage.getItem(key)
-    if (raw === null) return { value: fallback, warning: '' }
+    // Nothing stored yet. The fallback still goes through the normalizer: some
+    // normalizers derive fields the UI reads unconditionally (resolveInference
+    // turns { profile } into { profile, options, keepAlive }), so returning the
+    // bare fallback would leave those fields undefined on a first run.
+    if (raw === null) {
+      try { return { value: normalize(fallback), warning: '' } }
+      catch { return { value: fallback, warning: '' } }
+    }
     return { value: normalize(JSON.parse(raw)), warning: '' }
   } catch {
     return { value: fallback, warning: `Could not read ${key}. The original data has not been cleared.` }

@@ -13,6 +13,9 @@
 export const DEFAULT_PROFILE = Object.freeze({
   name: 'Friend',
   email: '',
+  // A data URL for the profile picture, or '' to fall back to initials/logo.
+  // Never uploaded; it never leaves this browser.
+  avatar: '',
   // Shown under the greeting. Empty means "don't show a line", which keeps the
   // home view as quiet as the screenshot it is matched to.
   tagline: '',
@@ -21,6 +24,9 @@ export const DEFAULT_PROFILE = Object.freeze({
 const MAX_NAME = 40
 const MAX_EMAIL = 120
 const MAX_TAGLINE = 80
+
+/** A 128px JPEG/PNG data URL is 5-20 KB; this is a ceiling for pathological images. */
+export const MAX_AVATAR_BYTES = 512 * 1024
 
 const clean = (value, max) => String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, max)
 
@@ -32,10 +38,56 @@ export function normalizeProfile(value) {
     name: name || DEFAULT_PROFILE.name,
     email: clean(input.email, MAX_EMAIL),
     tagline: clean(input.tagline, MAX_TAGLINE),
+    // Only ever accept an inline image; anything else silently falls back.
+    avatar: typeof input.avatar === 'string' && input.avatar.startsWith('data:image/') ? input.avatar : '',
   }
 }
 
-/** First name only, for "Good evening, Utso" rather than the full string. */
+/** "Nishad Islam Utso" -> "NU"; a one-word name -> its first two letters. */
+export function initials(name) {
+  const parts = clean(name, MAX_NAME).split(' ').filter(Boolean)
+  if (!parts.length) return '?'
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
+/**
+ * Shrink an uploaded image before it is stored.
+ *
+ * localStorage is a few megabytes for the whole app, so a 4 MB photo straight
+ * off a phone would eat the budget for chats and artifacts. This draws to a
+ * 128px square, cover-fit, and re-encodes it, which lands around 5-20 KB.
+ */
+export function shrinkImage(file, { size = 128, type = 'image/png' } = {}) {
+  return new Promise((resolve, reject) => {
+    if (!file || !String(file.type || '').startsWith('image/')) {
+      reject(new Error('Choose an image file (PNG, JPEG, WebP or GIF).'))
+      return
+    }
+    const reader = new FileReader()
+    reader.onerror = () => reject(new Error('That file could not be read.'))
+    reader.onload = () => {
+      const image = new Image()
+      image.onerror = () => reject(new Error('That image could not be decoded.'))
+      image.onload = () => {
+        const canvas = document.createElement('canvas')
+        canvas.width = size
+        canvas.height = size
+        const context = canvas.getContext('2d')
+        context.imageSmoothingQuality = 'high'
+        const scale = Math.max(size / image.width, size / image.height)
+        const width = image.width * scale
+        const height = image.height * scale
+        context.drawImage(image, (size - width) / 2, (size - height) / 2, width, height)
+        resolve(canvas.toDataURL(type))
+      }
+      image.src = reader.result
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+/** First name only, for "Good evening, Ada" rather than the full string. */
 export function firstName(profile) {
   const name = normalizeProfile(profile).name
   return name.split(/\s+/)[0] || DEFAULT_PROFILE.name

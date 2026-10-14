@@ -450,3 +450,19 @@ h1, h2, h3, h4, p { margin: 0; }
 .slash-item.selected { background: var(--hover, #2f2f2f); }
 .slash-name { font-size: 12.5px; font-weight: 600; color: var(--text, #e8e8e8); }
 .slash-hint { font-size: 10.5px; color: var(--faint, #8a8a8a); }
+
+
+/* ---- Profile avatar: the account button, and the Account settings picker ---- */
+.avatar-image { object-fit: cover; padding: 0; background: var(--surface, #242424); }
+.avatar-fallback { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; background: #454541; color: #efede5; font-size: 19px; letter-spacing: .5px; }
+
+.avatar-picker { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 22px; }
+.avatar-preview { flex-shrink: 0; width: 56px; height: 56px; border-radius: 50%; overflow: hidden; background: var(--surface, #242424); border: 1px solid var(--border, #333); display: flex; align-items: center; justify-content: center; }
+.avatar-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.avatar-controls { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.avatar-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.avatar-buttons .secondary-button { display: inline-flex; align-items: center; gap: 6px; font: 12px 'Segoe UI', sans-serif; padding: 6px 11px; border-radius: 7px; cursor: pointer; color: var(--text, #e8e8e8); }
+.avatar-buttons .secondary-button:disabled { opacity: .55; cursor: default; }
+.avatar-note { font-size: 11px; color: var(--muted, #8a8a8a); margin: 0; }
+.avatar-note strong { color: var(--text, #e8e8e8); font-weight: 500; word-break: break-all; }
+.avatar-error { font-size: 11px; color: #e08585; margin: 0; }

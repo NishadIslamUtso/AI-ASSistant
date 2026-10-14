@@ -8,7 +8,15 @@ export default function BlacklistManager() {
   const [loading, setLoading] = useState(true)
   useEffect(() => {
     const controller = new AbortController()
-    vaultGet('/blacklist', controller.signal).then(data => { setPatterns(data.excluded_patterns); setError('') }).catch(error => { if (!controller.signal.aborted) setError(`Vault unavailable: ${error.message}`) }).finally(() => { if (!controller.signal.aborted) setLoading(false) })
+    vaultGet('/blacklist', controller.signal)
+      .then(data => {
+        // A vault that answers with the wrong shape must not take the panel down.
+        if (!Array.isArray(data?.excluded_patterns)) throw new Error('unexpected blacklist payload')
+        setPatterns(data.excluded_patterns)
+        setError('')
+      })
+      .catch(error => { if (!controller.signal.aborted) setError(`Vault unavailable: ${error.message}`) })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false) })
     return () => controller.abort()
   }, [])
   async function change(next) {
