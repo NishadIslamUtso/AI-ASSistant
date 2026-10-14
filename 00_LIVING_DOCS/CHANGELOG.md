@@ -57,6 +57,29 @@ The install on a real Windows machine is the owner's own test, and it is Priorit
 ### Landing
 This commit on `arena/3c06e1bf-ai-assistant-v3`, merged into `main`.
 
+## 2026-10-14 (near midnight) — the owner's own artwork, everywhere
+
+### The logo is now the owner's file, verbatim
+He sent the SVG himself and said to use it everywhere, as SVG. `resources/icon.svg` and
+`src/renderer/public/favicon.svg` are that file, byte-identical. A path-by-path diff against the app's
+`BrainMark` component showed the artwork was already the same mark (32/32 paths, 22/22 colours) — what
+changes is which file is *canonical* and what happens to the interim **tile** I had put behind the icon:
+removed, because his export says transparent background.
+
+- **The renderer's source is now `resources/icon.svg`** — no more JSX extraction for the icon path — and it
+  keeps a **sync guard**: the file's paths, colours and circles must equal the component's, or no icon is
+  written. The UI, the favicon and the desktop icon are allowed to be different *formats* of one mark, never
+  different marks.
+- Both audits stay: every `url(#…)` must resolve, and the pixels are read back — brain as one centred pink
+  blob, lavender lenses, white shine, purple sneakers, and now **transparent corners**.
+- The component gained his `<desc>` for screen readers.
+- The favicon was previously a crop of the same artwork framed on the head+glasses, because the full figure
+  turns to mush at 16 px; it is now the full mark as instructed (a one-file revert if tabs read worse).
+
+**Installer 0.1.2** replaces 0.1.1 (which had the fixed brain but my tile). Verification: 269 tests,
+typecheck, smoke with zero console noise, the 22-assertion artifact-library check, and the icon read back out
+of the built executables.
+
 ## 2026-10-14 (late night) — the logo, and a store worth having
 
 ### The logo, fixed for real
