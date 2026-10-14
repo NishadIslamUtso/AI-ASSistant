@@ -5,9 +5,6 @@ button move is slow, and building on a machine you are not sitting at is slower
 still. So the interface has a second way out: the renderer alone, built as a
 plain static site and served anywhere.
 
-Import the repository on Vercel and it builds with no settings to fill in — the
-`vercel.json` at the repository root points at this app.
-
 ## What the browser preview is
 
 - The **same renderer source**: the same components, the same Tailwind theme,
@@ -47,47 +44,9 @@ npm run dev:web       # same, with hot reload, on http://localhost:5174
 Both dev and preview servers bind `0.0.0.0` and accept any host header, so the
 same commands work behind a tunnel or a preview proxy.
 
-## Deploying
+## Serving the built folder
 
-1. On Vercel: **Add New → Project → import this repository.** Deploy.
-2. That is the whole setup. Build command, output directory and framework preset
-   all come from `vercel.json`.
-
-### Root Directory — both settings work
-
-Vercel's **Root Directory** setting decides the working directory the build runs
-in, and everything in `vercel.json` is relative to it. This project supports both
-choices, so you cannot get it wrong:
-
-- **Leave it empty** (the repository root), or
-- **Set it to `apps/03_ai-assistant`** — convenient, because the Vercel dashboard
-  then deals with this app alone.
-
-Two settings, one implementation. `vercel-install.sh` and `vercel-build.sh` live
-in this folder and act on the folder they are in, so they behave identically
-either way; each `vercel.json` just calls them. The app's copy of the config says
-`sh vercel-build.sh`, the repository root's copy says
-`sh apps/03_ai-assistant/vercel-build.sh`. Vercel reads the config from the Root
-Directory, so the right one is found without anyone configuring anything, and the
-built site is written to `dist-web` inside the Root Directory in both cases.
-
-Why scripts instead of one inline command: **Vercel rejects a `buildCommand`
-longer than 256 characters.** The inline version that detected its own location
-was 270, and the schema validation refused the deployment before it ran.
-`buildCommand` is now 18 characters, and the logic lives here where it can be
-read and changed.
-
-An earlier version of this file assumed the repository root, and failed with
-`cd: apps/03_ai-assistant: No such file or directory` when the Root Directory was
-set to the app — it tried to descend into the folder it was already standing in.
-If you set the Root Directory in the dashboard, clear any custom Install or Build
-Command left over from an earlier attempt, so the ones in `vercel.json` apply.
-
-The install runs with `ELECTRON_SKIP_BINARY_DOWNLOAD=1`. That is deliberately not
-`--ignore-scripts`: skipping every lifecycle script can leave esbuild and rollup
-without their native binaries and the build then fails, while this variable skips
-only the ~100 MB Electron binary that a web host can never run.
-
-To deploy only when this app changes, set the project's **Ignored Build Step** to
-`git diff --quiet HEAD^ HEAD -- apps/03_ai_assistant`. That is a dashboard
-setting, not something this file can set for you.
+`dist-web/` is a plain static site: HTML, CSS and JavaScript, no server behind
+it, no build step needed to serve it. Any static host can serve the folder as
+it is — nothing here is tied to a particular one, and the desktop app does not
+need it at all.
