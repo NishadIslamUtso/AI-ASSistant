@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { X, Bot, Plus, Play, Trash2, Copy, CornerDownLeft, Square, AlertTriangle, Database, RefreshCw } from 'lucide-react'
 import { AGENT_PRESETS } from '../hooks/useSubAgents.js'
+import { BookmarkPlus } from 'lucide-react'
 import Markdown from './Markdown.jsx'
 
 /**
@@ -11,10 +12,13 @@ import Markdown from './Markdown.jsx'
  * about the conversation, not about every side investigation.
  */
 export default function SubAgentPanel({ subAgents, models, onClose, onInsert, notify, onExternalLink }) {
-  const { agents, activeId, setActiveId, busy, add, remove, run, patch } = subAgents
+  const { agents, activeId, setActiveId, busy, add, remove, run, patch, allPresets, skills, saveAsSkill, removeSkill } = subAgents
   const [draft, setDraft] = useState(null)
+  const [saveOpen, setSaveOpen] = useState(false)
+  const [skillName, setSkillName] = useState('')
   const agent = agents.find(entry => entry.id === activeId) || null
-  const preset = AGENT_PRESETS.find(entry => entry.id === agent?.preset) || AGENT_PRESETS[0]
+  const presets = allPresets || AGENT_PRESETS
+  const preset = presets.find(entry => entry.id === agent?.preset) || presets[0] || AGENT_PRESETS[0]
   const edit = changes => { if (agent) patch(agent.id, changes) }
   const running = agent?.status === 'running'
 
@@ -36,8 +40,24 @@ export default function SubAgentPanel({ subAgents, models, onClose, onInsert, no
       </div>
       {agent ? <div className="agent-editor">
         <label className="agent-field"><span>Name</span><input value={agent.name} maxLength={60} onChange={event => edit({ name: event.target.value })} /></label>
-        <label className="agent-field"><span>Role</span><select value={agent.preset} onChange={event => edit({ preset: event.target.value })}>{AGENT_PRESETS.map(entry => <option key={entry.id} value={entry.id}>{entry.name}</option>)}</select></label>
+        <label className="agent-field"><span>Role</span><select value={agent.preset} onChange={event => edit({ preset: event.target.value })}>{AGENT_PRESETS.map(entry => <option key={entry.id} value={entry.id}>{entry.name}</option>)}
+          {skills.length > 0 && <optgroup label="Your skills">{skills.map(entry => <option key={entry.id} value={entry.id}>{entry.name}</option>)}</optgroup>}</select></label>
         <p className="agent-hint">{preset.hint}</p>
+        <label className="agent-field"><span>Instruction</span><textarea rows={4} value={agent.system ?? preset.system} placeholder="What this sub-agent is told to do." onChange={event => edit({ system: event.target.value })} /></label>
+        <div className="agent-skill-row">
+          {saveOpen ? <>
+            <input aria-label="Skill name" value={skillName} placeholder="Name this skill" maxLength={60} onChange={event => setSkillName(event.target.value)} />
+            <button className="secondary-button" onClick={() => {
+              const saved = saveAsSkill({ name: skillName || preset.name, hint: preset.hint, system: agent.system ?? preset.system })
+              if (saved) { setSaveOpen(false); setSkillName(''); edit({ preset: saved.id }); notify(`Saved "${saved.name}" as a skill. It is reusable on any sub-agent.`) }
+            }}>Save</button>
+            <button className="icon-button" aria-label="Cancel saving skill" onClick={() => { setSaveOpen(false); setSkillName('') }}>✕</button>
+          </> : <>
+            <button className="secondary-button" onClick={() => setSaveOpen(true)} title="Save this instruction as a reusable skill"><BookmarkPlus size={13} />Save as skill</button>
+            {preset.custom && <button className="secondary-button" onClick={() => { removeSkill(preset.id); edit({ preset: 'freeform', system: undefined }); notify(`Deleted the skill "${preset.name}".`) }}><Trash2 size={13} />Delete skill</button>}
+            {agent.system && <button className="secondary-button" onClick={() => { edit({ system: undefined }); notify('Reverted to the built-in instruction.') }}>Reset</button>}
+          </>}
+        </div>
         <label className="agent-field"><span>Task</span><textarea rows={6} value={draft ?? agent.task} placeholder="One self-contained task. The sub-agent cannot see this chat." onChange={event => { setDraft(event.target.value); edit({ task: event.target.value }) }} /></label>
         <div className="agent-controls">
           <label className="agent-toggle"><input type="checkbox" checked={Boolean(agent.useVault)} onChange={event => edit({ useVault: event.target.checked })} /><Database size={13} />Search AI-Brain for context</label>

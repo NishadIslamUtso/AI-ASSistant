@@ -250,11 +250,32 @@ export function previewScript(channel) {
 </script>`
 }
 
-export function buildPreviewHtml(source, channel = 'artifact-preview') {
+/**
+ * Give an artifact a real design language.
+ *
+ * The tokens are plain CSS custom properties. They are injected first so the
+ * artifact's own rules still win, and a source that already declares a
+ * variable keeps its value instead of being overridden.
+ */
+export function withDesignTokens(source, tokens = '') {
+  const value = String(source || '')
+  if (!tokens || !tokens.trim()) return value
+  const style = `<style id="ai-design-tokens">${tokens}</style>`
+  const headIndex = value.search(/<\/head\s*>/i)
+  if (headIndex > -1) {
+    return value.slice(0, headIndex) + style + value.slice(headIndex)
+  }
+  // A fragment, not a document: the variables still resolve, they just have
+  // to be declared before anything that uses them.
+  return style + value
+}
+
+export function buildPreviewHtml(source, channel = 'artifact-preview', tokens = '') {
   const policy = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; media-src data: blob:; connect-src 'none'; font-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
   // This is always the first head/CSP, even when the source contains a full page.
   // Additional CSPs in untrusted content cannot loosen this one.
-  return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${policy}"><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{margin:0;font-family:system-ui,sans-serif;background:white;color:#171717}*{box-sizing:border-box}canvas[data-chart]{display:block;width:100%}</style>${previewScript(channel)}</head><body>${source}</body></html>`
+  const tokensStyle = tokens ? `<style id="ai-design-tokens">${tokens}</style>` : ''
+  return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${policy}"><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{margin:0;font-family:system-ui,sans-serif;background:white;color:#171717}*{box-sizing:border-box}canvas[data-chart]{display:block;width:100%}</style>${tokensStyle}${previewScript(channel)}</head><body>${source}</body></html>`
 }
 
 /* ---------------- comment mode: pick, describe, rewrite ---------------- */

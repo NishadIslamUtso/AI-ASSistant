@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Code2, Eye, X, Copy, Download, RefreshCw, Save, FileCode2, MessageSquarePlus, Crosshair, Wand2, PackageOpen, Loader2, Check } from 'lucide-react'
-import { applyElementRewrite, artifactSource, buildPreviewHtml, parseElementPick, rewritePrompt, sourceSignature } from '../lib/artifacts.js'
+import { applyElementRewrite, artifactSource, buildPreviewHtml, parseElementPick, rewritePrompt, sourceSignature, withDesignTokens } from '../lib/artifacts.js'
+import { DEFAULT_DESIGN_SYSTEM, DESIGN_SYSTEMS, designSystemLabel, loadDesignTokens } from '../design-systems/index.js'
+import usePersistentState from '../hooks/usePersistentState.js'
 import { askLocal } from '../lib/ask.js'
 import { createZip, downloadBytes, slugify, staticSiteEntries } from '../lib/zip.js'
 import { newId } from '../lib/storage.js'
@@ -29,7 +31,16 @@ export default function ArtifactPanel({ artifact, onClose, onSave, notify, model
   const source = live ? liveSource : artifactSource(artifact, version)
   const savingVersion = artifact.versions.length - 1
   const dirty = draft !== artifactSource(artifact, savingVersion)
-  const html = useMemo(() => buildPreviewHtml(draft === artifactSource(artifact, savingVersion) ? source : draft, channel.current), [source, draft, savingVersion, artifact])
+  // A visual language for generated markup. Without one, a 3B model produces
+  // unstyled output; with one it produces something that looks designed.
+  const [designId, setDesignId] = usePersistentState('artifact_design_system', DEFAULT_DESIGN_SYSTEM)
+  const [tokens, setTokens] = useState('')
+  useEffect(() => {
+    let alive = true
+    loadDesignTokens(designId).then(css => { if (alive) setTokens(css) }).catch(() => { if (alive) setTokens('') })
+    return () => { alive = false }
+  }, [designId])
+  const html = useMemo(() => buildPreviewHtml(draft === artifactSource(artifact, savingVersion) ? source : draft, channel.current, tokens), [source, draft, savingVersion, artifact, tokens])
   const signature = sourceSignature(source)
 
   useEffect(() => { setVersion(artifact.versions.length - 1) }, [artifact.versions.length])
@@ -81,7 +92,8 @@ export default function ArtifactPanel({ artifact, onClose, onSave, notify, model
   /** A folder a static host can publish with no build step. */
   function exportSite() {
     try {
-      const body = draft
+      // Export what the preview shows, so a deployed copy looks the same.
+      const body = withDesignTokens(draft, tokens)
       const entries = staticSiteEntries({
         title: artifact.title, source: body, type: artifact.type,
         note: `Exported from AI ASSistant on ${new Date().toLocaleString()}. The preview inside the app is sandboxed; a deployed copy is a normal web page and should be reviewed before publishing.`,
@@ -132,6 +144,12 @@ export default function ArtifactPanel({ artifact, onClose, onSave, notify, model
         <button className={view === 'source' ? 'selected' : ''} onClick={() => setView('source')}><Code2 size={14} />Source</button>
       </div>
       <div>
+        <label className="design-system-picker" title="Visual language used to style this artifact">
+          <span aria-hidden="true" className="design-swatch" style={{ background: DESIGN_SYSTEMS.find(entry => entry.id === designId)?.accent || '#888' }} />
+          <select aria-label="Design system" value={designId} onChange={event => setDesignId(event.target.value)}>
+            {DESIGN_SYSTEMS.map(entry => <option key={entry.id} value={entry.id}>{entry.label}</option>)}
+          </select>
+        </label>
         <button className={`icon-button ${pickMode ? 'active' : ''}`} aria-label="Comment on an element" aria-pressed={pickMode} title="Comment mode: click an element to pin a change" onClick={() => { if (view !== 'preview') { notify('Switch to Preview to pin an element.'); return } setPickMode(!pickMode) }}><Crosshair size={14} /></button>
         <button className="icon-button" aria-label="Export a deployable site" title="Export a ZIP that any static host can publish" onClick={exportSite}>{exported ? <Check size={14} /> : <PackageOpen size={14} />}</button>
         <button className="icon-button" aria-label="Copy artifact source" onClick={copy}><Copy size={14} /></button>

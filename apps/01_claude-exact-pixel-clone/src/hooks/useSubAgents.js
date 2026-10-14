@@ -1,7 +1,8 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { askLocal } from '../lib/ask.js'
 import { newId, readStored, writeStored } from '../lib/storage.js'
 import { vaultGet } from '../lib/vault.js'
+import { deleteSkill, loadSkills, saveSkill } from '../lib/skills.js'
 
 /**
  * useSubAgents — isolated-context jobs that never touch the open chat.
@@ -60,6 +61,11 @@ export default function useSubAgents({ models, notify }) {
     const stored = readStored(KEY, [], normalize)
     return stored.value
   })
+  // Built-in roles plus any skill the user has saved.
+  const [skills, setSkills] = useState(() => loadSkills())
+  const allPresets = useMemo(() => [...AGENT_PRESETS, ...skills.map(skill => ({
+    id: skill.id, name: skill.name, hint: skill.hint || 'Your saved instruction.', system: skill.system, custom: true,
+  }))], [skills])
   const [activeId, setActiveId] = useState('')
   const [busy, setBusy] = useState(false)
   const jobRef = useRef(null)
@@ -154,8 +160,19 @@ export default function useSubAgents({ models, notify }) {
     await run(first)
   }
 
+  /** Save the current instruction as a reusable, named skill. */
+  const saveAsSkill = useCallback(({ name, hint = '', system, id } = {}) => {
+    try {
+      const result = saveSkill({ name, hint, system, id })
+      setSkills(result.skills)
+      return result.skill
+    } catch (error) { notify(error.message); return null }
+  }, [notify])
+  const removeSkill = useCallback(id => setSkills(deleteSkill(id)), [])
+
   return {
     agents, activeId, setActiveId, busy, runningId: jobRef.current, add, remove, run, runMany, patch, persist,
+    allPresets, skills, saveAsSkill, removeSkill,
     queuedIds: queueRef.current,
     waitingCount: agents.filter(agent => agent.status === 'waiting').length,
     /** Stop the running job. Partial output already written stays visible. */

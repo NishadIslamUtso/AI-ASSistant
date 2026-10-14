@@ -157,3 +157,9 @@ enough of the Ollama API (`/api/tags`, `/api/show`, `/api/chat`) to exercise
 model verification, streaming and artifacts, and **labels every reply as a
 mock**. `start-app.bat` never starts it — the real build always talks to the real
 Ollama on `127.0.0.1:11434`.
+
+## Credits
+
+Design system tokens and the skills mechanism are derived from
+[open-design](https://github.com/nexu-io/open-design) (Apache-2.0).
+See `THIRD_PARTY_NOTICES.md`.
