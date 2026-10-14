@@ -30,32 +30,16 @@ const CUSTOM_KEYS: readonly (keyof InferenceOptions)[] = Object.freeze([
   'num_gpu',
 ])
 
-/** What each custom field is called, and what it actually does to a small card. */
+/** What each custom field is called. Labels only: the value and the range the
+ *  field accepts are the explanation. */
 export const CUSTOM_FIELDS: readonly {
   key: keyof InferenceOptions
   label: string
-  hint: string
 }[] = Object.freeze([
-  {
-    key: 'num_ctx',
-    label: 'Context window',
-    hint: 'How much of the conversation stays in view. On a small card this is the setting that decides whether replies keep up.',
-  },
-  {
-    key: 'num_batch',
-    label: 'Prompt batch',
-    hint: 'Bigger batches read a long prompt faster, and need more memory at once to do it.',
-  },
-  {
-    key: 'num_predict',
-    label: 'Longest reply',
-    hint: 'Caps how long a single answer can get.',
-  },
-  {
-    key: 'num_gpu',
-    label: 'Layers on the GPU',
-    hint: '0 keeps every layer on the processor: slow, but it cannot run out of video memory.',
-  },
+  { key: 'num_ctx', label: 'Context window' },
+  { key: 'num_batch', label: 'Prompt batch' },
+  { key: 'num_predict', label: 'Longest reply' },
+  { key: 'num_gpu', label: 'Layers on the GPU' },
 ])
 
 export function profileFor(id: string): (typeof INFERENCE_PROFILES)[number] | undefined {

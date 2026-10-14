@@ -14,7 +14,7 @@ import useArtifactRewrite from './hooks/useArtifactRewrite'
 import useModels from './hooks/useModels'
 import usePersistentState from './hooks/usePersistentState'
 import useVault from './hooks/useVault'
-import SettingsDialog from './components/SettingsDialog'
+import SettingsView from './components/SettingsView'
 import {
   APPEARANCE_KEY,
   DEFAULT_APPEARANCE,
@@ -222,7 +222,9 @@ export default function App() {
         // shows up as a chip rather than as a save that silently did not happen.
         vault={vault}
       />
-      <div className="flex min-h-0 flex-1">
+      {/* Settings fills this row rather than the whole window, so the app keeps
+          its own header and the operating system keeps the window frame. */}
+      <div className="relative flex min-h-0 flex-1">
         <Sidebar
           chats={chats.chats}
           currentChat={chats.currentChat}
@@ -264,19 +266,19 @@ export default function App() {
             onJump={item => jumpToArtifact(item.id)}
           />
         ) : null}
-      </div>
 
-      <SettingsDialog
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        vault={vault}
-        onChanged={() => setVaultRevision(revision => revision + 1)}
-        appearance={appearance}
-        onAppearanceChange={setAppearance}
-        inference={inference}
-        onInferenceChange={setInference}
-        models={models}
-      />
+        <SettingsView
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          vault={vault}
+          onChanged={() => setVaultRevision(revision => revision + 1)}
+          appearance={appearance}
+          onAppearanceChange={setAppearance}
+          inference={inference}
+          onInferenceChange={setInference}
+          models={models}
+        />
+      </div>
     </div>
   )
 }
