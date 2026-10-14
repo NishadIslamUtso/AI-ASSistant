@@ -76,7 +76,7 @@ Last landed: the **Artifacts screen** this session (on top of `75aa731`, the Win
 - **Browsing Maps**: the vault's own record — conversations, captured pages and visits — as a timeline with
   site grouping, kind filters, search and a time window. A visit stays a visit; nothing is invented and no
   count disagrees with the rows on screen.
-- **A Windows installer** (`AI-ASSistant-Setup-0.1.1.exe`, ~84 MB, NSIS, per-user, unsigned → SmartScreen
+- **A Windows installer** (`AI-ASSistant-Setup-0.1.2.exe`, ~84 MB, NSIS, per-user, unsigned → SmartScreen
   warning): notes, first run and the reproducible build recipe in `apps/03_ai-assistant/RELEASE-WINDOWS.md`.
 
 ## 4. What is honestly missing
@@ -119,4 +119,4 @@ Last landed: the **Artifacts screen** this session (on top of `75aa731`, the Win
   each.
 - **2026-10-14 (evening) — it became shippable.** Online providers behind Settings > Agent access, the loopback
   port for the browser extension, Browsing Maps over the vault's own record, and finally a Windows installer
-  (`AI-ASSistant-Setup-0.1.1.exe`) — the first file a person can double-click.
+  (`AI-ASSistant-Setup-0.1.2.exe`) — the first file a person can double-click.

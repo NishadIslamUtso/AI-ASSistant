@@ -11,6 +11,12 @@ import { useId, type SVGProps } from 'react'
  * clipPath references, so two copies of the logo on one page would otherwise
  * steal each other's shapes — the sidebar mark would silently clip the one in
  * the settings header.
+ *
+ * This artwork also exists verbatim as `resources/icon.svg` — the owner's own
+ * export, the canonical file — and shot-tools/render-mark.cjs renders the desktop
+ * icon from it. That script compares the two and refuses to write an icon if the
+ * paths, colours or circles ever drift apart, so the UI, the tab icon and the
+ * desktop icon are always the same mark.
  */
 /** Only used if a React version ever returns an id that sanitises to nothing. */
 let markCount = 0
@@ -44,11 +50,16 @@ export default function BrainMark({ size = 20, className = '', title = 'AI ASSis
       height={size}
       fill="none"
       role="img"
-      aria-labelledby={id('title')}
+      aria-labelledby={`${id('title')} ${id('description')}`}
       className={className}
       {...rest}
     >
       <title id={id('title')}>{title}</title>
+      <desc id={id('description')}>
+        A smiling pink cartoon brain shaped like a pair of butt cheeks, wearing oversized round black
+        glasses and purple sneakers, with one hand giving a thumbs-up. All artwork is editable vector,
+        on a transparent background.
+      </desc>
       <defs>
         <path
           id={body}

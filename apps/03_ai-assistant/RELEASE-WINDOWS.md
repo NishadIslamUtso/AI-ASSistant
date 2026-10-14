@@ -1,6 +1,37 @@
 # Release notes — the Windows installer
 
+## 0.1.2 — the owner's own artwork, verbatim
+
+| | |
+|---|---|
+| Name | `AI-ASSistant-Setup-0.1.2.exe` |
+| Size | 87,929,407 bytes |
+| SHA-256 | `73cb5f4faa627b8a43446242ed50fb401b6c161d848107a332d0b83191263ff4` |
+| Signed | No — SmartScreen will say "unknown publisher" |
+
+**What changed:** where the logo comes from. The owner supplied his own SVG export of the mark and said to
+use it **everywhere, as SVG**. It is now the canonical file, byte-identical to what he sent:
+
+- `resources/icon.svg` — his file, verbatim; the window icon, exe icon and installer icon are rendered from
+  it (transparent background — the tile 0.1.1 put behind the mark is gone, because his file says transparent).
+- `src/renderer/public/favicon.svg` — his file, verbatim (the previous favicon was a crop of the same artwork
+  framed on the head, because the full figure turns to mush at 16 px; swapped as instructed — one line in the
+  report says why, and it is a one-file change to go back).
+- The app's `BrainMark` component renders the same artwork (it always did — a path-by-path diff against his
+  file showed 32 identical paths and 22 identical colours) and gained his `<desc>` for screen readers.
+
+**The renderer changed with it:** its source is now the SVG file itself instead of extracting JSX out of the
+component, and it keeps a **sync guard** — paths, colours and circles must match the component or it refuses
+to write an icon — plus the two audits from 0.1.1 (every `url(#…)` must resolve; the pixels must show the
+brain, lenses, shine and sneakers with **transparent corners**).
+
+**Verified:** 269 tests, typecheck, `SMOKE OK errors=0 warnings=0`, the 22-assertion artifact-library check
+green, the icon read back out of the built executables (seven sizes, brain present, corners empty).
+
 ## 0.1.1 — the logo, for real this time
+
+> Superseded by 0.1.2: same app, but the icon in 0.1.1 sits on a dark tile of my choosing. The owner's own
+> export is transparent; 0.1.2 ships his file verbatim.
 
 | | |
 |---|---|
