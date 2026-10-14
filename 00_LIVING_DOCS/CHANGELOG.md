@@ -6,7 +6,7 @@
 ## 2026-10-14 (evening) — the Windows installer
 
 Until now, "install it" meant `npm install && npm run dev` on a machine with Node, a terminal and a tolerance
-for terminals. The app now ships as **one file a person can double-click**: `AI-ASSistant-Setup-0.1.0.exe`.
+for terminals. The app now ships as **one file a person can double-click**: `AI-ASSistant-Setup-0.1.1.exe`.
 
 ### What it is
 - **NSIS, assisted** (not one-click): the install folder can be changed, desktop + Start-menu shortcuts are
@@ -56,6 +56,46 @@ The install on a real Windows machine is the owner's own test, and it is Priorit
 
 ### Landing
 This commit on `arena/3c06e1bf-ai-assistant-v3`, merged into `main`.
+
+## 2026-10-14 (late night) — the logo, and a store worth having
+
+### The logo, fixed for real
+The owner's screenshot said it exactly: *"it only showed the glasses where icon was supposed to be … and on
+top of app too."* He was right, and both the shipped installer and the app icon had it.
+
+- **What was actually wrong.** The mark's brain is defined once inside `<defs>` and painted **through a
+  reference**. The icon renderer resolved the component's JSX expressions, but that reference did not survive
+  intact, so the body painted **nothing** while the glasses, hands and sneakers — drawn directly — still did.
+  The result looked like a faded ghost of the logo, not like a broken file, which is why it survived two
+  rounds of "looks fine to me".
+- **The fix is in the renderer, not in the artwork.** It now audits the drawing before photographing it: every
+  `url(#…)` must point at an id that exists, and the run **fails** if one does not. No new logo was drawn.
+- **Pixels, not previews.** The render is then read back with a pixel check: the pink body must be a large
+  blob in the middle, lenses grey with white shine, sneakers purple, tile clean where the drawing stops. A
+  transparent PNG looks complete in any viewer that paints white behind it — that is exactly how a hollow logo
+  passed inspection once already.
+- **A tile, because a white mark on transparency is invisible.** The mark now sits on a rounded dark tile and
+  the `.ico` carries **seven sizes** (16–256) rather than one PNG Windows scales badly. Verified by reading
+  the icon back **out of the built executables** with `wrestool`: all seven sizes in both the app exe and the
+  installer, with the body present at 64 px.
+- **Where it lives now:** `resources/icon.png` + `resources/icon.ico`, wired through `electron-builder.yml`
+  (`win.icon`, `nsis.installerIcon`, `nsis.uninstallerIcon`, `buildResources`) and `windowIcon()`. Not
+  `build/`: that directory name is excluded from this project's workspace snapshots, which silently deleted
+  the icon twice.
+
+### Installer 0.1.1
+`AI-ASSistant-Setup-0.1.1.exe` (87,869,296 bytes, SHA-256 `f56828ef96a08de4327221768bad648fa777e95a8bdec966a6e43768a261ad5f`) replaces 0.1.0, which shipped the broken
+icon. Same app-plus: the **Artifacts** screen, the sidebar's collapse and resize, the rail fix. Per-user,
+unsigned → SmartScreen warning; notes and the build recipe in `apps/03_ai-assistant/RELEASE-WINDOWS.md`.
+
+### Community, stores, plugins — answered, not deferred
+The owner asked why this had never come up. It is now written out in `COMMUNITY-STORE-PLAN.md`: a **pack** is
+a folder with a `manifest.json` (skills, prompts, agents, themes, connectors, capture recipes); a **store** is
+an **index file at a URL**, not a service, so nothing needs an account or a server; installing shows the
+permissions in plain words first and enforces them through the agent-access switches that already exist; and
+sharing is a folder you send someone or a repo you add. It lands after Projects (04) and Vault (05), in five
+additive steps — file install first, then the index client, then publish/export and a first-party starter
+pack, then connectors with the agents step, then the community index.
 
 ## 2026-10-14 (late evening) — one fix on top: the chat's artifacts rail belongs to the chat
 

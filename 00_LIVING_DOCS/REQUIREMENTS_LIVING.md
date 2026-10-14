@@ -64,7 +64,7 @@
   as a timeline with site grouping, kind filters, search and a time window, over the app's own API. It
   invents nothing: a visit is labelled a visit (the vault's own "not proof of reading" is repeated, never
   upgraded), a captured page is one entry rather than two, and the counts always describe the rows on screen.
-- **The app ships as an installer.** `AI-ASSistant-Setup-0.1.0.exe` (~84 MB, NSIS, assisted, per-user, no
+- **The app ships as an installer.** `AI-ASSistant-Setup-0.1.1.exe` (~84 MB, NSIS, assisted, per-user, no
   admin prompt, desktop + Start-menu shortcuts, and uninstalling it leaves the vault and settings alone), built
   from `electron-builder.yml`. It is **not code-signed**, so Windows shows SmartScreen's "unknown publisher"
   until a certificate exists — `apps/03_ai-assistant/RELEASE-WINDOWS.md` states that in advance, explains what
@@ -530,7 +530,7 @@ Old or rarely retrieved transcripts are not automatic deletion candidates.
 - **Where:** branch `arena/3c06e1bf-ai-assistant-v3`, merged into `main`.
 
 ### [2026-10-14 evening] The Windows installer exists
-The first file a person can double-click: `AI-ASSistant-Setup-0.1.0.exe` — NSIS, assisted (not one-click),
+The first file a person can double-click: `AI-ASSistant-Setup-0.1.1.exe` — NSIS, assisted (not one-click),
 per-user (no admin prompt), folder choosable, desktop + Start-menu shortcuts, and an uninstall that keeps the
 vault and settings. Unsigned, so SmartScreen will warn about an unknown publisher; the release notes say so
 plainly, in advance, with the exact text. Built from `electron-builder.yml` by electron-builder 26.15.3, icon
