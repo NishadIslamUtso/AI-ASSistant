@@ -386,14 +386,14 @@ export default function App() {
           }
         />
         )}
-        {artifacts.length > 0 && railOpen ? (
+        {view === 'chat' && artifacts.length > 0 && railOpen ? (
           <ArtifactsRail
             items={artifacts}
             onJump={item => jumpToArtifact(item.id)}
             onClose={() => setRailOpen(false)}
           />
         ) : null}
-        {artifacts.length > 0 && !railOpen ? (
+        {view === 'chat' && artifacts.length > 0 && !railOpen ? (
           <button
             type="button"
             onClick={() => setRailOpen(true)}

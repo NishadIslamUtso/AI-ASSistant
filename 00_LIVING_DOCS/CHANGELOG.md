@@ -57,6 +57,22 @@ The install on a real Windows machine is the owner's own test, and it is Priorit
 ### Landing
 This commit on `arena/3c06e1bf-ai-assistant-v3`, merged into `main`.
 
+## 2026-10-14 (late evening) — one fix on top: the chat's artifacts rail belongs to the chat
+
+Seen in a screenshot of the finished screen at 1280 wide: the conversation's **artifacts rail** and its toggle
+were still drawn on the Artifacts screen, next to the library's own panel. The rail lists one conversation's
+artifacts and jumps within the transcript — on the library screen it duplicated the panel and squeezed the grid
+to a single column. Both are now gated to the Chat view.
+
+Verified after the fix on the same build: 28 files / 269 tests, typecheck clean, and **all six desktop
+end-to-end checks green** — including the artifact library check, re-driven against this implementation from
+the outside (`shot-tools/check-artifact-library.cjs`, 22 assertions): an empty library says so, a turn builds
+an artifact that lands on disk as `v1.html`, the card draws the document itself with scripts off, the panel
+shows the scripted preview and `v1`, a **two-version** artifact seeded with the store's own `save()` shows
+`v2 v1`, **"Save v1 again" appended a third version** with the note `Restored from version 1` rather than
+truncating, rename reached `index.json`, duplicate made `"… copy"`, search narrowed to one row, one remove
+took one artifact and the last brought the empty state back — console clean throughout.
+
 ## 2026-10-14 (late evening) — the Artifacts screen, and two things the owner saw
 
 The owner's verdict on the app as it stood was blunt and correct: "this is not what was promised. even on the
