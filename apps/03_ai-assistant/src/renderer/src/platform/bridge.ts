@@ -15,8 +15,8 @@
  *      "not available here", never an exception in the console.
  *   2. Nothing here pretends to be real. `isDemo` is true in the browser, and
  *      the demo layer never returns invented vault contents, chat history or
- *      model output — it returns empty, so the UI's own empty state is what the
- *      person sees.
+ *      model output — it returns empty, or a sentence saying what is missing,
+ *      so the UI's own empty state is what the person sees.
  */
 
 /** What the preload script exposes today. It grows as the main process does. */
@@ -24,6 +24,27 @@ export type DesktopBridge = {
   app: {
     version: string
     platform: string
+  }
+  settings: {
+    /** What the app has been told to do. */
+    read: () => Promise<{ vaultPath: string }>
+    /** Save a change; the main process decides and reports what happened. */
+    update: (patch: { vaultPath?: string }) => Promise<{
+      ok: boolean
+      error?: string
+      settings?: { vaultPath: string }
+      status?: {
+        ok: boolean
+        available: boolean
+        vault: string
+        error?: string
+        counts?: { files: number; entities: number }
+      }
+    }>
+  }
+  vault: {
+    /** The operating system's folder picker. null when the person closed it. */
+    chooseFolder: () => Promise<string | null>
   }
 }
 
@@ -40,14 +61,20 @@ declare global {
 export const hasDesktopBridge = (): boolean =>
   typeof window !== 'undefined' && typeof window.api === 'object' && window.api !== null
 
-/** Empty, not invented. See rule 2 above. */
+/** Empty, and honest about it. See rule 2 above. */
 const demoBridge: DesktopBridge = {
   app: { version: 'web preview', platform: 'web' },
+  settings: {
+    read: async () => ({ vaultPath: '' }),
+    update: async () => ({
+      ok: false,
+      error: 'Settings are part of the desktop app. This window is the interface only, so there is no folder to change.',
+    }),
+  },
+  vault: { chooseFolder: async () => null },
 }
 
-export const bridge: DesktopBridge = hasDesktopBridge()
-  ? (window.api as DesktopBridge)
-  : demoBridge
+export const bridge: DesktopBridge = hasDesktopBridge() ? (window.api as DesktopBridge) : demoBridge
 
 /** True in the browser preview, where there is no main process behind the UI. */
 export const isDemo = !hasDesktopBridge()

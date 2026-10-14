@@ -18,6 +18,7 @@ export default function Sidebar({
   onOpen,
   onNew,
   onDelete,
+  onOpenSettings,
   profileName,
 }: {
   chats: Chat[]
@@ -25,6 +26,8 @@ export default function Sidebar({
   onOpen: (chatId: string) => void
   onNew: () => void
   onDelete: (chatId: string) => void
+  /** The profile row at the bottom is the way in to Settings, as in the mockup. */
+  onOpenSettings: () => void
   profileName: string
 }) {
   const [query, setQuery] = useState('')
@@ -102,7 +105,13 @@ export default function Sidebar({
         )}
       </nav>
 
-      <div className="flex items-center gap-2.5 border-t border-line p-3">
+      <button
+        type="button"
+        onClick={onOpenSettings}
+        aria-label="Settings"
+        title="Settings"
+        className="flex w-full items-center gap-2.5 border-t border-line p-3 text-left hover:bg-white/[0.06]"
+      >
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand/25 text-[12px] font-semibold text-brand">
           {initials(profileName)}
         </span>
@@ -110,7 +119,7 @@ export default function Sidebar({
         <span className="rounded-full border border-line px-2 py-0.5 text-[10px] text-muted">
           Local
         </span>
-      </div>
+      </button>
     </aside>
   )
 }

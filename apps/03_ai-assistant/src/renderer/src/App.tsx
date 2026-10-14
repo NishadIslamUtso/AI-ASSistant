@@ -15,6 +15,7 @@ import useArtifactRewrite from './hooks/useArtifactRewrite'
 import useModels from './hooks/useModels'
 import usePersistentState from './hooks/usePersistentState'
 import useVault from './hooks/useVault'
+import SettingsDialog from './components/SettingsDialog'
 import { useChats } from './state/useChats'
 import { isDemo } from './platform/bridge'
 import { vaultPost } from '@shared/lib/vault'
@@ -51,9 +52,13 @@ export default function App() {
     () => chats.chats.find(entry => entry.id === chats.currentChat) || null,
     [chats.chats, chats.currentChat]
   )
-  // Re-checked whenever the current conversation is kept, so a vault that has
-  // gone missing shows as a chip rather than as a save that quietly did not happen.
-  const vault = useVault(chat?.vaultStatus)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  // Bumped when Settings moves the vault, so the chip and the dialog both re-read it.
+  const [vaultRevision, setVaultRevision] = useState(0)
+  // Re-checked whenever the current conversation is kept or the vault moves: a
+  // vault that has gone missing shows as a chip rather than as a save that
+  // quietly did not happen.
+  const vault = useVault(`${chat?.vaultStatus || ''}:${vaultRevision}`)
 
   const navigate = useCallback((chatId: string) => chats.open(chatId), [chats])
 
@@ -201,6 +206,7 @@ export default function App() {
             setNotice('')
           }}
           onDelete={chats.remove}
+          onOpenSettings={() => setSettingsOpen(true)}
           profileName={profile.name}
         />
         <ChatView
@@ -233,6 +239,13 @@ export default function App() {
           />
         ) : null}
       </div>
+
+      <SettingsDialog
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        vault={vault}
+        onChanged={() => setVaultRevision(revision => revision + 1)}
+      />
     </div>
   )
 }

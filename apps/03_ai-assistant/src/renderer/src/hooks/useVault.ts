@@ -20,6 +20,8 @@ export type VaultState = {
   path: string
   /** The sentence the vault gave, so the interface can repeat it rather than guess. */
   error: string
+  /** How many files the vault holds, when it answered. */
+  files?: number
 }
 
 export default function useVault(revision?: unknown): VaultState {
@@ -33,7 +35,12 @@ export default function useVault(revision?: unknown): VaultState {
       .then(reply => {
         if (cancelled) return
         if (reply?.available) {
-          setVault({ state: 'ready', path: String(reply.vault || ''), error: '' })
+          setVault({
+            state: 'ready',
+            path: String(reply.vault || ''),
+            error: '',
+            files: Number(reply?.counts?.files ?? 0),
+          })
           return
         }
         setVault({
