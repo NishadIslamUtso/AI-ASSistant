@@ -1,9 +1,7 @@
-import { useState } from 'react'
-import { Check, ChevronDown, ChevronRight, Copy, FileCode2, Package } from 'lucide-react'
-import type { Message } from '@shared/types'
-import { createZip, downloadBytes, slugify, staticSiteEntries } from '@shared/lib/zip'
+import type { Artifact, Message } from '@shared/types'
+import type { ElementPick } from '@shared/lib/artifacts'
 import type { ArtifactView } from '@/state/artifactView'
-import ArtifactPreview from './ArtifactPreview'
+import ArtifactCard from './ArtifactCard'
 import BrainMark from './BrainMark'
 
 /**
@@ -19,6 +17,12 @@ export default function MessageRow({
   artifacts = [],
   tokens = '',
   highlightId = '',
+  onRewrite,
+  onRestore,
+  busyArtifactId = '',
+  rewriteStage = '',
+  rewriteError = '',
+  rewriteErrorFor = '',
 }: {
   message: Message
   /** Already resolved for this message: live draft while streaming, saved after. */
@@ -26,6 +30,18 @@ export default function MessageRow({
   tokens?: string
   /** Set briefly when the rail jumps to an artifact here. */
   highlightId?: string
+  onRewrite: (request: {
+    artifact: Artifact
+    source: string
+    pick: ElementPick
+    comment: string
+  }) => Promise<boolean>
+  onRestore: (artifact: Artifact, index: number) => void
+  busyArtifactId?: string
+  rewriteStage?: string
+  rewriteError?: string
+  /** The artifact the error belongs to, so it is not printed on every card. */
+  rewriteErrorFor?: string
 }) {
   if (message.role === 'user') {
     return (
@@ -93,6 +109,11 @@ export default function MessageRow({
                 view={view}
                 tokens={tokens}
                 highlighted={view.artifact.id === highlightId}
+                onRewrite={onRewrite}
+                onRestore={onRestore}
+                busy={busyArtifactId === view.artifact.id}
+                stage={busyArtifactId === view.artifact.id ? rewriteStage : ''}
+                error={rewriteErrorFor === view.artifact.id ? rewriteError : ''}
               />
             ))}
           </ul>
@@ -122,118 +143,5 @@ export default function MessageRow({
         ) : null}
       </div>
     </div>
-  )
-}
-
-/**
- * A file the model wrote: its preview, and the two things a person actually wants
- * from one — the source, and a folder they can deploy.
- */
-function ArtifactCard({
-  view,
-  tokens,
-  highlighted,
-}: {
-  view: ArtifactView
-  tokens: string
-  highlighted: boolean
-}) {
-  const { artifact, source, draft } = view
-  const [copied, setCopied] = useState(false)
-  const [open, setOpen] = useState(true)
-  const [problem, setProblem] = useState('')
-
-  const copy = async (): Promise<void> => {
-    try {
-      await navigator.clipboard.writeText(source)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1600)
-    } catch {
-      // A refused clipboard is not worth a dialog: the source is visible above.
-    }
-  }
-
-  /**
-   * The deployable folder: the document, the two hosting configs, and a README.
-   * Entries and the archive both come from the shared library, which is where the
-   * ZIP writing is already tested.
-   */
-  const exportZip = (): void => {
-    try {
-      const entries = staticSiteEntries({
-        title: artifact.title,
-        source,
-        type: artifact.type,
-        note: draft ? 'Exported while the model was still writing this file.' : '',
-      })
-      const bytes = createZip(entries)
-      downloadBytes(bytes, `${slugify(artifact.title)}.zip`, 'application/zip', setProblem)
-    } catch (error) {
-      setProblem((error as Error).message)
-    }
-  }
-
-  return (
-    <li
-      id={`artifact-${artifact.id}`}
-      className={`rounded-xl border bg-card p-2.5 transition-colors ${
-        highlighted ? 'border-accent/70' : 'border-line'
-      }`}
-    >
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => setOpen(!open)}
-          aria-expanded={open}
-          aria-label={open ? 'Hide preview' : 'Show preview'}
-          title={open ? 'Hide preview' : 'Show preview'}
-          className="shrink-0 rounded p-0.5 text-muted hover:text-ink"
-        >
-          {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-        </button>
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/15 text-accent">
-          <FileCode2 size={15} />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-[13px]">{artifact.title}</span>
-          <span className="text-[11px] text-muted">
-            {artifact.type.toUpperCase()}
-            {draft ? ' · still being written' : ''}
-          </span>
-        </span>
-        <button
-          type="button"
-          onClick={() => void copy()}
-          title="Copy the source"
-          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-line px-2 py-1 text-[12px] text-muted hover:text-ink"
-        >
-          {copied ? <Check size={13} /> : <Copy size={13} />}
-          {copied ? 'Copied' : 'Copy'}
-        </button>
-        <button
-          type="button"
-          onClick={exportZip}
-          title="Download a folder you can put on any static host"
-          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-line px-2 py-1 text-[12px] text-muted hover:text-ink"
-        >
-          <Package size={13} />
-          ZIP
-        </button>
-      </div>
-
-      {open ? (
-        <div className="mt-2.5">
-          <ArtifactPreview
-            artifact={artifact}
-            source={source}
-            draft={draft}
-            tokens={tokens}
-            height={420}
-          />
-        </div>
-      ) : null}
-
-      {problem ? <p className="mt-2 text-[11.5px] text-warn">{problem}</p> : null}
-    </li>
   )
 }

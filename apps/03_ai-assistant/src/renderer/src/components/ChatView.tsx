@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
-import type { Chat } from '@shared/types'
+import type { Artifact, Chat } from '@shared/types'
+import type { ElementPick } from '@shared/lib/artifacts'
 import type { ModelState } from '@/hooks/useModels'
 import { useDesignTokens } from '@/hooks/useDesignTokens'
 import { viewsForMessage, type LiveArtifacts } from '@/state/artifactView'
@@ -32,6 +33,12 @@ export default function ChatView({
   preview,
   live,
   highlightId,
+  onRewrite,
+  onRestore,
+  busyArtifactId,
+  rewriteStage,
+  rewriteError,
+  rewriteErrorFor,
 }: {
   chat: Chat | null
   draft: string
@@ -46,6 +53,17 @@ export default function ChatView({
   live?: LiveArtifacts
   /** Briefly set when the rail jumps to an artifact in this conversation. */
   highlightId?: string
+  onRewrite: (request: {
+    artifact: Artifact
+    source: string
+    pick: ElementPick
+    comment: string
+  }) => Promise<boolean>
+  onRestore: (artifact: Artifact, index: number) => void
+  busyArtifactId?: string
+  rewriteStage?: string
+  rewriteError?: string
+  rewriteErrorFor?: string
 }) {
   const scroller = useRef<HTMLDivElement | null>(null)
   const follow = useRef(true)
@@ -84,6 +102,12 @@ export default function ChatView({
                   artifacts={viewsForMessage(message.id, message.artifacts, liveArtifacts)}
                   tokens={tokens}
                   highlightId={highlightId}
+                  onRewrite={onRewrite}
+                  onRestore={onRestore}
+                  busyArtifactId={busyArtifactId}
+                  rewriteStage={rewriteStage}
+                  rewriteError={rewriteError}
+                  rewriteErrorFor={rewriteErrorFor}
                 />
               ))}
             </div>

@@ -5,9 +5,13 @@ import { DEFAULT_PROFILE_ID } from '@shared/lib/inference'
 import TitleBar from './components/TitleBar'
 import ArtifactsRail from './components/ArtifactsRail'
 import { chatArtifacts } from './state/artifactView'
+import { restoredInPlace, withNewVersion } from './state/artifactEdits'
+import type { Artifact } from '@shared/types'
+import type { ElementPick } from '@shared/lib/artifacts'
 import Sidebar from './components/Sidebar'
 import ChatView from './components/ChatView'
 import useChat from './hooks/useChat'
+import useArtifactRewrite from './hooks/useArtifactRewrite'
 import useModels from './hooks/useModels'
 import usePersistentState from './hooks/usePersistentState'
 import { useChats } from './state/useChats'
@@ -81,6 +85,80 @@ export default function App() {
       ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 
+  const rewrite = useArtifactRewrite({
+    model: models.model,
+    available: models.available,
+    inference: { profile: DEFAULT_PROFILE_ID },
+  })
+
+  /**
+   * Replace an artifact on a message. Both the rewrite and the restore go through
+   * here, so there is exactly one place in the app that edits a document — and it
+   * can only ever append a version (see artifactEdits).
+   */
+  const replaceArtifact = (messageId: string, artifactId: string, next: Artifact): void => {
+    chats.setChats(previous =>
+      previous.map(entry =>
+        entry.id !== chats.currentChat
+          ? entry
+          : {
+              ...entry,
+              messages: entry.messages.map(message =>
+                message.id !== messageId
+                  ? message
+                  : {
+                      ...message,
+                      artifacts: (message.artifacts || []).map(artifact =>
+                        artifact.id === artifactId ? next : artifact
+                      ),
+                    }
+              ),
+            }
+      )
+    )
+  }
+
+  /** Which message holds an artifact, so an edit can be written back to the right
+   *  place even when the card is showing an older version of the same file. */
+  const findArtifact = (artifactId: string): { messageId: string; artifact: Artifact } | null => {
+    for (const message of chat?.messages || []) {
+      const found = (message.artifacts || []).find(artifact => artifact.id === artifactId)
+      if (found) return { messageId: message.id, artifact: found }
+    }
+    return null
+  }
+
+  const runRewrite = async ({
+    artifact,
+    source,
+    pick,
+    comment,
+  }: {
+    artifact: Artifact
+    source: string
+    pick: ElementPick
+    comment: string
+  }): Promise<boolean> => {
+    const next = await rewrite.rewrite({ artifact, source, pick, comment })
+    if (!next) return false
+    const found = findArtifact(artifact.id)
+    // A no-op rewrite comes back as the same artifact, and withNewVersion returns
+    // it unchanged rather than inventing a version for it.
+    if (found) replaceArtifact(found.messageId, artifact.id, withNewVersion(found.artifact, next, comment.trim().slice(0, 60)))
+    setNotice('')
+    return true
+  }
+
+  const restoreVersion = (artifactId: string, index: number): void => {
+    const found = findArtifact(artifactId)
+    if (!found) return
+    try {
+      replaceArtifact(found.messageId, artifactId, restoredInPlace(found.artifact, index))
+    } catch (failure) {
+      setNotice((failure as Error).message)
+    }
+  }
+
   const send = async (): Promise<void> => {
     const text = draft
     if (!text.trim()) return
@@ -119,6 +197,12 @@ export default function App() {
           live={chatApi.live}
           highlightId={highlight}
           notice={notice}
+          onRewrite={runRewrite}
+          onRestore={(artifact, index) => restoreVersion(artifact.id, index)}
+          busyArtifactId={rewrite.busyId || ''}
+          rewriteStage={rewrite.stage}
+          rewriteError={rewrite.error}
+          rewriteErrorFor={rewrite.errorFor}
           preview={
             isDemo
               ? 'Browser preview — this window is the interface only. Models, files and your vault live on your own machine, in the desktop app.'
