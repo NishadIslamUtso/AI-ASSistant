@@ -1,0 +1,38 @@
+@import 'tailwindcss';
+
+/*
+  The whole theme lives here as tokens. Nothing in the app hardcodes a colour,
+  which is what makes Appearance able to rewrite these at runtime and export them.
+*/
+@theme {
+  --color-bg: #141417;
+  --color-panel: #1a1a1f;
+  --color-card: #202027;
+  --color-line: #2e2e36;
+  --color-ink: #ececef;
+  --color-muted: #9a9aa3;
+  --color-accent: #7c5cff;
+  --color-brand: #e8a0b4;
+  --color-ok: #4ade80;
+  --color-warn: #f5b14c;
+
+  --radius-panel: 14px;
+
+  --font-sans: 'Segoe UI', Inter, system-ui, -apple-system, sans-serif;
+  --font-mono: 'Cascadia Mono', Consolas, 'SF Mono', ui-monospace, monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  /* The window chrome is ours, so the page must not be draggable by default. */
+  overflow: hidden;
+}
