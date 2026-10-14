@@ -5,8 +5,8 @@
 | | |
 |---|---|
 | Name | `AI-ASSistant-Setup-0.1.2.exe` |
-| Size | 87,929,407 bytes |
-| SHA-256 | `73cb5f4faa627b8a43446242ed50fb401b6c161d848107a332d0b83191263ff4` |
+| Size | 87,929,333 bytes |
+| SHA-256 | `a8fa8f275f68036930920b617bdeed1cb108df2e11396ab0f872d27ac4631f4a` |
 | Signed | No — SmartScreen will say "unknown publisher" |
 
 **What changed:** where the logo comes from. The owner supplied his own SVG export of the mark and said to
@@ -27,6 +27,11 @@ brain, lenses, shine and sneakers with **transparent corners**).
 
 **Verified:** 269 tests, typecheck, `SMOKE OK errors=0 warnings=0`, the 22-assertion artifact-library check
 green, the icon read back out of the built executables (seven sizes, brain present, corners empty).
+
+**If this file is missing from a fresh checkout:** the installer is ~88 MB and workspace snapshots may drop
+it. Rebuild it from the pushed tree — `npm install && npm run dist:win` (Linux needs Wine for the NSIS step).
+NSIS stamps build time, so a rebuild hashes differently; the SHA-256 above identifies the delivered file
+itself, and the icon inside any rebuild is held to the same audits (sync + references + pixels).
 
 ## 0.1.1 — the logo, for real this time
 

@@ -57,6 +57,26 @@ The install on a real Windows machine is the owner's own test, and it is Priorit
 ### Landing
 This commit on `arena/3c06e1bf-ai-assistant-v3`, merged into `main`.
 
+## 2026-10-14 (after midnight) — purge: nothing of the previous mark remains
+
+The owner's order: "the new one is very different than the previous one, don't you dare keep the old one
+anywhere." Swept the whole workspace for logo-class files and dealt with every one:
+
+- **Deleted:** `icon-check-256.png` (the old outline-only ghost render, viewed before deletion),
+  `screenshots/95-icon-sizes.png` (my interim tiled sheet), and every logo scratch file under `/var/tmp`.
+- **Rebuilt:** the browser extension's `icon16/48/128.png` were 68-byte empty stubs — now rendered from
+  `resources/icon.svg`.
+- **Rebuilt:** the stale `dist-web/` web bundle still carried the old cropped favicon; `npm run build:web`
+  regenerates it from the current `favicon.svg`.
+- **Verified equal to the owner's file, not assumed:** `resources/icon.svg` and `favicon.svg` are byte-equal
+  to his export (`cmp`); `BrainMark.tsx` and the reference app's `BrainMark.jsx` match it path-for-path
+  (32/32 `d`, 22/22 colours); every mark-like SVG in the tree matches; the PNG/ICO renders pass the pixel
+  audit against it. A signature scan of every SVG in the repo returns **zero** different-artwork files.
+- **Kept, and why they are not "the old one":** `claude-logo.svg` inside the two archived Claude-clone apps
+  (Claude's own brand in clone apps, not our mark), the mockups (design authority), and his own uploaded
+  bug-report screenshot (evidence of his report). Git history still holds the old intermediate renders —
+  rewriting pushed history is available on request, not done unilaterally.
+
 ## 2026-10-14 (near midnight) — the owner's own artwork, everywhere
 
 ### The logo is now the owner's file, verbatim
