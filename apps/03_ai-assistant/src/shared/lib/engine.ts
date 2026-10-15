@@ -80,6 +80,16 @@ export type EngineModelEntry = {
   sizeGB: number | null
 }
 
+/** What a whole engine looks like from the machine it runs on. */
+export type EngineAvailability = {
+  id: EngineId
+  found: boolean
+  /** The engine's own version line, when it answers. */
+  version: string
+  /** The one-liner that fixes a missing engine. */
+  install: string
+}
+
 const ENGINES: readonly EngineId[] = ['claude-code', 'agy']
 
 /**

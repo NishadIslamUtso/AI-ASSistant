@@ -21,7 +21,7 @@ import type { ApprovalMode, EngineId } from '@shared/lib/engine'
 
 const ENGINES: Array<{ id: EngineId; label: string; hint: string }> = [
   { id: 'claude-code', label: 'Claude Code', hint: 'Anthropic’s agent, wired to your free brains' },
-  { id: 'agy', label: 'agy', hint: 'Google’s agent — arrives after its Windows check' },
+  { id: 'agy', label: 'agy', hint: 'Google’s agent — its own brains, from its own selector' },
 ]
 
 /** The last part of a path, whichever slash the platform uses. */
@@ -54,10 +54,11 @@ export default function EngineBay() {
   const menuRef = useRef<HTMLDivElement | null>(null)
   useDismiss(menuRef, () => setMenuOpen(false), menuOpen)
 
-  // The brain list is real data from the engine's door: ask once when the
-  // bay appears, and again whenever the person asks for a refresh.
+  // Real data only: the brain list from the engine's door, and what engines
+  // actually exist on this machine — asked once when the bay appears.
   useEffect(() => {
     void engine.loadModels()
+    void engine.checkEngines()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -75,24 +76,33 @@ export default function EngineBay() {
         />
       </header>
 
-      {/* The engine selection system. */}
+      {/* The engine selection system. An engine that is not on this machine
+          is shown as missing, with the one command that fixes it — the bay
+          refuses to offer a pickable lie. */}
       <div className="grid grid-cols-2 gap-1.5" role="radiogroup" aria-label="Which engine">
         {ENGINES.map((entry) => {
           const active = engine.settings.id === entry.id
+          const known = engine.detection.engines.find((knownEngine) => knownEngine.id === entry.id)
+          const missing = known ? !known.found : false
+          const title = missing
+            ? `Not found on this machine. ${known?.install ?? ''}`
+            : known?.version
+              ? `${entry.hint} — ${known.version}`
+              : entry.hint
           return (
             <button
               key={entry.id}
               type="button"
               role="radio"
               aria-checked={active}
-              title={entry.hint}
+              title={title}
               onClick={() => void engine.pick(entry.id)}
               className={`rounded-lg border px-2 py-1.5 text-left text-[12px] transition-colors ${
                 active ? 'border-accent text-ink' : 'border-line text-muted hover:text-ink'
-              }`}
+              } ${missing ? 'opacity-60' : ''}`}
             >
               {entry.label}
-              {entry.id === 'agy' ? <span className="ml-1 text-[10px] text-warn">soon</span> : null}
+              {missing ? <span className="ml-1 text-[10px] text-warn">not installed</span> : null}
             </button>
           )
         })}

@@ -5,7 +5,7 @@ import type {
   CloudView,
 } from '../shared/lib/providers'
 import type { Permissions } from '../shared/lib/permissions'
-import type { ApprovalMode, EngineEvent, EngineId, EngineModelEntry, EngineSettings } from '../shared/lib/engine'
+import type { ApprovalMode, EngineAvailability, EngineEvent, EngineId, EngineModelEntry, EngineSettings } from '../shared/lib/engine'
 import type {
   AdoptInput,
   ItemAnswer,
@@ -34,6 +34,8 @@ const engineApi = {
   /** The brains this engine can use, as its own door reports them. */
   models: (): Promise<{ ok: boolean; models: EngineModelEntry[]; error?: string }> =>
     ipcRenderer.invoke('engine:models'),
+  /** What engines are really installed on this machine. */
+  detect: (): Promise<EngineAvailability[]> => ipcRenderer.invoke('engine:detect'),
   /** Pick which brain the engine thinks with. */
   setModel: (model: string): Promise<{ ok: boolean; answer: string }> =>
     ipcRenderer.invoke('engine:model', model),

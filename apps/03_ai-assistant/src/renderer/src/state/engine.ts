@@ -9,7 +9,15 @@
  * preview) gets honest refusals, never invented work.
  */
 import { useSyncExternalStore } from 'react'
-import type { ApprovalMode, EngineEvent, EngineId, EngineModelEntry, EngineSettings, EngineUsage } from '@shared/lib/engine'
+import type {
+  ApprovalMode,
+  EngineAvailability,
+  EngineEvent,
+  EngineId,
+  EngineModelEntry,
+  EngineSettings,
+  EngineUsage,
+} from '@shared/lib/engine'
 import { DEFAULT_ENGINE } from '@shared/lib/engine'
 import { getEngineApi } from '@/platform/bridge'
 
@@ -25,6 +33,9 @@ export type EnginePermission = { requestId: string; tool: string; summary: strin
 
 /** The engine's brains, as its own door reports them. */
 export type EngineModels = { loading: boolean; entries: EngineModelEntry[]; error: string }
+
+/** What is really installed on this machine, as the last detection saw it. */
+export type EngineDetection = { loading: boolean; engines: EngineAvailability[] }
 
 /** One work order, from the moment it is sent to the moment it lands. */
 export type EngineTurn = {
@@ -44,6 +55,7 @@ export type EngineState = {
   on: boolean
   turn: EngineTurn | null
   models: EngineModels
+  detection: EngineDetection
   /** Whether the engine process is alive on this machine, as last reported. */
   alive: boolean
 }
@@ -69,6 +81,8 @@ type EngineStore = EngineState & {
   setApproval(mode: ApprovalMode): Promise<void>
   /** "Open a folder": pick where the engine works; persists. */
   pickWorkspace(): Promise<void>
+  /** Ask the machine which engines really exist. */
+  checkEngines(): Promise<void>
 }
 
 const state: EngineState = {
@@ -76,6 +90,7 @@ const state: EngineState = {
   on: false,
   turn: null,
   models: { loading: false, entries: [], error: '' },
+  detection: { loading: false, engines: [] },
   alive: false,
 }
 
@@ -161,6 +176,9 @@ const store: EngineStore = {
   get alive() {
     return state.alive
   },
+  get detection() {
+    return state.detection
+  },
 
   async init(): Promise<void> {
     if (subscribed || initializing) return
@@ -237,6 +255,13 @@ const store: EngineStore = {
     if (answer.ok) setState({ settings: { ...state.settings, approval: mode } })
   },
 
+  async checkEngines(): Promise<void> {
+    if (state.detection.loading) return
+    setState({ detection: { ...state.detection, loading: true } })
+    const engines = await getEngineApi().detect()
+    setState({ detection: { loading: false, engines } })
+  },
+
   async pickWorkspace(): Promise<void> {
     const answer = await getEngineApi().pickWorkspace()
     if (answer.ok) setState({ settings: { ...state.settings, workspace: answer.answer } })
@@ -283,6 +308,7 @@ export function resetEngineForTests(): void {
   state.turn = null
   state.settings = { ...DEFAULT_ENGINE }
   state.models = { loading: false, entries: [], error: '' }
+  state.detection = { loading: false, engines: [] }
   state.alive = false
   emit()
 }

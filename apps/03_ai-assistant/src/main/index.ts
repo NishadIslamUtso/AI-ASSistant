@@ -19,7 +19,8 @@ import { normalizePermissions } from '../shared/lib/permissions'
 import { registerArtifactIpc } from './artifacts/ipc'
 import { createEngineSocket, type EngineSocket } from './engine/socket'
 import { normalizeEngine } from '../shared/lib/engine'
-import { APPROVAL_MODES, type ApprovalMode, type EngineEvent, type EngineModelEntry } from '../shared/lib/engine'
+import { APPROVAL_MODES, type ApprovalMode, type EngineEvent, type EngineId, type EngineModelEntry } from '../shared/lib/engine'
+import { agyModelSource, detectEngine } from './engine/availability'
 
 /**
  * The main process. Everything that touches the machine lives on this side:
@@ -260,6 +261,12 @@ function registerBridges(): void {
     return { ok: true }
   })
 
+  // What is really installed on this machine — the bay refuses to guess.
+  ipcMain.handle('engine:detect', async (): Promise<Array<{ id: EngineId; found: boolean; version: string; install: string }>> => {
+    const ids: EngineId[] = ['claude-code', 'agy']
+    return Promise.all(ids.map((id) => detectEngine(id)))
+  })
+
   ipcMain.handle('engine:stop', () => {
     engine?.stop()
     return { ok: true }
@@ -270,6 +277,13 @@ function registerBridges(): void {
   // Ollama reports, with cloud brains flagged because their work leaves the
   // machine and the label must say so.
   ipcMain.handle('engine:models', async (): Promise<{ ok: boolean; models: EngineModelEntry[]; error?: string }> => {
+    // Each engine is served by its OWN source: Claude Code reads its brains
+    // from the owner's door; agy answers only to Google. Never a pickable lie.
+    if (settings.engine.id !== 'claude-code') {
+      const known = await detectEngine(settings.engine.id as EngineId)
+      const answer = await agyModelSource(known.found).models()
+      return answer
+    }
     const door = settings.engine.baseUrl || 'http://localhost:11434'
     try {
       const answer = await fetch(`${door}/api/tags`, { signal: AbortSignal.timeout(4000) })
