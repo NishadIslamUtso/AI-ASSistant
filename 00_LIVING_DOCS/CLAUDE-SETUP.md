@@ -87,10 +87,13 @@ by hand again.
 
 ## Phase 2 — Claude Code, his way
 
-- [ ] **2.1 Skills:** copy `refs/replica-skill/replica-*` →
-      `%USERPROFILE%\.claude\skills\`. Cost: $0 (MIT).
-      *Done when:* `claude` shows the replica commands.
-- [ ] **2.2 Mods:** inside Claude Code — `/plugin`, add marketplace
+- [x] **2.1 Skills** ✅ 2026-10-15 — all 11 replica skills live in
+      `~\.claude\skills\`, enabled in the skills browser (`user` scope, ✔ each).
+      Note: `/reload-plugins` counts only plugin-bundled skills, hence its
+      misleading "0 skills" — user skills load at startup.
+- [ ] **2.2 Mods (in progress):** marketplace ADDED (70 mods live, not the stale
+      "explainx" from earlier notes — that one no longer exists). Candidates picked
+      from the live shelf: `task-board`, `scratchpad`. Inside Claude Code — `/plugin`:
       `whyashthakker/awesome-claude-code-mods`, install 1–2 MIT, reviewed mods.
       Remember: **mods are unsandboxed** (full machine access) — trusted sources
       only; he approves each install. Cost: $0.
