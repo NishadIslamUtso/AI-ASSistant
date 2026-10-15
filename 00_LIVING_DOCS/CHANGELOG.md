@@ -959,3 +959,18 @@ journal / follow-ups) and P9 (installer).
   `.github/workflows/checks.yml` runs types + tests + build on every push.
 - **298 tests green, typecheck clean, build clean.** Owner round-trip on his
   machine = the final ✅ the judges asked for.
+## 2026-10-15 (later) — the one-click installer, v0.2.0
+
+- **AI-ASSistant-Setup-0.2.0.exe (~84 MB)** built from this tree in the build
+  sandbox (wine 10 + NSIS): TRUE one click — no questions, no folder picker,
+  installs per-user without admin rights, puts shortcuts on desktop + start
+  menu, opens the app when done. Uninstall leaves his vault and settings alone.
+- Carries everything on main: the app (v0.2.0) with the hardened engine,
+  permission cards, Engine toggle. **Not yet RUN on a Windows machine — the
+  owner's double-click is the test.** Unsigned (no certificate exists; buying
+  one violates the Free Gate), so Windows SmartScreen will show "unknown
+  publisher" once — More info → Run anyway, and never again after.
+- SHA-256: a9099b0af8a459900ec0620dadcf22e358fa3b616d5f81352af3e89d21ac4322
+- Config: `nsis.oneClick: true`, `runAfterFinish: true` (folder-choice dropped
+  — the owner's one-click order outranks it). Version bumped 0.1.2 → 0.2.0:
+  the engine-inside milestone.

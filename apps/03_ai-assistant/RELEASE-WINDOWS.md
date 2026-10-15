@@ -211,3 +211,13 @@ The app icon is the app's own **BrainMark**, rendered from the existing `BrainMa
 - **No auto-update.** Installing a newer build means running a newer installer over it.
 - **Windows x64 is the only target configured.** macOS targets are not set up; Linux builds work
   (`dist:linux`) but are not the owner's platform.
+
+## 0.2.0 (2026-10-15) — the one-click build
+
+- File: `AI-ASSistant-Setup-0.2.0.exe` (~84 MB), SHA-256
+  `a9099b0af8a459900ec0620dadcf22e358fa3b616d5f81352af3e89d21ac4322`.
+- Built from this exact tree (wine 10 + NSIS, oneClick + runAfterFinish).
+- Honest status: never executed on Windows yet. First run on the owner's
+  machine is the acceptance test. Unsigned — expect the SmartScreen note.
+- Rebuild from the pushed tree — `npm install`, then `npm run dist:win`
+  (two commands, PowerShell-safe; Linux needs Wine for the NSIS step).
