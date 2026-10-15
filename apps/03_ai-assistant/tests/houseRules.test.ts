@@ -24,7 +24,7 @@ describe('house rules', () => {
     expect(cc).toContain('# House rules (AI ASSistant)')
     expect(agy).toContain('# House rules (AI ASSistant)')
     // The portable core: every section appears in both projections.
-    for (const section of ['Who you are', 'Artifacts', 'Approvals', 'How you write']) {
+    for (const section of ['Who you are', 'Artifacts', 'Approvals', 'Memory and searching', 'How you write']) {
       expect(cc).toContain(`## ${section}`)
       expect(agy).toContain(`## ${section}`)
     }
@@ -35,6 +35,18 @@ describe('house rules', () => {
     const text = compileFor('claude-code')
     expect(text).toMatch(/artifacts\//)
     expect(text).toMatch(/build the file/)
+  })
+
+  test('his standing instructions ride every engine: ask when unsure, nothing unnecessary', () => {
+    const text = compileFor('claude-code')
+    expect(text).toMatch(/not sure.*ask the owner/)
+    expect(text).toMatch(/do nothing unnecessary/)
+  })
+
+  test('memory discipline: no sweeping the workspace for a simple ask', () => {
+    const text = compileFor('agy')
+    expect(text).toMatch(/never sweep the workspace/)
+    expect(text).toMatch(/Memory and context files are background/)
   })
 
   test('no rule section is ever empty in the defaults', () => {

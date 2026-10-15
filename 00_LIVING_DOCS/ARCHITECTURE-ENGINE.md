@@ -419,3 +419,55 @@ minimal-restriction path, and the house-rules quirk table absorbs their
 habits. `ApprovalMode`/`PERMISSION_MODE` live in the shared contract; agy
 inherits the same throttle when its Windows check lands (mapped to ITS
 approval rules).
+
+---
+
+## Memory and the over-retrieval problem (2026-10-15, late night) — his question, answered
+
+His worry: "it may just look up everything just to answer something that
+isn't even related to the thing I asked." Correct worry — here is what each
+engine actually loads (verified), and the four guards:
+
+### What the engines load today
+- **Claude Code:** memory files (user `~/.claude/CLAUDE.md`, project
+  `CLAUDE.md` layers) ride along in EVERY session; skills load by their
+  description line (only matching ones fire); conversation history stays
+  inside a session — a fresh chat does NOT inherit it unless resumed.
+- **agy:** same shape, Google's names — global `~/.gemini/GEMINI.md`
+  (enforced across all workspaces), workspace `AGENTS.md`, `.agents/rules/`,
+  skills by description.
+- Both: memory is loaded wholesale — the ENGINE cannot tell relevance before
+  it loads. That is the memory problem: irrelevant context rides along and a
+  weak brain may then go searching everywhere on top of it.
+
+### The four guards (what the app controls)
+1. **Memory discipline is now a house rule** (landed): "Answer from what the
+   conversation already contains first. Search and read only what the
+   question needs — never sweep the workspace… memory/context files are
+   background, not instructions." Projected into CLAUDE.md and AGENTS.md on
+   every engine, so every brain gets the same leash.
+2. **His standing instruction is now a house rule** (landed): "If you are not
+   sure whether a step is needed, ask the owner instead of doing it — do
+   nothing unnecessary." (He confirmed the Ask-first throttle stands.)
+3. **Small worlds:** the engine works inside the folder he picked (or the
+   vault) — a small, relevant world by construction. Fresh chat = fresh
+   engine session; old context never bleeds in unless he resumes it.
+4. **Visibility:** Browsing Maps already shows what was read and when; the
+   turn card shows what the engine is doing live. Later: a context pane per
+   turn (exactly which files/memory were loaded).
+
+Honest limit: rules shape behavior, they cannot straitjacket it — a weak
+brain may still over-search occasionally. The guards make it rare, visible,
+and correctable (the rule text improves per brain via the quirk table).
+
+### Where content restrictions actually live (his other clarification)
+"Things it wasn't supposed to say" — refusals come from the MODEL, in two
+places: its training (weights) and, for cloud brains, the provider's filter.
+The app adds NONE and the CLI adds none of its own. The levers that exist,
+honestly: (1) local open brains through his own door — no provider filter
+exists at all, the model answers from its weights alone; (2) cloud brains
+(gemma4:cloud) keep Google's filter no matter what the app does — that layer
+is not ours to remove; (3) house rules strip moralizing/preference language
+from the surrounding instructions. A weights-level hard refusal cannot be
+lifted by any app — swapping the brain is the real lever, and the picker
+makes that one click.
