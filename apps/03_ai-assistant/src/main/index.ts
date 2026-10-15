@@ -1,6 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, safeStorage, shell } from 'electron'
 import { join } from 'node:path'
-import { existsSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { startLocalApi, type LocalApi } from './api/server'
 import { DEFAULT_EXTENSION_PORT, startExtensionApi, type ExtensionApi } from './extension/server'
 import { createVaultService, resolveVaultRoot } from './vault/service'
@@ -485,7 +485,37 @@ if (!gotLock) {
     // file means "nothing chosen yet", never a failed launch.
     settingsFile = join(app.getPath('userData'), 'settings.json')
     settings = readSettings(settingsFile)
-    engine = createEngineSocket()
+    engine = createEngineSocket({
+      // Engine sessions, remembered per workspace so a conversation survives
+      // an app restart (the engine's own --resume). A damaged file means
+      // "nothing to resume", never a failed launch.
+      load: (cwd) => {
+        try {
+          const file = join(app.getPath('userData'), 'engine-sessions.json')
+          const data = JSON.parse(readFileSync(file, 'utf8')) as Record<string, string>
+          return typeof data[cwd] === 'string' ? data[cwd] : ''
+        } catch {
+          return ''
+        }
+      },
+      save: (cwd, sessionId) => {
+        try {
+          const file = join(app.getPath('userData'), 'engine-sessions.json')
+          let data: Record<string, string> = {}
+          try {
+            data = JSON.parse(readFileSync(file, 'utf8')) as Record<string, string>
+          } catch {
+            data = {}
+          }
+          data[cwd] = sessionId
+          // Keep the map small: the twenty most recent workplaces are enough.
+          const entries = Object.entries(data).slice(-20)
+          writeFileSync(file, JSON.stringify(Object.fromEntries(entries)), 'utf8')
+        } catch {
+          // A failed save costs only the resume; the work itself is unaffected.
+        }
+      },
+    })
     registerBridges()
 
     // Keys are sealed by the operating system — safeStorage is the keychain on

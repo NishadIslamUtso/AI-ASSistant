@@ -9,7 +9,7 @@
  * preview) gets honest refusals, never invented work.
  */
 import { useSyncExternalStore } from 'react'
-import type { ApprovalMode, EngineEvent, EngineId, EngineModelEntry, EngineSettings } from '@shared/lib/engine'
+import type { ApprovalMode, EngineEvent, EngineId, EngineModelEntry, EngineSettings, EngineUsage } from '@shared/lib/engine'
 import { DEFAULT_ENGINE } from '@shared/lib/engine'
 import { getEngineApi } from '@/platform/bridge'
 
@@ -21,7 +21,7 @@ export type EngineItem =
   | { kind: 'error'; text: string }
 
 /** A question from the engine that a person must answer. */
-export type EnginePermission = { requestId: string; tool: string; summary: string }
+export type EnginePermission = { requestId: string; tool: string; summary: string; detail?: string }
 
 /** The engine's brains, as its own door reports them. */
 export type EngineModels = { loading: boolean; entries: EngineModelEntry[]; error: string }
@@ -32,6 +32,10 @@ export type EngineTurn = {
   items: EngineItem[]
   permission: EnginePermission | null
   state: 'running' | 'done' | 'error'
+  /** The engine's own session id, when it opened one — the resumable thread. */
+  sessionId: string | null
+  /** What the turn cost, as the engine itself reported. */
+  usage: EngineUsage | null
 }
 
 export type EngineState = {
@@ -97,20 +101,28 @@ const ingest = (event: EngineEvent): void => {
   if (event.kind === 'closed') state.alive = false
   const turn = state.turn
   if (!turn) return
-  if (event.kind === 'status') {
+  if (event.kind === 'session') {
+    turn.sessionId = event.id
+  } else if (event.kind === 'status') {
     turn.items.push({ kind: 'status', text: event.text })
   } else if (event.kind === 'text') {
     turn.items.push({ kind: 'text', text: event.text })
   } else if (event.kind === 'tool') {
     turn.items.push({ kind: 'tool', name: event.name, summary: event.summary })
   } else if (event.kind === 'permission') {
-    turn.permission = { requestId: event.requestId, tool: event.tool, summary: event.summary }
+    turn.permission = {
+      requestId: event.requestId,
+      tool: event.tool,
+      summary: event.summary,
+      detail: event.detail,
+    }
   } else if (event.kind === 'done') {
     // The wire says the same goodbye twice (once as the engine's last words,
     // once as the result) — show it once.
     const last = turn.items.at(-1)
     const alreadySaid = event.text && last?.kind === 'text' && last.text === event.text
     if (event.text && !alreadySaid) turn.items.push({ kind: 'text', text: event.text })
+    if (event.usage) turn.usage = event.usage
     turn.state = 'done'
     turn.permission = null
   } else if (event.kind === 'closed') {
@@ -124,6 +136,7 @@ const ingest = (event: EngineEvent): void => {
     }
   } else {
     turn.items.push({ kind: 'error', text: event.text })
+    if ('usage' in event && event.usage) turn.usage = event.usage
     turn.state = 'error'
     turn.permission = null
   }
@@ -173,7 +186,7 @@ const store: EngineStore = {
       return { ok: false, answer: 'The engine is already working on the last task.' }
     }
     void store.init()
-    const turn: EngineTurn = { prompt, items: [], permission: null, state: 'running' }
+    const turn: EngineTurn = { prompt, items: [], permission: null, state: 'running', sessionId: null, usage: null }
     setState({ turn })
     const answer = await getEngineApi().send(prompt, '')
     if (answer.ok) state.alive = true
