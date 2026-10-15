@@ -1,6 +1,8 @@
 # HANDOVER_LIVING.md — Current State + Gaps (Living)
 
-> **Taking over? Read in this order:** `TODOLIST.md` in this folder (the active
+> **Taking over? Read in this order:** `CLAUDE-SETUP.md` in this folder (the
+> owner's active path since 2026-10-15 — configure Claude + Claude Code, app parked),
+> then `TODOLIST.md` here (the app's full record, light-shell frame
 > checklist — light-shell frame, the Claude-connection plan), then `BUILD-TODO.md` here (the reference
 > plan, screens-first order + the full mockup/feature tables), `CHANGELOG.md`
 > (what landed when, with commit ids), `../memory/sessions/` (why decisions
