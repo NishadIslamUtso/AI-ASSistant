@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { bridge, isDemo } from '../platform/bridge'
 import HouseRulesSection from './HouseRulesSection'
+import SkillsCatalogSection from './SkillsCatalogSection'
 import type { VaultState } from '../hooks/useVault'
 import type { ModelState } from '../hooks/useModels'
 import {
@@ -58,7 +59,7 @@ import {
  * browser preview there is no folder to choose and no model to run.
  */
 
-type SectionId = 'agents' | 'house' | 'system' | 'appearance' | 'models' | 'performance' | 'vault'
+type SectionId = 'agents' | 'house' | 'skills' | 'system' | 'appearance' | 'models' | 'performance' | 'vault'
 
 type Row = {
   /** What the row is called, and what the rail's search matches on. */
@@ -78,6 +79,7 @@ const SECTIONS: readonly {
   { id: 'system', title: 'System', group: 'This computer' },
   { id: 'agents', title: 'Agent access', group: 'This app', resettable: true },
   { id: 'house', title: 'House rules', group: 'This app' },
+  { id: 'skills', title: 'Skills', group: 'This app' },
   { id: 'appearance', title: 'Appearance', group: 'This app', resettable: true },
   { id: 'models', title: 'Models', group: 'This app' },
   { id: 'performance', title: 'Performance', group: 'This app', resettable: true },
@@ -104,6 +106,11 @@ function SectionIcon({ id }: { id: SectionId }) {
       <>
         <path d="M10 3 4 5.4v3.9c0 3.5 2.5 6.3 6 7.4 3.5-1.1 6-3.9 6-7.4V5.4z" />
         <path d="M7.6 10.2 9.4 12l3-3.4" />
+      </>
+    ),
+    skills: (
+      <>
+        <path d="M10 3.5 11.8 7.6 16 8.2 13 11.2 13.7 15.5 10 13.4 6.3 15.5 7 11.2 4 8.2 8.2 7.6z" />
       </>
     ),
     appearance: (
@@ -917,6 +924,13 @@ export default function SettingsView({
         label: 'The rulebook',
         terms: 'house rules instructions identity artifacts approvals memory style ask unsure CLAUDE.md AGENTS.md',
         body: <HouseRulesSection />,
+      },
+    ],
+    skills: [
+      {
+        label: 'Skill catalog',
+        terms: 'skills install catalog engines deploy anthropic docx pptx xlsx pdf mcp webapp',
+        body: <SkillsCatalogSection />,
       },
     ],
     vault: [      {

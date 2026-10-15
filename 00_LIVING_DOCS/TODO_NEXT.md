@@ -121,8 +121,7 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
 - [x] **Caveman-style token hint** — LANDED: `isSmallLocalBrain` (size tags ≤14b, phi/tiny families) adds a two-sentence bare-facts hint to the quirk table, riding the deployed rules. Researched: the caveman skill claims 65% output cuts but its own rule block costs ~1,160 input tokens — ours is two sentences, only for the brains that need it.
 - [x] **Handoff button** — LANDED: a finished turn becomes one vault document (`handoffs/<date>-<task>.md`) shaped after the three handoff repos studied 2026-10-16 — instructions to the receiving assistant, the task, the real tool calls as evidence, the resumable session id — also copied to the clipboard. Built from the turn in memory; nothing parsed post-hoc, nothing invented.
 - [ ] **Obsidian export** (trivial — the vault is already markdown).
-- [ ] **Skills sourcing**: browse anthropics/skills + awesome-claude-skills
-  and offer installs through the existing one-vault-to-every-engine deploy.
+- [x] **Skills sourcing** — LANDED: Settings > Skills lists a curated catalog (verified live against anthropics/skills' real folder list: docx/pptx/xlsx/pdf, mcp-builder, skill-creator, webapp-testing, frontend-design, web-artifacts-builder, doc-coauthoring, internal-comms); one click fetches the raw SKILL.md (catalog names only — the door fetches nothing else) and deploys to both engines through Track A's deploy. The Skills pane UI debt is hereby settled by this section.
 
 - [ ] Real-CLI harness (settle `-p/--print` and `initialize` disputes)
 - [ ] JUDGE-BRIEF.md refresh: engine spine, throttle, house rules, freedom

@@ -88,6 +88,10 @@ export type DesktopBridge = {
       }
     }>
   }
+  skills: {
+    /** Install one skill from the app's own catalog, into every engine. */
+    installCatalog: (name: string) => Promise<{ ok: boolean; answer: string; written?: string[] }>
+  }
   vault: {
     /** The operating system's folder picker. null when the person closed it. */
     chooseFolder: () => Promise<string | null>
@@ -154,6 +158,7 @@ const demoBridge: DesktopBridge = {
       error: 'Settings are part of the desktop app. This window is the interface only, so there is no folder to change.',
     }),
   },
+  skills: { installCatalog: async () => ({ ok: false, answer: 'Installing skills needs the desktop app.' }) },
   vault: { chooseFolder: async () => null, saveHandoff: async () => ({ ok: false, answer: 'Writing a handoff needs the desktop app.' }) },
   // No socket is open here, and none can be: this is a page, not the app.
   extension: {

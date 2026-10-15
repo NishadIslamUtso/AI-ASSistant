@@ -23,6 +23,7 @@ import { APPROVAL_MODES, type ApprovalMode, type EngineEvent, type EngineId, typ
 import { agyModelSource, detectEngine } from './engine/availability'
 import { parsePullLine, validateModelName } from './engine/pull'
 import { deployMcp, deploySkill, scanClaudeSkills, type McpServer, type VaultSkill } from './engine/deploy'
+import { installCatalogSkill } from './engine/skillCatalogInstall'
 import { deployHouseRules } from './engine/houseRulesDeploy'
 import { DEFAULT_HOUSE_RULES, type HouseRules } from '../shared/lib/houseRules'
 import { newProject, normalizeProjects, type Project } from '../shared/lib/projects'
@@ -407,6 +408,16 @@ function registerBridges(): void {
   ipcMain.handle('skills:scan', () => {
     const home = process.env['USERPROFILE'] || process.env['HOME'] || ''
     return scanClaudeSkills(join(home, '.claude', 'skills'))
+  })
+
+  // Install a skill from the app's own catalog: the name is checked against
+  // the catalog (this door fetches nothing else), the file comes from
+  // anthropics/skills, and it lands in every engine's own folder through the
+  // same deploy everything else uses.
+  ipcMain.handle('skills:install-catalog', async (_event, name: string): Promise<{ ok: boolean; answer: string; written?: string[] }> => {
+    const result = await installCatalogSkill(String(name ?? ''), skillTargets())
+    if (!result.ok) return { ok: false, answer: result.answer }
+    return { ok: true, answer: `${result.skill.name} installed to ${result.written.length} engine folders`, written: result.written }
   })
 
   // Deploy the app's vault into every engine's own folder. The renderer sends
