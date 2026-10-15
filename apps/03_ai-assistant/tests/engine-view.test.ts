@@ -28,6 +28,7 @@ type FakeApi = {
   picked?: string
   model?: string
   workspace?: string
+  approval?: string
   brains: Array<{ name: string; cloud: boolean; sizeGB: number | null }>
 }
 
@@ -44,7 +45,13 @@ function withFakeEngine(): FakeApi {
   }
   const api = {
     read: async () => ({
-      engine: { id: 'claude-code', model: 'gemma4:cloud', baseUrl: 'http://localhost:11434', workspace: '' },
+      engine: {
+        id: 'claude-code',
+        model: 'gemma4:cloud',
+        baseUrl: 'http://localhost:11434',
+        workspace: '',
+        approval: 'ask',
+      },
       running: true,
       history: [],
     }),
@@ -60,6 +67,10 @@ function withFakeEngine(): FakeApi {
     pickWorkspace: async () => {
       fake.workspace = 'C:\\engworkspace'
       return { ok: true, answer: fake.workspace as string }
+    },
+    setApproval: async (mode: string) => {
+      fake.approval = mode
+      return { ok: true, answer: mode }
     },
     send: async (prompt: string, cwd: string) => {
       fake.sent.push({ prompt, cwd })
@@ -235,6 +246,26 @@ test('the engine bay: a silent brain door becomes a sentence, never an empty lie
   // An honest refusal leaves the previous choice standing.
   await store.pickWorkspace()
   assert.equal(store.settings.workspace, '')
+})
+
+test('the throttle: the owner sets how much the engine may do before asking', async () => {
+  const { store, fake } = freshStore()
+  await store.init()
+  assert.equal(store.settings.approval, 'ask')
+  await store.setApproval('full')
+  assert.equal(fake.approval, 'full')
+  assert.equal(store.settings.approval, 'full')
+  // The bay offers the three settings, by their honest names.
+  const bay = read('../src/renderer/src/components/EngineBay.tsx')
+  for (const label of ['Ask me', 'Auto-edits', 'Full speed']) {
+    assert.match(bay, new RegExp(label))
+  }
+  assert.match(bay, /deny rules/)
+  // The app's door exists and the launch line reads the throttle.
+  const main = read('../src/main/index.ts')
+  assert.match(main, /engine:approval/)
+  const adapter = read('../src/main/engine/claudeCode.ts')
+  assert.match(adapter, /PERMISSION_MODE\[approval\]/)
 })
 
 test('the shell carries the bay: sidebar has the engine section, the composer defers to it', () => {

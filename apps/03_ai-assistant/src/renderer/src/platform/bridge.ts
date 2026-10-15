@@ -19,7 +19,7 @@
  *      so the UI's own empty state is what the person sees.
  */
 import type { CloudModelsAnswer, CloudTestAnswer, CloudView } from '@shared/lib/providers'
-import { DEFAULT_ENGINE, type EngineEvent, type EngineId, type EngineModelEntry, type EngineSettings } from '@shared/lib/engine'
+import { DEFAULT_ENGINE, type ApprovalMode, type EngineEvent, type EngineId, type EngineModelEntry, type EngineSettings } from '@shared/lib/engine'
 import { DEFAULT_PERMISSIONS, type Permissions } from '@shared/lib/permissions'
 import type {
   AdoptInput,
@@ -204,6 +204,7 @@ export type EngineBridge = {
   pick: (id: EngineId) => Promise<{ ok: boolean; answer: string }>
   models: () => Promise<{ ok: boolean; models: EngineModelEntry[]; error?: string }>
   setModel: (model: string) => Promise<{ ok: boolean; answer: string }>
+  setApproval: (mode: ApprovalMode) => Promise<{ ok: boolean; answer: string }>
   pickWorkspace: () => Promise<{ ok: boolean; answer: string }>
   send: (prompt: string, cwd: string) => Promise<{ ok: boolean; answer: string }>
   answer: (requestId: string, allow: boolean) => Promise<{ ok: boolean }>
@@ -220,6 +221,7 @@ const demoEngineBridge: EngineBridge = {
     error: 'Engine brains are listed in the desktop app: this window is the interface only.',
   }),
   setModel: async () => ({ ok: false, answer: 'Brains are chosen in the desktop app.' }),
+  setApproval: async () => ({ ok: false, answer: 'The throttle lives in the desktop app.' }),
   pickWorkspace: async () => ({
     ok: false,
     answer: 'Choosing a folder needs the desktop app: this window is the interface only.',

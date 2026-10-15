@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ChevronDown, FolderOpen, RefreshCw, Cpu, Cloud } from 'lucide-react'
 import { useEngine, type EngineModels } from '@/state/engine'
 import useDismiss from '@/hooks/useDismiss'
-import type { EngineId } from '@shared/lib/engine'
+import type { ApprovalMode, EngineId } from '@shared/lib/engine'
 
 /**
  * The engine bay — the app's own engine selection system.
@@ -26,6 +26,27 @@ const ENGINES: Array<{ id: EngineId; label: string; hint: string }> = [
 
 /** The last part of a path, whichever slash the platform uses. */
 const leaf = (folder: string): string => folder.split(/[\\/]/).filter(Boolean).at(-1) ?? folder
+
+/** The throttle: how much the engine may do before it asks. Its own official settings, nothing added. */
+const THROTTLE: Array<{ id: ApprovalMode; label: string; note: string }> = [
+  {
+    id: 'ask',
+    label: 'Ask me',
+    note: 'Every step beyond reading asks you first — as a card in the chat.',
+  },
+  {
+    id: 'edits',
+    label: 'Auto-edits',
+    note: 'Files in the workspace change without asking; other commands still ask.',
+  },
+  {
+    id: 'full',
+    label: 'Full speed',
+    note:
+      'Everything runs without asking. The engine\u2019s own deny rules and guarded deletions still block. ' +
+      'Your machine, your call — takes hold from the next engine start.',
+  },
+]
 
 export default function EngineBay() {
   const engine = useEngine()
@@ -147,6 +168,32 @@ export default function EngineBay() {
         <FolderOpen size={12} aria-hidden className="shrink-0" />
         <span className="min-w-0 flex-1 truncate">{workspaceLabel}</span>
       </button>
+
+      {/* The throttle: the engine's own settings, from ask-me to full speed. */}
+      <div
+        role="radiogroup"
+        aria-label="How much the engine may do before asking"
+        className="mt-1 grid grid-cols-3 gap-1 rounded-lg border border-line p-1"
+      >
+        {THROTTLE.map((step) => {
+          const active = (engine.settings.approval ?? 'ask') === step.id
+          return (
+            <button
+              key={step.id}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              title={step.note}
+              onClick={() => void engine.setApproval(step.id)}
+              className={`rounded-md px-1 py-1 text-[11px] transition-colors ${
+                active ? 'bg-accent text-white' : 'text-muted hover:text-ink'
+              }`}
+            >
+              {step.label}
+            </button>
+          )
+        })}
+      </div>
     </section>
   )
 }

@@ -21,7 +21,8 @@
 import { spawn, type ChildProcess } from 'node:child_process'
 import { StringDecoder } from 'node:string_decoder'
 import { join } from 'node:path'
-import type { EngineEvent, EngineSettings } from '../../shared/lib/engine'
+import type { ApprovalMode, EngineEvent, EngineSettings } from '../../shared/lib/engine'
+import { PERMISSION_MODE } from '../../shared/lib/engine'
 import { createEngineParser } from './stream'
 
 export type EngineSession = {
@@ -58,12 +59,12 @@ export type EngineStartInput = Omit<StartSessionInput, 'spawnProcess'>
  * permission flags are the difference between "the app gates every tool" and
  * "the CLI does whatever it likes" — see the header comment.
  */
-export function engineArguments(model: string): string[] {
+export function engineArguments(model: string, approval: ApprovalMode = 'ask'): string[] {
   const args = [
     '--output-format', 'stream-json',
     '--input-format', 'stream-json',
     '--verbose',
-    '--permission-mode', 'manual',
+    '--permission-mode', PERMISSION_MODE[approval],
     '--permission-prompt-tool', 'stdio',
   ]
   if (model) args.push('--model', model)
@@ -105,7 +106,7 @@ export function brainEnvironment(baseUrl: string): Record<string, string> {
 }
 
 export function startClaudeCodeSession(input: StartSessionInput): EngineSession {
-  const args = engineArguments(input.settings.model)
+  const args = engineArguments(input.settings.model, input.settings.approval)
 
   let child: ChildProcess
   const start = input.spawnProcess ?? spawn

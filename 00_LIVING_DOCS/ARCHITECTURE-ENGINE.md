@@ -364,3 +364,58 @@ are deployment targets, and a change in the app re-deploys everywhere.
 House rules, skills vault, engine binary, and a local brain (e.g.
 qwen2.5-coder:3b) are all on-disk: the whole loop — instructions, work,
 verification — runs with zero internet. Cloud brains stay badged.
+
+---
+
+## The freedom matrix and the throttle (2026-10-15, late night)
+
+His questions: gemma already works through Claude Code — how do the offline
+models run? Can he choose whichever engine for whichever model? And he wants
+as few restrictions as possible.
+
+### How offline models run (now and future)
+
+The brain door (Ollama) serves every brain it has — cloud (`gemma4:cloud`)
+and on-his-GPU local (`qwen2.5-coder:3b`, anything else he pulls) — through
+one Anthropic-compatible mouth. Claude Code consumes that door; the app
+points Claude Code at it. Offline is the SAME pipe with a local brain: engine
+binary (disk) + app (disk) + local brain (disk) = the whole loop with zero
+internet. Future models = whatever appears in the door appears in the bay's
+picker automatically (`engine:models` reads it live). Next landing in this
+line: a pull-models control in the bay (`POST /api/pull`) so "whichever
+models I want" needs no terminal at all.
+
+### The freedom matrix — the honest version
+
+| engine | which models | why |
+|---|---|---|
+| Claude Code | **any brain in his door** (all of Ollama: local + cloud) + Anthropic's own if ever logged in | CC reads its brains from `ANTHROPIC_BASE_URL` — the app owns that |
+| agy | Google's fixed, plan-dependent selector only | verified: no custom endpoint exists in agy; Ollama brains cannot plug in |
+| engine #3+ | whatever that engine allows | the bay exposes each engine's real freedom, never a fake |
+
+So: engine choice is free; model choice is whatever the CHOSEN engine truly
+accepts. The app's rule: show the truth per engine, never a pickable lie.
+(structural fix queued: `engine:models` becomes per-engine routed.)
+
+### The throttle — fewer restrictions, the official way (LANDED 2026-10-15)
+
+Verified against the CLI's real modes (manual/default → acceptEdits →
+bypassPermissions, plus plan/auto/dontAsk). The EngineBay now carries a
+three-step throttle, persisted, read by the launch line:
+
+- **Ask me** (`--permission-mode manual`, the old behavior, still default)
+- **Auto-edits** (`acceptEdits`: files change in the workspace unasked;
+  other commands still ask)
+- **Full speed** (`bypassPermissions`: everything runs unasked)
+
+Honest limits, stated in the UI and here: even at full speed the engine's
+own deny rules and guarded deletions (rm on /, ~, cwd parents) still block —
+that is the engine keeping its nature, not the app adding restrictions. The
+app writes NO deny rules of its own (the settings→flags defect stays
+deliberately unfixed in the owner's favor: the app imposes nothing beyond
+the engine's defaults). Model-level refusals are a brain property, not an
+app property — open brains through his own door are already the
+minimal-restriction path, and the house-rules quirk table absorbs their
+habits. `ApprovalMode`/`PERMISSION_MODE` live in the shared contract; agy
+inherits the same throttle when its Windows check lands (mapped to ITS
+approval rules).

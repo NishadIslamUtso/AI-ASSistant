@@ -339,6 +339,20 @@ test('the launch arguments are a pure function of the model', () => {
   assert.equal(engineArguments('').includes('--model'), false)
 })
 
+test('the throttle maps to the engine\u2019s own official modes, ask unchanged', () => {
+  // The default stays exactly what always ran: manual (the CLI's alias for ask-first).
+  assert.equal(engineArguments('m').includes('manual'), true)
+  assert.equal(engineArguments('m', 'ask').includes('manual'), true)
+  assert.equal(engineArguments('m', 'edits').includes('acceptEdits'), true)
+  assert.equal(engineArguments('m', 'full').includes('bypassPermissions'), true)
+  // Only the mode value moves; the wire sentence and prompt tool stay pinned.
+  for (const mode of ['ask', 'edits', 'full'] as const) {
+    const args = engineArguments('m', mode)
+    assert.equal(args.includes('--permission-prompt-tool'), true)
+    assert.equal(args.includes('stream-json'), true)
+  }
+})
+
 test('the socket: one task at a time, but the next task reuses the living engine', () => {
   const fake = fakeEngine()
   const rec = recorder()
@@ -411,6 +425,10 @@ test('engine settings: a model name can never carry shell meaning', () => {
   assert.equal(normalizeEngine({ model: 'gemma4:cloud & del /q *' }).model, DEFAULT_ENGINE.model)
   assert.equal(normalizeEngine({ model: 'x"; calc' }).model, DEFAULT_ENGINE.model)
   assert.equal(normalizeEngine({ model: 'gemma4:cloud' }).model, 'gemma4:cloud')
+  // The throttle: anything unknown falls back to ask; the real modes persist.
+  assert.equal(normalizeEngine({ approval: 'yolo' }).approval, 'ask')
+  assert.equal(normalizeEngine({ approval: 'full' }).approval, 'full')
+  assert.equal(normalizeEngine({}).approval, 'ask')
 })
 
 test('tool summaries speak about the thing, not the JSON', () => {

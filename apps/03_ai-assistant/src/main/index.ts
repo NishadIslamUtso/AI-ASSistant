@@ -19,7 +19,7 @@ import { normalizePermissions } from '../shared/lib/permissions'
 import { registerArtifactIpc } from './artifacts/ipc'
 import { createEngineSocket, type EngineSocket } from './engine/socket'
 import { normalizeEngine } from '../shared/lib/engine'
-import type { EngineEvent, EngineModelEntry } from '../shared/lib/engine'
+import { APPROVAL_MODES, type ApprovalMode, type EngineEvent, type EngineModelEntry } from '../shared/lib/engine'
 
 /**
  * The main process. Everything that touches the machine lives on this side:
@@ -289,6 +289,16 @@ function registerBridges(): void {
     } catch {
       return { ok: false, models: [], error: 'the brain door (Ollama) is not answering — start Ollama, then refresh' }
     }
+  })
+
+  // The throttle: how much the engine may do before asking. The app offers
+  // the engine's own official settings and imposes nothing beyond them.
+  ipcMain.handle('engine:approval', (_event, approval: string): { ok: boolean; answer: string } => {
+    const mode: ApprovalMode = APPROVAL_MODES.includes(approval as ApprovalMode)
+      ? (approval as ApprovalMode)
+      : 'ask'
+    settings = writeSettings(settingsFile, { ...settings, engine: { ...settings.engine, approval: mode } })
+    return { ok: true, answer: mode }
   })
 
   ipcMain.handle('engine:model', (_event, model: string): { ok: boolean; answer: string } => {

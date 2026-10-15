@@ -1007,3 +1007,15 @@ landing rebuilds the shell around the engine:
   SHA-256 `87e2867b7b8caf5c8a4e99fe918efa7d793a1fdcd111ef3f9b179d295bd441c6`.
 - Parity program next: session history/resume, skills + plugins panes, file
   diffs, usage display — then the six designed screens.
+
+## 2026-10-15 (late night) — the throttle: fewer restrictions, the engine's own way
+
+His ask: as few restrictions as possible. Landed: the EngineBay carries a
+three-step throttle — Ask me (`manual`, unchanged default), Auto-edits
+(`acceptEdits`), Full speed (`bypassPermissions`) — persisted, wired through
+the shared contract (`ApprovalMode`, `PERMISSION_MODE`), the door
+(`engine:approval`), and the launch line. Honest notes in the UI: engine
+deny rules and guarded deletions still hold at full speed (its nature, not
+our gate); the app itself writes no restrictions. 313 tests, tsc clean.
+ARCHITECTURE-ENGINE: the freedom matrix (engine x models, the honest
+version) and the offline-models explanation added.
