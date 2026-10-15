@@ -1,104 +1,105 @@
 # TODO_NEXT.md — Immediate Next Actions (Living)
 
-**Last Updated:** 2026-10-15 (late) Asia/Dhaka
+**Last Updated:** 2026-10-15 (late night) Asia/Dhaka — rewritten after the
+engine-spine session (Engine bay, house rules, throttle, freedom matrix,
+memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
 
-## 2026-10-15 state (engine era)
+## What changed this session (already DONE, for the record)
 
-- [x] 6.2 + 6.2b landed (engine back room + face) — then HARDENED after six
-  judge reviews: permission flags pinned (cards really fire), multi-turn,
-  Stop-wedge fixed, Bangla-safe decoding, flush, denials/retries surfaced,
-  model validation, agy honesty, warnings-fail smoke, CI workflow. **298/298.**
-- [ ] **Owner round-trip** — installer → he opens the app → Engine on → one
-  file edit with a card. This is the ✅ the judges demanded. NEXT.
-- [ ] Then: the six screens (one landing each), undo card, session insights,
-  MCP server, agy Windows check, prompt-library + regenerate UI wiring.
-**Rule:** Priority order. Update after each session, check off when done.
+- [x] **v0.3.0 shipped:** the engine is the spine — EngineBay (engine
+  selection system, brains FROM the engine's door, workplace folder picker),
+  composer defers in engine mode, truthful alive tracking.
+- [x] **House rules compiler** (`shared/lib/houseRules.ts`): one rulebook →
+  CLAUDE.md (Claude Code) / AGENTS.md (agy); includes his standing
+  instructions (ask when unsure, do nothing unnecessary) and memory
+  discipline (answer from the conversation first, never sweep).
+- [x] **The throttle:** Ask me (`manual`) / Auto-edits (`acceptEdits`) /
+  Full speed (`bypassPermissions`) — the engine's own official modes, the
+  app adds none of its own.
+- [x] **Freedom matrix + five boundaries + memory problem** documented in
+  ARCHITECTURE-ENGINE.md; both engine repos verified (agy has NO custom
+  endpoint — Ollama brains can never plug into it; fake
+  `gemini-antigravity-cli` repos = scams, warned).
+- 315/315 tests, tsc clean, pushed (main = v3).
 
----
+## NOW — the acceptance round-trip (everything hangs on this)
 
-## Priority 1 — The owner's own Windows test ⬅ DO THIS FIRST
+- [ ] **Rebuild installer as v0.4.0** — 0.3.0 predates the throttle + house
+  rules; he must get ONE installer with everything (`npm run dist:win`,
+  wine note in RELEASE-WINDOWS.md).
+- [ ] **His run on the TUF A15:** install → Engine on → pick a brain in the
+  bay (cloud badge = leaves machine; local = offline) → pick a folder →
+  set the throttle → give real work → approve via the card → see artifacts
+  land. This is the ✅ the judges demanded (6.2/6.5 tick on 👍).
+- [ ] On any defect: same-day fix, rebuild, he retries.
 
-Nothing below matters until the app has run on the TUF A15.
+## TRACK A — the spine (engine parity — his #1 ruling, in order)
 
-**The short way — the installer** (no Node, no build tools, no admin rights):
+- [ ] **Per-engine model routing** — `engine:models` becomes per-engine:
+  claude-code → brain door `/api/tags`; agy → its own selector (read from
+  his machine once installed); the bay shows each engine's REAL freedom,
+  never a pickable lie.
+- [ ] **Pull-models button in the bay** (`POST /api/pull` to the door) —
+  "whichever models I want" with zero terminal.
+- [ ] **agy Windows check (6.3)** on his machine → `main/engine/agy.ts`
+  adapter (native input mode vs PTY, decided by the check) → throttle mapped
+  to agy's approval rules → bay flips "soon" to live.
+- [ ] **Session history / resume** — engine sessions listed and resumable
+  (the `--resume` class of ability), in-app.
+- [ ] **Skills, one vault → every engine:** import his existing 11 CC skills
+  into the app vault (markdown + frontmatter, already the format) → deploy
+  to `~/.claude/skills/` AND `.agents/skills/` → a Skills pane in the app.
+- [ ] **MCP, one list → every engine:** app keeps the server list, projects
+  to Claude Code's config and agy's `.agents/mcp_config.json` (field names
+  translated per engine).
+- [ ] **File diffs on approval cards** — see exactly what an edit changes
+  before allowing it.
+- [ ] **Usage display** — what each session/turn cost in time and tokens
+  (cloud brains: the free-slice caps visible).
+- [ ] **Plugin packs (level 2)** — per-engine plugin packaging, after the
+  agy check confirms formats. Level 1 = skills + rules + MCP (above).
+- [ ] **House-rules edit screen** — the canonical rulebook editable in
+  Settings; re-deploys to every engine on save.
+- [ ] **"About the owner" block — ON HIS WORD** (offered 2026-10-15): ten
+  lines max, he writes/edits it, rides every engine's context. Not built
+  until he says so.
+- [ ] **Per-turn context pane** — exactly which files/memory/skills were
+  loaded this turn (the visibility guard for the memory problem).
 
-- [ ] Copy `AI-ASSistant-Setup-0.1.0.exe` (87,748,105 bytes, ~84 MB) to the Windows machine and double-click it
-- [ ] Windows shows SmartScreen: *"Windows protected your PC"* / unknown publisher. It is **unsigned** — no
-      certificate exists — so click **More info** → **Run anyway**. It is your own build from your own repo
-- [ ] Choose the folder (the default is fine) and finish; a desktop and Start-menu shortcut appear
-- [ ] Start Ollama (it must be running at `127.0.0.1:11434` with a model pulled; the app talks to it, it does
-      not install it), then open **AI ASSistant**
-- [ ] Ask something ordinary: it must answer, and must not open an artifact
-- [ ] Confirm the conversation appeared in the vault as Markdown
-- [ ] Open Settings (bottom left) and walk the sections; report anything that looks off
-- [ ] If you have an API key you are willing to paste: Settings > Models > Add key, press Test, then pick that
-      model in the composer and ask it something. Nothing is sent anywhere until a key is saved.
-- [ ] Report back: what worked, what looked wrong, any red text in the terminal
+## TRACK B — the face (the six designed screens; mockups are authority)
 
-**The developer way** (running from source, if you would rather): branch `arena/3c06e1bf-ai-assistant-v3` or
-`main` → `cd apps\03_ai-assistant` → `npm install` → `npm run dev`.
+- [ ] **Today 07** (first screen to land)
+- [ ] **Projects 04**
+- [ ] **Vault 05**
+- [ ] **Code 06**
+- [ ] **First-run 08** (folds in engine setup: brain, folder, throttle)
+- [ ] **Appearance 09**
+- [ ] Carried UI debts: undo card, session insights, prompt-library +
+  regenerate wiring, sidebar collapse/resize already remembered (done).
 
-Honest details about the installer (including the SmartScreen text, in advance): `apps/03_ai-assistant/RELEASE-WINDOWS.md`.
+## TRACK C — open defects (judge list; fix as encountered, all before 1.0)
 
-## Priority 2 — The screens, in order (the owner's verdict was "this is a plain chatbot"; screens first)
+- [ ] free-gate: empty `baseUrl` still passes machine env through
+- [ ] cloud/local badge classification in the chat model list
+- [ ] stdin EPIPE guard on engine stdin
+- [ ] deliberate kill still emits an error card (should be quiet)
+- [ ] Windows stop via `taskkill /pid <pid> /T /F`
+- [ ] parser scan-offset (chunk-boundary scan)
+- [ ] `engine:read` history hydrate-or-drop
+- [ ] token streaming (incremental text, not end-of-turn)
+- [ ] >1 pending card queue
+- [x] ~~settings.permissions → engine flags~~ RESOLVED BY DECISION
+  (2026-10-15): the app imposes no rules of its own — owner-favor, documented
+  in ARCHITECTURE-ENGINE.md.
 
-The mockups have eight screens. Chat, Settings and now **Artifacts** exist. Each step below is one landing:
-built, verified, merged, reported. The rule: **a nav item appears only when its screen works.**
+## TRACK D — hygiene (continuous)
 
-- [x] **Artifacts** — done 2026-10-14 (late evening): a real library on disk (append-only versions, remove moves
-      to `.trash`, damaged index repaired from the files), the grid with real thumbnails, version chips,
-      rename/duplicate/copy-out/remove, the folder named in a footer, adoption of what was already in
-      conversations, and the sidebar search filtering the library. 14 new tests; a new desktop check that reads
-      the files off disk before it trusts the screen. **Step 1b is Import and Tweaks** (the mockup's file picker
-      and the accent/radius sliders) — deferred by ordering, not dropped
-- [ ] **Today** (mockup 07) — the landing screen: conversations today, vault notes touched, artifacts made
-      today (the library now makes this number honest), worth-doing-next from the vault's open loops, recent
-      sources, quick actions — **next**
-- [ ] **Vault** (mockup 05) — the real file tree, search, preview, reindex, add-to-composer
-- [ ] **Projects** (mockup 04) — projects with chats, instructions, context and memory
-- [ ] **Code** (mockup 06) — read the mockup when this step starts
-- [ ] **First-run** (mockup 08) and the composer chips (project · model · effort · local/online)
-- [ ] **Port the extension itself.** The app has carried the port it needs since `8e589a0`
-      (`127.0.0.1:8765`, capture side only); the extension is still the starter it was. Load it in a real
-      browser, wire the collector + context suggester + popup, and prove a real page capture lands in the
-      vault — until then Browsing Maps is mostly the app's own conversations
-- [ ] The preview/export chain (after the extension)
-- [ ] The topic list / branch tree
-- [ ] Projects + chat memory
-- [ ] Cloud follow-ups: per-provider default model, audit log, token/cost meter, cloud → local-only failover
-- [ ] Code signing, **only if** the SmartScreen warning gets in the way (a certificate costs money and
-      requires proving identity; until then the warning is expected behaviour, not a bug)
+- [ ] Real-CLI harness (settle `-p/--print` and `initialize` disputes)
+- [ ] JUDGE-BRIEF.md refresh: engine spine, throttle, house rules, freedom
+  matrix, memory guards (branch must stay judgeable)
+- [ ] `/home/user/` doc mirrors re-sync (CLAUDE-SETUP/ARCHITECTURE/FEATURE-AUDIT)
+- [ ] RELEASE-WINDOWS.md stays current per installer build
 
-## Priority 3 — Parked by the owner
-
-- [ ] Voice, wake word, always-listening (Jarvis) — "leave jarvis idea for now; i will do it when I have a
-      better computer"
-
-## Done recently (do not redo)
-
-- [x] Vault writes end to end (conversations, activity log, folder moved from Settings)
-- [x] Settings: Appearance (accent + conversation width, tokenised) and Performance (profiles + custom values)
-- [x] Settings as the full-window surface with a rail, search and Reset
-- [x] Memory warning measured against the chosen profile; no more "6 GB answered with 4 GB"
-- [x] Vercel deployment files removed
-- [x] Every living doc, `.ai/` file and the extension docs brought to the current state
-- [x] **Browsing Maps** — the timeline of what the vault holds (conversations, captured pages, visits) with
-      site grouping, kind filters, search and a time window; a visit stays a visit
-- [x] **Settings > Agent access** — the local model, browser captures, keeping conversations and each keyed
-      provider, each one enforced in the main process; Files, Shell, Web and MCP are stated as not built rather
-      than offered. Every reply is labelled `local` or `online · <provider>`
-- [x] **The extension port** — 127.0.0.1:8765, loopback only, `chrome-extension://` origins only, carrying the
-      capture side of the vault (health, status, context, capsules, blacklist, capture) and nothing that could
-      spend a key, change a setting or export the vault
-- [x] **Online providers** — Claude (Anthropic), GPT, Gemini, OpenRouter, Groq, DeepSeek, Grok and any
-      OpenAI-compatible endpoint. Keys pasted in Settings > Models, sealed by the machine's own keychain,
-      never handed to the interface; a cloud model is `provider/model` and answers through the same
-      address as a local one. Off by default: no key, no request
-- [x] **The Artifacts screen** — the library on disk, the grid, versions, and the nav entry (see Priority 2)
-- [x] **The sidebar collapses and resizes** — a 56px rail and a drag handle, both remembered; the chat's
-      artifacts rail hides and returns
-- [x] **The logo's id namespacing hardened** — `useId()` punctuation is stripped before it goes into
-      `url(#…)` references, and the window icon is wired for the development build
-- [x] **The Windows installer** — `AI-ASSistant-Setup-0.1.0.exe` (NSIS, assisted, per-user, unsigned) built
-      from `electron-builder.yml`, icon from the app's own BrainMark; payload listed and the same config's
-      Linux bundle boots clean. Installing it on Windows is the owner's own test (Priority 1)
+**Standing rules:** ✅ only after a real turn with the real engine on his
+machine; every item individually checkable; docs in sync each landing; no
+quiet descope — "everything, done correctly."
