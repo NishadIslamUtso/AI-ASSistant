@@ -12,7 +12,8 @@ subscription. Other than that, everything must be free."*
   explanation the first time it appears.
 - **App status:** parked (see `TODOLIST.md`), not deleted. No app code unless he
   un-parks it.
-- **Cadence:** one step per turn. He says **"next"** (or "skip" / "reorder").
+- **Cadence (corrected 2026-10-15):** batched paste-blocks — one paste runs several
+  commands (his call: "so i can copy paste a lot at once"). He says **"next"** between blocks.
 
 ---
 
@@ -136,7 +137,9 @@ Each surface gets the cheapest free vehicle: **skill** (command) · **mod** (pan
 
 ## The structure we follow now
 
-1. **One step per turn.** I never stack two steps. He says "next".
+1. **Batched paste-blocks (owner correction):** each block runs several commands in one
+   copy-paste — fewer round-trips. Phases remain the progress unit; he says "next" between
+   blocks; no block may cross a payment wall without saying so first.
 2. **Every step ships with:** exact commands (PowerShell 5.1-safe: no `&&`,
    `.\` for relatives), a **cost label**, and a **done-when check**. No step
    without all three.
