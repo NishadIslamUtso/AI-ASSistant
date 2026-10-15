@@ -122,7 +122,7 @@ test('a turn folds whatever order the wire delivers it', async () => {
   const turn = store.turn
   assert.ok(turn, 'a turn exists')
   assert.equal(turn?.state, 'done')
-  assert.equal(turn?.permission, null)
+  assert.deepEqual(turn?.permissions, [])
   assert.deepEqual(
     turn?.items.map(item => item.kind),
     ['status', 'tool', 'text', 'text'],
@@ -135,11 +135,11 @@ test('a permission question goes back to the bridge with the id it came with', a
   const { store, fake } = freshStore()
   await store.send('x')
   fake.listener?.({ kind: 'permission', requestId: 'req-11', tool: 'Bash', summary: 'npm test' })
-  assert.equal(store.turn?.permission?.requestId, 'req-11')
+  assert.equal(store.turn?.permissions[0]?.requestId, 'req-11')
 
   await store.answer(true)
   assert.deepEqual(fake.answered, [{ requestId: 'req-11', allow: true }])
-  assert.equal(store.turn?.permission, null, 'the card is gone the moment it is answered')
+  assert.deepEqual(store.turn?.permissions, [], 'the card is gone the moment it is answered')
   await store.answer(false)
   assert.equal(fake.answered.length, 1, 'answering with no card on the table does nothing')
 })
@@ -201,7 +201,7 @@ test('an error still closes the turn', async () => {
   await store.send('x')
   fake.listener?.({ kind: 'error', text: 'the engine closed with an error: boom' })
   assert.equal(store.turn?.state, 'error')
-  assert.equal(store.turn?.permission, null)
+  assert.deepEqual(store.turn?.permissions, [])
 })
 
 test('the engine bay: brains come from the engine door, a choice persists', async () => {
@@ -301,4 +301,84 @@ test('the face is wired: the panel is in the chat, the toggle is in the composer
   assert.match(app, /setEngineOn\(value => !value\)/)
   // The shared contract the whole face speaks.
   assert.match(read('../src/renderer/src/state/engine.ts'), /useSyncExternalStore/)
+})
+
+
+test('a second question queues instead of replacing the first', async () => {
+  const { store, fake } = freshStore()
+  await store.send('two asks in one turn')
+  fake.listener?.({ kind: 'permission', requestId: 'q1', tool: 'Write', summary: 'a.md' })
+  fake.listener?.({ kind: 'permission', requestId: 'q2', tool: 'Bash', summary: 'npm test' })
+  assert.equal(store.turn?.permissions.length, 2, 'both questions are on the table')
+  assert.equal(store.turn?.permissions[0]?.requestId, 'q1', 'the first stays first')
+
+  await store.answer(false)
+  assert.deepEqual(fake.answered, [{ requestId: 'q1', allow: false }])
+  assert.equal(store.turn?.permissions.length, 1)
+  assert.equal(store.turn?.permissions[0]?.requestId, 'q2', 'the second rises without being re-sent')
+
+  await store.answer(true)
+  assert.deepEqual(fake.answered.at(-1), { requestId: 'q2', allow: true })
+  assert.deepEqual(store.turn?.permissions, [])
+})
+
+test('a window opened mid-turn hydrates the remembered work; a phantom is dropped', async () => {
+  // The remembered events of a turn that finished while no window watched.
+  resetEngineForTests()
+  ;(window as unknown as Record<string, unknown>).api = {}
+  ;(window as unknown as Record<string, unknown>).engineApi = {
+    read: async () => ({
+      engine: { id: 'claude-code', model: 'gemma4:cloud', baseUrl: 'http://localhost:11434', workspace: '', approval: 'ask' },
+      running: false,
+      history: [
+        { kind: 'status', text: 'engine ready' },
+        { kind: 'text', text: 'Finished while you were away.' },
+        { kind: 'done', text: 'Done.' },
+      ],
+    }),
+    onEvent: () => () => undefined,
+    onPullEvent: () => () => undefined,
+  }
+  const store = engineStore()
+  await store.init()
+  const turn = store.turn
+  assert.ok(turn, 'the remembered turn is shown, not hidden')
+  assert.equal(turn?.state, 'done')
+  assert.match(turn?.items.map(item => ('text' in item ? item.text : '')).join(' '), /away/)
+
+  // A history cut off mid-run, with the engine gone: the phantom "running"
+  // state is closed honestly instead of spinning forever.
+  resetEngineForTests()
+  ;(window as unknown as Record<string, unknown>).engineApi = {
+    read: async () => ({
+      engine: { id: 'claude-code', model: 'gemma4:cloud', baseUrl: 'http://localhost:11434', workspace: '', approval: 'ask' },
+      running: false,
+      history: [
+        { kind: 'status', text: 'engine ready' },
+        { kind: 'permission', requestId: 'q-lost', tool: 'Write', summary: 'a.md' },
+      ],
+    }),
+    onEvent: () => () => undefined,
+    onPullEvent: () => () => undefined,
+  }
+  const second = engineStore()
+  await second.init()
+  assert.equal(second.turn?.state, 'done', 'no phantom "working" forever')
+  assert.deepEqual(second.turn?.permissions, [], 'a question nobody can answer is not re-asked')
+  assert.match(second.turn?.items.map(item => ('text' in item ? item.text : '')).join(' '), /stopped/)
+
+  // And an engine with no past shows no invented turn.
+  resetEngineForTests()
+  ;(window as unknown as Record<string, unknown>).engineApi = {
+    read: async () => ({
+      engine: { id: 'claude-code', model: 'gemma4:cloud', baseUrl: 'http://localhost:11434', workspace: '', approval: 'ask' },
+      running: false,
+      history: [],
+    }),
+    onEvent: () => () => undefined,
+    onPullEvent: () => () => undefined,
+  }
+  const third = engineStore()
+  await third.init()
+  assert.equal(third.turn, null, 'nothing happened, nothing is shown')
 })

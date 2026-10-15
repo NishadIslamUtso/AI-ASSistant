@@ -104,9 +104,9 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
 - [x] deliberate kill is quiet — FIXED: `deliberate` flag; a stop's close carries no error card, a real crash still says why
 - [x] Windows stop = `taskkill /pid <pid> /T /F` — FIXED: tree-kill through the shell's pid (pinned by test); plain signal elsewhere
 - [x] parser scan-offset — FIXED: `scanned` offset; a chunk-chopped line is rescanned only in its new tail (linear, pinned at every split point)
-- [ ] `engine:read` history hydrate-or-drop
+- [x] `engine:read` history hydrate-or-drop — FIXED: a window opened mid-turn replays the remembered events; replayed-as-live then reconciled (a dead engine's leftover question is dropped, a cut-off run closes as "engine stopped", empty history shows nothing)
 - [ ] token streaming (incremental text, not end-of-turn)
-- [ ] >1 pending card queue
+- [x] >1 pending card queue — FIXED: `permissions` queue in arrival order; the first is answered first, the rest counted ("+N more waiting"); nothing lost under the card being looked at
 - [x] ~~settings.permissions → engine flags~~ RESOLVED BY DECISION
   (2026-10-15): the app imposes no rules of its own — owner-favor, documented
   in ARCHITECTURE-ENGINE.md.
