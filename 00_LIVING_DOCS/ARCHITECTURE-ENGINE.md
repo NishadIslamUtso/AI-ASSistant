@@ -84,7 +84,17 @@ A new back-room module: `src/main/engine/`. It has three jobs:
 - `claude-code` (default) · `agy` (when it lands) · later: 9Router door.
 - Choice saved in the app's existing Settings file — no new config universe.
 
-### Job 2 — adapter #1: Claude Code via the Agent SDK
+### Job 2 — adapter #1: Claude Code — DECISION FLIPPED 2026-10-15 (build)
+
+Built on the **raw stream** (drive the installed CLI in its official
+stream-json mode) instead of the Agent SDK, for four honest reasons:
+(1) the SDK can't be installed in my sandbox, so I'd be coding its API blind —
+the raw stream I can test here, and IS tested (12 wire tests);
+(2) it drives the very CLI already verified on his machine (v2.1.300 +
+gemma4:cloud) — zero new dependencies, version-matched;
+(3) same auto-loaded skills/memory (`~/.claude` is the CLI's own home);
+(4) it keeps the mods-panel door open (section 3's stretch goal becomes
+step-free). The SDK remains the fallback if the wire ever fights back.
 The **Agent SDK** is Anthropic's official package (TypeScript, publicly
 released, free) whose entire purpose is "run Claude Code inside YOUR app."
 Confirmed from their docs (2026-10): same tools, same agent loop, sessions,
@@ -169,7 +179,11 @@ everything about the vault, artifacts-as-files, Browsing Maps, real-data rule.
 
 ## 6 · Build order (one landing per turn, code only after your "go")
 
-- [ ] **6.2 — Engine spike.** Socket + SDK adapter in the back room; one chat
+- [x] **6.2 — Engine spike, back room DONE 2026-10-15.** Socket + stream adapter
+      + wire parser + settings.engine + five IPC doors + preload API; 281/281
+      tests pass, typecheck clean; merged to main. Face wiring (chat hook +
+      approval cards) is the next landing; his round-trip test follows it.
+- [ ] **6.2b — Engine face.** One chat
       round-trip through YOUR app on gemma4:cloud; approval card works once.
       *Done when:* you watch the engine edit a file from your app's chat.
 - [ ] **6.3 — agy check + adapter.** Windows check first; then same plug.
