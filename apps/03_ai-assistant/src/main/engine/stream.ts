@@ -16,6 +16,11 @@ import { toolSummary } from '../../shared/lib/engine'
 export type EngineParser = {
   /** Feed raw output; returns every complete event found in it. */
   feed(chunk: string): EngineEvent[]
+  /**
+   * Call once when the engine closes: returns the event in a final line that
+   * arrived without its newline, so a last "done" is never lost.
+   */
+  flush(): EngineEvent[]
 }
 
 type LooseRecord = Record<string, unknown>
@@ -40,7 +45,32 @@ export function createEngineParser(): EngineParser {
     if (message.type === 'system') {
       const subtype = typeof message.subtype === 'string' ? message.subtype : ''
       if (subtype === 'init') return [{ kind: 'status', text: 'engine ready' }]
+      // A denial the engine decided itself: shown, never swallowed — a person
+      // must be able to see WHY nothing happened.
+      if (subtype === 'permission_denied')
+        return [{ kind: 'status', text: 'a tool use was denied by the engine\'s safe mode' }]
+      // The brain not answering yet: say so, or the window looks frozen.
+      if (subtype === 'api_retry') {
+        const attempt = typeof message.attempt === 'number' ? message.attempt : null
+        return [{ kind: 'status', text: attempt ? `the brain is not answering — retry ${attempt}` : 'the brain is not answering — retrying' }]
+      }
       return []
+    }
+
+    if (message.type === 'user') {
+      // Tool RESULTS travel back as user-role messages. A failed one is news:
+      // without this, a broken command looks like the engine going quiet.
+      const content = asRecord(message.message).content
+      if (!Array.isArray(content)) return []
+      const events: EngineEvent[] = []
+      for (const block of content) {
+        const entry = asRecord(block)
+        if (entry.type === 'tool_result' && entry.is_error === true) {
+          const text = typeof entry.content === 'string' ? entry.content : JSON.stringify(entry.content) ?? ''
+          events.push({ kind: 'status', text: `a tool call failed: ${text.slice(0, 160)}` })
+        }
+      }
+      return events
     }
 
     if (message.type === 'assistant') {
@@ -90,6 +120,9 @@ export function createEngineParser(): EngineParser {
   return {
     feed(chunk: string): EngineEvent[] {
       buffer += chunk
+      // A single line longer than this is not a sentence, it is a runaway —
+      // drop the oldest half rather than grow without limit.
+      if (buffer.length > 2_000_000) buffer = buffer.slice(-1_000_000)
       const events: EngineEvent[] = []
       let index = buffer.indexOf('\n')
       while (index !== -1) {
@@ -98,6 +131,11 @@ export function createEngineParser(): EngineParser {
         index = buffer.indexOf('\n')
       }
       return events
+    },
+    flush(): EngineEvent[] {
+      const rest = buffer
+      buffer = ''
+      return parseLine(rest)
     },
   }
 }

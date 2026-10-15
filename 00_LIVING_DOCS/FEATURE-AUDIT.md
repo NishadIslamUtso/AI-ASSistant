@@ -23,8 +23,8 @@ Legend: ✅ shipped & tested · 🔨 partially there · ❌ not built ·
 | Branch tree inside a topic | Cherry | ❌ |
 | Split Chats (several models side by side) | Msty | ❌ |
 | Arena compare + leaderboard | Open WebUI | ❌ (🗑 single-user stance) |
-| Regenerate / edit-and-resend | — | ❌ |
-| Prompt library with variables | BoltAI | ❌ |
+| Regenerate / edit-and-resend | — | 🔨 logic built and exported (`useChat.regenerate` / `editAndResend`), UI buttons not wired |
+| Prompt library with variables | BoltAI | 🔨 library built + 11 tests (`shared/lib/prompts.ts`), UI not wired |
 | Slash-command menu | Claude plugins | ❌ in-app · ♻️ engine has them (skills) |
 | Inline charts in replies | your branch | ✅ (chart.ts, wired in useChat) |
 | Mermaid + code highlighting | Cherry | ❌ (nothing in code) |
@@ -66,7 +66,7 @@ Legend: ✅ shipped & tested · 🔨 partially there · ❌ not built ·
 | Item | Status |
 |---|---|
 | **Agent runtime adapters (launch CLIs, structured stream)** | 🆕 ✅ **the engine socket — built 2026-10-15** (this WAS the open item; now real, agy pending its Windows check) |
-| **Approval gates before destructive actions** | 🆕 ✅ **permission cards shipped today** (Allow/Deny wired to the wire) |
+| **Approval gates before destructive actions** | 🆕 🔨 **cards wired end-to-end and proven against the real CLI binary by reviewers; launch flags pinned (`--permission-mode manual` + `--permission-prompt-tool stdio`); owner's own round-trip still owed for the final ✅ |
 | One-click UNDO after an approved action | ❌ (the Claude-OS half still open) |
 | Local MCP server exposing vault + artifacts | ❌ (still the TODOLIST proposal) |
 | One-line MCP install for external agents | ❌ |
@@ -118,7 +118,7 @@ Legend: ✅ shipped & tested · 🔨 partially there · ❌ not built ·
 | Agent access permissions (local / capture / keep / per-provider cloud) | ✅ full-window Settings |
 | Prompt-injection guard (tag untrusted, confirm outbound) | ❌ |
 | Token + cost meter per turn / monthly cap | ❌ |
-| Failover cloud → local, never cloud → cloud | 🆕 ♻️ engine designed exactly this (gemma4:cloud → local seatbelt) |
+| Failover cloud → local, never cloud → cloud | ❌ OPEN — today the brain is picked in settings (manual seatbelt); no automatic failover code exists (judges verified the absence; the earlier ✅ was wrong) |
 | Links to providers' data-use pages | ❌ |
 
 ## 9 · Browser capture & Browsing Maps
@@ -154,7 +154,7 @@ Legend: ✅ shipped & tested · 🔨 partially there · ❌ not built ·
 |---|---|
 | Skills library + knowledge lifecycle (brobertsaz/claude-os) | ❌ app-side · ♻️ engine loads skill folders today; lifecycle/dedup/health still open |
 | Session-insight extraction → Today's "Worth doing next" | ❌ |
-| **Approval card** (open-ClaudeOS) | 🆕 ✅ **the exact pattern shipped today** (see-before-it-happens cards) |
+| **Approval card** (open-ClaudeOS) | 🆕 🔨 the exact pattern shipped (see-before-it-happens cards); proven against the real CLI by reviewers; owner round-trip pending |
 | **One-click undo** (same repo) | ❌ — now the natural next half-step on the cards |
 | Mods as plain files with declared permissions | ❌ app-native packs · ♻️ CC mods exist (unsandboxed caveat stands) |
 | "Fast things never touch a model" as a written rule | ✍️ adopted in this audit — the rule is now written: trivial UI actions never wait on any model |
@@ -171,8 +171,10 @@ engine build** (next landing). REDESIGN-FOUNDATION's stack kept as chosen.
 
 ## The verdict, in one paragraph
 
-Everything the pivot promised for the engine era is genuinely done (runtime
-adapters, approval gates, failover design, skill auto-load — all tested). What
+The engine wiring the pivot promised is genuinely in — adapters, cards, skills
+auto-load — with every judge-found defect fixed and tested (298 green); what is
+NOT yet proven is the owner's own live round-trip, and two earlier claims in
+this audit were corrected the same day (failover, gate wording). What
 you mentioned that is **still missing** falls in six buckets: **(1) six
 screens** (Today, Projects, Vault, Code, first-run init, appearance polish),
 **(2) the undo half of the approval card**, (3) **session insights** feeding

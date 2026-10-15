@@ -26,7 +26,7 @@ export default function EnginePanel() {
           }`}
         />
         <h2 className="text-[12px] font-medium text-muted">
-          Engine · {engine.settings.id}
+          Engine · {engine.settings.id} · {engine.settings.model}
           {turn.state === 'running' ? ' · working' : turn.state === 'error' ? ' · stopped' : ' · done'}
         </h2>
         {turn.state === 'running' ? (

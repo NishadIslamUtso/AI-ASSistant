@@ -1,6 +1,19 @@
 # DECISIONS_LOG.md — All Decisions With Dates
 
-**Last Updated:** 2026-10-14 (evening) Asia/Dhaka
+**Last Updated:** 2026-10-15 (late) Asia/Dhaka
+
+## 2026-10-15 Decisions (engine era)
+
+- **Engine = the real CLI on the raw stream, not the Agent SDK** — sandbox
+  could not install the SDK (blind coding); the CLI was owner-verified; fully
+  testable; mods door stays open. SDK = documented fallback. (Owner's "go".)
+- **Permission policy = `--permission-mode manual` + `--permission-prompt-tool
+  stdio`** — proven required by reviewers running the real v2.1.300 binary;
+  every tool use now raises an app card. App-switches→flags mapping = open.
+- **Working folder = the vault, app-decided** — the renderer never picks it.
+- **A ✅ now requires a real run** — reviewers' rule, adopted: source+tests
+  alone are marked 🔨 until proven live.
+- **Console-clean means warnings fail too**, enforced by smoke + CI.
 **Rule:** Log every decision with date, what, why, who requested, alternatives considered.
 
 ## 2026-10-14 Decisions

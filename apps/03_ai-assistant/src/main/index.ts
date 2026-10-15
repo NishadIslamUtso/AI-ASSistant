@@ -241,15 +241,15 @@ function registerBridges(): void {
       const text = typeof prompt === 'string' ? prompt.trim().slice(0, 20000) : ''
       if (!text) return { ok: false, answer: 'Write what the engine should do first.' }
       if (!engine) return { ok: false, answer: 'The engine is still waking up — try again in a moment.' }
-      const working = typeof cwd === 'string' && cwd ? cwd : vaultRoot()
-      const started = engine.begin({
-        cwd: working,
+      // The working folder is the app's decision, not the window's: the vault
+      // is where the engine works unless a future screen offers a real choice.
+      // The renderer's value is deliberately not consulted (review finding).
+      void cwd
+      return engine.send(text, {
+        cwd: vaultRoot(),
         settings: settings.engine,
         onEvent: pushEngineEvent,
       })
-      if (!started.ok) return started
-      engine.current()?.send(text)
-      return { ok: true, answer: 'started' }
     },
   )
 
@@ -396,7 +396,9 @@ function runSmoke(window: BrowserWindow): void {
         )
         for (const line of consoleErrors.slice(0, 10)) console.log(`  ERROR: ${line}`)
         for (const line of consoleWarnings.slice(0, 10)) console.log(`  WARN:  ${line}`)
-        const failed = consoleErrors.length > 0 || blank
+        // The rule the owner set: a WARNING is already a failure. The smoke
+        // run is the console-clean gate, so it enforces the whole sentence.
+        const failed = consoleErrors.length > 0 || consoleWarnings.length > 0 || blank
         app.exit(failed ? 1 : 0)
       } catch (error) {
         console.log(`SMOKE FAILED: ${(error as Error).message}`)

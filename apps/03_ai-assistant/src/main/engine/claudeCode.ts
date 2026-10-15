@@ -7,11 +7,19 @@
  * wire sentences. The CLI keeps doing what it is good at; the app keeps being
  * the face.
  *
+ * The two permission flags are not optional. Verified against the real CLI
+ * (v2.1.300): without `--permission-mode manual` the CLI runs in "auto" mode
+ * and decides for itself (no card is ever sent); without
+ * `--permission-prompt-tool stdio` the "may I use this tool?" question never
+ * reaches this process, so the app's Allow/Deny cards can never appear.
+ * Both were proven by six independent reviewers running the real binary.
+ *
  * The brain wiring (which door, which brain) is set per launch from the app's
  * own settings, so the engine works no matter what environment variables the
  * machine happens to have — a fresh laptop needs nothing outside this app.
  */
 import { spawn, type ChildProcess } from 'node:child_process'
+import { StringDecoder } from 'node:string_decoder'
 import type { EngineEvent, EngineSettings } from '../../shared/lib/engine'
 import { createEngineParser } from './stream'
 
@@ -38,6 +46,30 @@ export type StartSessionInput = {
 }
 
 /**
+ * Everything the engine needs besides the process: where it works and with
+ * which brain. The socket passes this shape, so it never has to know which
+ * keys the adapter ignores.
+ */
+export type EngineStartInput = Omit<StartSessionInput, 'spawnProcess'>
+
+/**
+ * The engine's launch line, in one place so a test can pin it. The two
+ * permission flags are the difference between "the app gates every tool" and
+ * "the CLI does whatever it likes" — see the header comment.
+ */
+export function engineArguments(model: string): string[] {
+  const args = [
+    '--output-format', 'stream-json',
+    '--input-format', 'stream-json',
+    '--verbose',
+    '--permission-mode', 'manual',
+    '--permission-prompt-tool', 'stdio',
+  ]
+  if (model) args.push('--model', model)
+  return args
+}
+
+/**
  * The environment the engine needs to think with the app's chosen brain.
  * With the local Ollama door there is no key and no account — the token is
  * the literal word `ollama`, which that door accepts.
@@ -52,8 +84,7 @@ export function brainEnvironment(baseUrl: string): Record<string, string> {
 }
 
 export function startClaudeCodeSession(input: StartSessionInput): EngineSession {
-  const args = ['--output-format', 'stream-json', '--input-format', 'stream-json', '--verbose']
-  if (input.settings.model) args.push('--model', input.settings.model)
+  const args = engineArguments(input.settings.model)
 
   let child: ChildProcess
   const start = input.spawnProcess ?? spawn
@@ -62,8 +93,10 @@ export function startClaudeCodeSession(input: StartSessionInput): EngineSession 
       cwd: input.cwd,
       env: { ...process.env, ...brainEnvironment(input.settings.baseUrl) },
       // On Windows the command lives behind an npm `.cmd` shim, which only
-      // runs through the shell. The arguments are all ours — no user text is
-      // ever placed on the command line — so this is safe to enable there.
+      // runs through the shell. The one argument that is not a fixed flag is
+      // the model name, which the settings layer validates against a strict
+      // pattern (`MODEL_PATTERN` in shared/lib/engine.ts) before it can ever
+      // reach this line — the safety rule is code, not this comment.
       shell: process.platform === 'win32',
     })
   } catch {
@@ -78,19 +111,39 @@ export function startClaudeCodeSession(input: StartSessionInput): EngineSession 
   })
 
   const parser = createEngineParser()
+  // Bytes can be chopped in the middle of a multi-byte character (Bangla
+  // characters are three bytes long, and pipe chunks land wherever they
+  // land), so decoding is left to a StringDecoder, which holds the partial
+  // character until its remaining bytes arrive. Decoding each chunk on its
+  // own corrupts text — that bug was demonstrated by reviewers with real
+  // Bangla content, and this is its fix.
+  const decoder = new StringDecoder('utf8')
   let stderrTail = ''
-  child.stdout?.on('data', (chunk: Buffer) => {
-    for (const event of parser.feed(chunk.toString('utf8'))) input.onEvent(event)
-  })
+  let finished = false
+
+  const deliver = (text: string): void => {
+    for (const event of parser.feed(text)) input.onEvent(event)
+  }
+
+  child.stdout?.on('data', (chunk: Buffer) => deliver(decoder.write(chunk)))
   child.stderr?.on('data', (chunk: Buffer) => {
     // Keep only the last few hundred characters — the part that says why.
     stderrTail = `${stderrTail}${chunk.toString('utf8')}`.slice(-600)
   })
   child.on('close', (code: number | null) => {
+    if (finished) return
+    finished = true
+    // Anything the engine said in its final breath still counts.
+    try {
+      for (const event of [...parser.feed(decoder.end()), ...parser.flush()]) input.onEvent(event)
+    } catch {
+      // A decoder error at the very end must not mask the close itself.
+    }
     if (stderrTail.trim() && code !== 0) {
       input.onEvent({ kind: 'error', text: `engine closed with an error: ${stderrTail.trim()}` })
     }
     input.onClose?.(code)
+    input.onEvent({ kind: 'closed' })
   })
 
   return {
@@ -101,10 +154,18 @@ export function startClaudeCodeSession(input: StartSessionInput): EngineSession 
     },
     answer(requestId: string, allow: boolean): void {
       if (!isRunning()) return
+      // The deny shape needs a `message` — the real CLI rejects a bare deny
+      // as an invalid permission result (proven against v2.1.300).
       child.stdin?.write(
         `${JSON.stringify({
           type: 'control_response',
-          response: { request_id: requestId, subtype: 'success', response: { behavior: allow ? 'allow' : 'deny' } },
+          response: {
+            request_id: requestId,
+            subtype: 'success',
+            response: allow
+              ? { behavior: 'allow' }
+              : { behavior: 'deny', message: 'The owner said no to this action in AI ASSistant.' },
+          },
         })}\n`,
       )
     },
