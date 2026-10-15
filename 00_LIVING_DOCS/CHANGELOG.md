@@ -981,3 +981,29 @@ His first real run found two things; both fixed, both carried by tests:
   Note: Windows caches shortcut icons — if the desktop shortcut still shows
   the old brain after upgrading, unpin/repin or sign out and in; the file
   inside is the new mark.
+## 2026-10-15 (night) — v0.3.0: the engine becomes the spine
+
+His ruling after 0.2.1: the engine must not look bolted on — the app is a
+shell FOR Claude Code and agy, "as if Anthropic themselves made it." This
+landing rebuilds the shell around the engine:
+
+- **The Engine bay** (top of the sidebar, rail button when collapsed): the
+  engine selection system (Claude Code / agy — agy honestly marked "soon"
+  until its Windows check), the brain picker, the workplace row.
+- **Model list comes FROM the engine's own door** (`engine:models` asks the
+  brain door): what Claude Code can really use — cloud brains flagged with a
+  cloud badge (work leaves the machine), local brains with their size. Real
+  data only; a silent door says so in a sentence.
+- **"Open a folder"** (`engine:pick-workspace`): the engine's workplace, via
+  the native folder picker, remembered, and actually used by `engine:send`
+  (vault stays the default). The renderer still cannot pick a folder behind
+  the app's back.
+- **Brain choice persists** (`engine:model`, strict-pattern validated); the
+  composer in engine mode shows the engine's brain and defers to the bay;
+  the work-order card names engine, brain, workplace.
+- **The alive light is tracked truthfully** — set from the machine's report,
+  cleared on close even with no task running (a test-caught bug).
+- 302 tests green, typecheck clean. `AI-ASSistant-Setup-0.3.0.exe` (~84 MB),
+  SHA-256 `87e2867b7b8caf5c8a4e99fe918efa7d793a1fdcd111ef3f9b179d295bd441c6`.
+- Parity program next: session history/resume, skills + plugins panes, file
+  diffs, usage display — then the six designed screens.
