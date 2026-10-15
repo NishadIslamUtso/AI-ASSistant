@@ -1,16 +1,5 @@
 # AI ASSistant — build todo
 
-> **Mirror of the owner's live plan file.** The workspace copy
-> (`/home/user/BUILD-TODO.md`) is edited during work; this copy is refreshed at
-> every landing so a clone of this branch alone carries the full plan. If they
-> ever differ, the newer commit wins. Companion docs in this folder:
-> `COMMUNITY-STORE-PLAN.md` (packs/stores design) and
-> `ARTIFACTS-SCREEN-PLAN.md` (step-1 decision record, superseded by what
-> landed). Session-by-session reasoning: `../memory/sessions/` + `CHANGELOG.md`;
-> machine-readable state: `../ai/STATE.json`. Archives on branches:
-> `archive/workspace` (mockups + owner attachments + screenshots — raw fetch
-> recipe inside), `archive/ai-assistant-app` (original app source).
-
 `S` ≈ under an hour · `M` ≈ a day · `L` ≈ multi-day.
 Order inside each section is roughly the order I'd build.
 
