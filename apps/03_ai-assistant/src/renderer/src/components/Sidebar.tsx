@@ -589,11 +589,20 @@ function UserMenu({
   const ref = useRef<HTMLDivElement | null>(null)
   useEffect(() => {
     if (!open) return
-    const dismiss = (event: PointerEvent): void => {
+    // Escape closes, like every other menu in the app — leaving it open traps
+    // the corner of the screen it covers.
+    const dismiss = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    const away = (event: PointerEvent): void => {
       if (!ref.current?.contains(event.target as Node)) setOpen(false)
     }
-    window.addEventListener('pointerdown', dismiss)
-    return () => window.removeEventListener('pointerdown', dismiss)
+    window.addEventListener('keydown', dismiss)
+    window.addEventListener('pointerdown', away)
+    return () => {
+      window.removeEventListener('keydown', dismiss)
+      window.removeEventListener('pointerdown', away)
+    }
   }, [open])
   return (
     <div className="relative border-t border-line" ref={ref}>

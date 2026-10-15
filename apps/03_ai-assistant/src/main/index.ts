@@ -897,9 +897,11 @@ if (!gotLock) {
       ],
     },
   ])
-  Menu.setApplicationMenu(menu)
-
+  // Inside whenReady, as Electron requires — set before ready and the menu is
+  // silently ignored, which is exactly the "Ctrl+4 does nothing" this once was.
   void app.whenReady().then(async () => {
+    Menu.setApplicationMenu(menu)
+    console.log(`[menu] application menu set: ${Menu.getApplicationMenu()?.items.length ?? 0} top items`)
     const rendererDir = process.env['ELECTRON_RENDERER_URL']
       ? undefined
       : join(__dirname, '../renderer')
