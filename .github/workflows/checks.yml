@@ -1,0 +1,24 @@
+# The console-clean gate, on every push — the rule the owner set.
+# Runs the three checks the docs promise: types, tests, build.
+name: checks
+on: [push, pull_request]
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        working-directory: apps/03_ai-assistant
+        run: npm install --no-audit --no-fund
+      - name: Types
+        working-directory: apps/03_ai-assistant
+        run: npx tsc --noEmit -p tsconfig.json
+      - name: Tests
+        working-directory: apps/03_ai-assistant
+        run: npx vitest run
+      - name: Build
+        working-directory: apps/03_ai-assistant
+        run: npm run build

@@ -196,13 +196,14 @@ will work in the app normally too."*
   the same interface (Windows support check still owed). Face: existing v0.1.2
   app + mockups (design authority) + replica-skill refresh pass vs the current
       Claude app look. *Done when:* doc in 00_LIVING_DOCS, he reads, says "go".
-      GO RECEIVED 2026-10-15; 6.2 back-room LANDED (commit "Engine spike"; 281/281 tests; raw-stream chosen over SDK — reasons in ARCHITECTURE.md §Job 2). Next: 6.2b face.
+      GO RECEIVED 2026-10-15; 6.2 landed (raw-stream over SDK, reasons in ARCHITECTURE §Job 2) — then HARDENED after six judge reviews (permission flags pinned, multi-turn, Stop-wedge fix, Bangla-safe decoding, 298/298). Owner round-trip pending.
       📝 DRAFTED 2026-10-15 → `ARCHITECTURE.md` (workspace) +
       `00_LIVING_DOCS/ARCHITECTURE-ENGINE.md` (repo). Awaiting read + "go".
 - [x] **6.2 Engine spike — DONE 2026-10-15 (back room + face).** Raw-stream socket,
       wire parser, Claude Code adapter, settings.engine, IPC doors; then the face:
       composer Engine toggle, work-order panel, Allow/Deny permission cards.
-      287/287 tests, typecheck clean. SDK→stream decision in ARCHITECTURE.md §Job 2.
+      298/298 tests after the judge-fix landing, typecheck clean. Verdicts +
+      fixes in memory/sessions; decision in ARCHITECTURE.md §Job 2.
 - [ ] **6.3 agy spike:** same harness, second provider (after Windows check).
 - [ ] **6.4 Face refresh + mockup surfaces** (the eight screens, mockups rule).
 - [ ] **6.5 Installer for him** (he only ever runs installers).

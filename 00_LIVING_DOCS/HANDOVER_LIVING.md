@@ -1,5 +1,10 @@
 # HANDOVER_LIVING.md — Current State + Gaps (Living)
 
+> **2026-10-15:** the app is UN-PARKED and hosts the engine — read
+> `ARCHITECTURE-ENGINE.md`, then the 2026-10-15 changelog entry (six judge
+> reviews, all defects fixed, 298/298). CLAUDE-SETUP.md's app-parked line is
+> history; Phase 6 there is the active plan.
+>
 > **Taking over? Read in this order:** `CLAUDE-SETUP.md` in this folder (the
 > owner's active path since 2026-10-15 — configure Claude + Claude Code, app parked),
 > then `TODOLIST.md` here (the app's full record, light-shell frame

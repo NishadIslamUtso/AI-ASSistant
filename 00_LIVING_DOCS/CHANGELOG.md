@@ -19,7 +19,11 @@ for terminals. The app now ships as **one file a person can double-click**: `AI-
   by Windows alone — so only run the one you built or downloaded from a source you trust.
 - The whole packaging config is `electron-builder.yml` at the app root, commented; `npm run dist:win`,
   `dist:win:dir` and `dist:linux` are the scripts.
-- The icon is the app's **own BrainMark**, rendered from `BrainMark.tsx` by `shot-tools/render-mark.cjs` into
+- **CORRECTED 2026-10-15 (judge finding):** this entry described an older arrangement that no longer
+  exists — `build/icon.png` is not tracked (that folder is excluded from snapshots), `shot-tools/render-mark.cjs`
+  was never committed, and the `.gitignore` negation is gone. The icon's real home is `resources/`
+  (`icon.svg/png/ico`), which `electron-builder.yml` points at. Original (superseded) wording: the icon is the
+  app's **own BrainMark**, rendered from `BrainMark.tsx` by `shot-tools/render-mark.cjs` into
   `build/icon.png` (512×512). No new mark was drawn, and `.gitignore` got a precise negation so the icon is
   source while the rest of `build/` stays ignored.
 
@@ -931,3 +935,27 @@ journal / follow-ups) and P9 (installer).
 - **Verified:** unzip -l shows .ai/ 5 files, ai/ 6 files, .gitignore, gitignore.txt, GITIGNORE.txt all in zip. git status shows .ai/ and .gitignore untracked and not ignored.
 - **New Zips:** Rebuilt AI-ASSistant-Github-Complete-Testable.zip 2.8M and AI-ASSistant-Github-EVERYTHING.zip 3.8M with both dot and visible copies
 - **Recommendation:** Use git push via command line (git add . includes dotfiles) not web UI upload, or upload both dot and visible versions via web UI
+
+## 2026-10-15 — the engine lands (6.2 + 6.2b) and survives six judges
+
+- **Engine inside the app, free:** socket + wire parser + Claude Code adapter
+  (`src/main/engine/`), settings.engine (default `gemma4:cloud` via the local
+  Ollama door), five IPC doors, preload `engineApi`; face: composer **Engine**
+  toggle, work-order panel with the brain's name on every turn, Allow/Deny
+  permission cards, Stop.
+- **Six independent judge reviews ran the REAL CLI (v2.1.300) and found real
+  defects; all fixed with the test that would have caught each:** permission
+  launch flags pinned (`--permission-mode manual`, `--permission-prompt-tool
+  stdio`) so the cards actually fire; deny replies carry the CLI-required
+  `message`; one engine process serves many tasks (a finished task no longer
+  refuses the next one); Stop closes the turn immediately (no wedged panel);
+  Bangla text survives stdout chunk splits (StringDecoder); a final line
+  without its newline is flushed on close; self-denials, brain retries and
+  failed tools are shown instead of swallowed; model names are validated
+  against shell tricks; the goodbye is shown once; agy refuses honestly
+  (`ok:false`); the working folder is the app's decision (the vault).
+- **Rules made real:** the smoke run now FAILS on console warnings (the
+  owner's console-clean rule, whole sentence), and
+  `.github/workflows/checks.yml` runs types + tests + build on every push.
+- **298 tests green, typecheck clean, build clean.** Owner round-trip on his
+  machine = the final ✅ the judges asked for.

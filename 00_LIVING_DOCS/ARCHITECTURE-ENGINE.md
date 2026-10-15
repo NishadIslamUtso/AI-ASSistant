@@ -95,33 +95,35 @@ gemma4:cloud) — zero new dependencies, version-matched;
 (3) same auto-loaded skills/memory (`~/.claude` is the CLI's own home);
 (4) it keeps the mods-panel door open (section 3's stretch goal becomes
 step-free). The SDK remains the fallback if the wire ever fights back.
-The **Agent SDK** is Anthropic's official package (TypeScript, publicly
-released, free) whose entire purpose is "run Claude Code inside YOUR app."
-Confirmed from their docs (2026-10): same tools, same agent loop, sessions,
-permissions — and **it automatically loads skills, commands and memory from
-`~/.claude/`, same as Claude Code.** Your 11 skills and today's wiring walk
-straight in.
+**How it actually works (updated after six judge reviews, all findings fixed
+and tested — 298 tests green):** the adapter launches the CLI you already have
+in its official stream mode and speaks its documented wire in both directions:
 
 How a message flows, plainly:
 1. You type in your app's chat.
-2. The socket calls the SDK: *"here's the prompt, here's the working folder,
-   here's the allowed tools."*
-3. The engine works. The SDK **streams events back**: thinking…, reading file…,
-   editing file…, wants to run a command…
-4. The face draws all of it — your chat bubbles, your progress, your cards.
-5. When the engine wants permission, the socket raises an event → **your app
-   shows an approve/deny card in YOUR style** → the answer streams back down.
-   (This plugs into the permission settings you already shipped.)
+2. The socket launches `claude --output-format stream-json --input-format
+   stream-json --verbose --permission-mode manual --permission-prompt-tool
+   stdio --model <brain>` in your chosen folder (the vault). The two
+   permission flags are PROVEN required: without them the real CLI runs in
+   "auto" mode and never asks — the reviewers demonstrated this.
+3. The engine works. The wire **streams events back**: engine ready, reading
+   file…, editing file…, wants to run a command…, retries when the brain is
+   slow, and any tool failure — nothing is swallowed.
+4. The face draws all of it — the work-order panel, the brain's name on every
+   turn (so you always SEE when work goes to the free cloud), your cards.
+5. When the engine wants a tool, it asks over the wire → **your app shows an
+   Allow/Deny card** → the answer goes back down. A denial carries a message
+   the real CLI accepts (bare denies were rejected — judges proved that too).
+6. One engine process serves MANY tasks in a row — a finished task never
+   blocks the next one, Stop always closes the turn, and the engine saying
+   goodbye mid-word (no trailing newline) is still heard.
 
-Wiring: the SDK picks up the same env instructions you already set
-(Ollama address, model). Default brain `gemma4:cloud`; automatic fallback to
-the local model when the cloud slice runs dry or you're offline.
-
-**Honest limits (no sugar):** the SDK drives the CLI under the hood, so a task
-has CLI-style startup lag; and how *well* it works depends on the brain — the
-free cloud brain is good, the tiny local one will be clumsy at heavy tool work.
-Also: the SDK ships its own copy of the CLI engine — the `claude` you installed
-today stays for terminal use; the app doesn't depend on it.
+**Honest limits (no sugar):** launching the CLI costs a moment per session;
+how *well* it works depends on the brain — the free cloud brain is good, the
+tiny local one will be clumsy at heavy tool work; **automatic** cloud→local
+failover is still OPEN (today you pick the brain in settings; the local one is
+your manual seatbelt); and the round-trip has been proven by reviewers against
+the real CLI binary — YOUR own run happens with the installer.
 
 ### Job 3 — adapter #2: agy (engine #2, same plug)
 - **Gate first:** agy is Google's free agent CLI but its Windows support is
@@ -130,11 +132,10 @@ today stays for terminal use; the app doesn't depend on it.
   events. You switch engines in Settings like switching input sources.
 - If it fails: recorded, parked, nothing else changes.
 
-### The stretch goal (later, not now): raw-stream mode
-Claude Code can also be driven raw (`--output-format stream-json`), which can
-even mirror **mod panels** (the little screens mods draw) inside your window.
-That's a bonus mode we revisit after the SDK path works. Noted so we don't
-lose it; not in the first build.
+### The stretch goal (later, not now): mirroring mod panels
+Because the engine IS the real CLI on the real wire, the road to mirroring
+**mod panels** (the little screens mods draw) inside your window is short.
+Revisited after the installer lands. Noted so we don't lose it.
 
 ---
 
@@ -160,16 +161,20 @@ everything about the vault, artifacts-as-files, Browsing Maps, real-data rule.
 
 ## 5 · Safety & the Free Gate
 
-- **Permissions stay king:** nothing the engine does runs without your
-  settings allowing it. Auto mode = low-risk actions only; anything spicy
-  raises a card. You can flip the whole engine to ask-everything.
+- **Permissions (as the code really is, post-review):** the engine runs in
+  **manual mode** — EVERY tool use raises an Allow/Deny card in your app; the
+  engine cannot run so much as a file edit without your click, and Stop is
+  always one press away. What is still OPEN: making your Settings permission
+  switches (the per-agent table) steer the engine's flags directly, and an
+  undo button on an approved action. The engine's default workplace is your
+  vault — with manual mode that means you approve every touch of your notes.
 - **Mods warning carried over:** mods run with full machine access — only
   install ones you've eyeballed (that rule is already in the plan).
 - **Costs, the whole architecture:**
 
 | Piece | Cost |
 |---|---|
-| Agent SDK, Claude Code engine, agy | $0 |
+| The engine (real CLI on the real wire), agy | $0 |
 | gemma4:cloud (free starter slice) | $0 |
 | local brain + Ollama | $0, unlimited |
 | Skills, mods, the app itself | $0 |
@@ -179,10 +184,15 @@ everything about the vault, artifacts-as-files, Browsing Maps, real-data rule.
 
 ## 6 · Build order (one landing per turn, code only after your "go")
 
-- [x] **6.2 — Engine spike, back room DONE 2026-10-15.** Socket + stream adapter
-      + wire parser + settings.engine + five IPC doors + preload API; 281/281
-      tests pass, typecheck clean; merged to main. Face wiring (chat hook +
-      approval cards) is the next landing; his round-trip test follows it.
+- [x] **6.2 — Engine spike, back room DONE 2026-10-15** — then **HARDENED the
+      same day after six judge reviews**: permission flags pinned (cards now
+      really fire), deny replies carry the CLI-required message, multi-turn
+      (one engine serves many tasks), Stop can never wedge the panel, Bangla
+      survives chunk splits (StringDecoder), final lines flushed, denials and
+      retries and tool failures shown, model names validated against shell
+      tricks, console rule enforces warnings. **298/298 tests, typecheck
+      clean.** Remaining: HIS round-trip on his machine (the reviewers proved
+      the wire against the real v2.1.300 binary; the owner run is the final ✅).
 - [ ] **6.2b — Engine face.** One chat
       round-trip through YOUR app on gemma4:cloud; approval card works once.
       *Done when:* you watch the engine edit a file from your app's chat.

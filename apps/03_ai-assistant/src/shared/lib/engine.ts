@@ -37,6 +37,13 @@ export const DEFAULT_ENGINE: EngineSettings = {
 const ENGINES: readonly EngineId[] = ['claude-code', 'agy']
 
 /**
+ * A model name may only be a model name. It reaches a command line, so the
+ * rule is a pattern, not a comment: letters, digits, dots, colons, and a few
+ * separator characters — nothing that a shell could interpret.
+ */
+const MODEL_PATTERN = /^[\w.:@/-]+$/
+
+/**
  * Read engine settings from a parsed settings file without ever throwing —
  * the same promise the rest of the settings make. Anything missing, unknown
  * or absurd falls back to the default, because a damaged line in a file must
@@ -49,9 +56,10 @@ export function normalizeEngine(raw: unknown): EngineSettings {
     const trimmed = typeof input === 'string' ? input.trim().slice(0, limit) : ''
     return trimmed || fallback
   }
+  const model = text(value.model, DEFAULT_ENGINE.model, 300)
   return {
     id,
-    model: text(value.model, DEFAULT_ENGINE.model, 300),
+    model: MODEL_PATTERN.test(model) ? model : DEFAULT_ENGINE.model,
     baseUrl: text(value.baseUrl, DEFAULT_ENGINE.baseUrl, 2048),
   }
 }
@@ -68,6 +76,7 @@ export type EngineEvent =
   | { kind: 'permission'; requestId: string; tool: string; summary: string }
   | { kind: 'done'; text: string }
   | { kind: 'error'; text: string }
+  | { kind: 'closed' }
 
 /**
  * A short human sentence about a tool call — what it touches, not its whole

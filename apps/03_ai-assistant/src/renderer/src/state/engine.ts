@@ -83,9 +83,22 @@ const ingest = (event: EngineEvent): void => {
   } else if (event.kind === 'permission') {
     turn.permission = { requestId: event.requestId, tool: event.tool, summary: event.summary }
   } else if (event.kind === 'done') {
-    if (event.text) turn.items.push({ kind: 'text', text: event.text })
+    // The wire says the same goodbye twice (once as the engine's last words,
+    // once as the result) — show it once.
+    const last = turn.items.at(-1)
+    const alreadySaid = event.text && last?.kind === 'text' && last.text === event.text
+    if (event.text && !alreadySaid) turn.items.push({ kind: 'text', text: event.text })
     turn.state = 'done'
     turn.permission = null
+  } else if (event.kind === 'closed') {
+    // The engine process ended. After a finished task this changes nothing;
+    // after a Stop or a crash it is what closes the turn — without it the
+    // panel would say "working" forever (a reviewed-and-reproduced bug).
+    if (turn.state === 'running') {
+      turn.items.push({ kind: 'status', text: 'engine stopped' })
+      turn.state = 'done'
+      turn.permission = null
+    }
   } else {
     turn.items.push({ kind: 'error', text: event.text })
     turn.state = 'error'
@@ -155,6 +168,15 @@ const store: EngineStore = {
 
   async stop(): Promise<void> {
     await getEngineApi().stop()
+    // Belt and suspenders: the 'closed' event also closes the turn, but the
+    // person who pressed Stop should never wait for a wire to agree.
+    const turn = state.turn
+    if (turn?.state === 'running') {
+      turn.items.push({ kind: 'status', text: 'stopped by you' })
+      turn.state = 'done'
+      turn.permission = null
+      emit()
+    }
   },
 
   ingest,

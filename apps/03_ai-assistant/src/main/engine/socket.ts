@@ -5,56 +5,81 @@
  * events, answers permission cards. Adding engine #2 (agy) later means adding
  * one branch here and nothing else.
  *
- * One engine works at a time: a second task while one is running is refused
- * with a plain sentence, the way the rest of the app answers, not an exception.
+ * Sessions outlive tasks. The real CLI stays alive after finishing a task,
+ * ready for the next one (verified against v2.1.300), so one session serves
+ * many tasks: a second task while the engine is idle goes to the same
+ * process; only a task arriving while another is still running is refused.
  */
-import type { EngineEvent, EngineId, EngineSettings } from '../../shared/lib/engine'
-import { startClaudeCodeSession, type EngineSession, type StartSessionInput } from './claudeCode'
+import type { EngineEvent } from '../../shared/lib/engine'
+import { startClaudeCodeSession, type EngineSession, type EngineStartInput } from './claudeCode'
+
+export type EngineAnswer = { ok: boolean; answer: string }
 
 export type EngineSocket = {
-  begin(input: Omit<StartSessionInput, 'command'>): { ok: boolean; answer: string }
+  /** Hand the engine a task — starts it on the first one, reuses it after. */
+  send(prompt: string, input: EngineStartInput): EngineAnswer
   current(): EngineSession | null
+  /** True only while a TASK is in flight, not merely while the process lives. */
+  turnBusy(): boolean
   running(): boolean
   stop(): void
 }
 
 export function createEngineSocket(): EngineSocket {
   let session: EngineSession | null = null
+  let busy = false
 
-  const begin = (input: Omit<StartSessionInput, 'command'>): { ok: boolean; answer: string } => {
-    if (session?.isRunning()) {
-      return { ok: false, answer: 'An engine is already working. Stop it first, or wait for it to finish.' }
-    }
-    session = spawnById(input.settings, input)
-    return { ok: true, answer: 'started' }
+  const onEvent = (input: EngineStartInput, event: EngineEvent): void => {
+    // The socket owns the busy flag: a finished or failed task frees the
+    // engine for the next one. Everything else is forwarded untouched.
+    if (event.kind === 'done' || event.kind === 'error') busy = false
+    input.onEvent(event)
   }
 
-  const spawnById = (settings: EngineSettings, input: Omit<StartSessionInput, 'command'>): EngineSession => {
-    const id: EngineId = settings.id
-    if (id === 'agy') {
-      // Engine #2 arrives after its Windows check (architecture doc, 6.3).
-      // Until then it answers honestly instead of pretending.
-      const onEvent = input.onEvent
-      const text = 'agy is not wired in yet — its Windows check comes first (plan 6.3).'
-      queueMicrotask(() => {
-        onEvent({ kind: 'error', text } satisfies EngineEvent)
-        input.onClose?.(null)
-      })
-      return deadSession()
-    }
-    return startClaudeCodeSession(input)
+  const start = (input: EngineStartInput): EngineSession => {
+    return startClaudeCodeSession({
+      ...input,
+      onEvent: (event) => onEvent(input, event),
+      onClose: (code) => {
+        busy = false
+        input.onClose?.(code)
+      },
+    })
   }
-
-  const deadSession = (): EngineSession => ({
-    send: () => false,
-    answer: () => undefined,
-    stop: () => undefined,
-    isRunning: () => false,
-  })
 
   return {
-    begin,
+    send(prompt: string, input: EngineStartInput): EngineAnswer {
+      // Engine #2 arrives after its Windows check (architecture doc, 6.3).
+      // Until then it refuses honestly instead of pretending to start.
+      if (input.settings.id === 'agy') {
+        const text = 'agy is not wired in yet — its Windows check comes first (plan 6.3).'
+        queueMicrotask(() => {
+          input.onEvent({ kind: 'error', text } satisfies EngineEvent)
+          input.onClose?.(null)
+        })
+        return { ok: false, answer: text }
+      }
+      if (session?.isRunning()) {
+        if (busy) {
+          return { ok: false, answer: 'An engine is already working. Stop it first, or wait for it to finish.' }
+        }
+        // Same engine, new task — no relaunch, no refusal.
+        const sent = session.send(prompt)
+        if (!sent) return { ok: false, answer: 'The engine just closed — try again.' }
+        busy = true
+        return { ok: true, answer: 'started' }
+      }
+      session = start(input)
+      if (!session.isRunning()) {
+        return { ok: false, answer: 'The engine could not be started on this machine.' }
+      }
+      const sent = session.send(prompt)
+      if (!sent) return { ok: true, answer: 'starting' }
+      busy = true
+      return { ok: true, answer: 'started' }
+    },
     current: () => session,
+    turnBusy: () => busy,
     running: () => session?.isRunning() === true,
     stop: () => session?.stop(),
   }

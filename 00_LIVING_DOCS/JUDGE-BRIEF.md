@@ -48,12 +48,18 @@ In this repo (the app), latest landings with commits to inspect:
 Evidence you can run (in `apps/03_ai-assistant`):
 
 ```
-npx vitest run          # 287 tests, all passing (12 engine wire + 6 face)
+npx vitest run          # 298 tests, all passing
 npx tsc --noEmit -p tsconfig.json   # clean
 ```
 
+**POST-VERDICT (same day):** six judge reviews ran the real CLI and found
+real defects — ALL fixed with regression tests (permission flags, multi-turn,
+Stop wedge, Bangla-safe decoding, flush, surfaced denials/retries, model
+validation, agy honesty, warnings-fail smoke, CI workflow). The counts above
+are post-fix. The engine round-trip on the owner's machine is still the final ✅.
+
 Deliberate engineering decision to scrutinize: the engine drives the **real
-installed CLI in stream-json mode** rather than the Agent SDK — reasons in
+installed CLI in stream-json mode** (permission-gated, multi-turn — see the changelog's 2026-10-15 entry) rather than the Agent SDK — reasons in
 `ARCHITECTURE-ENGINE.md` §Job 2 (sandbox could not install the SDK; the CLI
 was already owner-verified; fully testable; keeps the mods door open). The
 SDK remains the documented fallback.

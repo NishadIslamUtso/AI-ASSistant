@@ -29,7 +29,8 @@ brain, lenses, shine and sneakers with **transparent corners**).
 green, the icon read back out of the built executables (seven sizes, brain present, corners empty).
 
 **If this file is missing from a fresh checkout:** the installer is ~88 MB and workspace snapshots may drop
-it. Rebuild it from the pushed tree — `npm install && npm run dist:win` (Linux needs Wine for the NSIS step).
+it. Rebuild it from the pushed tree — `npm install`, then `npm run dist:win`
+(two commands, PowerShell-safe; Linux needs Wine for the NSIS step).
 NSIS stamps build time, so a rebuild hashes differently; the SHA-256 above identifies the delivered file
 itself, and the icon inside any rebuild is held to the same audits (sync + references + pixels).
 

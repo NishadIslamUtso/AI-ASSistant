@@ -1,6 +1,17 @@
 # TODO_NEXT.md — Immediate Next Actions (Living)
 
-**Last Updated:** 2026-10-14 (late evening) Asia/Dhaka
+**Last Updated:** 2026-10-15 (late) Asia/Dhaka
+
+## 2026-10-15 state (engine era)
+
+- [x] 6.2 + 6.2b landed (engine back room + face) — then HARDENED after six
+  judge reviews: permission flags pinned (cards really fire), multi-turn,
+  Stop-wedge fixed, Bangla-safe decoding, flush, denials/retries surfaced,
+  model validation, agy honesty, warnings-fail smoke, CI workflow. **298/298.**
+- [ ] **Owner round-trip** — installer → he opens the app → Engine on → one
+  file edit with a card. This is the ✅ the judges demanded. NEXT.
+- [ ] Then: the six screens (one landing each), undo card, session insights,
+  MCP server, agy Windows check, prompt-library + regenerate UI wiring.
 **Rule:** Priority order. Update after each session, check off when done.
 
 ---
