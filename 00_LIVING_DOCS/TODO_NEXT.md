@@ -118,8 +118,7 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
   capture extensions, skills indexes, Ollama tools); anything genuinely new
   goes into RESEARCH-LANDSCAPE.md with the five-question rubric. He found
   two repos before I found any — that never happens again.
-- [ ] **Caveman-style token hint** for weak local brains in the quirk table
-  (strip narration, keep facts).
+- [x] **Caveman-style token hint** — LANDED: `isSmallLocalBrain` (size tags ≤14b, phi/tiny families) adds a two-sentence bare-facts hint to the quirk table, riding the deployed rules. Researched: the caveman skill claims 65% output cuts but its own rule block costs ~1,160 input tokens — ours is two sentences, only for the brains that need it.
 - [x] **Handoff button** — LANDED: a finished turn becomes one vault document (`handoffs/<date>-<task>.md`) shaped after the three handoff repos studied 2026-10-16 — instructions to the receiving assistant, the task, the real tool calls as evidence, the resumable session id — also copied to the clipboard. Built from the turn in memory; nothing parsed post-hoc, nothing invented.
 - [ ] **Obsidian export** (trivial — the vault is already markdown).
 - [ ] **Skills sourcing**: browse anthropics/skills + awesome-claude-skills
