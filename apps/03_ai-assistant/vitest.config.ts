@@ -20,6 +20,12 @@ export default defineConfig({
         find: /^@shared\//,
         replacement: fileURLToPath(new URL('./src/shared/', import.meta.url)),
       },
+      {
+        // The renderer's own alias, so a test can import a state module that
+        // reaches for the bridge the way the interface does.
+        find: /^@\//,
+        replacement: fileURLToPath(new URL('./src/renderer/src/', import.meta.url)),
+      },
     ],
   },
   test: {

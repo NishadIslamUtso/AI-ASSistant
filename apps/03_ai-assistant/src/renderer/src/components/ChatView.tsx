@@ -5,6 +5,7 @@ import type { ModelState } from '@/hooks/useModels'
 import { useDesignTokens } from '@/hooks/useDesignTokens'
 import { viewsForMessage, type LiveArtifacts } from '@/state/artifactView'
 import Composer from './Composer'
+import EnginePanel from './EnginePanel'
 import MessageRow from './MessageRow'
 import BrainMark from './BrainMark'
 
@@ -39,6 +40,8 @@ export default function ChatView({
   rewriteStage,
   rewriteError,
   rewriteErrorFor,
+  engineOn,
+  onEngineToggle,
 }: {
   chat: Chat | null
   draft: string
@@ -64,6 +67,8 @@ export default function ChatView({
   rewriteStage?: string
   rewriteError?: string
   rewriteErrorFor?: string
+  engineOn?: boolean
+  onEngineToggle?: () => void
 }) {
   const scroller = useRef<HTMLDivElement | null>(null)
   const follow = useRef(true)
@@ -115,6 +120,7 @@ export default function ChatView({
         </div>
       </div>
 
+      <EnginePanel />
       <Composer
         value={draft}
         onChange={setDraft}
@@ -124,6 +130,8 @@ export default function ChatView({
         models={models}
         notice={notice}
         preview={preview}
+        engineOn={engineOn}
+        onEngineToggle={onEngineToggle}
       />
     </main>
   )

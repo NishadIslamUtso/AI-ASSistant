@@ -11,6 +11,7 @@ import type { ElementPick } from '@shared/lib/artifacts'
 import Sidebar from './components/Sidebar'
 import { type View } from './components/AppNav'
 import ChatView from './components/ChatView'
+import { engineStore } from '@/state/engine'
 import ArtifactsView from './components/ArtifactsView'
 import useArtifactLibrary, { adoptionRecords } from './state/artifactLibrary'
 import type { ArtifactSummary } from '../../main/artifacts/store'
@@ -64,6 +65,7 @@ export default function App() {
   const [permissionsRevision, setPermissionsRevision] = useState(0)
   const models = useModels(model, setModel, permissions)
   const [draft, setDraft] = useState('')
+  const [engineOn, setEngineOn] = useState(false)
   // Set for a moment when the rail jumps to an artifact, so a click on something
   // already on screen still shows that it did something.
   const [highlight, setHighlight] = useState('')
@@ -301,6 +303,18 @@ export default function App() {
   const send = async (): Promise<void> => {
     const text = draft
     if (!text.trim()) return
+    // Engine mode: the text is a work order, not a chat message. The same
+    // keep-the-draft-on-refusal rule applies, so nothing is ever typed twice.
+    if (engineOn) {
+      const answer = await engineStore().send(text)
+      if (answer.ok) {
+        setDraft('')
+        setNotice('')
+      } else {
+        setNotice(answer.answer)
+      }
+      return
+    }
     const accepted = await chatApi.send({ content: text })
     // The draft is cleared only when the send was accepted. A refused send keeps
     // the text and every attachment, so nothing has to be typed twice.
@@ -367,6 +381,8 @@ export default function App() {
           draft={draft}
           setDraft={setDraft}
           onSend={() => void send()}
+          engineOn={engineOn}
+          onEngineToggle={() => setEngineOn(value => !value)}
           onStop={chatApi.stop}
           busy={Boolean(chatApi.busyChatId)}
           models={isDemo ? { ...models, error: '' } : models}
