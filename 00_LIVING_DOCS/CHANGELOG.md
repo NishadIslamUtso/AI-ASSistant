@@ -1100,3 +1100,14 @@ through SKILLS + the existing vault HTTP API — no MCP schemas, no account.
 ContextFlow profiled as a one-day rebrand (badge/link mismatches, copyright-
 swap commit): ideas only, code never. Triage rubric for the whole "way many
 like this" class written into RESEARCH-LANDSCAPE.md.
+
+## 2026-10-16 (day III) — sweep #1, mine this time
+
+Proactive scan of all four spaces. Findings: the claude-code-desktop topic
+is polluted with keyword-farm fake-download repos (same class as the fake
+agy repos — clean provenance is a differentiator); agent-memory validates
+our capture design; anthropics/skills + awesome lists = install sources for
+our vault deploy; Caveman/Context Mode/Handoff = house-rule and session
+ideas queued; ollama-model-manager's name-based rebuild (vision projector
+preserved) noted for the bay. Landscape sweep made a STANDING duty in
+TODO_NEXT Track D — he should never have to find repos for me again.
