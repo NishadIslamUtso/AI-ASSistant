@@ -88,15 +88,15 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
   (chats, artifacts, the vault's reading record), worth-doing-next comes
   from those records and never invents a task, honest empty/missing states,
   third nav section (the muted "being built" line shrank accordingly).
-- [ ] **Projects 04**
-- [ ] **Vault 05**
-- [ ] **Code 06**
-- [ ] **First-run 08** (folds in engine setup: brain, folder, throttle)
-- [ ] **Appearance 09**
+- [x] **Projects 04** — LANDED v0.5.0
+- [x] **Vault 05** — LANDED v0.5.0
+- [x] **Code 06** — LANDED v0.5.0 (workspace, throttle quick-set, real resumable threads)
+- [x] **First-run 08** — LANDED v0.5.0 (name, brain from the engine's door, vault folder; all skippable)
+- [x] **Appearance 09** — verified built (tokens, sidebar/rail remembered)
 - [ ] Carried UI debts: undo card, session insights, prompt-library +
   regenerate wiring, sidebar collapse/resize already remembered (done).
 
-## TRACK C — open defects (judge list; fix as encountered, all before 1.0)
+## TRACK C — open defects (judge list) — **COMPLETE 2026-10-16: all nine resolved, each pinned by test (v0.5.1)**
 
 - [x] free-gate: empty `baseUrl` still passes machine env through — FIXED: `sanitizeEnvironment` strips ANTHROPIC_* from the inherited env on every launch; the chosen brain is applied on top, none borrowed
 - [x] cloud/local badge classification — FIXED: one function (`isCloudModelName`) classifies for every list; the composer's trigger badges the chosen brain too, and the list speaks the one canonical word ("cloud")
