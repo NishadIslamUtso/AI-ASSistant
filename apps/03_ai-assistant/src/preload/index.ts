@@ -156,6 +156,8 @@ const api = {
     /** A finished turn, written into the vault as a handoff document. */
     saveHandoff: (name: string, markdown: string): Promise<{ ok: boolean; answer: string }> =>
       ipcRenderer.invoke('vault:save-handoff', { name, markdown }),
+    /** A timestamped portable copy of the vault, written to the exports folder. */
+    exportCopy: (): Promise<{ ok: boolean; answer: string }> => ipcRenderer.invoke('vault:export-copy'),
   },
   extension: {
     /**

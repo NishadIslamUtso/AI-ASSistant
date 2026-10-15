@@ -24,6 +24,7 @@ import { agyModelSource, detectEngine } from './engine/availability'
 import { parsePullLine, validateModelName } from './engine/pull'
 import { deployMcp, deploySkill, scanClaudeSkills, type McpServer, type VaultSkill } from './engine/deploy'
 import { installCatalogSkill } from './engine/skillCatalogInstall'
+import { exportVaultCopy } from './vault/exportCopy'
 import { deployHouseRules } from './engine/houseRulesDeploy'
 import { DEFAULT_HOUSE_RULES, type HouseRules } from '../shared/lib/houseRules'
 import { newProject, normalizeProjects, type Project } from '../shared/lib/projects'
@@ -98,6 +99,16 @@ function cloudView(): {
  * opened mid-turn still sees what happened. Small on purpose: context for a
  * person, not a log file.
  */
+/** A Dhaka-time stamp for export folder names: vault-2026-10-16-1430. */
+function stampFor(now: Date): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Dhaka',
+    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false,
+  }).formatToParts(now)
+  const get = (type: string): string => parts.find((part) => part.type === type)?.value ?? '00'
+  return `${get('year')}-${get('month')}-${get('day')}-${get('hour')}${get('minute')}`
+}
+
 function pushEngineEvent(event: EngineEvent): void {
   // Stream pieces are for the live window only: a hundred of them would
   // crowd out the real story from the small remembered history, and the
@@ -402,6 +413,20 @@ function registerBridges(): void {
     } catch (error) {
       return { ok: false, answer: error instanceof Error ? error.message : 'The vault refused the handoff.' }
     }
+  })
+
+  // A timestamped, portable copy of the vault: every markdown file, same
+  // structure, written to the app's exports folder. Obsidian (or a backup,
+  // or another machine) takes folders of markdown as they are — nothing is
+  // converted, because nothing needs converting.
+  ipcMain.handle('vault:export-copy', (): { ok: boolean; answer: string } => {
+    const service = createVaultService({ vaultPath: vaultRoot() })
+    if (!service.available()) return { ok: false, answer: 'No vault to copy.' }
+    const stamp = stampFor(new Date())
+    const destination = join(app.getPath('userData'), 'exports', `vault-${stamp}`)
+    const result = exportVaultCopy(service.root, destination)
+    if (!result.ok) return { ok: false, answer: result.answer }
+    return { ok: true, answer: `${result.count} files copied to ${result.destination}` }
   })
 
   // The skills the owner's engine already has — the import list.
