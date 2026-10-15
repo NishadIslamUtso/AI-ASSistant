@@ -108,6 +108,12 @@ by hand again.
       wrapper. The app also carries the official **Ollama gateway** (local free
       brains inside the app). Cost: $0. *Done when:* Claude Code works inside a
       window on free brains, or the wall is recorded and fallback chosen.
+      ⛔ OUTCOME 2026-10-15: Code tab = upgrade wall on his free sign-in; no
+      local-models/Ollama toggle visible (subscriber-only or newer build). Free
+      Gate: NO pay. → FALLBACK ACTIVE: VS Code + official Claude Code extension
+      (same CLI core, same ~/.claude skills/mods, windowed panels); wiring via
+      `%USERPROFILE%\.claude\settings.json` env block (scoped to Claude only,
+      delete file to undo). If the extension also walls: community GUI wrapper.
 - [ ] **2.3 Vault to Claude Code:** filesystem MCP config or a `CLAUDE.md` at the
       vault root. Cost: $0. *Done when:* Claude Code reads a named note unprompted.
 - [ ] **2.5 Optional — put his existing `agy` to work:** `agy` on his device is the
