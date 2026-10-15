@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { EMPTY_SETTINGS, folderProblem, readSettings, vaultCandidates, writeSettings } from '../src/main/settings'
+import { DEFAULT_ENGINE } from '../src/shared/lib/engine'
 import { createVaultService } from '../src/main/vault/service'
 import { startLocalApi } from '../src/main/api/server'
 
@@ -53,6 +54,9 @@ test('settings round-trip, and unknown keys are dropped rather than kept', (t) =
     // Nothing was said about permissions, so the file carries the defaults: a
     // local model may answer, a local vault may keep, nothing is switched off.
     permissions: { local: true, browserCapture: true, keepConversations: true, cloud: {} },
+    // Nothing was said about the engine either, so it carries the brain the
+    // owner verified works: Claude Code through the local Ollama door.
+    engine: DEFAULT_ENGINE,
   })
   assert.equal(readdirSync(join(dir, 'nested')).includes('settings.json.tmp'), false, 'no half-written file is left')
 

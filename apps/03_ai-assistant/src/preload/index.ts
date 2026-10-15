@@ -5,6 +5,7 @@ import type {
   CloudView,
 } from '../shared/lib/providers'
 import type { Permissions } from '../shared/lib/permissions'
+import type { EngineEvent, EngineId, EngineSettings } from '../shared/lib/engine'
 import type {
   AdoptInput,
   ItemAnswer,
@@ -23,6 +24,29 @@ import type {
  * the interface, because a failed folder choice is not an exception, it is an
  * answer.
  */
+/** The engine, exactly as the window may touch it: ask, task, answer, watch. */
+const engineApi = {
+  /** The chosen engine, whether it is working, and what it last said. */
+  read: (): Promise<{ engine: EngineSettings; running: boolean; history: EngineEvent[] }> =>
+    ipcRenderer.invoke('engine:read'),
+  /** Choose which engine thinks inside the app. */
+  pick: (id: EngineId): Promise<{ ok: boolean; answer: string }> => ipcRenderer.invoke('engine:pick', id),
+  /** Hand the engine a task. Events arrive through `onEvent` from then on. */
+  send: (prompt: string, cwd: string): Promise<{ ok: boolean; answer: string }> =>
+    ipcRenderer.invoke('engine:send', prompt, cwd),
+  /** Answer one of the engine's permission cards. */
+  answer: (requestId: string, allow: boolean): Promise<{ ok: boolean }> =>
+    ipcRenderer.invoke('engine:answer', requestId, allow),
+  /** Make the engine stop. */
+  stop: (): Promise<{ ok: boolean }> => ipcRenderer.invoke('engine:stop'),
+  /** Watch the engine live. Returns the unsubscribe function. */
+  onEvent: (listener: (event: EngineEvent) => void): (() => void) => {
+    const channel = (_outer: unknown, event: EngineEvent): void => listener(event)
+    ipcRenderer.on('engine:event', channel)
+    return () => ipcRenderer.removeListener('engine:event', channel)
+  },
+}
+
 const api = {
   app: {
     /** Which build is running. Used by the About panel and bug reports. */
@@ -109,5 +133,6 @@ const api = {
 }
 
 contextBridge.exposeInMainWorld('api', api)
+contextBridge.exposeInMainWorld('engineApi', engineApi)
 
 export type Api = typeof api
