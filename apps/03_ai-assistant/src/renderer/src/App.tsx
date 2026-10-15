@@ -396,6 +396,8 @@ export default function App() {
           onOpenMemory={() => setMemoryOpen(true)}
           onOpenMarketplace={() => setMarketOpen(true)}
           onSetChatProject={(chatId, projectId) => chats.setProject(chatId, projectId)}
+          onPin={chats.pin}
+          onRenameChat={chats.rename}
           profileName={profile.name}
         />
         {view === 'code' ? <CodeView /> : view === 'vault' ? (

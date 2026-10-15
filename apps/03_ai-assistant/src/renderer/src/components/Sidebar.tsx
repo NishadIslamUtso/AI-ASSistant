@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import useProjects from '@/state/projects'
-import { useChats } from '@/state/useChats'
 import { PanelLeftClose, PanelLeftOpen, Plus, Search, Store, X } from 'lucide-react'
 import type { Chat } from '@shared/types'
 import { searchChats } from '@shared/lib/search'
@@ -51,6 +50,10 @@ export default function Sidebar({
   profileName,
   /** The chat-row menu's "Add to project" needs the real list. */
   onSetChatProject,
+  /** Pin and rename go through the one chat state the app holds — a second
+   *  instance here would write its own stale copy over the app's. */
+  onPin,
+  onRenameChat,
   view,
   onView,
   artifactQuery,
@@ -70,6 +73,8 @@ export default function Sidebar({
   onOpenMarketplace: () => void
   profileName: string
   onSetChatProject: (chatId: string, projectId: string | null) => void
+  onPin: (chatId: string, pinned: boolean) => void
+  onRenameChat: (chatId: string, title: string) => void
   /** Which screen is showing, so the sidebar can serve it. */
   view: View
   onView: (view: View) => void
@@ -79,7 +84,6 @@ export default function Sidebar({
   artifactCount: number
 }) {
   const [query, setQuery] = useState('')
-  const chats0 = useChats()
   const { projects } = useProjects(true)
   const [prefs, setPrefs] = usePersistentState<SidebarPrefs>('ai-assistant.sidebar', { collapsed: false, width: 260 }, normalizePrefs)
   const [dragging, setDragging] = useState(false)
@@ -234,8 +238,8 @@ export default function Sidebar({
                   active={chat.id === currentChat}
                   onOpen={onOpen}
                   onDelete={onDelete}
-                  onPin={chats0.pin}
-                  onRename={chats0.rename}
+                  onPin={onPin}
+                  onRename={onRenameChat}
                   onSetProject={onSetChatProject}
                   projects={projects}
                 />

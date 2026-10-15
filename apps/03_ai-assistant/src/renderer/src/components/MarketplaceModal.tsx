@@ -16,6 +16,17 @@ export default function MarketplaceModal({ open, onClose }: { open: boolean; onC
   const engine = useEngine()
   const [extension, setExtension] = useState('')
 
+  // Escape closes, like every other way out of this modal. Without this the
+  // keyboard is trapped behind the × and the overlay.
+  useEffect(() => {
+    if (!open) return
+    const dismiss = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', dismiss)
+    return () => window.removeEventListener('keydown', dismiss)
+  }, [open, onClose])
+
   useEffect(() => {
     if (!open) return
     void engine.checkEngines()
