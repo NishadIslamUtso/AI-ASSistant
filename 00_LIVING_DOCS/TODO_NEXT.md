@@ -113,6 +113,18 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
 
 ## TRACK D — hygiene (continuous)
 
+- [ ] **Landscape sweep — STANDING DUTY (his correction, 2026-10-16):** every
+  working session includes a proactive scan of the four spaces (CC GUIs,
+  capture extensions, skills indexes, Ollama tools); anything genuinely new
+  goes into RESEARCH-LANDSCAPE.md with the five-question rubric. He found
+  two repos before I found any — that never happens again.
+- [ ] **Caveman-style token hint** for weak local brains in the quirk table
+  (strip narration, keep facts).
+- [ ] **Handoff button**: compress a session to markdown (pairs with resume).
+- [ ] **Obsidian export** (trivial — the vault is already markdown).
+- [ ] **Skills sourcing**: browse anthropics/skills + awesome-claude-skills
+  and offer installs through the existing one-vault-to-every-engine deploy.
+
 - [ ] Real-CLI harness (settle `-p/--print` and `initialize` disputes)
 - [ ] JUDGE-BRIEF.md refresh: engine spine, throttle, house rules, freedom
   matrix, memory guards (branch must stay judgeable)

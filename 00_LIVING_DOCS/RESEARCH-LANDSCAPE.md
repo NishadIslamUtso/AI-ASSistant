@@ -101,3 +101,55 @@ capture/capsule niche pays. Our position is the strongest slot in it:
 local + free + versioned vault + THE ENGINE can use what was captured
 (nobody else wires capture to an agent). The niche being crowded is
 validation, not threat.
+
+---
+
+## 2026-10-16 (day II) — proactive sweep #1 (his correction accepted: searching is MY job)
+
+### The scam wave is real and worth naming
+The `claude-code-desktop` GitHub topic is polluted with keyword-farm fakes:
+"Claude-Opus-5.5-AI-Free-Desktop", "ClaudeCodeUncensored", "jailbreak-claude"
+repos farming model-name search terms with exe downloads. Same class as the
+fake gemini-antigravity repos. Our clean provenance (real history, his mark,
+no download-bait) is itself a differentiator. Rubric question 1 exists for
+exactly this.
+
+### App side
+- **CloudCLI / claudecodeui** (siteboon, AGPL): desktop+MOBILE web UI for
+  Claude Code/Cursor/Codex, remote session management, tray companion.
+  Ideas only (AGPL). Validates: mobile access to sessions is a real demand —
+  parked with the community-store/mobile thinking, not queued.
+- **aofp/yume** (Tauri): hooks/subagents/skills-aware desktop; watch later.
+
+### Extension side
+- **agent-memory** (jennifermarsman, MIT): MutationObserver real-time
+  auto-capture to IndexedDB, JSON export. Validates our design; the
+  real-time observer is the detail our capture could adopt if manual
+  capture ever feels like friction.
+- **ChatEngram**: one-click Markdown export to Obsidian/Notion. Our vault
+  IS markdown — "export to Obsidian" is nearly free for us. Queued small.
+- **AIContext Saver** (sharath2525, open source): inject an AI-COMPRESSED
+  summary of a capsule instead of the full context — a real token-saver for
+  cloud-brain slices; relevant to the vault skills work.
+
+### Skills space (the big one)
+- **anthropics/skills** = the official first-party repo (authoritative).
+- **ComposioHQ/awesome-claude-skills** (13k stars), awesome-claude-code
+  (54k stars): the curated indexes. Our one-vault-to-every-engine deploy can
+  source from these directly — skills are already our format.
+- **Caveman**: strips narration, cuts output tokens ~65% — EXACTLY the kind
+  of footnote our per-brain quirk table wants for weak local brains.
+- **Context Mode**: filters shell-output noise from context — complements
+  our memory-discipline house rule.
+- **Handoff**: compresses a session to markdown to continue elsewhere —
+  pairs with our resume; a "hand this session to a fresh chat" button.
+
+### Ollama space
+- **ollama-model-manager** (ur3ley, MIT, Qt6): edit parameters/create
+  variants WITHOUT Modelfiles, and — the clever bit — edits rebuild by NAME
+  so vision projectors are never silently dropped. Future bay idea:
+  parameter tweaks + variants beside pull/delete.
+- **AnythingLLM** (MIT, 66k stars): validates local RAG over one's own
+  files — our vault+memory direction, independently confirmed at scale.
+- LibreChat (MIT, 45k stars): local+hosted side-by-side; Cherry Studio
+  (AGPL): crowded space, none wired to an agent engine.
