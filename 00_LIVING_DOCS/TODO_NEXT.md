@@ -127,6 +127,15 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
 - [x] `/home/user/` doc mirrors re-sync — done 2026-10-16 (stamped).
 - [ ] RELEASE-WINDOWS.md stays current per installer build
 
+**Standing rules (his, 2026-10-16, after the merge-spam):**
+
+- **Work in the v3 branch only.** `main` is frozen — it moves only when HE
+  says merge. No heal-merges, no "Merge remote main" chains, one landing =
+  one commit, never two merges for one landing.
+- **Verify before pushing:** full suite + tsc clean, `git status` empty,
+  diff vs remote checked line-by-line, THEN push once, THEN `ls-remote`
+  confirms the exact sha landed. No push without that chain.
+
 **Standing rules:** ✅ only after a real turn with the real engine on his
 machine; every item individually checkable; docs in sync each landing; no
 quiet descope — "everything, done correctly."
