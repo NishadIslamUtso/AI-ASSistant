@@ -1031,3 +1031,38 @@ memory discipline (answer from the conversation first, search only what the
 question needs, never sweep) and his standing instruction (ask when unsure,
 do nothing unnecessary). 11 house-rules tests. Throttle stands as built,
 Ask-me default.
+
+## 2026-10-16 (early) — Track A landed: the spine, five landings, 343 tests
+
+He could not test, so the spine got built — no compromises, every landing
+tested and pushed:
+
+1. **Resumable sessions, honest usage, before/after cards.** The engine's
+   init sentence carries its session id; the app remembers one per workspace
+   and resumes with `--resume` after a restart (a living engine is never
+   resumed from file — tested). Result sentences carry tokens/time/cost; the
+   work card shows them. Permission cards carry a clipped before/after
+   (Edit/Write/Bash) so an allow is an informed allow.
+2. **Per-engine model routing + real detection.** `engine:models` asks the
+   CHOSEN engine's own source (claude-code → his door; agy → its honest
+   answer in both installed/not-installed states, scam repos named).
+   `engine:detect` runs each engine's `--version` — the agy "Windows check"
+   is now self-serve: the bay shows "not installed" with the fix, or lights
+   agy up by itself the day he installs it.
+3. **Pull-models in the bay.** Real progress bar from the brain door's own
+   stream, delete buttons on local brains, names validated, claude-code
+   only (cloud-only engines get no fake download box).
+4. **One vault → every engine.** Skills deploy to Claude Code's exact shape
+   (`~/.claude/skills/<n>/SKILL.md`) and agy's exact shape
+   (`.agents/skills/<n>.md`, filename = slash command); his existing eleven
+   import cleanly. One MCP list writes `.mcp.json` +
+   `.agents/mcp_config.json`.
+5. **The rulebook, editable and delivered on every send.** Settings → House
+   rules: five fields, save-and-deliver. `engine:send` deploys the rules +
+   the current brain's footnote to each engine's own global file as a
+   marker-bounded block — the owner's own words in those files are never
+   touched (re-deploy tested).
+
+**v0.4.0:** everything above in one installer. Remaining in Track A: the agy
+ADAPTER (needs agy on his machine), the Skills pane UI (lands with its
+screen), plugin packs (blocked on agy formats).

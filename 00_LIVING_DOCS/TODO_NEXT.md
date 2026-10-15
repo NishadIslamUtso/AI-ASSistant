@@ -24,47 +24,48 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
 
 ## NOW — the acceptance round-trip (everything hangs on this)
 
-- [ ] **Rebuild installer as v0.4.0** — 0.3.0 predates the throttle + house
-  rules; he must get ONE installer with everything (`npm run dist:win`,
-  wine note in RELEASE-WINDOWS.md).
+- [ ] **His run on the TUF A15** with the v0.4.0 installer (built below):
 - [ ] **His run on the TUF A15:** install → Engine on → pick a brain in the
   bay (cloud badge = leaves machine; local = offline) → pick a folder →
   set the throttle → give real work → approve via the card → see artifacts
   land. This is the ✅ the judges demanded (6.2/6.5 tick on 👍).
 - [ ] On any defect: same-day fix, rebuild, he retries.
 
-## TRACK A — the spine (engine parity — his #1 ruling, in order)
+## TRACK A — the spine (engine parity — HIS #1 RULING: LANDED 2026-10-15, five landings, 343 tests)
 
-- [ ] **Per-engine model routing** — `engine:models` becomes per-engine:
-  claude-code → brain door `/api/tags`; agy → its own selector (read from
-  his machine once installed); the bay shows each engine's REAL freedom,
-  never a pickable lie.
-- [ ] **Pull-models button in the bay** (`POST /api/pull` to the door) —
-  "whichever models I want" with zero terminal.
-- [ ] **agy Windows check (6.3)** on his machine → `main/engine/agy.ts`
-  adapter (native input mode vs PTY, decided by the check) → throttle mapped
-  to agy's approval rules → bay flips "soon" to live.
-- [ ] **Session history / resume** — engine sessions listed and resumable
-  (the `--resume` class of ability), in-app.
-- [ ] **Skills, one vault → every engine:** import his existing 11 CC skills
-  into the app vault (markdown + frontmatter, already the format) → deploy
-  to `~/.claude/skills/` AND `.agents/skills/` → a Skills pane in the app.
-- [ ] **MCP, one list → every engine:** app keeps the server list, projects
-  to Claude Code's config and agy's `.agents/mcp_config.json` (field names
-  translated per engine).
-- [ ] **File diffs on approval cards** — see exactly what an edit changes
-  before allowing it.
-- [ ] **Usage display** — what each session/turn cost in time and tokens
-  (cloud brains: the free-slice caps visible).
-- [ ] **Plugin packs (level 2)** — per-engine plugin packaging, after the
-  agy check confirms formats. Level 1 = skills + rules + MCP (above).
-- [ ] **House-rules edit screen** — the canonical rulebook editable in
-  Settings; re-deploys to every engine on save.
+- [x] **Per-engine model routing** (landing 2): `engine:models` asks the
+  CHOSEN engine's own source; agy's answer is honest in both states.
+- [x] **Pull-models + delete in the bay** (landing 3): real progress bar,
+  names validated, claude-code only (no fake downloads for cloud engines).
+- [x] **agy Windows check is now self-serve** (landing 2): `engine:detect`
+  runs each engine's `--version` on HIS machine; the bay shows "not
+  installed" with the fix (scam repos named) or lights agy up by itself.
+  REMAINING: the agy ADAPTER (`main/engine/agy.ts`) once agy exists on his
+  machine — the check tells us which input mode it offers.
+- [x] **Session resume across app restarts** (landing 1): session id per
+  workspace persisted; fresh launches continue the old conversation via
+  `--resume`; a living engine is never resumed from file (tested).
+- [x] **Skills: one vault → every engine** (landing 4): doors + exact-format
+  deploys (CC `SKILL.md` frontmatter; agy filename-as-slash-command); his 11
+  CC skills import cleanly (scanner tested). REMAINING: the Skills pane UI
+  (nav item lands with its screen, per the standing rule).
+- [x] **MCP: one list → every engine** (landing 4): `.mcp.json` +
+  `.agents/mcp_config.json` written from one canonical list; remote-field
+  translation confirmed at the agy check.
+- [x] **File diffs on approval cards** (landing 1): before/after preview,
+  clipped to a decision size.
+- [x] **Usage display** (landing 1): tokens/time/cost from the engine's own
+  result sentence, on the work card.
+- [ ] **Plugin packs (level 2)** — still honestly blocked on agy's formats.
+- [x] **House-rules edit screen** (landing 5): Settings → House rules — five
+  fields, save-and-deliver; every send deploys the rules + brain footnote to
+  each engine's own global file as a marker-bounded block (his words in
+  those files are never touched — tested).
 - [ ] **"About the owner" block — ON HIS WORD** (offered 2026-10-15): ten
   lines max, he writes/edits it, rides every engine's context. Not built
   until he says so.
-- [ ] **Per-turn context pane** — exactly which files/memory/skills were
-  loaded this turn (the visibility guard for the memory problem).
+- [ ] **Per-turn context pane** — tool/file activity is already on the card;
+  the full pane (exactly which memory/skills loaded) lands with Code 06.
 
 ## TRACK B — the face (the six designed screens; mockups are authority)
 

@@ -105,3 +105,23 @@ SDK remains the documented fallback.
    gate the engine; secrets never cross to the renderer.
 5. Say clearly what you would do differently, with reasons — the owner will
    relay it and the builder continues from it.
+
+---
+
+## 2026-10-16 — v0.4.0: Track A (the spine), five landings, 343 tests
+
+Where to look, in order: `main/engine/stream.ts` (session id, usage,
+permission detail from the real wire), `main/engine/socket.ts`
+(SessionMemory: one session id per workspace, resumed with the engine's own
+`--resume` after a restart; a living engine is never resumed from file),
+`main/engine/availability.ts` (each engine found via its own `--version`;
+agy's model source is honest in both states), `main/engine/pull.ts` +
+`engine:pull` (the brain door's own progress stream, names validated),
+`main/engine/deploy.ts` (one skills/MCP vault → each engine's exact format),
+`main/engine/houseRulesDeploy.ts` (marker-bounded block in each engine's own
+global file; owner words preserved across re-deploys — tested),
+`shared/lib/houseRules.ts` (canonical rulebook + per-brain footnotes),
+`shared/lib/engine.ts` (the engine-blind contract everything speaks).
+UI: EngineBay (engine system, brain list FROM the engine, workplace,
+throttle, pull), EnginePanel (work card with usage + before/after),
+Settings → House rules. 343 vitest tests, tsc clean.
