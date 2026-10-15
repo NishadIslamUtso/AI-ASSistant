@@ -1019,3 +1019,15 @@ deny rules and guarded deletions still hold at full speed (its nature, not
 our gate); the app itself writes no restrictions. 313 tests, tsc clean.
 ARCHITECTURE-ENGINE: the freedom matrix (engine x models, the honest
 version) and the offline-models explanation added.
+
+## 2026-10-15 (late night II) — memory discipline + his standing instructions, into every engine
+
+His clarifications: restrictions meant "things it wasn't supposed to say"
+(answered in ARCHITECTURE-ENGINE: restrictions live in model weights and
+provider filters — the app adds none; local open brains via his door are the
+no-filter path), and the memory problem ("it may look up everything for an
+unrelated ask"). Landed in the house rules, projected to every engine:
+memory discipline (answer from the conversation first, search only what the
+question needs, never sweep) and his standing instruction (ask when unsure,
+do nothing unnecessary). 11 house-rules tests. Throttle stands as built,
+Ask-me default.
