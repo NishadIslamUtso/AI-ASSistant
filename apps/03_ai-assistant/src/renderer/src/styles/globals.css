@@ -23,6 +23,38 @@
 }
 
 /*
+  The light theme, and System. Dark is the app's own palette above; `[data-theme='light']`
+  is set by Settings > Appearance, and `System` is the attribute's absence — the OS's
+  preference answers through the media query. The accent is not overridden on purpose:
+  it is chosen separately in Appearance and works on both palettes.
+*/
+[data-theme='light'] {
+  --color-bg: #f4f2ec;
+  --color-panel: #ebe8df;
+  --color-card: #fbfaf6;
+  --color-line: #dcd7ca;
+  --color-ink: #262420;
+  --color-muted: #6f6a5e;
+  --color-brand: #b04a6a;
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    --color-bg: #f4f2ec;
+    --color-panel: #ebe8df;
+    --color-card: #fbfaf6;
+    --color-line: #dcd7ca;
+    --color-ink: #262420;
+    --color-muted: #6f6a5e;
+    --color-brand: #b04a6a;
+    --color-ok: #15803d;
+    --color-warn: #b45309;
+  }
+}
+
+/*
   Set by Settings > Appearance. Kept outside @theme on purpose: Tailwind emits
   only the theme variables its own utilities use, and this one is read through
   max-w-[var(--chat-width)] rather than through a generated class.

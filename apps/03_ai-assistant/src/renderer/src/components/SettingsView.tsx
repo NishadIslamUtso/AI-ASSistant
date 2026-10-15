@@ -15,7 +15,7 @@ import {
 } from '@shared/lib/inference'
 import { CLOUD_PROVIDERS, type CloudProviderView } from '@shared/lib/providers'
 import { DEFAULT_PERMISSIONS, type Permissions } from '@shared/lib/permissions'
-import { ACCENTS, DEFAULT_APPEARANCE, WIDTHS, type Appearance, TEXT_SIZES, FONTS } from '../state/appearance'
+import { ACCENTS, DEFAULT_APPEARANCE, WIDTHS, TEXT_SIZES, FONTS, THEMES, type Appearance } from '../state/appearance'
 import {
   CUSTOM_FIELDS,
   DEFAULT_INFERENCE,
@@ -628,6 +628,30 @@ export default function SettingsView({
             : []),
         ],
     appearance: [
+      {
+        label: 'Theme',
+        terms: 'theme dark light system appearance night day palette',
+        body: (
+          <div className="flex gap-1.5">
+            {THEMES.map(theme => (
+              <button
+                key={theme.name}
+                type="button"
+                className={`rounded-full border px-3 py-1 text-[12px] ${
+                  appearance.theme === theme.name
+                    ? 'border-accent bg-accent/15 text-ink'
+                    : 'border-line text-muted hover:bg-white/[0.06]'
+                }`}
+                onClick={() => onAppearanceChange({ ...appearance, theme: theme.name })}
+                aria-label={`Theme: ${theme.label}`}
+                aria-pressed={appearance.theme === theme.name}
+              >
+                {theme.label}
+              </button>
+            ))}
+          </div>
+        ),
+      },
       {
         label: 'Accent',
         terms: 'colour color theme violet blue teal amber rose',

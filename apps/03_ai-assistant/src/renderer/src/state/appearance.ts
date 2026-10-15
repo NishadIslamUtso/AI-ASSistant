@@ -17,8 +17,11 @@ export type AccentName = 'violet' | 'blue' | 'teal' | 'amber' | 'rose'
 export type WidthName = 'focused' | 'comfortable' | 'wide'
 export type TextSizeName = 'small' | 'medium' | 'large'
 export type FontName = 'sans' | 'serif'
+export type ThemeName = 'system' | 'light' | 'dark'
 
 export type Appearance = {
+  /** Which palette the neutrals come from: the OS's choice, or one of ours. */
+  theme: ThemeName
   accent: AccentName
   width: WidthName
   /** The transcript's text size, as the approved settings mockup offers it. */
@@ -58,7 +61,15 @@ export const FONTS: readonly { name: FontName; label: string; stack: string }[] 
   { name: 'serif', label: 'Reading serif', stack: "Georgia, 'Times New Roman', serif" },
 ])
 
+/** The dark palette is the app's own; System follows the OS either way. */
+export const THEMES: readonly { name: ThemeName; label: string }[] = Object.freeze([
+  { name: 'system', label: 'System' },
+  { name: 'light', label: 'Light' },
+  { name: 'dark', label: 'Dark' },
+])
+
 export const DEFAULT_APPEARANCE: Appearance = Object.freeze({
+  theme: 'system',
   accent: 'violet',
   width: 'comfortable',
   textSize: 'medium',
@@ -78,6 +89,9 @@ export function chatWidthPx(name: WidthName): number {
 export function normalizeAppearance(value: unknown): Appearance {
   const input = (value && typeof value === 'object' ? value : {}) as Partial<Appearance>
   return {
+    theme: THEMES.some(theme => theme.name === input.theme)
+      ? (input.theme as ThemeName)
+      : DEFAULT_APPEARANCE.theme,
     accent: ACCENTS.some(accent => accent.name === input.accent)
       ? (input.accent as AccentName)
       : DEFAULT_APPEARANCE.accent,
@@ -116,7 +130,11 @@ export function appearanceVariables(appearance: Appearance): Record<string, stri
   }
 }
 
-type StyledRoot = { style: { setProperty(name: string, value: string): void } }
+type StyledRoot = {
+  style: { setProperty(name: string, value: string): void }
+  setAttribute?(name: string, value: string): void
+  removeAttribute?(name: string, value?: string): void
+}
 
 export function applyAppearance(
   appearance: Appearance,
@@ -124,6 +142,15 @@ export function applyAppearance(
 ): void {
   const variables = appearanceVariables(appearance)
   for (const [name, value] of Object.entries(variables)) root.style.setProperty(name, value)
+  // The theme is a palette swap, not a variable: it lives in the stylesheet as
+  // `[data-theme='light']`, so `System` is the attribute's absence and the OS's
+  // preference answers. The accent stays inline — it is chosen separately and
+  // works on both palettes.
+  if (appearance.theme === 'light' || appearance.theme === 'dark') {
+    if (typeof root.setAttribute === 'function') root.setAttribute('data-theme', appearance.theme)
+  } else if (typeof root.removeAttribute === 'function') {
+    root.removeAttribute('data-theme')
+  }
 }
 
 /**

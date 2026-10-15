@@ -37,6 +37,20 @@ files:
   - out/**/*
   - package.json
 
+# The browser extension ships with the app: it lands in the install folder as
+# `resources/extension` so "Load unpacked" at chrome://extensions has a folder to
+# point at. It is not packed into the asar — Chrome needs real files on disk.
+extraResources:
+  - from: ../../extension
+    to: extension
+    filter:
+      - manifest.json
+      - background.js
+      - content-scripts/**
+      - lib/**
+      - popup/**
+      - icons/**
+
 # The app is written in English, so the other 54 Chromium locale files (46 MB
 # unpacked) are not shipped. A person who needs another language is better served
 # by a real translation than by Chromium's menus.

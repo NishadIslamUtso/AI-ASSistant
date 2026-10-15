@@ -130,6 +130,10 @@ export default function MarketplaceModal({ open, onClose }: { open: boolean; onC
               <div className="min-w-0 flex-1">
                 <p className="text-[13px] text-ink">Chrome extension — capture the page you are reading</p>
                 <p className="truncate text-[11.5px] text-muted">{isDemo ? 'The desktop app opens the door.' : extension}</p>
+                <p className="mt-1 text-[11px] leading-relaxed text-muted">
+                  One-time setup: chrome://extensions → turn on Developer mode → Load unpacked → choose the{' '}
+                  <span className="font-mono">extension</span> folder that ships with this app. Refresh open tabs once after.
+                </p>
               </div>
             </div>
           </section>

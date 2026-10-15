@@ -78,6 +78,7 @@ test('a half-written preference falls back field by field, never to nothing', ()
   assert.deepEqual(normalizeAppearance({}), DEFAULT_APPEARANCE)
   assert.deepEqual(normalizeAppearance({ accent: 'chartreuse' }), DEFAULT_APPEARANCE)
   assert.deepEqual(normalizeAppearance({ accent: 'rose', width: 'enormous' }), {
+    theme: 'system',
     accent: 'rose',
     width: 'comfortable',
     textSize: 'medium',
@@ -85,13 +86,15 @@ test('a half-written preference falls back field by field, never to nothing', ()
     motion: 'system',
   })
   assert.deepEqual(normalizeAppearance({ width: 'wide' }), {
+    theme: 'system',
     accent: 'violet',
     width: 'wide',
     textSize: 'medium',
     font: 'sans',
     motion: 'system',
   })
-  assert.deepEqual(normalizeAppearance({ accent: 'blue', width: 'focused' }), {
+  assert.deepEqual(normalizeAppearance({ accent: 'blue', width: 'focused', theme: 'light' }), {
+    theme: 'light',
     accent: 'blue',
     width: 'focused',
     textSize: 'medium',
@@ -124,7 +127,14 @@ test('the boot path applies what is stored before the first paint', () => {
   const store = new Map([
     [
       'ai-assistant.appearance',
-      JSON.stringify({ accent: 'blue', width: 'wide', textSize: 'large', font: 'serif', motion: 'reduced' }),
+      JSON.stringify({
+        theme: 'light',
+        accent: 'blue',
+        width: 'wide',
+        textSize: 'large',
+        font: 'serif',
+        motion: 'reduced',
+      }),
     ],
   ])
   const globals = globalThis as unknown as { localStorage: unknown; document: unknown }
@@ -134,14 +144,22 @@ test('the boot path applies what is stored before the first paint', () => {
     setItem: () => {},
     removeItem: () => {},
   }
-  globals.document = {
-    documentElement: {
-      style: {
-        setProperty: (name: string, value: string): void => {
-          written[name] = value
-        },
+  const fakeRoot = {
+    attributes: {} as Record<string, string>,
+    style: {
+      setProperty: (name: string, value: string): void => {
+        written[name] = value
       },
     },
+    setAttribute(name: string, value: string): void {
+      this.attributes[name] = value
+    },
+    removeAttribute(name: string): void {
+      delete this.attributes[name]
+    },
+  }
+  globals.document = {
+    documentElement: fakeRoot as unknown as { style: { setProperty(name: string, value: string): void } },
   }
   try {
     applyStoredAppearance()
@@ -156,4 +174,5 @@ test('the boot path applies what is stored before the first paint', () => {
     '--transcript-font': "Georgia, 'Times New Roman', serif",
     '--motion': '0',
   })
+  assert.equal(fakeRoot.attributes['data-theme'], 'light')
 })

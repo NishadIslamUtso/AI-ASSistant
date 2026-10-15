@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowUp, ChevronDown, CookingPot, Cpu, FolderOpen, Layers, Square } from 'lucide-react'
 import type { Project } from '@shared/lib/projects'
-import { vaultGet } from '@shared/lib/vault'
+import { vaultGet, type VaultReply } from '@shared/lib/vault'
 import { useEngine, type EngineTurn } from '@/state/engine'
 import useDismiss from '@/hooks/useDismiss'
 
@@ -223,14 +223,36 @@ function CookDialog({ draft, onDone }: { draft: string; onDone: (next: string | 
       return
     }
     const controller = new AbortController()
-    vaultGet(`/grep?q=${encodeURIComponent(words.join(' '))}`, controller.signal)
-      .then((reply) => {
-        const found = Array.isArray(reply?.hits) ? reply.hits.slice(0, 6) : []
-        setHits(found)
-        setPicked(Object.fromEntries(found.map((hit: { path: string }) => [hit.path, true])))
-        setState(found.length ? 'ready' : 'nothing')
-      })
-      .catch(() => setState('offline'))
+    // One search per word: the grep matches a whole needle as one phrase, and
+    // a three-word phrase rarely survives verbatim in the vault. Word by word
+    // finds the files that matter, and the merge keeps the best six.
+    void Promise.all(
+      words.map(word =>
+        vaultGet(`/grep?q=${encodeURIComponent(word)}`, controller.signal).catch(() => 'failed'),
+      ),
+    ).then((replies) => {
+      // A refused or unreachable door is not the same as an empty vault — the
+      // two states get different sentences.
+      if (replies.some(reply => reply === 'failed')) {
+        setState('offline')
+        return
+      }
+      const seen = new Set<string>()
+      const found: Array<{ path: string; line: number; text: string }> = []
+      for (const reply of replies as VaultReply[]) {
+        for (const hit of Array.isArray(reply?.hits) ? reply.hits : []) {
+          const key = `${hit.path}:${hit.line}`
+          if (seen.has(key)) continue
+          seen.add(key)
+          found.push(hit)
+          if (found.length >= 6) break
+        }
+        if (found.length >= 6) break
+      }
+      setHits(found)
+      setPicked(Object.fromEntries(found.map((hit: { path: string }) => [hit.path, true])))
+      setState(found.length ? 'ready' : 'nothing')
+    })
     return () => controller.abort()
   }, [draft])
 
