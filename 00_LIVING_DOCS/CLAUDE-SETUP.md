@@ -7,6 +7,9 @@ subscription. Other than that, everything must be free."*
 - **Free Gate:** every step below is labeled with its cost. Default = **$0**.
   Any item marked 🅿️ stays blocked until the owner literally says **"buy"** —
   and only he can say it. API credits *and* subscriptions both count as "cost".
+- **Language rule (owner, 2026-10-15):** explain everything in plain words —
+  like he understands no tech. Every technical term gets a straight
+  explanation the first time it appears.
 - **App status:** parked (see `TODOLIST.md`), not deleted. No app code unless he
   un-parks it.
 - **Cadence:** one step per turn. He says **"next"** (or "skip" / "reorder").
@@ -21,6 +24,15 @@ memory — running on his ASUS TUF (RTX 3050 4 GB / 8 GB RAM) with zero spend.
 ---
 
 ## Phase 0 — free brain for Claude Code (foundation)
+
+**Plain words:** a model is like a movie file; Ollama and LM Studio are two free
+"players" for it. Ollama is chosen not because it is smarter (same models on
+both) but because it is: (1) already installed and running on his machine,
+(2) the player Claude Code speaks to directly — three settings, done — while LM
+Studio would need an extra translator program in the middle, (3) quiet and
+background-friendly. Skipping both is possible too (free online models instead:
+no install, but internet, queues, and text leaves the machine) — allowed under
+the Free Gate, just a different trade.
 
 - [ ] **0.1 Verify Ollama is up** — cost: $0.
       `curl.exe http://127.0.0.1:11434/api/tags` → lists his models.
@@ -77,6 +89,14 @@ memory — running on his ASUS TUF (RTX 3050 4 GB / 8 GB RAM) with zero spend.
       *Done when:* the mod's UI/behavior is visibly active.
 - [ ] **2.3 Vault to Claude Code:** filesystem MCP config or a `CLAUDE.md` at the
       vault root. Cost: $0. *Done when:* Claude Code reads a named note unprompted.
+- [ ] **2.5 Optional — put his existing `agy` to work:** `agy` on his device is the
+      **Antigravity CLI** — Google's own terminal helper (the free successor to
+      Gemini CLI; signs in with a Google account, uses Gemini free quota). Free
+      add-ons let Claude Code hand tasks to `agy` for a second opinion or rescue
+      passes — two free helpers checking each other. **Check first:** those
+      add-ons lean Mac/Linux (bash); I verify Windows support before we install
+      anything. If he'd rather not keep it: deleting it breaks nothing in this
+      plan — Claude Code + Ollama don't need it. Cost: $0 either way.
 - [ ] **2.4 First real workflow:** one actual job of his, start to finish, free.
       *Done when:* he uses it without me standing over it.
 
