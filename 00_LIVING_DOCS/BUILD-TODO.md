@@ -1,4 +1,14 @@
 # AI ASSistant — build todo
+> **Mirror of the owner's live plan file.** The workspace copy
+> (`/home/user/BUILD-TODO.md`) is edited during work; this copy is refreshed at
+> every landing so a clone of this branch alone carries the full plan. If they
+> ever differ, the newer commit wins. Companion docs in this folder:
+> `COMMUNITY-STORE-PLAN.md` (packs/stores design) and
+> `ARTIFACTS-SCREEN-PLAN.md` (step-1 decision record, superseded by what
+> landed). Session-by-session reasoning: `../memory/sessions/` + `CHANGELOG.md`;
+> machine-readable state: `../ai/STATE.json`. Archives on branches:
+> `archive/workspace` (mockups + owner attachments + screenshots — raw fetch
+> recipe inside), `archive/ai-assistant-app` (original app source).
 
 `S` ≈ under an hour · `M` ≈ a day · `L` ≈ multi-day.
 Order inside each section is roughly the order I'd build.
@@ -350,9 +360,17 @@ owner's chair that reads as foundations with nothing on top. So: **screens first
 
 > **Workspace pruned (2026-10-15): 809 MB → 44 MB.** Dependencies are gone by design — run `npm install` in
 > `apps/03_ai-assistant` (and in `shot-tools` for the checkers) before anything is tested or built. Mockups,
-> uploads and screenshots stay local deliberately (the main repo is public); the archive repos
-> `AI-ASSistant-App` / `AI-ASSistant-workspace` exist on GitHub but are empty until the owner's token is
-> granted to them.
+> The mockups, uploads and screenshots now live on branch `archive/workspace` (raw-fetch recipe in the
+> session log), and the original app source on `archive/ai-assistant-app` — both verified on origin. The two
+> empty placeholder repos from the first attempt (`AI-ASSistant-App` / `AI-ASSistant-workspace`) can be
+> deleted by the owner, or granted to the token if he prefers them. Note: the main repository is public, so
+> the archive branches are public too.
+>
+> **replica-skill adopted, partly (cloned at `refs/replica-skill`, MIT, 448 KB).** Of its eleven skills the
+> one that earns its place is `replica-diff/imgdiff.py`: every future screen landing diffs a screenshot of the
+> built screen against its mockup (layout parity, colour ignored) — evidence alongside the checkers, aimed
+> straight at the "design exactly as per mockup" rule. Its recon/architect/backend/brand/launch/deploy skills
+> do not apply: there is no stranger's app to reverse-engineer here, and no SaaS to launch.
 
 The mockups, as the standard to hit:
 | Mockup | Screen | State |
