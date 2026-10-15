@@ -7,27 +7,23 @@ import type { VaultState } from '../hooks/useVault'
  * whether the two local services it depends on are up.
  */
 export default function TitleBar({
-  model,
-  ollamaStatus,
+  engineId,
+  engineModel,
+  engineAlive,
   preview = false,
   vault,
 }: {
-  model: string
-  ollamaStatus: 'loading' | 'online' | 'offline'
-  /** In the browser there is no Ollama to find, so the chip says what this is
-   *  instead of reporting a service on the person's machine as missing. */
+  /** Which engine the app drives, and with which brain — the engine's facts. */
+  engineId: string
+  engineModel: string
+  engineAlive: boolean
+  /** In the browser there is no machine behind the window. */
   preview?: boolean
   /** The vault, when the app is running where one can exist. The chip is the
    *  mockup's second indicator: green when conversations are being kept. */
   vault?: VaultState
 }) {
-  const state = preview
-    ? 'Preview'
-    : ollamaStatus === 'online'
-      ? 'Ollama'
-      : ollamaStatus === 'loading'
-        ? 'Looking for Ollama…'
-        : 'Ollama is not running'
+  const state = preview ? 'Preview' : `${engineId} · ${engineModel}`
 
   return (
     <header className="flex h-11 shrink-0 items-center gap-2.5 border-b border-line px-3.5">
@@ -39,22 +35,14 @@ export default function TitleBar({
           className="flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 text-[11px] text-muted"
           title={
             preview
-              ? 'This is the interface, running in a browser. Your models and files are on your machine, in the desktop app.'
-              : ollamaStatus === 'online'
-              ? `Ollama is running on this machine, serving ${model}.`
-              : 'Ollama is not reachable on this machine. The app works without it; replies need it.'
+              ? 'This is the interface, running in a browser. Your engines and files are on your machine, in the desktop app.'
+              : engineAlive
+              ? `${engineId} is running on this machine, thinking with ${engineModel}.`
+              : `${engineId} starts with the next task. It thinks with ${engineModel}.`
           }
         >
           <span
-            className={`h-1.5 w-1.5 rounded-full ${
-              preview
-                ? 'bg-muted'
-                : ollamaStatus === 'online'
-                  ? 'bg-ok'
-                  : ollamaStatus === 'loading'
-                    ? 'bg-warn'
-                    : 'bg-muted'
-            }`}
+            className={`h-1.5 w-1.5 rounded-full ${preview ? 'bg-muted' : engineAlive ? 'bg-ok' : 'bg-muted'}`}
           />
           {state}
         </span>

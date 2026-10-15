@@ -24,7 +24,7 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
 
 ## NOW — the acceptance round-trip (everything hangs on this)
 
-- [ ] **His run on the TUF A15** with the v0.4.0 installer (built below):
+- [ ] **His run on the TUF A15** with the v0.6.0 installer (BUILT 2026-10-16 — AI-ASSistant-Setup-0.6.0.exe, 88,062,356 B, sha256 c0c9c086…5ea38c):
 - [ ] **His run on the TUF A15:** install → Engine on → pick a brain in the
   bay (cloud badge = leaves machine; local = offline) → pick a folder →
   set the throttle → give real work → approve via the card → see artifacts
@@ -93,8 +93,7 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
 - [x] **Code 06** — LANDED v0.5.0 (workspace, throttle quick-set, real resumable threads)
 - [x] **First-run 08** — LANDED v0.5.0 (name, brain from the engine's door, vault folder; all skippable)
 - [x] **Appearance 09** — verified built (tokens, sidebar/rail remembered)
-- [ ] Carried UI debts: undo card, session insights, prompt-library +
-  regenerate wiring, sidebar collapse/resize already remembered (done).
+- [x] Sidebar + composer rebuilt to his correction (2026-10-16): EngineBay out of the sidebar, one scroll, collapse = chats only, engine-is-the-only-path, engine+models chips with the three modes in the engine box, marketplace. Still carried: undo card, session insights, prompt-library + regenerate wiring.
 
 ## TRACK C — open defects (judge list) — **COMPLETE 2026-10-16: all nine resolved, each pinned by test (v0.5.1)**
 
@@ -111,7 +110,7 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
   (2026-10-15): the app imposes no rules of its own — owner-favor, documented
   in ARCHITECTURE-ENGINE.md.
 
-## TRACK D — hygiene (continuous) — core landed 2026-10-16 (handoff, skills sourcing, vault export, caveman hint, sweep #3, JUDGE-BRIEF, mirrors); installer explicitly LAST (his word)
+## TRACK D — hygiene (continuous) — core landed 2026-10-16; installer REBUILT at v0.6.0 the same day (his "yes"), recipe preserved in RELEASE-WINDOWS.md
 
 - [ ] **Landscape sweep — STANDING DUTY (his correction, 2026-10-16):** every
   working session includes a proactive scan of the four spaces (CC GUIs,

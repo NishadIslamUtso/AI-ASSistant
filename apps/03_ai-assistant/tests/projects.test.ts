@@ -50,7 +50,7 @@ test('the screen is wired: fourth section, real doors, work-here through the app
   const app = read('src/renderer/src/App.tsx')
   assert.match(app, /ProjectsView/)
   assert.match(app, /setPendingProject\(projectId\)/)
-  assert.match(app, /projectId: pendingProject/)
+  assert.match(app, /setPendingProject\(null\)/, 'the pending project is consumed by the send')
   assert.match(app, /engine\.setWorkspace\(folder\)/)
   const main = read('src/main/index.ts')
   assert.match(main, /projects:read/)

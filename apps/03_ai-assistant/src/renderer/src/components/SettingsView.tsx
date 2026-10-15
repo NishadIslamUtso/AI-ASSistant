@@ -3,8 +3,9 @@ import type { ReactNode } from 'react'
 import { bridge, isDemo } from '../platform/bridge'
 import HouseRulesSection from './HouseRulesSection'
 import SkillsCatalogSection from './SkillsCatalogSection'
+import EngineBay from './EngineBay'
+import { useEngine } from '@/state/engine'
 import type { VaultState } from '../hooks/useVault'
-import type { ModelState } from '../hooks/useModels'
 import {
   INFERENCE_PROFILES,
   fitToProfile,
@@ -59,7 +60,7 @@ import {
  * browser preview there is no folder to choose and no model to run.
  */
 
-type SectionId = 'agents' | 'house' | 'skills' | 'system' | 'appearance' | 'models' | 'performance' | 'vault'
+type SectionId = 'agents' | 'house' | 'skills' | 'engine' | 'system' | 'appearance' | 'models' | 'performance' | 'vault'
 
 type Row = {
   /** What the row is called, and what the rail's search matches on. */
@@ -80,6 +81,7 @@ const SECTIONS: readonly {
   { id: 'agents', title: 'Agent access', group: 'This app', resettable: true },
   { id: 'house', title: 'House rules', group: 'This app' },
   { id: 'skills', title: 'Skills', group: 'This app' },
+  { id: 'engine', title: 'Engine', group: 'This computer' },
   { id: 'appearance', title: 'Appearance', group: 'This app', resettable: true },
   { id: 'models', title: 'Models', group: 'This app' },
   { id: 'performance', title: 'Performance', group: 'This app', resettable: true },
@@ -95,6 +97,12 @@ function SectionIcon({ id }: { id: SectionId }) {
       <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M4 8.5 10 3l6 5.5V16a1 1 0 0 1-1 1h-3.5v-4.5h-3V17H5a1 1 0 0 1-1-1V8.5Z" />
       </svg>
+    ),
+    engine: (
+      <>
+        <rect x="4" y="7" width="12" height="9" rx="1.5" />
+        <path d="M7 10.5h.01M10 10.5h.01M13 10.5h.01M7 13.5h6" />
+      </>
     ),
     system: (
       <>
@@ -193,7 +201,6 @@ export default function SettingsView({
   onAppearanceChange,
   inference,
   onInferenceChange,
-  models,
   permissions,
   onPermissionsChange,
 }: {
@@ -208,7 +215,6 @@ export default function SettingsView({
   onAppearanceChange: (next: Appearance) => void
   inference: InferenceSettings
   onInferenceChange: (next: InferenceSettings) => void
-  models: ModelState
 }) {
   const [section, setSection] = useState<SectionId>('system')
   const [providers, setProviders] = useState<CloudProviderView[]>([])
@@ -327,7 +333,6 @@ export default function SettingsView({
     setVerdict(current => ({ ...current, [id]: `Key saved for ${label}.` }))
     // The composer's model list is what just changed: the models this key reaches
     // belong in it now, not at the next launch.
-    models.refresh()
   }
 
   async function removeKey(id: string, label: string): Promise<void> {
@@ -336,7 +341,6 @@ export default function SettingsView({
       setProviders(view.providers)
       setKeyEncryption(view.encryption)
       setVerdict(current => ({ ...current, [id]: `The key for ${label} is gone.` }))
-      models.refresh()
       return
     }
     setVerdict(current => ({ ...current, [id]: view?.error || 'That key could not be removed.' }))
@@ -372,7 +376,6 @@ export default function SettingsView({
     // A provider switched off disappears from the composer's list immediately,
     // and one switched on appears: the model list is the permission's first
     // visible effect.
-    models.refresh()
   }
 
   /** The custom endpoint: an address and a model name, kept in the settings file. */
@@ -382,33 +385,23 @@ export default function SettingsView({
       ...current,
       custom: result?.ok ? 'Saved. The custom endpoint is used for its own models.' : result?.error || 'That could not be saved.',
     }))
-    if (result?.ok) models.refresh()
+    // The engine's own door picks the key up; the composer refetches on open.
   }
 
-  // What is loaded right now, from what Ollama reported — never a guess. In the
-  // preview there is no machine, so the rows say that instead.
-  const installed = models.models.find(entry => entry.name === models.model)
-  const modelGb = installed?.size ? `${(installed.size / 1e9).toFixed(1)} GB on disk` : ''
+  // The engine's models screen lives in the composer's model chip and the
+  // Engine bay; this section only manages the keys providers need.
 
   const running = isDemo
     ? {
         dot: 'bg-muted',
         label: 'No machine behind this window',
-        detail: 'Models run on your own machine, in the desktop app.',
+        detail: 'Provider keys are used by the engine, on your machine, in the desktop app.',
       }
-    : models.status === 'online' && models.available
-      ? {
-          dot: 'bg-ok',
-          label: `Running on this machine: ${models.model}`,
-          detail: modelGb,
-        }
-      : models.status === 'loading'
-        ? { dot: 'bg-muted', label: 'Looking for Ollama…', detail: '' }
-        : {
-            dot: 'bg-warn',
-            label: 'Ollama is not answering',
-            detail: models.error || 'Start Ollama and open Settings again.',
-          }
+    : {
+        dot: 'bg-ok',
+        label: 'Keys are saved in this app',
+        detail: 'The engine reads them through its own doors when it needs a cloud brain.',
+      }
 
   const keeping = isDemo
     ? { dot: 'bg-muted', label: 'Not in this window', detail: '' }
@@ -426,8 +419,13 @@ export default function SettingsView({
     .map(key => `${key}=${options[key]}`)
     .join(' · ')
 
-  const warning = vramWarning(inference, installed?.size || 0)
-  const fix = warning ? fitToProfile(inference, installed?.size || 0) : null
+  // The size that matters now is the ENGINE's chosen brain's — the same
+  // numbers its own door reports, used for the fit check.
+  const engineState = useEngine()
+  const engineBrain = engineState.models.entries.find(entry => entry.name === engineState.settings.model)
+  const brainBytes = engineBrain?.sizeGB ? engineBrain.sizeGB * 1e9 : 0
+  const warning = vramWarning(inference, brainBytes)
+  const fix = warning ? fitToProfile(inference, brainBytes) : null
 
   // The providers that have a key, which are exactly the ones a permission can
   // govern: no key, nothing to allow.
@@ -458,11 +456,11 @@ export default function SettingsView({
         ),
       },
       {
-        label: 'Ollama',
-        terms: 'server endpoint 11434 not running',
+        label: 'Engine',
+        terms: 'claude-code agy engine running installed',
         body: (
           <span className="text-[12.5px]">
-            {isDemo ? 'Not in this window' : models.status === 'online' ? '127.0.0.1:11434' : models.status === 'loading' ? 'Looking…' : 'Not running'}
+            {isDemo ? 'Not in this window' : `${engineState.settings.id} · ${engineState.settings.model}`}
           </span>
         ),
       },
@@ -924,6 +922,13 @@ export default function SettingsView({
         label: 'The rulebook',
         terms: 'house rules instructions identity artifacts approvals memory style ask unsure CLAUDE.md AGENTS.md',
         body: <HouseRulesSection />,
+      },
+    ],
+    engine: [
+      {
+        label: 'The engine bay',
+        terms: 'engine agent claude-code agy brain model pull download detect install throttle folder',
+        body: <EngineBay />,
       },
     ],
     skills: [
