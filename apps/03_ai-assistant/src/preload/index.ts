@@ -148,6 +148,9 @@ const api = {
   vault: {
     /** The operating system's folder picker. null when the person closed it. */
     chooseFolder: (): Promise<string | null> => ipcRenderer.invoke('vault:choose-folder'),
+    /** A finished turn, written into the vault as a handoff document. */
+    saveHandoff: (name: string, markdown: string): Promise<{ ok: boolean; answer: string }> =>
+      ipcRenderer.invoke('vault:save-handoff', { name, markdown }),
   },
   extension: {
     /**

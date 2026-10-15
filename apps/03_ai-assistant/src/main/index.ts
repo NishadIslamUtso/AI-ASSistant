@@ -384,6 +384,25 @@ function registerBridges(): void {
     }
   })
 
+  // A handoff: the finished turn, written into the vault as one markdown
+  // document any later session (here or in a terminal) can continue from.
+  // The name is validated and the vault's own path rules apply.
+  ipcMain.handle('vault:save-handoff', (_event, payload: { name: string; markdown: string }): { ok: boolean; answer: string } => {
+    const name = typeof payload?.name === 'string' ? payload.name.trim() : ''
+    const markdown = typeof payload?.markdown === 'string' ? payload.markdown : ''
+    if (!name || name.length > 120 || /[\\/:*?"<>|\n\r]/.test(name) || !markdown || markdown.length > 200_000) {
+      return { ok: false, answer: 'That is not a name and document this app will write.' }
+    }
+    const service = createVaultService({ vaultPath: vaultRoot() })
+    if (!service.available()) return { ok: false, answer: 'No vault to write the handoff into.' }
+    try {
+      service.files().write(`handoffs/${name}`, markdown)
+      return { ok: true, answer: `handoffs/${name}` }
+    } catch (error) {
+      return { ok: false, answer: error instanceof Error ? error.message : 'The vault refused the handoff.' }
+    }
+  })
+
   // The skills the owner's engine already has — the import list.
   ipcMain.handle('skills:scan', () => {
     const home = process.env['USERPROFILE'] || process.env['HOME'] || ''

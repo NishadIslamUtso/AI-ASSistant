@@ -1,4 +1,7 @@
-import { Wrench, FilePen, Terminal, Search, CircleCheck, TriangleAlert, Square } from 'lucide-react'
+import { useState } from 'react'
+import { Handshake, Wrench, FilePen, Terminal, Search, CircleCheck, TriangleAlert, Square } from 'lucide-react'
+import { buildHandoff, handoffFileName } from '@shared/lib/handoff'
+import { bridge } from '@/platform/bridge'
 import { useEngine, type EngineItem } from '@/state/engine'
 
 /**
@@ -12,7 +15,30 @@ import { useEngine, type EngineItem } from '@/state/engine'
 export default function EnginePanel() {
   const engine = useEngine()
   const turn = engine.turn
+  const [handed, setHanded] = useState('')
   if (!turn) return null
+
+  // The handoff: the finished turn written into the vault as one document a
+  // later session can continue from — and copied, so it can go anywhere.
+  const handOff = (): void => {
+    if (turn.state === 'running') return
+    const markdown = buildHandoff({
+      prompt: turn.prompt,
+      items: turn.items,
+      state: turn.state,
+      sessionId: turn.sessionId,
+      usage: turn.usage,
+      engine: engine.settings.id,
+      model: engine.settings.model,
+      workspace: engine.settings.workspace,
+      date: new Date().toISOString(),
+    })
+    const name = handoffFileName(new Date().toISOString(), turn.prompt).split('/').at(-1) ?? 'handoff.md'
+    void bridge.vault.saveHandoff(name, markdown).then((answer) => {
+      void navigator.clipboard?.writeText(markdown).catch(() => undefined)
+      setHanded(answer.ok ? `Saved to the vault: ${answer.answer} (also copied)` : answer.answer)
+    })
+  }
 
   return (
     <section
@@ -38,7 +64,16 @@ export default function EnginePanel() {
           >
             <Square size={10} /> Stop
           </button>
-        ) : null}
+        ) : (
+          <button
+            type="button"
+            onClick={handOff}
+            title="Write this finished task into the vault as a document any later session can continue from"
+            className="ml-auto flex items-center gap-1 rounded-lg border border-line px-2 py-0.5 text-[11px] text-muted hover:text-ink"
+          >
+            <Handshake size={10} /> Hand off
+          </button>
+        )}
       </header>
 
       <p className="mt-1.5 line-clamp-3 text-[12.5px] text-muted">▸ {turn.prompt}</p>
@@ -49,6 +84,7 @@ export default function EnginePanel() {
         ))}
       </ul>
 
+      {handed ? <p className="mt-1 text-[11px] text-muted">{handed}</p> : null}
       {turn.usage && turn.state !== 'running' ? (
         <p className="mt-2 text-[11px] text-muted" title="What the engine itself reported for this turn">
           {turn.usage.inTokens.toLocaleString()} in · {turn.usage.outTokens.toLocaleString()} out

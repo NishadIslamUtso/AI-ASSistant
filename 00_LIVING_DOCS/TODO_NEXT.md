@@ -120,7 +120,7 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
   two repos before I found any — that never happens again.
 - [ ] **Caveman-style token hint** for weak local brains in the quirk table
   (strip narration, keep facts).
-- [ ] **Handoff button**: compress a session to markdown (pairs with resume).
+- [x] **Handoff button** — LANDED: a finished turn becomes one vault document (`handoffs/<date>-<task>.md`) shaped after the three handoff repos studied 2026-10-16 — instructions to the receiving assistant, the task, the real tool calls as evidence, the resumable session id — also copied to the clipboard. Built from the turn in memory; nothing parsed post-hoc, nothing invented.
 - [ ] **Obsidian export** (trivial — the vault is already markdown).
 - [ ] **Skills sourcing**: browse anthropics/skills + awesome-claude-skills
   and offer installs through the existing one-vault-to-every-engine deploy.

@@ -91,6 +91,8 @@ export type DesktopBridge = {
   vault: {
     /** The operating system's folder picker. null when the person closed it. */
     chooseFolder: () => Promise<string | null>
+    /** A finished turn, written into the vault as a handoff document. */
+    saveHandoff: (name: string, markdown: string) => Promise<{ ok: boolean; answer: string }>
   }
   /** Whether the browser extension can reach this app, and where. */
   extension: {
@@ -152,7 +154,7 @@ const demoBridge: DesktopBridge = {
       error: 'Settings are part of the desktop app. This window is the interface only, so there is no folder to change.',
     }),
   },
-  vault: { chooseFolder: async () => null },
+  vault: { chooseFolder: async () => null, saveHandoff: async () => ({ ok: false, answer: 'Writing a handoff needs the desktop app.' }) },
   // No socket is open here, and none can be: this is a page, not the app.
   extension: {
     status: async () => ({
