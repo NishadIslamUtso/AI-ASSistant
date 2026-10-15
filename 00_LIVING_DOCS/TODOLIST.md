@@ -1,10 +1,12 @@
 # AI ASSistant — TODOLIST (light-shell reframe)
 
 **Written 2026-10-15**, after the "I do everything in Claude anyway" conversation.
-**PARKED 2026-10-15 (owner):** *"i don't need to make the app, i just need to
-set the claude and claude code the way i want."* The active path is now
-`CLAUDE-SETUP.md`; this list stays as the record of what the app would have been
-— every item remains valid if he returns to it.
+**PARKED 2026-10-15** … **UN-PARKED same day, evening (owner):** *"gonna
+implement that, and agy cli too… claude code will run on it normally, it's
+features will work in the app normally too."* Architecture adds: the app is the
+face; Claude Code (Agent SDK or stream-json) is the engine inside; `agy` is
+engine #2; free Ollama brains unchanged. Active path = `CLAUDE-SETUP.md` Phase 6;
+this list is the feature record again.
 
 This was the **active checklist**. `BUILD-TODO.md` keeps its job as the reference
 (mockup table, feature sections, community-plan pointer). Where the two disagree
