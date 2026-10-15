@@ -64,8 +64,12 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
   permission card waits — after the card-queue defect fix.
 - [ ] **Session board** (Nimbalyst): the resumable sessions get a kanban in
   Projects 04 / Code 06, with session-to-file links feeding the context pane.
-- [ ] **Extension → engine MCP** (onUI idea): captured/annotated pages become
-  queryable by Claude Code/agy, not just saved to the vault.
+- [ ] **Extension → engine, via SKILLS not MCP** (upgraded after studying
+  capsule-hub-skills 2026-10-16): ship vault skills (save/search/read) that
+  teach Claude Code/agy to call the LOCAL vault HTTP API — their paid cloud
+  flow, ours local and free, and no tool schemas riding every turn (their
+  own design note, verified). Captured/annotated pages become queryable by
+  the engine, not just saved.
 - [ ] **Accessibility-tree capture** (Prophet): the better capture default if
   we go beyond text, replacing screenshots.
 - [x] **House-rules edit screen** (landing 5): Settings → House rules — five

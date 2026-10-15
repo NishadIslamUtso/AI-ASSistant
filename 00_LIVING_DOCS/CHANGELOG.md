@@ -1091,3 +1091,12 @@ license and a verdict. Six ideas queued (per-hunk diffs, needs-you pulse,
 session board, extension→engine MCP, a11y-tree capture, SDK contract),
 all ideas-only (AGPL never enters). Also recorded what none of them have:
 our union of engines + free brains + house rules + vault + captures.
+
+## 2026-10-16 (day) — his two repos studied: capsule-hub-skills, ContextFlow
+
+Capsule Hub's Claude Code pack (cloud, paid) validates the capture niche AND
+upgrades our engine-bridge plan: teach the engines to use the local vault
+through SKILLS + the existing vault HTTP API — no MCP schemas, no account.
+ContextFlow profiled as a one-day rebrand (badge/link mismatches, copyright-
+swap commit): ideas only, code never. Triage rubric for the whole "way many
+like this" class written into RESEARCH-LANDSCAPE.md.
