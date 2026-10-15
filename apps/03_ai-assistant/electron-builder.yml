@@ -70,9 +70,12 @@ win:
 nsis:
   installerIcon: resources/icon.ico
   uninstallerIcon: resources/icon.ico
-  oneClick: false
+  # ONE CLICK, as the owner ordered 2026-10-15: double-click the file, it
+  # installs without a single question and opens the app when done. The folder
+  # choice was dropped for this — the owner's words outrank the old comment.
+  oneClick: true
   perMachine: false
-  allowToChangeInstallationDirectory: true
+  runAfterFinish: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
   shortcutName: AI ASSistant

@@ -5,7 +5,7 @@ import type {
   CloudView,
 } from '../shared/lib/providers'
 import type { Permissions } from '../shared/lib/permissions'
-import type { EngineEvent, EngineId, EngineSettings } from '../shared/lib/engine'
+import type { EngineEvent, EngineId, EngineModelEntry, EngineSettings } from '../shared/lib/engine'
 import type {
   AdoptInput,
   ItemAnswer,
@@ -31,6 +31,15 @@ const engineApi = {
     ipcRenderer.invoke('engine:read'),
   /** Choose which engine thinks inside the app. */
   pick: (id: EngineId): Promise<{ ok: boolean; answer: string }> => ipcRenderer.invoke('engine:pick', id),
+  /** The brains this engine can use, as its own door reports them. */
+  models: (): Promise<{ ok: boolean; models: EngineModelEntry[]; error?: string }> =>
+    ipcRenderer.invoke('engine:models'),
+  /** Pick which brain the engine thinks with. */
+  setModel: (model: string): Promise<{ ok: boolean; answer: string }> =>
+    ipcRenderer.invoke('engine:model', model),
+  /** "Open a folder": choose where the engine works. */
+  pickWorkspace: (): Promise<{ ok: boolean; answer: string }> =>
+    ipcRenderer.invoke('engine:pick-workspace'),
   /** Hand the engine a task. Events arrive through `onEvent` from then on. */
   send: (prompt: string, cwd: string): Promise<{ ok: boolean; answer: string }> =>
     ipcRenderer.invoke('engine:send', prompt, cwd),

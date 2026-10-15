@@ -19,7 +19,7 @@
  *      so the UI's own empty state is what the person sees.
  */
 import type { CloudModelsAnswer, CloudTestAnswer, CloudView } from '@shared/lib/providers'
-import { DEFAULT_ENGINE, type EngineEvent, type EngineId, type EngineSettings } from '@shared/lib/engine'
+import { DEFAULT_ENGINE, type EngineEvent, type EngineId, type EngineModelEntry, type EngineSettings } from '@shared/lib/engine'
 import { DEFAULT_PERMISSIONS, type Permissions } from '@shared/lib/permissions'
 import type {
   AdoptInput,
@@ -202,6 +202,9 @@ export const bridge: DesktopBridge = hasDesktopBridge() ? (window.api as Desktop
 export type EngineBridge = {
   read: () => Promise<{ engine: EngineSettings; running: boolean; history: EngineEvent[] }>
   pick: (id: EngineId) => Promise<{ ok: boolean; answer: string }>
+  models: () => Promise<{ ok: boolean; models: EngineModelEntry[]; error?: string }>
+  setModel: (model: string) => Promise<{ ok: boolean; answer: string }>
+  pickWorkspace: () => Promise<{ ok: boolean; answer: string }>
   send: (prompt: string, cwd: string) => Promise<{ ok: boolean; answer: string }>
   answer: (requestId: string, allow: boolean) => Promise<{ ok: boolean }>
   stop: () => Promise<{ ok: boolean }>
@@ -211,6 +214,16 @@ export type EngineBridge = {
 const demoEngineBridge: EngineBridge = {
   read: async () => ({ engine: { ...DEFAULT_ENGINE }, running: false, history: [] }),
   pick: async () => ({ ok: false, answer: 'Engines are chosen in the desktop app.' }),
+  models: async () => ({
+    ok: false,
+    models: [],
+    error: 'Engine brains are listed in the desktop app: this window is the interface only.',
+  }),
+  setModel: async () => ({ ok: false, answer: 'Brains are chosen in the desktop app.' }),
+  pickWorkspace: async () => ({
+    ok: false,
+    answer: 'Choosing a folder needs the desktop app: this window is the interface only.',
+  }),
   send: async () => ({
     ok: false,
     answer: 'The engine works in the desktop app: this window is the interface only.',

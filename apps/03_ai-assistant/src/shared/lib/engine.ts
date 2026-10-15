@@ -22,6 +22,11 @@ export type EngineSettings = {
   /** The brain the engine thinks with, e.g. `gemma4:cloud`. */
   model: string
   /**
+   * Where the engine works — a folder the owner picked, like "open a folder"
+   * in a real code app. Empty means the vault, which is the default workplace.
+   */
+  workspace: string
+  /**
    * The door the brain lives behind. Empty means "whatever this machine
    * already has", which lets an Anthropic key work later without app changes.
    */
@@ -32,6 +37,16 @@ export const DEFAULT_ENGINE: EngineSettings = {
   id: 'claude-code',
   model: 'gemma4:cloud',
   baseUrl: 'http://localhost:11434',
+  workspace: '',
+}
+
+/** One brain the engine can use, as the engine itself reports it. */
+export type EngineModelEntry = {
+  name: string
+  /** A cloud brain: its work leaves the machine, so the label must say so. */
+  cloud: boolean
+  /** Gigabytes on disk, for local brains. Cloud brains carry no size. */
+  sizeGB: number | null
 }
 
 const ENGINES: readonly EngineId[] = ['claude-code', 'agy']
@@ -61,6 +76,7 @@ export function normalizeEngine(raw: unknown): EngineSettings {
     id,
     model: MODEL_PATTERN.test(model) ? model : DEFAULT_ENGINE.model,
     baseUrl: text(value.baseUrl, DEFAULT_ENGINE.baseUrl, 2048),
+    workspace: typeof value.workspace === 'string' ? value.workspace.trim().slice(0, 4096) : '',
   }
 }
 

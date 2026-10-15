@@ -25,17 +25,42 @@ type FakeApi = {
   answered: Array<{ requestId: string; allow: boolean }>
   stopped: number
   listener: ((event: EngineEvent) => void) | null
+  picked?: string
+  model?: string
+  workspace?: string
+  brains: Array<{ name: string; cloud: boolean; sizeGB: number | null }>
 }
 
 function withFakeEngine(): FakeApi {
-  const fake: FakeApi = { sent: [], answered: [], stopped: 0, listener: null }
+  const fake: FakeApi = {
+    sent: [],
+    answered: [],
+    stopped: 0,
+    listener: null,
+    brains: [
+      { name: 'gemma4:cloud', cloud: true, sizeGB: null },
+      { name: 'qwen2.5-coder:3b', cloud: false, sizeGB: 1.9 },
+    ],
+  }
   const api = {
     read: async () => ({
-      engine: { id: 'claude-code', model: 'gemma4:cloud', baseUrl: 'http://localhost:11434' },
-      running: false,
+      engine: { id: 'claude-code', model: 'gemma4:cloud', baseUrl: 'http://localhost:11434', workspace: '' },
+      running: true,
       history: [],
     }),
-    pick: async () => ({ ok: true, answer: 'picked' }),
+    pick: async (id: string) => {
+      fake.picked = id
+      return { ok: true, answer: `engine set to ${id}` }
+    },
+    models: async () => ({ ok: true, models: fake.brains }),
+    setModel: async (model: string) => {
+      fake.model = model
+      return { ok: true, answer: `brain set to ${model}` }
+    },
+    pickWorkspace: async () => {
+      fake.workspace = 'C:\\engworkspace'
+      return { ok: true, answer: fake.workspace as string }
+    },
     send: async (prompt: string, cwd: string) => {
       fake.sent.push({ prompt, cwd })
       return { ok: true, answer: 'started' }
@@ -162,6 +187,70 @@ test('an error still closes the turn', async () => {
   fake.listener?.({ kind: 'error', text: 'the engine closed with an error: boom' })
   assert.equal(store.turn?.state, 'error')
   assert.equal(store.turn?.permission, null)
+})
+
+test('the engine bay: brains come from the engine door, a choice persists', async () => {
+  const { store, fake } = freshStore()
+  await store.init()
+  assert.equal(store.alive, true, 'the truth from read() is tracked, not guessed')
+  await store.loadModels()
+  assert.equal(store.models.loading, false)
+  assert.deepEqual(store.models.entries, fake.brains)
+  assert.equal(store.models.error, '')
+
+  await store.pick('agy')
+  assert.equal(fake.picked, 'agy')
+  assert.equal(store.settings.id, 'agy')
+
+  await store.setModel('qwen2.5-coder:3b')
+  assert.equal(fake.model, 'qwen2.5-coder:3b')
+  assert.equal(store.settings.model, 'qwen2.5-coder:3b')
+
+  await store.pickWorkspace()
+  assert.equal(store.settings.workspace, 'C:\\engworkspace')
+
+  // A closed engine clears the alive light.
+  fake.listener?.({ kind: 'closed' })
+  assert.equal(store.alive, false)
+})
+
+test('the engine bay: a silent brain door becomes a sentence, never an empty lie', async () => {
+  resetEngineForTests()
+  ;(window as unknown as Record<string, unknown>).api = {}
+  ;(window as unknown as Record<string, unknown>).engineApi = {
+    read: async () => ({ engine: { ...DEFAULT_ENGINE }, running: false, history: [] }),
+    pick: async () => ({ ok: true, answer: 'picked' }),
+    models: async () => ({ ok: false, models: [], error: 'the brain door (Ollama) is not answering — start Ollama, then refresh' }),
+    setModel: async () => ({ ok: false, answer: 'no' }),
+    pickWorkspace: async () => ({ ok: false, answer: 'No folder chosen — the vault stays the workplace.' }),
+    send: async () => ({ ok: false, answer: 'refused' }),
+    answer: async () => ({ ok: true }),
+    stop: async () => ({ ok: true }),
+    onEvent: () => () => undefined,
+  }
+  const store = engineStore()
+  await store.loadModels()
+  assert.equal(store.models.entries.length, 0)
+  assert.match(store.models.error, /Ollama/)
+  // An honest refusal leaves the previous choice standing.
+  await store.pickWorkspace()
+  assert.equal(store.settings.workspace, '')
+})
+
+test('the shell carries the bay: sidebar has the engine section, the composer defers to it', () => {
+  const sidebar = read('../src/renderer/src/components/Sidebar.tsx')
+  assert.match(sidebar, /import EngineBay from '\.\/EngineBay'/)
+  assert.match(sidebar, /<EngineBay \/>/)
+  const bay = read('../src/renderer/src/components/EngineBay.tsx')
+  assert.match(bay, /role="radiogroup"/, 'the engine selection system')
+  assert.match(bay, /loadModels/, 'the brain list comes from the engine door')
+  assert.match(bay, /pickWorkspace/, 'the workplace is choosable')
+  const composer = read('../src/renderer/src/components/Composer.tsx')
+  assert.match(composer, /engine\.settings\.model/)
+  const main = read('../src/main/index.ts')
+  assert.match(main, /engine:models/)
+  assert.match(main, /engine:pick-workspace/)
+  assert.match(main, /settings\.engine\.workspace \|\| vaultRoot\(\)/)
 })
 
 test('the face is wired: the panel is in the chat, the toggle is in the composer', () => {

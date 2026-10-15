@@ -1,10 +1,12 @@
 import { EventEmitter } from 'node:events'
+import { sep as pathSep } from 'node:path'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { createEngineParser } from '../src/main/engine/stream'
 import {
   brainEnvironment,
   engineArguments,
+  enginePathPrepend,
   startClaudeCodeSession,
 } from '../src/main/engine/claudeCode'
 import { createEngineSocket } from '../src/main/engine/socket'
@@ -307,6 +309,20 @@ test('a session: a missing engine becomes a sentence, not a crash', async () => 
   assert.match(error.text, /not found/i)
   assert.match(error.text, /npm install -g @anthropic-ai\/claude-code/)
   assert.equal(session.send('anything'), false)
+})
+
+test('the engine PATH: Windows gets its npm folders prepended, other systems get nothing', () => {
+  // The owner hit "'claude' is not recognized" inside the installed app —
+  // a packaged app does not inherit PowerShell's PATH. These folders are
+  // where npm and the native installer put claude on Windows.
+  assert.equal(enginePathPrepend('linux', {}), '')
+  assert.equal(enginePathPrepend('darwin', {}), '')
+  const windowsPath = enginePathPrepend('win32', { APPDATA: 'C:\\Users\\x\\AppData\\Roaming', USERPROFILE: 'C:\\Users\\x' })
+  // Built with the same path.join the code uses, so the separators are
+  // correct on whichever platform runs the test.
+  const expected = ['C:\\Users\\x\\AppData\\Roaming', 'npm'].join(pathSep) + ';' + ['C:\\Users\\x', '.local', 'bin'].join(pathSep)
+  assert.equal(windowsPath, expected)
+  assert.equal(enginePathPrepend('win32', {}), '', 'empty variables contribute nothing, never a bare separator')
 })
 
 test('the brain wiring: the Ollama door is set explicitly, no door means no override', () => {

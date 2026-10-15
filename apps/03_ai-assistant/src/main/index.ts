@@ -19,7 +19,7 @@ import { normalizePermissions } from '../shared/lib/permissions'
 import { registerArtifactIpc } from './artifacts/ipc'
 import { createEngineSocket, type EngineSocket } from './engine/socket'
 import { normalizeEngine } from '../shared/lib/engine'
-import type { EngineEvent } from '../shared/lib/engine'
+import type { EngineEvent, EngineModelEntry } from '../shared/lib/engine'
 
 /**
  * The main process. Everything that touches the machine lives on this side:
@@ -241,12 +241,12 @@ function registerBridges(): void {
       const text = typeof prompt === 'string' ? prompt.trim().slice(0, 20000) : ''
       if (!text) return { ok: false, answer: 'Write what the engine should do first.' }
       if (!engine) return { ok: false, answer: 'The engine is still waking up — try again in a moment.' }
-      // The working folder is the app's decision, not the window's: the vault
-      // is where the engine works unless a future screen offers a real choice.
+      // The working folder is the app's decision, never the window's: the
+      // folder the owner picked in the engine bay, or the vault when none.
       // The renderer's value is deliberately not consulted (review finding).
       void cwd
       return engine.send(text, {
-        cwd: vaultRoot(),
+        cwd: settings.engine.workspace || vaultRoot(),
         settings: settings.engine,
         onEvent: pushEngineEvent,
       })
@@ -263,6 +263,52 @@ function registerBridges(): void {
   ipcMain.handle('engine:stop', () => {
     engine?.stop()
     return { ok: true }
+  })
+
+  // The brains the engine can actually use, straight from the brain door —
+  // the same list Claude Code itself would choose from. Real data only: what
+  // Ollama reports, with cloud brains flagged because their work leaves the
+  // machine and the label must say so.
+  ipcMain.handle('engine:models', async (): Promise<{ ok: boolean; models: EngineModelEntry[]; error?: string }> => {
+    const door = settings.engine.baseUrl || 'http://localhost:11434'
+    try {
+      const answer = await fetch(`${door}/api/tags`, { signal: AbortSignal.timeout(4000) })
+      if (!answer.ok) return { ok: false, models: [], error: `the brain door answered ${answer.status}` }
+      const data = (await answer.json()) as { models?: Array<{ name?: string; size?: number; remote_model?: string }> }
+      const models = (data.models ?? [])
+        .filter((m): m is { name: string; size?: number; remote_model?: string } => typeof m.name === 'string')
+        .map((m) => {
+          const cloud = Boolean(m.remote_model) || m.name.endsWith(':cloud')
+          return {
+            name: m.name,
+            cloud,
+            sizeGB: cloud || typeof m.size !== 'number' ? null : Math.round((m.size / 1e9) * 10) / 10,
+          }
+        })
+      return { ok: true, models }
+    } catch {
+      return { ok: false, models: [], error: 'the brain door (Ollama) is not answering — start Ollama, then refresh' }
+    }
+  })
+
+  ipcMain.handle('engine:model', (_event, model: string): { ok: boolean; answer: string } => {
+    const clean = normalizeEngine({ ...settings.engine, model }).model
+    settings = writeSettings(settingsFile, { ...settings, engine: { ...settings.engine, model: clean } })
+    return { ok: true, answer: `brain set to ${clean}` }
+  })
+
+  // "Open a folder" — the engine's workplace, chosen once and remembered.
+  ipcMain.handle('engine:pick-workspace', async (): Promise<{ ok: boolean; answer: string }> => {
+    const answer = await dialog.showOpenDialog({
+      title: 'Where should the engine work?',
+      properties: ['openDirectory', 'createDirectory'],
+    })
+    if (answer.canceled || !answer.filePaths[0]) {
+      return { ok: false, answer: 'No folder chosen — the vault stays the workplace.' }
+    }
+    const workspace = answer.filePaths[0]
+    settings = writeSettings(settingsFile, { ...settings, engine: { ...settings.engine, workspace } })
+    return { ok: true, answer: workspace }
   })
 }
 

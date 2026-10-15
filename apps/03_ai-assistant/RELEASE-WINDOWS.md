@@ -211,3 +211,13 @@ The app icon is the app's own **BrainMark**, rendered from the existing `BrainMa
 - **No auto-update.** Installing a newer build means running a newer installer over it.
 - **Windows x64 is the only target configured.** macOS targets are not set up; Linux builds work
   (`dist:linux`) but are not the owner's platform.
+
+## 0.2.1 (2026-10-15, evening) — the mark + the PATH
+
+- `AI-ASSistant-Setup-0.2.1.exe`, SHA-256
+  `78b9b40f221b5fb0f0657c0994b50ba9c5b2d7c4c2477cef03040c56d65de14f`.
+- Fixes his first-run findings: owner's canonical butt-brain mark everywhere
+  (UI + favicon + installer icons, rendered by the committed
+  `scripts/render-icons.mjs`), and the engine prepends the Windows npm folders
+  to its own PATH so `claude` is found without PowerShell.
+- Windows icon-cache note applies to the desktop shortcut after upgrade.

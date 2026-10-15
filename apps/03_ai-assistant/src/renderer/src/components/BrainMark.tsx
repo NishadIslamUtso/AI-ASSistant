@@ -3,20 +3,19 @@ import { useId, type SVGProps } from 'react'
 /**
  * BrainMark — the AI ASSistant logo.
  *
- * The original artwork, ported unchanged from the previous app: a smiling brain
- * with round glasses, a thumbs-up and sneakers. Rendered inline so it needs no
- * network request, which matters for an app that has to open offline.
+ * THE mark, replaced 2026-10-15 with the owner's own export: the distinguished
+ * butt-brain (his words: "use this only"). The previous smiling-brain artwork
+ * was purged everywhere — this component, the favicon and the desktop icon all
+ * render from the same drawing now (`resources/icon.svg` is the canonical
+ * file; `scripts/render-icons.mjs` turns it into the install icons).
+ *
+ * Rendered inline so it needs no network request, which matters for an app
+ * that has to open offline.
  *
  * Every id is namespaced per instance. The artwork is built from <use> and
  * clipPath references, so two copies of the logo on one page would otherwise
  * steal each other's shapes — the sidebar mark would silently clip the one in
  * the settings header.
- *
- * This artwork also exists verbatim as `resources/icon.svg` — the owner's own
- * export, the canonical file — and shot-tools/render-mark.cjs renders the desktop
- * icon from it. That script compares the two and refuses to write an icon if the
- * paths, colours or circles ever drift apart, so the UI, the tab icon and the
- * desktop icon are always the same mark.
  */
 /** Only used if a React version ever returns an id that sanitises to nothing. */
 let markCount = 0
@@ -30,117 +29,163 @@ export default function BrainMark({ size = 20, className = '', title = 'AI ASSis
   // React's useId has changed shape between versions — React 19 returns ids
   // wrapped in punctuation, older ones return `:r0:`. Punctuation is legal in an
   // id attribute but NOT safe inside `url(#…)` references, which is how this
-  // artwork points at its own body, clip paths and lens highlights. If those
+  // artwork points at its own body, clip paths and lens tint. If those
   // references miss, the mark renders in pieces — a pink blob with no glasses.
-  // So the id is stripped to letters and digits, which both are safe in every
+  // So the id is stripped to letters and digits, which are safe in every
   // reference context. The fallback covers a useId that sanitises to nothing.
   const raw = useId().replace(/[^a-zA-Z0-9]/g, '')
   const uid = raw || `bm${markCount++}`
   const id = (name: string) => `${uid}-${name}`
-  const body = id('body')
-  const bodyClip = `url(#${id('body-clip')})`
-  const leftLens = `url(#${id('left-lens')})`
-  const rightLens = `url(#${id('right-lens')})`
+  const body = id('body-shape')
+  const bodyClip = id('body-clip')
+  const leftLens = id('left-lens')
+  const rightLens = id('right-lens')
+  const leftLensClip = id('left-lens-clip')
+  const rightLensClip = id('right-lens-clip')
+  const lensTint = id('lens-tint')
 
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 740 740"
       width={size}
       height={size}
+      viewBox="0 0 740 740"
       fill="none"
       role="img"
-      aria-labelledby={`${id('title')} ${id('description')}`}
+      aria-label={title}
       className={className}
       {...rest}
     >
-      <title id={id('title')}>{title}</title>
-      <desc id={id('description')}>
-        A smiling pink cartoon brain shaped like a pair of butt cheeks, wearing oversized round black
-        glasses and purple sneakers, with one hand giving a thumbs-up. All artwork is editable vector,
-        on a transparent background.
+      <title>{title}</title>
+      <desc>
+        A pink cartoon brain with a pronounced two-cheek butt silhouette, winding brain wrinkles,
+        tailored black sunglasses and a small smug smirk, arms at its sides, purple shoes.
       </desc>
       <defs>
         <path
           id={body}
           d="M356 148 C322 120 281 112 242 120 C169 131 107 178 80 246 C40 344 59 438 119 482 C178 526 280 530 330 483 C341 473 351 459 356 447 C362 463 372 479 386 489 C440 531 529 518 580 471 C637 419 649 333 618 252 C593 185 540 137 476 122 C432 112 391 121 356 148Z"
         />
-        <clipPath id={id('body-clip')}>
+        <clipPath id={bodyClip}>
           <use href={`#${body}`} />
         </clipPath>
-        <clipPath id={id('left-lens')}>
-          <circle cx="299" cy="280" r="67" />
+        <path
+          id={leftLens}
+          d="M236 234 C263 230 316 230 342 235 L333 282 C331 296 319 304 303 305 L282 305 C265 304 253 296 248 282Z"
+        />
+        <path
+          id={rightLens}
+          d="M412 234 C439 230 489 230 521 234 L511 282 C506 296 494 304 478 305 L456 305 C440 304 427 296 423 282Z"
+        />
+        <clipPath id={leftLensClip}>
+          <use href={`#${leftLens}`} />
         </clipPath>
-        <clipPath id={id('right-lens')}>
-          <circle cx="470" cy="249" r="67" />
+        <clipPath id={rightLensClip}>
+          <use href={`#${rightLens}`} />
         </clipPath>
+        <linearGradient id={lensTint} x1="0" y1="230" x2="0" y2="307" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#343E48" />
+          <stop offset="1" stopColor="#20272E" />
+        </linearGradient>
       </defs>
 
-      <g stroke="#393A34" strokeWidth="23" strokeLinecap="round">
+      {/* Quiet, upright stance: no suit, tie, or other outfit. */}
+      <g stroke="#393A35" strokeWidth="23" strokeLinecap="round">
         <path d="M259 481 C267 514 260 548 250 574" />
         <path d="M418 480 C432 513 424 550 414 574" />
       </g>
       <g>
-        <path d="M578 357 C609 378 632 399 655 406" stroke="#373834" strokeWidth="22" strokeLinecap="round" />
+        <path d="M580 358 C617 384 637 418 636 455" stroke="#393A35" strokeWidth="20" strokeLinecap="round" />
         <path
-          d="M645 397 C650 389 659 384 668 383 C677 381 685 384 683 391 L679 398 C692 407 697 418 692 430 C687 442 675 447 662 443 C649 440 642 431 640 419 L636 411Z"
-          fill="#373834"
-          stroke="#282A28"
+          d="M637 444 C649 445 657 454 661 467 C667 482 660 498 647 503 C634 508 621 501 620 487 L618 479 C611 481 607 476 611 469 C617 455 626 445 637 444Z"
+          fill="#393A35"
+          stroke="#2B2D29"
           strokeWidth="1.5"
           strokeLinejoin="round"
         />
       </g>
 
       <g>
-        <use href={`#${body}`} fill="#FF99A5" />
-        <g clipPath={bodyClip}>
+        <use href={`#${body}`} fill="#FF98A5" />
+        <g clipPath={`url(#${bodyClip})`}>
           <use href={`#${body}`} transform="translate(0 -12)" fill="#FFAFB8" />
-          <path d="M356 148 C338 172 333 198 342 234" stroke="#F27F89" strokeWidth="10" strokeLinecap="round" />
-          <path d="M366 366 C380 389 376 420 356 447" stroke="#EE7B87" strokeWidth="11" strokeLinecap="round" />
-          <path d="M357 366 C368 393 365 418 350 438" stroke="#FFA0AC" strokeWidth="5" strokeLinecap="round" />
-          <g stroke="#F08089" strokeWidth="9.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M233 181 C205 176 185 184 174 205 C167 219 165 231 165 239 C146 231 128 243 122 260 C117 274 120 288 123 296 C106 304 100 319 100 334" />
-            <path d="M446 168 C468 162 489 173 496 191" />
-            <path d="M111 384 C99 400 106 419 119 429" />
-            <path d="M144 443 C157 450 174 453 188 451" />
-            <path d="M585 338 C597 355 588 375 574 383 C579 402 557 421 530 421" />
+
+          {/* The long central cleft preserves the unmistakable butt shape. */}
+          <g strokeLinecap="round">
+            <path d="M356 148 C338 172 333 198 342 234" stroke="#EF7F8C" strokeWidth="10" />
+            <path d="M367 366 C382 391 375 420 356 447" stroke="#EA7787" strokeWidth="11" />
+            <path d="M357 368 C369 392 364 417 350 438" stroke="#FF9DAA" strokeWidth="5" />
           </g>
-          <path d="M203 472 C235 483 277 475 298 456" stroke="#FFA0AA" strokeWidth="8" strokeLinecap="round" />
-          <path d="M417 460 C444 481 483 480 508 466" stroke="#FFA0AA" strokeWidth="8" strokeLinecap="round" />
+
+          {/* Winding, branching sulci across both cheeks, rather than a smooth peach. */}
+          <g stroke="#EE818D" strokeWidth="8.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M231 158 C248 148 269 150 279 164 C287 175 284 190 274 195 C262 201 258 210 262 222" />
+            <path d="M305 168 C315 178 313 194 303 201" />
+            <path d="M202 184 C176 184 158 203 160 226 C144 219 130 224 120 236 C109 249 111 266 115 279" />
+            <path d="M218 199 C199 195 186 208 187 223 C189 239 180 251 165 251" />
+            <path d="M159 272 C145 264 130 272 128 286 C126 299 130 309 119 317 C106 327 102 340 110 354" />
+            <path d="M182 296 C171 289 159 294 153 304 C147 315 153 327 165 332 C180 339 184 352 174 365" />
+            <path d="M109 385 C98 396 103 413 116 419" />
+            <path d="M201 356 C217 352 231 363 232 377 C232 391 245 400 259 396 C275 391 289 399 291 413" />
+            <path d="M172 391 C155 386 143 397 146 412 C150 429 167 432 181 427 C192 423 204 429 204 442" />
+            <path d="M230 429 C219 440 223 458 239 463 C256 470 273 461 275 447 C277 433 294 429 306 438" />
+            <path d="M315 371 C299 376 297 392 309 403 C322 414 325 428 317 441" />
+            <path d="M175 466 C184 481 198 486 215 483" />
+            <path d="M289 477 C306 471 319 460 327 448" />
+            <path d="M397 176 C396 160 412 151 426 156 C439 160 442 175 452 181 C462 186 473 182 477 171" />
+            <path d="M494 159 C508 165 515 178 511 191 C508 202 514 214 526 217" />
+            <path d="M550 198 C545 212 551 225 564 231 C579 238 583 251 578 265" />
+            <path d="M586 278 C601 285 605 301 597 316 C591 327 579 329 574 342 C569 356 575 366 585 373" />
+            <path d="M546 318 C528 317 518 331 525 345 C532 359 525 372 511 374" />
+            <path d="M570 399 C555 392 538 400 536 415 C535 430 520 437 507 430" />
+            <path d="M451 360 C435 355 422 366 424 380 C426 395 442 399 455 393 C469 387 483 394 484 408" />
+            <path d="M413 414 C424 422 423 436 435 443 C448 450 463 446 469 436 C477 423 490 423 501 430" />
+            <path d="M420 475 C438 481 455 474 458 460" />
+            <path d="M485 477 C501 477 516 469 523 458" />
+          </g>
         </g>
       </g>
 
-      <g fill="#FF939F">
-        <ellipse cx="218" cy="364" rx="34" ry="19" transform="rotate(-6 218 364)" />
-        <ellipse cx="521" cy="352" rx="34" ry="19" transform="rotate(5 521 352)" />
+      {/* Dark, angular sunglasses: opaque lenses, discreet hardware, no visible eyes. */}
+      <g transform="rotate(-6 379 267)">
+        <g stroke="#222625" strokeLinecap="round">
+          <path d="M225 234 L184 235" strokeWidth="15" />
+          <path d="M533 235 L557 243" strokeWidth="13" />
+          <path d="M355 239 C369 231 385 231 400 239" strokeWidth="13" />
+        </g>
+        <g fill="#222625">
+          <path d="M224 222 C260 215 321 215 351 222 C359 224 362 230 360 240 L350 285 C347 307 329 319 305 320 L280 320 C255 319 238 307 233 287 L218 241 C215 232 216 225 224 222Z" />
+          <path d="M404 222 C434 215 493 215 529 222 C537 224 543 230 540 241 L525 287 C520 307 503 319 479 320 L454 320 C428 319 411 307 405 285 L395 240 C393 230 396 224 404 222Z" />
+        </g>
+        <g fill={`url(#${lensTint})`}>
+          <use href={`#${leftLens}`} />
+          <use href={`#${rightLens}`} />
+        </g>
+        <g fill="#B2C3D1">
+          <g clipPath={`url(#${leftLensClip})`}>
+            <path d="M278 224 L300 224 L248 314 L226 314Z" opacity="0.23" />
+            <path d="M311 224 L318 224 L266 314 L259 314Z" opacity="0.12" />
+          </g>
+          <g clipPath={`url(#${rightLensClip})`}>
+            <path d="M454 224 L476 224 L424 314 L402 314Z" opacity="0.23" />
+            <path d="M487 224 L494 224 L442 314 L435 314Z" opacity="0.12" />
+          </g>
+        </g>
+        <g stroke="#515750" strokeWidth="2.5" strokeLinecap="round" opacity="0.7">
+          <path d="M242 224 C270 221 314 222 335 225" />
+          <path d="M414 225 C442 221 485 221 513 224" />
+        </g>
+        <g fill="#A8B0AE">
+          <rect x="225" y="230" width="7" height="3.5" rx="1.75" />
+          <rect x="525" y="230" width="7" height="3.5" rx="1.75" />
+        </g>
       </g>
 
-      <g>
-        <g stroke="#242725" strokeLinecap="round">
-          <path d="M229 288 L184 300" strokeWidth="18" />
-          <path d="M370 267 C381 262 390 261 399 260" strokeWidth="11" />
-        </g>
-        <g fill="#DECBDE">
-          <circle cx="299" cy="280" r="69" />
-          <circle cx="470" cy="249" r="69" />
-        </g>
-        <g fill="#9099A2">
-          <ellipse cx="294" cy="287" rx="19.5" ry="27.5" />
-          <ellipse cx="472" cy="262" rx="20" ry="28" />
-          <path d="M281 232 C289 224 300 224 309 229" stroke="#9099A2" strokeWidth="10" strokeLinecap="round" />
-          <path d="M451 207 C459 198 470 198 478 203" stroke="#9099A2" strokeWidth="10" strokeLinecap="round" />
-        </g>
-        <g fill="#FFFFFF" opacity="0.94">
-          <path d="M308 205 L324 210 L251 341 L235 331Z" clipPath={leftLens} />
-          <path d="M466 174 L483 179 L414 306 L400 296Z" clipPath={rightLens} />
-        </g>
-        <g stroke="#242725" strokeWidth="15.5">
-          <circle cx="299" cy="280" r="71" />
-          <circle cx="470" cy="249" r="71" />
-        </g>
+      {/* A restrained asymmetric smile, not a big cartoon grin. */}
+      <g stroke="#3C3836" strokeLinecap="round">
+        <path d="M349 342 C366 350 389 347 408 334" strokeWidth="6.5" />
+        <path d="M406 331 C411 333 414 337 414 341" strokeWidth="4.5" />
       </g>
-
-      <path d="M374 325 C378 343 399 345 406 325" stroke="#384638" strokeWidth="7" strokeLinecap="round" />
 
       <g>
         <path d="M151 358 C139 385 127 419 120 461" stroke="#393A35" strokeWidth="21" strokeLinecap="round" />
@@ -154,20 +199,18 @@ export default function BrainMark({ size = 20, className = '', title = 'AI ASSis
       </g>
 
       <g>
-        <path d="M232 570 L270 570 L270 592 L227 592Z" fill="#F2EFF8" />
-        <path
-          d="M228 583 C239 588 256 589 270 582 C287 582 309 596 322 611 C330 620 334 630 331 636 C305 647 252 647 225 638 C214 634 216 623 220 608Z"
-          fill="#9473B0"
-        />
-        <path d="M219 622 C244 635 299 639 333 628 L332 637 C328 646 292 648 262 646 C236 645 216 640 219 622Z" fill="#383333" />
-        <path d="M294 590 C287 596 281 602 278 608" stroke="#F5F2F9" strokeWidth="8" strokeLinecap="round" />
-        <path d="M396 570 L434 570 L434 592 L391 592Z" fill="#F2EFF8" />
-        <path
-          d="M392 583 C404 588 421 589 435 582 C452 583 474 596 487 612 C495 621 499 631 496 637 C470 647 417 647 390 638 C379 634 381 623 385 608Z"
-          fill="#9473B0"
-        />
-        <path d="M384 622 C409 635 464 639 498 628 L497 637 C493 646 457 648 427 646 C401 645 381 640 384 622Z" fill="#383333" />
-        <path d="M459 590 C452 596 446 602 443 608" stroke="#F5F2F9" strokeWidth="8" strokeLinecap="round" />
+        <g>
+          <path d="M232 570 L270 570 L270 592 L227 592Z" fill="#F2EFF8" />
+          <path d="M228 583 C239 588 256 589 270 582 C287 582 309 596 322 611 C330 620 334 630 331 636 C305 647 252 647 225 638 C214 634 216 623 220 608Z" fill="#8C6AA7" />
+          <path d="M219 622 C244 635 299 639 333 628 L332 637 C328 646 292 648 262 646 C236 645 216 640 219 622Z" fill="#383333" />
+          <path d="M294 590 C287 596 281 602 278 608" stroke="#F5F2F9" strokeWidth="8" strokeLinecap="round" />
+        </g>
+        <g>
+          <path d="M396 570 L434 570 L434 592 L391 592Z" fill="#F2EFF8" />
+          <path d="M392 583 C404 588 421 589 435 582 C452 583 474 596 487 612 C495 621 499 631 496 637 C470 647 417 647 390 638 C379 634 381 623 385 608Z" fill="#8C6AA7" />
+          <path d="M384 622 C409 635 464 639 498 628 L497 637 C493 646 457 648 427 646 C401 645 381 640 384 622Z" fill="#383333" />
+          <path d="M459 590 C452 596 446 602 443 608" stroke="#F5F2F9" strokeWidth="8" strokeLinecap="round" />
+        </g>
       </g>
     </svg>
   )

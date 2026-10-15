@@ -959,3 +959,25 @@ journal / follow-ups) and P9 (installer).
   `.github/workflows/checks.yml` runs types + tests + build on every push.
 - **298 tests green, typecheck clean, build clean.** Owner round-trip on his
   machine = the final ✅ the judges asked for.
+## 2026-10-15 (evening) — v0.2.1: the owner's mark everywhere + the engine can finally see `claude`
+
+His first real run found two things; both fixed, both carried by tests:
+
+- **The old logo was still alive** — `BrainMark.tsx` (sidebar, title bar,
+  messages, empty state), the favicon AND the desktop icon all showed the
+  previous smiling brain. PURGED: every surface now renders his canonical
+  artwork (`resources/icon.svg`, his own export, byte-for-byte). New committed
+  script `scripts/render-icons.mjs` renders icon.png (512) + icon.ico
+  (16–256) from that one file and refuses to run without it — the drift that
+  caused this can never quietly happen again. 299 tests green.
+- **`'claude' is not recognized`** inside the installed app: a packaged app
+  gets a slim PATH that does not include the user's npm folder, unlike his
+  PowerShell. The engine now prepends `%APPDATA%\npm` and
+  `%USERPROFILE%\.local\bin` to the engine process PATH itself (tested), and
+  the not-found message tells him exactly what to install and to fully quit +
+  reopen the app afterwards.
+- Installer rebuilt: `AI-ASSistant-Setup-0.2.1.exe`, SHA-256
+  `78b9b40f221b5fb0f0657c0994b50ba9c5b2d7c4c2477cef03040c56d65de14f`.
+  Note: Windows caches shortcut icons — if the desktop shortcut still shows
+  the old brain after upgrading, unpin/repin or sign out and in; the file
+  inside is the new mark.

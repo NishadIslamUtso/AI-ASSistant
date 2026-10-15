@@ -9,7 +9,7 @@
  * preview) gets honest refusals, never invented work.
  */
 import { useSyncExternalStore } from 'react'
-import type { EngineEvent, EngineSettings } from '@shared/lib/engine'
+import type { EngineEvent, EngineId, EngineModelEntry, EngineSettings } from '@shared/lib/engine'
 import { DEFAULT_ENGINE } from '@shared/lib/engine'
 import { getEngineApi } from '@/platform/bridge'
 
@@ -22,6 +22,9 @@ export type EngineItem =
 
 /** A question from the engine that a person must answer. */
 export type EnginePermission = { requestId: string; tool: string; summary: string }
+
+/** The engine's brains, as its own door reports them. */
+export type EngineModels = { loading: boolean; entries: EngineModelEntry[]; error: string }
 
 /** One work order, from the moment it is sent to the moment it lands. */
 export type EngineTurn = {
@@ -36,6 +39,9 @@ export type EngineState = {
   /** Whether the composer sends work to the engine instead of the chat brain. */
   on: boolean
   turn: EngineTurn | null
+  models: EngineModels
+  /** Whether the engine process is alive on this machine, as last reported. */
+  alive: boolean
 }
 
 type EngineStore = EngineState & {
@@ -47,12 +53,24 @@ type EngineStore = EngineState & {
   stop(): Promise<void>
   /** Fold one wire event into the turn. Public so tests can drive it directly. */
   ingest(event: EngineEvent): void
+  /** Whether the engine process is alive on this machine. */
+  running(): boolean
+  /** Choose which engine thinks inside the app; persists. */
+  pick(id: EngineId): Promise<void>
+  /** Ask the brain door what the engine can use. */
+  loadModels(): Promise<void>
+  /** Pick the engine's brain; persists. */
+  setModel(name: string): Promise<void>
+  /** "Open a folder": pick where the engine works; persists. */
+  pickWorkspace(): Promise<void>
 }
 
 const state: EngineState = {
   settings: { ...DEFAULT_ENGINE },
   on: false,
   turn: null,
+  models: { loading: false, entries: [], error: '' },
+  alive: false,
 }
 
 let subscribed = false
@@ -72,6 +90,9 @@ const setState = (patch: Partial<EngineState>): void => {
 
 /** Fold one wire event into the current turn, whatever order they arrive in. */
 const ingest = (event: EngineEvent): void => {
+  // The engine's existence is not a per-turn fact: even with no task under
+  // way, a closed engine must dim its light.
+  if (event.kind === 'closed') state.alive = false
   const turn = state.turn
   if (!turn) return
   if (event.kind === 'status') {
@@ -119,6 +140,12 @@ const store: EngineStore = {
   get turn() {
     return state.turn
   },
+  get models() {
+    return state.models
+  },
+  get alive() {
+    return state.alive
+  },
 
   async init(): Promise<void> {
     if (subscribed || initializing) return
@@ -126,7 +153,7 @@ const store: EngineStore = {
     const api = getEngineApi()
     try {
       const read = await api.read()
-      setState({ settings: read.engine })
+      setState({ settings: read.engine, alive: read.running })
     } finally {
       initializing = false
     }
@@ -147,6 +174,7 @@ const store: EngineStore = {
     const turn: EngineTurn = { prompt, items: [], permission: null, state: 'running' }
     setState({ turn })
     const answer = await getEngineApi().send(prompt, '')
+    if (answer.ok) state.alive = true
     if (!answer.ok) {
       // The refusal is the result, shown where the work would have appeared —
       // the same honesty rule the rest of the app follows.
@@ -166,10 +194,39 @@ const store: EngineStore = {
     await getEngineApi().answer(permission.requestId, allow)
   },
 
+  running(): boolean {
+    return state.alive
+  },
+
+  async pick(id: EngineId): Promise<void> {
+    const answer = await getEngineApi().pick(id)
+    if (answer.ok) setState({ settings: { ...state.settings, id } })
+  },
+
+  async loadModels(): Promise<void> {
+    if (state.models.loading) return
+    setState({ models: { ...state.models, loading: true, error: '' } })
+    const answer = await getEngineApi().models()
+    setState({
+      models: { loading: false, entries: answer.models, error: answer.ok ? '' : answer.error || 'the brain door did not answer' },
+    })
+  },
+
+  async setModel(name: string): Promise<void> {
+    const answer = await getEngineApi().setModel(name)
+    if (answer.ok) setState({ settings: { ...state.settings, model: name } })
+  },
+
+  async pickWorkspace(): Promise<void> {
+    const answer = await getEngineApi().pickWorkspace()
+    if (answer.ok) setState({ settings: { ...state.settings, workspace: answer.answer } })
+  },
+
   async stop(): Promise<void> {
     await getEngineApi().stop()
     // Belt and suspenders: the 'closed' event also closes the turn, but the
     // person who pressed Stop should never wait for a wire to agree.
+    state.alive = false
     const turn = state.turn
     if (turn?.state === 'running') {
       turn.items.push({ kind: 'status', text: 'stopped by you' })
@@ -205,5 +262,7 @@ export function resetEngineForTests(): void {
   state.on = false
   state.turn = null
   state.settings = { ...DEFAULT_ENGINE }
+  state.models = { loading: false, entries: [], error: '' }
+  state.alive = false
   emit()
 }

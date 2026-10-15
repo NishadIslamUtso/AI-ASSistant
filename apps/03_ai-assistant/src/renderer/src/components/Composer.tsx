@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUp, ChevronDown, Square } from 'lucide-react'
+import { ArrowUp, ChevronDown, Cpu, Square } from 'lucide-react'
+import { useEngine } from '@/state/engine'
 import type { ModelState } from '@/hooks/useModels'
 import useDismiss from '@/hooks/useDismiss'
 
@@ -35,6 +36,7 @@ export default function Composer({
   engineOn?: boolean
   onEngineToggle?: () => void
 }) {
+  const engine = useEngine()
   const box = useRef<HTMLTextAreaElement | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
@@ -88,7 +90,18 @@ export default function Composer({
               Engine
             </button>
           ) : null}
-          <ModelMenu models={models} open={menuOpen} setOpen={setMenuOpen} menuRef={menuRef} />
+          {engineOn ? (
+            <span
+              className="flex h-8 items-center gap-1.5 rounded-lg border border-accent px-2.5 text-[12px] text-ink"
+              title="Engine mode — the full picker lives in the sidebar's Engine bay"
+            >
+              <Cpu size={12} aria-hidden />
+              <span className="min-w-0 max-w-[180px] truncate">{engine.settings.model}</span>
+              <span className="text-[10.5px] text-muted">{engine.settings.id}</span>
+            </span>
+          ) : (
+            <ModelMenu models={models} open={menuOpen} setOpen={setMenuOpen} menuRef={menuRef} />
+          )}
           <span className="ml-auto flex items-center gap-2">
             {busy ? (
               <button

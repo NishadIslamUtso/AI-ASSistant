@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { PanelLeftClose, PanelLeftOpen, Plus, Search, Trash2, X } from 'lucide-react'
+import { Cpu, PanelLeftClose, PanelLeftOpen, Plus, Search, Trash2, X } from 'lucide-react'
 import type { Chat } from '@shared/types'
 import { searchChats } from '@shared/lib/search'
 import { initials } from '@shared/lib/profile'
 import { groupChats } from '@/state/useChats'
 import usePersistentState from '@/hooks/usePersistentState'
 import AppNav, { type View } from './AppNav'
+import EngineBay from './EngineBay'
 
 /**
  * The list of conversations, and the app's own sections above them.
@@ -126,6 +127,15 @@ export default function Sidebar({
           <Plus size={15} />
         </button>
         <AppNav view={view} onView={onView} collapsed artifactCount={artifactCount} />
+        <button
+          type="button"
+          onClick={() => setPrefs(previous => ({ ...previous, collapsed: false }))}
+          aria-label="Engine settings"
+          title="Engine — which agent, which brain, which folder"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-white/[0.06] hover:text-ink"
+        >
+          <Cpu size={15} />
+        </button>
         <span className="flex-1" />
         <button
           type="button"
@@ -205,6 +215,8 @@ export default function Sidebar({
         </button>
 
         <AppNav view={view} onView={onView} artifactCount={artifactCount} />
+
+        <EngineBay />
       </div>
 
       <nav className="min-h-0 flex-1 overflow-y-auto px-3 pb-3" aria-label="Conversations">

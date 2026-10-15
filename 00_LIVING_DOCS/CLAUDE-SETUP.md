@@ -206,4 +206,9 @@ will work in the app normally too."*
       fixes in memory/sessions; decision in ARCHITECTURE.md §Job 2.
 - [ ] **6.3 agy spike:** same harness, second provider (after Windows check).
 - [ ] **6.4 Face refresh + mockup surfaces** (the eight screens, mockups rule).
-- [ ] **6.5 Installer for him** (he only ever runs installers).
+- [x] **6.5 Installer BUILT 2026-10-15** — `AI-ASSistant-Setup-0.2.0.exe`
+      (~84 MB, one click, no PowerShell, no admin, opens the app when done).
+      First build (0.2.0) surfaced two real findings on his machine — old logo
+      still present + `claude` invisible to the packaged app — BOTH fixed and
+      re-shipped as **0.2.1** (SHA-256 78b9b40f…65de14f) with his canonical
+      butt-brain mark everywhere and engine-PATH prepending. Awaiting his run.
