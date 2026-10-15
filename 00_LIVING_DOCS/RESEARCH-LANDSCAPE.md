@@ -153,3 +153,10 @@ exactly this.
   files — our vault+memory direction, independently confirmed at scale.
 - LibreChat (MIT, 45k stars): local+hosted side-by-side; Cherry Studio
   (AGPL): crowded space, none wired to an agent engine.
+
+
+## Sweep #2 — 2026-10-16 (post Track B)
+- Scam wave on `claude-code-desktop` topic intensified: "Claude Code Uncensored Desktop", "Claude-Fable-5.1-Free-Desktop", "Claude-Pro-Desktop-2026", "claude-opus-interface-toolkit" — anonymous one-repo accounts, model-name bait, several updated this very week. Clean provenance + one canonical mark remains the differentiator; never mirror their naming patterns.
+- Two live, plausibly-legit newcomers to study (ideas only until checked against the rubric): **ittop** (pottz91 — Electron, xterm, session multiplexer, active Oct 12) and **moontors** (ADE-style parallel agents, git-worktree orchestration, active Oct 14).
+- Opcode/Claudia still the most-cited GUI; AGPL (claudia.so confirms) — read ideas, never code; earlier unmaintained verdict stands.
+- Verdict: nothing changes Track B/C priorities. Carried queues (worktree isolation, browser capture, vault-skill injection) unchanged.
