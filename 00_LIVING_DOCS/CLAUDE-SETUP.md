@@ -195,7 +195,9 @@ will work in the app normally too."*
   visible). Env wiring identical (Ollama base URL). `agy` = engine #2 behind
   the same interface (Windows support check still owed). Face: existing v0.1.2
   app + mockups (design authority) + replica-skill refresh pass vs the current
-  Claude app look. *Done when:* doc in 00_LIVING_DOCS, he reads, says "go".
+      Claude app look. *Done when:* doc in 00_LIVING_DOCS, he reads, says "go".
+      📝 DRAFTED 2026-10-15 → `ARCHITECTURE.md` (workspace) +
+      `00_LIVING_DOCS/ARCHITECTURE-ENGINE.md` (repo). Awaiting read + "go".
 - [ ] **6.2 Engine spike:** SDK or stream-json inside the app shell, one chat
   round-trip on gemma4:cloud through the app. $0.
 - [ ] **6.3 agy spike:** same harness, second provider (after Windows check).
