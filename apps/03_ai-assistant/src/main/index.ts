@@ -23,6 +23,8 @@ import { APPROVAL_MODES, type ApprovalMode, type EngineEvent, type EngineId, typ
 import { agyModelSource, detectEngine } from './engine/availability'
 import { parsePullLine, validateModelName } from './engine/pull'
 import { deployMcp, deploySkill, scanClaudeSkills, type McpServer, type VaultSkill } from './engine/deploy'
+import { deployHouseRules } from './engine/houseRulesDeploy'
+import { DEFAULT_HOUSE_RULES, type HouseRules } from '../shared/lib/houseRules'
 
 /**
  * The main process. Everything that touches the machine lives on this side:
@@ -248,6 +250,7 @@ function registerBridges(): void {
       // folder the owner picked in the engine bay, or the vault when none.
       // The renderer's value is deliberately not consulted (review finding).
       void cwd
+      deployRulesNow()
       return engine.send(text, {
         cwd: settings.engine.workspace || vaultRoot(),
         settings: settings.engine,
@@ -274,6 +277,25 @@ function registerBridges(): void {
     }
   }
   const mcpFile = join(app.getPath('userData'), 'mcp.json')
+
+  // The canonical rulebook, as the owner edited it (blanks fall back to the
+  // defaults inside the compiler — never an empty rule).
+  const houseRulesFile = join(app.getPath('userData'), 'house-rules.json')
+  const readHouseRules = (): Partial<HouseRules> => {
+    try {
+      return JSON.parse(readFileSync(houseRulesFile, 'utf8')) as Partial<HouseRules>
+    } catch {
+      return {}
+    }
+  }
+  const deployRulesNow = (): void => {
+    try {
+      const home = process.env['USERPROFILE'] || process.env['HOME'] || ''
+      deployHouseRules(settings.engine.id, settings.engine.model, home, readHouseRules())
+    } catch {
+      // A failed rules deploy must never block the work itself.
+    }
+  }
 
   // What is really installed on this machine — the bay refuses to guess.
   ipcMain.handle('engine:detect', async (): Promise<Array<{ id: EngineId; found: boolean; version: string; install: string }>> => {
@@ -387,6 +409,34 @@ function registerBridges(): void {
     const servers = Array.isArray(payload?.servers) ? payload.servers.slice(0, 100) : []
     writeFileSync(mcpFile, JSON.stringify({ servers }), 'utf8')
     return { ok: true, written: deployMcp(servers, settings.engine.workspace || vaultRoot()) }
+  })
+
+  // The rulebook itself: read for the edit screen, write to persist and
+  // deploy immediately to every engine's global file.
+  ipcMain.handle('houserules:read', () => {
+    const rules = readHouseRules()
+    return {
+      rules: {
+        identity: rules.identity ?? DEFAULT_HOUSE_RULES.identity,
+        artifacts: rules.artifacts ?? DEFAULT_HOUSE_RULES.artifacts,
+        permissions: rules.permissions ?? DEFAULT_HOUSE_RULES.permissions,
+        memory: rules.memory ?? DEFAULT_HOUSE_RULES.memory,
+        style: rules.style ?? DEFAULT_HOUSE_RULES.style,
+      },
+      defaults: DEFAULT_HOUSE_RULES,
+    }
+  })
+
+  ipcMain.handle('houserules:write', (_event, rules: Partial<HouseRules>): { ok: boolean; written: string[] } => {
+    const clean: Partial<HouseRules> = {}
+    for (const key of Object.keys(DEFAULT_HOUSE_RULES) as Array<keyof HouseRules>) {
+      const value = rules?.[key]
+      if (typeof value === 'string' && value.trim()) clean[key] = value
+    }
+    writeFileSync(houseRulesFile, JSON.stringify(clean), 'utf8')
+    const home = process.env['USERPROFILE'] || process.env['HOME'] || ''
+    const written = deployHouseRules(settings.engine.id, settings.engine.model, home, clean)
+    return { ok: true, written }
   })
 
   // The brains the engine can actually use, straight from the brain door —

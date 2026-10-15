@@ -6,6 +6,7 @@ import type {
 } from '../shared/lib/providers'
 import type { Permissions } from '../shared/lib/permissions'
 import type { ApprovalMode, EngineAvailability, EngineEvent, EngineId, EngineModelEntry, EngineSettings } from '../shared/lib/engine'
+import type { HouseRules } from '../shared/lib/houseRules'
 import type {
   AdoptInput,
   ItemAnswer,
@@ -41,6 +42,12 @@ const engineApi = {
   /** Take a brain off this machine. */
   deleteModel: (name: string): Promise<{ ok: boolean; answer: string }> =>
     ipcRenderer.invoke('engine:model-delete', name),
+  /** The rulebook, as it stands (blanks already filled from the defaults). */
+  readHouseRules: (): Promise<{ rules: HouseRules; defaults: HouseRules }> =>
+    ipcRenderer.invoke('houserules:read'),
+  /** Save the rulebook and deploy it to every engine's global file. */
+  writeHouseRules: (rules: HouseRules): Promise<{ ok: boolean; written: string[] }> =>
+    ipcRenderer.invoke('houserules:write', rules),
   /** Pull progress ticks, in the same shape `parsePullLine` produces. */
   onPullEvent: (listener: (tick: unknown) => void): (() => void) => {
     const channel = 'engine:pull-event'
@@ -78,6 +85,11 @@ const api = {
     /** Which build is running. Used by the About panel and bug reports. */
     version: process.env['npm_package_version'] ?? '0.1.0',
     platform: process.platform,
+  },
+  houseRules: {
+    read: (): Promise<{ rules: HouseRules; defaults: HouseRules }> => ipcRenderer.invoke('houserules:read'),
+    write: (rules: HouseRules): Promise<{ ok: boolean; written: string[] }> =>
+      ipcRenderer.invoke('houserules:write', rules),
   },
   settings: {
     /** What the app has been told to do, as the main process holds it. */
