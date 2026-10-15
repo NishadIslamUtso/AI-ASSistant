@@ -217,3 +217,75 @@ everything about the vault, artifacts-as-files, Browsing Maps, real-data rule.
 
 **Your only jobs in this whole plan: read this, say "go", run installers I
 hand you, and keep being the person who says when something looks wrong.**
+
+---
+
+## The adapter structure (2026-10-15, evening) — how both CLIs plug in, and the next ones
+
+Checked live against both GitHub repos. What each engine actually is, and the
+seams the app uses to serve them through one socket:
+
+### The engines, as they really are (verified 2026-10-15)
+
+| | Claude Code | agy (Antigravity CLI) |
+|---|---|---|
+| GitHub | `anthropics/claude-code` (issues/docs; CLI closed-source) | `google-antigravity/antigravity-cli` (public repo, **proprietary** — no OSS license, install scripts + docs) |
+| Binary | `claude` | `agy` (not `antigravity` — matters for scripting) |
+| Since | — | **Replaced Gemini CLI 19 May 2026** (Go rewrite, Gemini CLI sunset for individuals 18 Jun 2026) |
+| Models | aliases (`default best opus sonnet haiku fable opusplan`, `[1m]` suffixes) or exact names (`claude-opus-5-5`…); pick via `--model`, `/model`, `ANTHROPIC_MODEL`, settings `model` field; third-party slots remappable via `ANTHROPIC_DEFAULT_{OPUS,SONNET,HAIKU,FABLE}_MODEL`, `ANTHROPIC_SMALL_FAST_MODEL`, `CLAUDE_CODE_SUBAGENT_MODEL` | **Fixed, plan-dependent list from its own model selector** (Gemini 3 family + plan-gated Claude/GPT-OSS). **No custom endpoint / no base URL — Ollama brains cannot plug into agy.** |
+| Extensibility | skills, plugins, hooks, MCP, `~/.claude/` + project `.claude/` | skills (`.agents/skills/*.md` → slash commands), plugins (`~/.gemini/antigravity-cli/plugins/`), rules (`.agents/rules/`, `GEMINI.md`/`AGENTS.md`), MCP (`.agents/mcp_config.json`, `agy mcp …` subcommands), hooks, subagents |
+| Auth | his Ollama brain door (free) / Anthropic account | Google account sign-in (keyring); free individual quota |
+
+**Scam warning (told to him 2026-10-15):** fake repos named
+`gemini-antigravity-cli` (e.g. testerlingcodo/…, Leeanninsular877/…) hand out
+`.zip`/`.exe` "installers" — do not touch them. Official =
+`github.com/google-antigravity/antigravity-cli` or the install script at
+`antigravity.google/cli/install.sh`.
+
+### The structure today (one plug, one socket)
+
+```
+shared/lib/engine.ts     the contract: EngineId, EngineSettings, MODEL_PATTERN,
+                         EngineModelEntry, DEFAULT_ENGINE — engine-agnostic
+main/engine/claudeCode.ts adapter #1: spawn args, brain-door env, PATH
+                         prepend, stream-json → EngineEvents parser
+main/engine/             adapter #2 lands here as agy.ts behind the same
+                         EngineEvent stream (Windows check first: does agy
+                         expose a non-interactive/JSON mode? if not: PTY)
+main/index.ts            the doors: engine:pick / models / model /
+                         pick-workspace / send / stop / onEvent
+preload → renderer bridge → state/engine.ts (store) → EngineBay / panel /
+                         composer — never talks to an engine by name
+```
+
+Rule the judges confirmed: **the UI names no engine.** Everything goes through
+the contract, so a third engine is: one union member in `EngineId`, one entry
+in the EngineBay list, one adapter file that emits the same EngineEvents, one
+`engine:models` source — nothing in the face changes.
+
+### What the contract already gets right, what agy forces us to fix
+
+- ✅ `EngineModelEntry {name, cloud, sizeGB}` — fits both worlds: Ollama's
+  local brains (offline, sized) and cloud brains (flagged). agy's selector
+  models will arrive as cloud entries with no size.
+- ✅ `MODEL_PATTERN` accepts aliases, `opus[1m]`, `gemma4:cloud`,
+  `claude-opus-5-5` — every spelling both CLIs use.
+- ⚠ **Per-engine model sources (next structural fix, agy forces it):**
+  `engine:models` today asks the brain door (Ollama) regardless of chosen
+  engine — correct for Claude Code, wrong for agy. The door becomes a
+  per-engine route: claude-code → Ollama `/api/tags`; agy → agy's own model
+  list (read from its config/`agy` CLI on his machine; plan-gated); a future
+  engine → its own source. Until that route lands, the bay must say plainly
+  that agy's brain list arrives with its Windows check.
+- ✅ Offline: Claude Code (local binary) + local Ollama brain + this app =
+  the whole loop runs with zero internet; the models door already labels
+  local brains with sizes, so "offline-ready" is visible per brain.
+
+### Adding engine #3+ (e.g. anything new) — the checklist
+
+1. `EngineId` union += id; EngineBay list += entry (with honest availability).
+2. `main/engine/<id>.ts`: how it spawns, its model flag, its event stream →
+   EngineEvents (or PTY scrape if it has no JSON mode).
+3. `engineArguments` + `engine:models` route for its model source.
+4. Windows check on HIS machine (same gate as agy), then availability flips
+   from "soon" to live in the bay.
