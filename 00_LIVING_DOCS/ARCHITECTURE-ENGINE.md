@@ -289,3 +289,78 @@ in the EngineBay list, one adapter file that emits the same EngineEvents, one
 3. `engineArguments` + `engine:models` route for its model source.
 4. Windows check on HIS machine (same gate as agy), then availability flips
    from "soon" to live in the bay.
+
+---
+
+## One input, many engines, constant results (2026-10-15, night) — the five boundaries
+
+His question: every CLI has its own input system and hard-coded instructions,
+every model has different restrictions — how does the app give constant
+results, and how do artifacts / skills / plugins work across all of them?
+
+The answer in one line: **the engines keep their nature; the app owns the
+boundaries.** An engine's hard-coded instructions cannot be rewritten from
+outside — and should not be. Every engine was built with OFFICIAL channels
+for exactly this (CLAUDE.md / AGENTS.md / skills / rules / MCP), so the app
+speaks each engine's language at five boundaries instead of fighting it:
+
+### Boundary 1 — INPUT: one composer → each engine's native mouth
+The composer's text + workspace + attachments are the app's input. The
+adapter translates: Claude Code gets stream-json user turns; agy gets its
+native input (PTY or its JSON mode, per the Windows check). The app never
+emits engine-specific syntax from the face.
+
+### Boundary 2 — INSTRUCTIONS: the house-rules compiler (LANDING 2026-10-15)
+One canonical rulebook (identity / artifacts / approvals / style) lives in
+the app. `shared/lib/houseRules.ts` compiles it per engine into the file that
+engine already auto-obey's — `CLAUDE.md` for Claude Code, `AGENTS.md` for
+agy — plus a per-brain footnote table (`modelHints`) that absorbs known
+quirks of specific models so the owner never re-prompts around them.
+`instructionBlock(engine, model)` = rules + footnote, deterministic, tested
+(9 tests). The edit screen lands with the settings work; the compiler is the
+source of truth from today. (This is the Phase-2 "house-rules CLAUDE.md"
+leftover, now general to every engine.)
+
+### Boundary 3 — RESTRICTIONS: same card, native approval, honest refusals
+Permission models differ (CC permission prompts; agy approval rules). The
+adapter maps each engine's native approval into THE one approval card, and
+refusals surface as honest status lines (already built). Provider-level
+restrictions are never bypassed — the app unifies the SURFACE, not the
+censor. A model that says no shows the same card style as one that asks.
+
+### Boundary 4 — CONSISTENCY: the ladder (what "constant results" really means)
+1. **Same instructions everywhere** — the compiled house rules ride every
+   engine identically (Boundary 2).
+2. **Same output contracts** — artifacts are FILES in artifacts/, work
+   happens in the chosen folder; the app verifies files, not prose.
+3. **Same approval surface** — one card, every engine (Boundary 3).
+4. **Verification over trust** — deterministic checks where possible (file
+   exists, HTML renders); a second cheap local pass can judge open-ended work.
+5. **Per-brain footnotes** — the quirk table absorbs model-specific drift.
+Honest limit, on the record: two different brains will never write identical
+prose. The app guarantees the CONTRACT (where things go, what counts as
+done, what is never faked) and verifies it — not sameness of style.
+
+### Boundary 5 — SKILLS / PLUGINS / MCP: one vault, projected per engine
+- **Artifacts (already real):** the vault watcher surfaces engine-written
+  files as live artifact cards — engine-blind by construction, because it
+  watches the filesystem, not the engine's opinion. The house rules make
+  every engine write artifacts the same way.
+- **Skills:** the app's vault (shared/lib/skills.ts — markdown + frontmatter,
+  exportable) becomes canonical. Projection: Claude Code →
+  `~/.claude/skills/<name>/SKILL.md`; agy → `.agents/skills/<name>.md`
+  (filename becomes its slash command). Formats are near-identical
+  (name/description/body), so one skill deploys to both; import-on-first-run
+  pulls his existing 11 CC skills in so nothing is lost.
+- **MCP:** one server list in the app; projected to CC's config and agy's
+  `.agents/mcp_config.json` (field names translated per engine).
+- **Plugins (level 2, honest):** CC and agy plugin packaging differs, so
+  level 1 = skills + rules + MCP (fully portable markdown/JSON); plugin-pack
+  generation per engine comes after the agy Windows check confirms formats.
+Direction of truth is one-way: app vault → engine folders. Engine folders
+are deployment targets, and a change in the app re-deploys everywhere.
+
+### Offline, in this structure
+House rules, skills vault, engine binary, and a local brain (e.g.
+qwen2.5-coder:3b) are all on-disk: the whole loop — instructions, work,
+verification — runs with zero internet. Cloud brains stay badged.
