@@ -23,6 +23,8 @@ import { APPROVAL_MODES, type ApprovalMode, type EngineEvent, type EngineId, typ
 import { agyModelSource, detectEngine } from './engine/availability'
 import { parsePullLine, validateModelName } from './engine/pull'
 import { deployMcp, deploySkill, scanClaudeSkills, type McpServer, type VaultSkill } from './engine/deploy'
+import { installCatalogSkill } from './engine/skillCatalogInstall'
+import { exportVaultCopy } from './vault/exportCopy'
 import { deployHouseRules } from './engine/houseRulesDeploy'
 import { DEFAULT_HOUSE_RULES, type HouseRules } from '../shared/lib/houseRules'
 import { newProject, normalizeProjects, type Project } from '../shared/lib/projects'
@@ -97,6 +99,16 @@ function cloudView(): {
  * opened mid-turn still sees what happened. Small on purpose: context for a
  * person, not a log file.
  */
+/** A Dhaka-time stamp for export folder names: vault-2026-10-16-1430. */
+function stampFor(now: Date): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Dhaka',
+    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false,
+  }).formatToParts(now)
+  const get = (type: string): string => parts.find((part) => part.type === type)?.value ?? '00'
+  return `${get('year')}-${get('month')}-${get('day')}-${get('hour')}${get('minute')}`
+}
+
 function pushEngineEvent(event: EngineEvent): void {
   // Stream pieces are for the live window only: a hundred of them would
   // crowd out the real story from the small remembered history, and the
@@ -384,10 +396,53 @@ function registerBridges(): void {
     }
   })
 
+  // A handoff: the finished turn, written into the vault as one markdown
+  // document any later session (here or in a terminal) can continue from.
+  // The name is validated and the vault's own path rules apply.
+  ipcMain.handle('vault:save-handoff', (_event, payload: { name: string; markdown: string }): { ok: boolean; answer: string } => {
+    const name = typeof payload?.name === 'string' ? payload.name.trim() : ''
+    const markdown = typeof payload?.markdown === 'string' ? payload.markdown : ''
+    if (!name || name.length > 120 || /[\\/:*?"<>|\n\r]/.test(name) || !markdown || markdown.length > 200_000) {
+      return { ok: false, answer: 'That is not a name and document this app will write.' }
+    }
+    const service = createVaultService({ vaultPath: vaultRoot() })
+    if (!service.available()) return { ok: false, answer: 'No vault to write the handoff into.' }
+    try {
+      service.files().write(`handoffs/${name}`, markdown)
+      return { ok: true, answer: `handoffs/${name}` }
+    } catch (error) {
+      return { ok: false, answer: error instanceof Error ? error.message : 'The vault refused the handoff.' }
+    }
+  })
+
+  // A timestamped, portable copy of the vault: every markdown file, same
+  // structure, written to the app's exports folder. Obsidian (or a backup,
+  // or another machine) takes folders of markdown as they are — nothing is
+  // converted, because nothing needs converting.
+  ipcMain.handle('vault:export-copy', (): { ok: boolean; answer: string } => {
+    const service = createVaultService({ vaultPath: vaultRoot() })
+    if (!service.available()) return { ok: false, answer: 'No vault to copy.' }
+    const stamp = stampFor(new Date())
+    const destination = join(app.getPath('userData'), 'exports', `vault-${stamp}`)
+    const result = exportVaultCopy(service.root, destination)
+    if (!result.ok) return { ok: false, answer: result.answer }
+    return { ok: true, answer: `${result.count} files copied to ${result.destination}` }
+  })
+
   // The skills the owner's engine already has — the import list.
   ipcMain.handle('skills:scan', () => {
     const home = process.env['USERPROFILE'] || process.env['HOME'] || ''
     return scanClaudeSkills(join(home, '.claude', 'skills'))
+  })
+
+  // Install a skill from the app's own catalog: the name is checked against
+  // the catalog (this door fetches nothing else), the file comes from
+  // anthropics/skills, and it lands in every engine's own folder through the
+  // same deploy everything else uses.
+  ipcMain.handle('skills:install-catalog', async (_event, name: string): Promise<{ ok: boolean; answer: string; written?: string[] }> => {
+    const result = await installCatalogSkill(String(name ?? ''), skillTargets())
+    if (!result.ok) return { ok: false, answer: result.answer }
+    return { ok: true, answer: `${result.skill.name} installed to ${result.written.length} engine folders`, written: result.written }
   })
 
   // Deploy the app's vault into every engine's own folder. The renderer sends

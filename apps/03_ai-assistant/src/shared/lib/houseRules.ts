@@ -106,8 +106,29 @@ const MODEL_HINTS: Array<{ match: RegExp; hint: string }> = [
   },
 ]
 
+/**
+ * The caveman lesson, kept tiny (Track D, researched 2026-10-16: the caveman
+ * skill claims 65% output-token cuts by telegraphic style — but its own rule
+ * block costs ~1,160 input tokens, which is the joke's punchline). Ours is
+ * two sentences for the brains that need it: the small local ones, known by
+ * their size tag (`:3b`, `:8b`) or their family (phi, tiny, mini).
+ */
+export function isSmallLocalBrain(model: string): boolean {
+  const value = String(model || '')
+  const tagged = /:(\d{1,2})b(?=[:.\-_]|$)/i.exec(value)
+  if (tagged) return Number(tagged[1]) <= 14
+  // phi and tiny are local families; "mini" is ambiguous (cloud providers
+  // use it too), so it does not qualify on its own.
+  return /\bphi\d*\b|\btiny\d*\b/i.test(value)
+}
+
+const CAVEMAN_HINT =
+  'Answer in bare facts: short lines, no preamble, no narration, no restating the task. ' +
+  'Code and paths over prose; one line per step.'
+
 export function modelHints(model: string): string {
   const found = MODEL_HINTS.filter(entry => entry.match.test(model)).map(entry => entry.hint)
+  if (isSmallLocalBrain(model)) found.push(CAVEMAN_HINT)
   return found.join(' ')
 }
 

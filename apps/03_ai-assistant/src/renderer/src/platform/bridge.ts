@@ -88,9 +88,17 @@ export type DesktopBridge = {
       }
     }>
   }
+  skills: {
+    /** Install one skill from the app's own catalog, into every engine. */
+    installCatalog: (name: string) => Promise<{ ok: boolean; answer: string; written?: string[] }>
+  }
   vault: {
     /** The operating system's folder picker. null when the person closed it. */
     chooseFolder: () => Promise<string | null>
+    /** A finished turn, written into the vault as a handoff document. */
+    saveHandoff: (name: string, markdown: string) => Promise<{ ok: boolean; answer: string }>
+    /** A timestamped portable copy of the vault, written to the exports folder. */
+    exportCopy: () => Promise<{ ok: boolean; answer: string }>
   }
   /** Whether the browser extension can reach this app, and where. */
   extension: {
@@ -152,7 +160,8 @@ const demoBridge: DesktopBridge = {
       error: 'Settings are part of the desktop app. This window is the interface only, so there is no folder to change.',
     }),
   },
-  vault: { chooseFolder: async () => null },
+  skills: { installCatalog: async () => ({ ok: false, answer: 'Installing skills needs the desktop app.' }) },
+  vault: { chooseFolder: async () => null, saveHandoff: async () => ({ ok: false, answer: 'Writing a handoff needs the desktop app.' }), exportCopy: async () => ({ ok: false, answer: 'Exporting needs the desktop app.' }) },
   // No socket is open here, and none can be: this is a page, not the app.
   extension: {
     status: async () => ({

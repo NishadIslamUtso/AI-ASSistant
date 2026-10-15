@@ -1,5 +1,14 @@
 # CHANGELOG.md — What Changed Each Session (Living)
 
+## 0.6.0 — Track D: the practice — research first, then each feature
+
+- **Handoff:** a finished engine turn becomes one vault document (`handoffs/…`) shaped after three studied repos — instructions to the receiving assistant, the task, the real tool calls, the resumable session id — also copied to the clipboard.
+- **Skills catalog:** Settings > Skills, curated from anthropics/skills (verified live); one click installs into both engines' own folders through the existing deploy. The deferred Skills pane is settled by this section.
+- **Vault export copy:** a timestamped, portable snapshot of every markdown file — Obsidian takes it as it is.
+- **Caveman hint:** small local brains (≤14b tags, phi/tiny) get a two-sentence bare-facts rule riding the deployed house rules — the token-cut idea without the original's ~1,160-token bloat.
+- Research sweeps #3 recorded; JUDGE-BRIEF refreshed; doc mirrors re-synced. 387 tests.
+
+
 ## 0.5.1 — Track C: every open defect closed, each pinned by test
 
 - **Free gate held honest:** machine Anthropic credentials are stripped from the engine's environment on every launch; the chosen brain or nothing, never a silent machine account.

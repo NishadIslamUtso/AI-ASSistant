@@ -145,9 +145,19 @@ const api = {
     /** Ask one provider for its model list, which is what the Test button does. */
     test: (id: string): Promise<CloudTestAnswer> => ipcRenderer.invoke('cloud:test', id),
   },
+  skills: {
+    /** Install one skill from the app's own catalog, into every engine. */
+    installCatalog: (name: string): Promise<{ ok: boolean; answer: string; written?: string[] }> =>
+      ipcRenderer.invoke('skills:install-catalog', name),
+  },
   vault: {
     /** The operating system's folder picker. null when the person closed it. */
     chooseFolder: (): Promise<string | null> => ipcRenderer.invoke('vault:choose-folder'),
+    /** A finished turn, written into the vault as a handoff document. */
+    saveHandoff: (name: string, markdown: string): Promise<{ ok: boolean; answer: string }> =>
+      ipcRenderer.invoke('vault:save-handoff', { name, markdown }),
+    /** A timestamped portable copy of the vault, written to the exports folder. */
+    exportCopy: (): Promise<{ ok: boolean; answer: string }> => ipcRenderer.invoke('vault:export-copy'),
   },
   extension: {
     /**

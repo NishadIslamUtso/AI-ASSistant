@@ -111,21 +111,19 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
   (2026-10-15): the app imposes no rules of its own — owner-favor, documented
   in ARCHITECTURE-ENGINE.md.
 
-## TRACK D — hygiene (continuous)
+## TRACK D — hygiene (continuous) — core landed 2026-10-16 (handoff, skills sourcing, vault export, caveman hint, sweep #3, JUDGE-BRIEF, mirrors); installer explicitly LAST (his word)
 
 - [ ] **Landscape sweep — STANDING DUTY (his correction, 2026-10-16):** every
   working session includes a proactive scan of the four spaces (CC GUIs,
   capture extensions, skills indexes, Ollama tools); anything genuinely new
   goes into RESEARCH-LANDSCAPE.md with the five-question rubric. He found
   two repos before I found any — that never happens again.
-- [ ] **Caveman-style token hint** for weak local brains in the quirk table
-  (strip narration, keep facts).
-- [ ] **Handoff button**: compress a session to markdown (pairs with resume).
-- [ ] **Obsidian export** (trivial — the vault is already markdown).
-- [ ] **Skills sourcing**: browse anthropics/skills + awesome-claude-skills
-  and offer installs through the existing one-vault-to-every-engine deploy.
+- [x] **Caveman-style token hint** — LANDED: `isSmallLocalBrain` (size tags ≤14b, phi/tiny families) adds a two-sentence bare-facts hint to the quirk table, riding the deployed rules. Researched: the caveman skill claims 65% output cuts but its own rule block costs ~1,160 input tokens — ours is two sentences, only for the brains that need it.
+- [x] **Handoff button** — LANDED: a finished turn becomes one vault document (`handoffs/<date>-<task>.md`) shaped after the three handoff repos studied 2026-10-16 — instructions to the receiving assistant, the task, the real tool calls as evidence, the resumable session id — also copied to the clipboard. Built from the turn in memory; nothing parsed post-hoc, nothing invented.
+- [x] **Obsidian export** — LANDED as Vault > "Export copy": a timestamped snapshot of every markdown file, structure intact, into the app's exports folder. Researched the export tools first — they all produce a folder of markdown, which the vault already is, so nothing is converted.
+- [x] **Skills sourcing** — LANDED: Settings > Skills lists a curated catalog (verified live against anthropics/skills' real folder list: docx/pptx/xlsx/pdf, mcp-builder, skill-creator, webapp-testing, frontend-design, web-artifacts-builder, doc-coauthoring, internal-comms); one click fetches the raw SKILL.md (catalog names only — the door fetches nothing else) and deploys to both engines through Track A's deploy. The Skills pane UI debt is hereby settled by this section.
 
-- [ ] Real-CLI harness (settle `-p/--print` and `initialize` disputes)
+- [ ] Real-CLI harness (settle `-p/--print` and `initialize` disputes) — honestly blocked: no claude binary in the build sandbox; runs on his TUF A15 (the detect door self-serves).
 - [ ] JUDGE-BRIEF.md refresh: engine spine, throttle, house rules, freedom
   matrix, memory guards (branch must stay judgeable)
 - [ ] `/home/user/` doc mirrors re-sync (CLAUDE-SETUP/ARCHITECTURE/FEATURE-AUDIT)

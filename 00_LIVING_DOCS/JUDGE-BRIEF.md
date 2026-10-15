@@ -125,3 +125,23 @@ global file; owner words preserved across re-deploys — tested),
 UI: EngineBay (engine system, brain list FROM the engine, workplace,
 throttle, pull), EnginePanel (work card with usage + before/after),
 Settings → House rules. 343 vitest tests, tsc clean.
+
+
+## 2026-10-16 — v0.6.0: Track B (the face) + Track C (the hardening) + Track D (the practice)
+
+The app now has all six designed screens — Chat, Artifacts, Today, Projects,
+Vault, Code, First-run, Settings — every one real, nav shows nothing that
+does not work. Judge the engine spine by: `main/engine/` (claudeCode.ts —
+launch line pins the two permission flags, partial messages on; stream.ts —
+the wire parser with chunk-boundary scan-offset and token streaming;
+socket.ts — one session per workspace, resumed by the engine's own --resume);
+the hardening by `tests/engine-process.test.ts` (machine credentials stripped
+from the engine's env, quiet deliberate stop, Windows taskkill /T /F,
+EPIPE-guarded writes); the queue by `tests/engine-view.test.ts` (cards queue
+in arrival order; a window opened mid-turn hydrates the remembered history,
+phantoms dropped). Face: Projects (per-project instruction + folder +
+chats), Vault (tree/search/preview/export copy), Code (workspace, throttle,
+real resumable threads), First-run (three skippable real choices). Practice:
+Handoff (a finished turn → one vault document with the resume id), Skills
+catalog (Settings > Skills → anthropics/skills → both engines' own folders),
+caveman hint for small local brains. 387 tests, tsc clean, $0.

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ExternalLink, FileText, FolderOpen, Search } from 'lucide-react'
 import { vaultGet } from '@shared/lib/vault'
-import { isDemo } from '@/platform/bridge'
+import { bridge, isDemo } from '@/platform/bridge'
 
 /**
  * Vault (05) — the folder, on screen.
@@ -19,6 +19,7 @@ const folderOf = (path: string): string => path.split('/').slice(0, -1).join('/'
 
 export default function VaultView({ onAddToComposer }: { onAddToComposer: (path: string, content: string) => void }) {
   const [files, setFiles] = useState<string[]>([])
+  const [exported, setExported] = useState('')
   const [root, setRoot] = useState('')
   const [capped, setCapped] = useState(false)
   const [state, setState] = useState<'loading' | 'ready' | 'missing'>('loading')
@@ -104,16 +105,29 @@ export default function VaultView({ onAddToComposer }: { onAddToComposer: (path:
             </span>
           ) : null}
           {root ? (
-            <button
-              type="button"
-              onClick={() => void window.api?.app?.openVaultFolder?.()}
-              title="Open this folder in the file manager"
-              className="ml-auto flex shrink-0 items-center gap-1 rounded-lg border border-line px-2.5 py-1.5 text-[11.5px] text-muted hover:text-ink"
-            >
-              <ExternalLink size={11} aria-hidden /> Open folder
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => void window.api?.app?.openVaultFolder?.()}
+                title="Open this folder in the file manager"
+                className="ml-auto flex shrink-0 items-center gap-1 rounded-lg border border-line px-2.5 py-1.5 text-[11.5px] text-muted hover:text-ink"
+              >
+                <ExternalLink size={11} aria-hidden /> Open folder
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  void bridge.vault.exportCopy().then((answer) => setExported(answer.answer))
+                }}
+                title="A timestamped, portable copy of every markdown file — hand it to Obsidian, a backup, or another machine"
+                className="flex shrink-0 items-center gap-1 rounded-lg border border-line px-2.5 py-1.5 text-[11.5px] text-muted hover:text-ink"
+              >
+                Export copy
+              </button>
+            </>
           ) : null}
         </header>
+        {exported ? <p className="mt-1 text-[11px] text-muted">{exported}</p> : null}
 
         <div className="mt-4 flex items-center gap-2">
           <div className="relative min-w-0 flex-1">
