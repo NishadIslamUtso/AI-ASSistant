@@ -10,8 +10,9 @@ subscription. Other than that, everything must be free."*
 - **Language rule (owner, 2026-10-15):** explain everything in plain words —
   like he understands no tech. Every technical term gets a straight
   explanation the first time it appears.
-- **App status:** parked (see `TODOLIST.md`), not deleted. No app code unless he
-  un-parks it.
+- **App status: UN-PARKED (owner, 2026-10-15 evening).** After the Desktop-app
+  paywall + VS Code veto he chose the endgame: HIS app is the face, Claude Code
+  is the engine inside it, `agy` CLI is engine #2. See Phase 6.
 - **GUI-first (owner, 2026-10-15):** he wants APP WINDOWS, not terminal workflows —
   hand him clickable paths; console pastes only for setup when unavoidable.
 - **Cadence (corrected 2026-10-15):** batched paste-blocks — one paste runs several
@@ -179,7 +180,24 @@ Each surface gets the cheapest free vehicle: **skill** (command) · **mod** (pan
    `memory/sessions/` = why + what failed.
 6. **Free Gate is law:** cost > $0 ⇒ blocked until "buy". Free tiers change
    without warning ⇒ we re-plan, we don't quietly pay.
-7. **The app stays parked** — repo, branches, archives intact; un-parking is a
-   "next" like any other.
+7. **Plan first, code after his "go"** (standing rule from the app era).
 
-**First step on "next": Phase 0.1 (verify Ollama).**
+## Phase 6 — THE APP RETURNS (active, 2026-10-15)
+
+Owner's words: *"gonna implement that, and agy cli too, and make my the way
+i want it to be, basically claude code will run on it normally, it's features
+will work in the app normally too."*
+
+- [ ] **6.1 Architecture doc (sandbox, mine, no cost):** how the engine embeds —
+  Claude **Agent SDK** (TypeScript, GA: same tools/loop/sessions; loads skills +
+  memory from `~/.claude/` automatically — his 11 skills carry in) VS raw
+  `claude --output-format stream-json` spawn (full TUI parity, mods panels
+  visible). Env wiring identical (Ollama base URL). `agy` = engine #2 behind
+  the same interface (Windows support check still owed). Face: existing v0.1.2
+  app + mockups (design authority) + replica-skill refresh pass vs the current
+  Claude app look. *Done when:* doc in 00_LIVING_DOCS, he reads, says "go".
+- [ ] **6.2 Engine spike:** SDK or stream-json inside the app shell, one chat
+  round-trip on gemma4:cloud through the app. $0.
+- [ ] **6.3 agy spike:** same harness, second provider (after Windows check).
+- [ ] **6.4 Face refresh + mockup surfaces** (the eight screens, mockups rule).
+- [ ] **6.5 Installer for him** (he only ever runs installers).
