@@ -221,3 +221,12 @@ The app icon is the app's own **BrainMark**, rendered from the existing `BrainMa
   `scripts/render-icons.mjs`), and the engine prepends the Windows npm folders
   to its own PATH so `claude` is found without PowerShell.
 - Windows icon-cache note applies to the desktop shortcut after upgrade.
+
+## 0.4.0 (2026-10-16, early) — the spine: Track A in one installer
+
+- Resumable engine sessions (survive app restarts), usage + before/after on
+  cards, per-engine brain routing, engine detection (self-serve agy check),
+  pull/delete brains in the bay, skills + MCP deploy to every engine, the
+  editable House rules delivered on every send. 343 tests.
+- `AI-ASSistant-Setup-0.4.0.exe` (~84 MB), SHA-256
+  `0c19f17ae64d2d768fe9967669132d1966fcd30e1424943a22d28992bbcaf666`.

@@ -38,6 +38,12 @@ export type EngineSession = {
 export type StartSessionInput = {
   cwd: string
   settings: EngineSettings
+  /**
+   * A previous session id to continue — the engine's own `--resume`. Empty
+   * means a fresh conversation; the socket only fills this when the engine
+   * is not already alive.
+   */
+  resumeId?: string
   onEvent(event: EngineEvent): void
   onClose?(code: number | null): void
   /**
@@ -59,7 +65,7 @@ export type EngineStartInput = Omit<StartSessionInput, 'spawnProcess'>
  * permission flags are the difference between "the app gates every tool" and
  * "the CLI does whatever it likes" — see the header comment.
  */
-export function engineArguments(model: string, approval: ApprovalMode = 'ask'): string[] {
+export function engineArguments(model: string, approval: ApprovalMode = 'ask', resumeId = ''): string[] {
   const args = [
     '--output-format', 'stream-json',
     '--input-format', 'stream-json',
@@ -68,6 +74,7 @@ export function engineArguments(model: string, approval: ApprovalMode = 'ask'): 
     '--permission-prompt-tool', 'stdio',
   ]
   if (model) args.push('--model', model)
+  if (resumeId) args.push('--resume', resumeId)
   return args
 }
 
@@ -106,7 +113,7 @@ export function brainEnvironment(baseUrl: string): Record<string, string> {
 }
 
 export function startClaudeCodeSession(input: StartSessionInput): EngineSession {
-  const args = engineArguments(input.settings.model, input.settings.approval)
+  const args = engineArguments(input.settings.model, input.settings.approval, input.resumeId)
 
   let child: ChildProcess
   const start = input.spawnProcess ?? spawn

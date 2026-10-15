@@ -11,7 +11,7 @@
  * and pipes wherever it likes), so unfinished text is kept for the next feed.
  */
 import type { EngineEvent } from '../../shared/lib/engine'
-import { toolSummary } from '../../shared/lib/engine'
+import { toolDetail, toolSummary, type EngineUsage } from '../../shared/lib/engine'
 
 export type EngineParser = {
   /** Feed raw output; returns every complete event found in it. */
@@ -44,7 +44,14 @@ export function createEngineParser(): EngineParser {
 
     if (message.type === 'system') {
       const subtype = typeof message.subtype === 'string' ? message.subtype : ''
-      if (subtype === 'init') return [{ kind: 'status', text: 'engine ready' }]
+      if (subtype === 'init') {
+        // The session id makes this conversation resumable after the app or
+        // the engine restarts — its own event so the back room can remember
+        // it without the window having to care.
+        const sessionId = typeof message.session_id === 'string' ? message.session_id : ''
+        const opened: EngineEvent[] = sessionId ? [{ kind: 'session', id: sessionId }] : []
+        return [...opened, { kind: 'status', text: 'engine ready' }]
+      }
       // A denial the engine decided itself: shown, never swallowed — a person
       // must be able to see WHY nothing happened.
       if (subtype === 'permission_denied')
@@ -102,6 +109,7 @@ export function createEngineParser(): EngineParser {
           requestId,
           tool: request.tool_name,
           summary: toolSummary(request.tool_name, request.input),
+          detail: toolDetail(request.tool_name, request.input),
         },
       ]
     }
@@ -109,7 +117,24 @@ export function createEngineParser(): EngineParser {
     if (message.type === 'result') {
       const text = typeof message.result === 'string' ? message.result : ''
       const isError = message.is_error === true || message.subtype === 'error_during_execution'
-      return [isError ? { kind: 'error', text: text || 'the engine hit an error' } : { kind: 'done', text }]
+      // What the turn cost: the engine reports its own token counts and time,
+      // and the app shows those honest numbers instead of guessing.
+      const usageRecord = asRecord(message.usage)
+      const usage: EngineUsage | undefined = message.usage
+        ? {
+            inTokens: typeof usageRecord.input_tokens === 'number' ? usageRecord.input_tokens : 0,
+            outTokens: typeof usageRecord.output_tokens === 'number' ? usageRecord.output_tokens : 0,
+            durationMs: typeof message.duration_ms === 'number' ? message.duration_ms : null,
+            costUsd: typeof message.total_cost_usd === 'number' ? message.total_cost_usd : null,
+          }
+        : undefined
+      const withUsage = (event: { kind: 'done'; text: string } | { kind: 'error'; text: string }): EngineEvent =>
+        usage ? { ...event, usage } : event
+      return [
+        isError
+          ? withUsage({ kind: 'error', text: text || 'the engine hit an error' })
+          : withUsage({ kind: 'done', text }),
+      ]
     }
 
     // Everything else (user echoes, control responses to our own answers,

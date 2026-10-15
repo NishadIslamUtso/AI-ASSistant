@@ -5,7 +5,8 @@ import type {
   CloudView,
 } from '../shared/lib/providers'
 import type { Permissions } from '../shared/lib/permissions'
-import type { ApprovalMode, EngineEvent, EngineId, EngineModelEntry, EngineSettings } from '../shared/lib/engine'
+import type { ApprovalMode, EngineAvailability, EngineEvent, EngineId, EngineModelEntry, EngineSettings } from '../shared/lib/engine'
+import type { HouseRules } from '../shared/lib/houseRules'
 import type {
   AdoptInput,
   ItemAnswer,
@@ -34,6 +35,26 @@ const engineApi = {
   /** The brains this engine can use, as its own door reports them. */
   models: (): Promise<{ ok: boolean; models: EngineModelEntry[]; error?: string }> =>
     ipcRenderer.invoke('engine:models'),
+  /** What engines are really installed on this machine. */
+  detect: (): Promise<EngineAvailability[]> => ipcRenderer.invoke('engine:detect'),
+  /** Bring a brain home; progress arrives through onPullEvent. */
+  pull: (name: string): Promise<{ ok: boolean; answer: string }> => ipcRenderer.invoke('engine:pull', name),
+  /** Take a brain off this machine. */
+  deleteModel: (name: string): Promise<{ ok: boolean; answer: string }> =>
+    ipcRenderer.invoke('engine:model-delete', name),
+  /** The rulebook, as it stands (blanks already filled from the defaults). */
+  readHouseRules: (): Promise<{ rules: HouseRules; defaults: HouseRules }> =>
+    ipcRenderer.invoke('houserules:read'),
+  /** Save the rulebook and deploy it to every engine's global file. */
+  writeHouseRules: (rules: HouseRules): Promise<{ ok: boolean; written: string[] }> =>
+    ipcRenderer.invoke('houserules:write', rules),
+  /** Pull progress ticks, in the same shape `parsePullLine` produces. */
+  onPullEvent: (listener: (tick: unknown) => void): (() => void) => {
+    const channel = 'engine:pull-event'
+    const wrapped = (_event: unknown, tick: unknown): void => listener(tick)
+    ipcRenderer.on(channel, wrapped)
+    return () => ipcRenderer.removeListener(channel, wrapped)
+  },
   /** Pick which brain the engine thinks with. */
   setModel: (model: string): Promise<{ ok: boolean; answer: string }> =>
     ipcRenderer.invoke('engine:model', model),
@@ -64,6 +85,11 @@ const api = {
     /** Which build is running. Used by the About panel and bug reports. */
     version: process.env['npm_package_version'] ?? '0.1.0',
     platform: process.platform,
+  },
+  houseRules: {
+    read: (): Promise<{ rules: HouseRules; defaults: HouseRules }> => ipcRenderer.invoke('houserules:read'),
+    write: (rules: HouseRules): Promise<{ ok: boolean; written: string[] }> =>
+      ipcRenderer.invoke('houserules:write', rules),
   },
   settings: {
     /** What the app has been told to do, as the main process holds it. */

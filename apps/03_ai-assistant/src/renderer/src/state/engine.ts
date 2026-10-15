@@ -9,7 +9,15 @@
  * preview) gets honest refusals, never invented work.
  */
 import { useSyncExternalStore } from 'react'
-import type { ApprovalMode, EngineEvent, EngineId, EngineModelEntry, EngineSettings } from '@shared/lib/engine'
+import type {
+  ApprovalMode,
+  EngineAvailability,
+  EngineEvent,
+  EngineId,
+  EngineModelEntry,
+  EngineSettings,
+  EngineUsage,
+} from '@shared/lib/engine'
 import { DEFAULT_ENGINE } from '@shared/lib/engine'
 import { getEngineApi } from '@/platform/bridge'
 
@@ -21,10 +29,23 @@ export type EngineItem =
   | { kind: 'error'; text: string }
 
 /** A question from the engine that a person must answer. */
-export type EnginePermission = { requestId: string; tool: string; summary: string }
+export type EnginePermission = { requestId: string; tool: string; summary: string; detail?: string }
 
 /** The engine's brains, as its own door reports them. */
 export type EngineModels = { loading: boolean; entries: EngineModelEntry[]; error: string }
+
+/** What is really installed on this machine, as the last detection saw it. */
+export type EngineDetection = { loading: boolean; engines: EngineAvailability[] }
+
+/** Bringing a brain home, as the door reports its progress. */
+export type PullState = {
+  active: boolean
+  name: string
+  status: string
+  /** 0..1 while downloading; null when the door gives no sizes. */
+  fraction: number | null
+  error: string
+}
 
 /** One work order, from the moment it is sent to the moment it lands. */
 export type EngineTurn = {
@@ -32,6 +53,10 @@ export type EngineTurn = {
   items: EngineItem[]
   permission: EnginePermission | null
   state: 'running' | 'done' | 'error'
+  /** The engine's own session id, when it opened one — the resumable thread. */
+  sessionId: string | null
+  /** What the turn cost, as the engine itself reported. */
+  usage: EngineUsage | null
 }
 
 export type EngineState = {
@@ -40,6 +65,8 @@ export type EngineState = {
   on: boolean
   turn: EngineTurn | null
   models: EngineModels
+  detection: EngineDetection
+  pull: PullState
   /** Whether the engine process is alive on this machine, as last reported. */
   alive: boolean
 }
@@ -65,6 +92,12 @@ type EngineStore = EngineState & {
   setApproval(mode: ApprovalMode): Promise<void>
   /** "Open a folder": pick where the engine works; persists. */
   pickWorkspace(): Promise<void>
+  /** Ask the machine which engines really exist. */
+  checkEngines(): Promise<void>
+  /** Bring a brain home; progress lands in `pull`. */
+  startPull(name: string): Promise<{ ok: boolean; answer: string }>
+  /** Take a brain off this machine. */
+  removeModel(name: string): Promise<{ ok: boolean; answer: string }>
 }
 
 const state: EngineState = {
@@ -72,6 +105,8 @@ const state: EngineState = {
   on: false,
   turn: null,
   models: { loading: false, entries: [], error: '' },
+  detection: { loading: false, engines: [] },
+  pull: { active: false, name: '', status: '', fraction: null, error: '' },
   alive: false,
 }
 
@@ -97,20 +132,28 @@ const ingest = (event: EngineEvent): void => {
   if (event.kind === 'closed') state.alive = false
   const turn = state.turn
   if (!turn) return
-  if (event.kind === 'status') {
+  if (event.kind === 'session') {
+    turn.sessionId = event.id
+  } else if (event.kind === 'status') {
     turn.items.push({ kind: 'status', text: event.text })
   } else if (event.kind === 'text') {
     turn.items.push({ kind: 'text', text: event.text })
   } else if (event.kind === 'tool') {
     turn.items.push({ kind: 'tool', name: event.name, summary: event.summary })
   } else if (event.kind === 'permission') {
-    turn.permission = { requestId: event.requestId, tool: event.tool, summary: event.summary }
+    turn.permission = {
+      requestId: event.requestId,
+      tool: event.tool,
+      summary: event.summary,
+      detail: event.detail,
+    }
   } else if (event.kind === 'done') {
     // The wire says the same goodbye twice (once as the engine's last words,
     // once as the result) — show it once.
     const last = turn.items.at(-1)
     const alreadySaid = event.text && last?.kind === 'text' && last.text === event.text
     if (event.text && !alreadySaid) turn.items.push({ kind: 'text', text: event.text })
+    if (event.usage) turn.usage = event.usage
     turn.state = 'done'
     turn.permission = null
   } else if (event.kind === 'closed') {
@@ -124,6 +167,7 @@ const ingest = (event: EngineEvent): void => {
     }
   } else {
     turn.items.push({ kind: 'error', text: event.text })
+    if ('usage' in event && event.usage) turn.usage = event.usage
     turn.state = 'error'
     turn.permission = null
   }
@@ -148,6 +192,12 @@ const store: EngineStore = {
   get alive() {
     return state.alive
   },
+  get detection() {
+    return state.detection
+  },
+  get pull() {
+    return state.pull
+  },
 
   async init(): Promise<void> {
     if (subscribed || initializing) return
@@ -160,6 +210,15 @@ const store: EngineStore = {
       initializing = false
     }
     api.onEvent(ingest)
+    api.onPullEvent((tick) => {
+      const record = (tick && typeof tick === 'object' ? tick : {}) as Record<string, unknown>
+      const status = typeof record.status === 'string' ? record.status : ''
+      const error = typeof record.error === 'string' ? record.error : ''
+      const total = typeof record.total === 'number' ? record.total : null
+      const completed = typeof record.completed === 'number' ? record.completed : null
+      const fraction = total !== null && completed !== null && total > 0 ? Math.min(1, completed / total) : null
+      setState({ pull: { ...state.pull, status, error, fraction } })
+    })
     subscribed = true
   },
 
@@ -173,7 +232,7 @@ const store: EngineStore = {
       return { ok: false, answer: 'The engine is already working on the last task.' }
     }
     void store.init()
-    const turn: EngineTurn = { prompt, items: [], permission: null, state: 'running' }
+    const turn: EngineTurn = { prompt, items: [], permission: null, state: 'running', sessionId: null, usage: null }
     setState({ turn })
     const answer = await getEngineApi().send(prompt, '')
     if (answer.ok) state.alive = true
@@ -224,6 +283,32 @@ const store: EngineStore = {
     if (answer.ok) setState({ settings: { ...state.settings, approval: mode } })
   },
 
+  async checkEngines(): Promise<void> {
+    if (state.detection.loading) return
+    setState({ detection: { ...state.detection, loading: true } })
+    const engines = await getEngineApi().detect()
+    setState({ detection: { loading: false, engines } })
+  },
+
+  async startPull(name: string): Promise<{ ok: boolean; answer: string }> {
+    if (state.pull.active) return { ok: false, answer: 'A brain is already downloading.' }
+    setState({ pull: { active: true, name, status: 'asking the door', fraction: null, error: '' } })
+    const answer = await getEngineApi().pull(name)
+    setState({
+      pull: answer.ok
+        ? { active: false, name: '', status: 'done', fraction: 1, error: '' }
+        : { ...state.pull, active: false, error: answer.answer },
+    })
+    if (answer.ok) void store.loadModels()
+    return answer
+  },
+
+  async removeModel(name: string): Promise<{ ok: boolean; answer: string }> {
+    const answer = await getEngineApi().deleteModel(name)
+    if (answer.ok) void store.loadModels()
+    return answer
+  },
+
   async pickWorkspace(): Promise<void> {
     const answer = await getEngineApi().pickWorkspace()
     if (answer.ok) setState({ settings: { ...state.settings, workspace: answer.answer } })
@@ -270,6 +355,8 @@ export function resetEngineForTests(): void {
   state.turn = null
   state.settings = { ...DEFAULT_ENGINE }
   state.models = { loading: false, entries: [], error: '' }
+  state.detection = { loading: false, engines: [] }
+  state.pull = { active: false, name: '', status: '', fraction: null, error: '' }
   state.alive = false
   emit()
 }

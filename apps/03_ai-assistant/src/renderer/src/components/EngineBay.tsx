@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronDown, FolderOpen, RefreshCw, Cpu, Cloud } from 'lucide-react'
+import { ChevronDown, Download, FolderOpen, RefreshCw, Trash2, Cpu, Cloud } from 'lucide-react'
 import { useEngine, type EngineModels } from '@/state/engine'
 import useDismiss from '@/hooks/useDismiss'
 import type { ApprovalMode, EngineId } from '@shared/lib/engine'
@@ -21,7 +21,7 @@ import type { ApprovalMode, EngineId } from '@shared/lib/engine'
 
 const ENGINES: Array<{ id: EngineId; label: string; hint: string }> = [
   { id: 'claude-code', label: 'Claude Code', hint: 'Anthropic’s agent, wired to your free brains' },
-  { id: 'agy', label: 'agy', hint: 'Google’s agent — arrives after its Windows check' },
+  { id: 'agy', label: 'agy', hint: 'Google’s agent — its own brains, from its own selector' },
 ]
 
 /** The last part of a path, whichever slash the platform uses. */
@@ -51,13 +51,15 @@ const THROTTLE: Array<{ id: ApprovalMode; label: string; note: string }> = [
 export default function EngineBay() {
   const engine = useEngine()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [pullName, setPullName] = useState('')
   const menuRef = useRef<HTMLDivElement | null>(null)
   useDismiss(menuRef, () => setMenuOpen(false), menuOpen)
 
-  // The brain list is real data from the engine's door: ask once when the
-  // bay appears, and again whenever the person asks for a refresh.
+  // Real data only: the brain list from the engine's door, and what engines
+  // actually exist on this machine — asked once when the bay appears.
   useEffect(() => {
     void engine.loadModels()
+    void engine.checkEngines()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -75,24 +77,33 @@ export default function EngineBay() {
         />
       </header>
 
-      {/* The engine selection system. */}
+      {/* The engine selection system. An engine that is not on this machine
+          is shown as missing, with the one command that fixes it — the bay
+          refuses to offer a pickable lie. */}
       <div className="grid grid-cols-2 gap-1.5" role="radiogroup" aria-label="Which engine">
         {ENGINES.map((entry) => {
           const active = engine.settings.id === entry.id
+          const known = engine.detection.engines.find((knownEngine) => knownEngine.id === entry.id)
+          const missing = known ? !known.found : false
+          const title = missing
+            ? `Not found on this machine. ${known?.install ?? ''}`
+            : known?.version
+              ? `${entry.hint} — ${known.version}`
+              : entry.hint
           return (
             <button
               key={entry.id}
               type="button"
               role="radio"
               aria-checked={active}
-              title={entry.hint}
+              title={title}
               onClick={() => void engine.pick(entry.id)}
               className={`rounded-lg border px-2 py-1.5 text-left text-[12px] transition-colors ${
                 active ? 'border-accent text-ink' : 'border-line text-muted hover:text-ink'
-              }`}
+              } ${missing ? 'opacity-60' : ''}`}
             >
               {entry.label}
-              {entry.id === 'agy' ? <span className="ml-1 text-[10px] text-warn">soon</span> : null}
+              {missing ? <span className="ml-1 text-[10px] text-warn">not installed</span> : null}
             </button>
           )
         })}
@@ -140,9 +151,25 @@ export default function EngineBay() {
                     <span className="flex shrink-0 items-center gap-0.5 rounded-md border border-warn/50 px-1.5 text-[10.5px] text-warn">
                       <Cloud size={9} aria-hidden /> cloud
                     </span>
-                  ) : entry.sizeGB !== null ? (
-                    <span className="shrink-0 text-[11px] text-muted">{entry.sizeGB.toFixed(1)} GB</span>
-                  ) : null}
+                  ) : (
+                    <>
+                      {entry.sizeGB !== null ? (
+                        <span className="shrink-0 text-[11px] text-muted">{entry.sizeGB.toFixed(1)} GB</span>
+                      ) : null}
+                      <button
+                        type="button"
+                        title={`Take ${entry.name} off this machine`}
+                        aria-label={`Take ${entry.name} off this machine`}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          void engine.removeModel(entry.name)
+                        }}
+                        className="shrink-0 rounded p-0.5 text-muted hover:text-warn"
+                      >
+                        <Trash2 size={11} aria-hidden />
+                      </button>
+                    </>
+                  )}
                 </button>
               ))
             )}
@@ -154,9 +181,55 @@ export default function EngineBay() {
             >
               <RefreshCw size={11} aria-hidden /> Refresh the list
             </button>
+
+            {/* Bringing a brain home — no terminal needed. Local machines only:
+                cloud brains come from their own service, never a download. */}
+            {engine.settings.id === 'claude-code' ? (
+              <form
+                className="mt-1 flex items-center gap-1.5 border-t border-line px-1.5 pb-1 pt-2"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  if (pullName.trim()) void engine.startPull(pullName.trim()).then(() => setPullName(''))
+                }}
+              >
+                <input
+                  value={pullName}
+                  onChange={(event) => setPullName(event.target.value)}
+                  placeholder="e.g. llama3.2:3b"
+                  aria-label="The brain to bring home"
+                  className="h-7 min-w-0 flex-1 rounded-md border border-line bg-bg px-2 text-[11.5px] text-ink outline-none placeholder:text-muted focus:border-accent/60"
+                />
+                <button
+                  type="submit"
+                  disabled={engine.pull.active}
+                  title="Download this brain onto this machine"
+                  className="flex h-7 shrink-0 items-center gap-1 rounded-md border border-line px-2 text-[11.5px] text-muted hover:text-ink disabled:opacity-50"
+                >
+                  <Download size={11} aria-hidden /> Get
+                </button>
+              </form>
+            ) : null}
           </div>
         ) : null}
       </div>
+
+      {/* The pull's progress, while it runs. */}
+      {engine.pull.active ? (
+        <div className="mt-1.5 px-1">
+          <div className="h-1 w-full overflow-hidden rounded-full bg-line">
+            <div
+              className="h-full bg-accent transition-all"
+              style={{ width: `${Math.round((engine.pull.fraction ?? 0.05) * 100)}%` }}
+            />
+          </div>
+          <p className="mt-1 text-[10.5px] text-muted">
+            {engine.pull.name} — {engine.pull.status || 'working'}
+          </p>
+        </div>
+      ) : null}
+      {engine.pull.error && !engine.pull.active ? (
+        <p className="mt-1 px-1 text-[10.5px] text-warn">{engine.pull.error}</p>
+      ) : null}
 
       {/* Where the engine works. */}
       <button

@@ -46,3 +46,12 @@ for (const size of sizes) {
 const ico = await pngToIco([256, 128, 64, 48, 32, 16].map((size) => Buffer.from(pngs[size])))
 writeFileSync(join(root, 'resources', 'icon.ico'), ico)
 console.log('wrote resources/icon.png (512) and resources/icon.ico (16–256)')
+
+// The browser extension carries the same single mark: three sizes into its
+// icons folder, from the same SVG, in the same run — so the extension can
+// never drift back to an old logo (that drift happened once; never again).
+const extensionIcons = join(root, '..', '..', 'extension', 'icons')
+for (const size of [16, 48, 128]) {
+  writeFileSync(join(extensionIcons, `icon${size}.png`), pngs[size])
+}
+console.log('wrote extension/icons/icon{16,48,128}.png — the same mark everywhere')

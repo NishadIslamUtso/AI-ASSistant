@@ -25,7 +25,19 @@ export type EngineSocket = {
   stop(): void
 }
 
-export function createEngineSocket(): EngineSocket {
+/**
+ * Where the socket remembers engine sessions, so a conversation can survive
+ * an app restart: one id per workspace folder. Both halves are injectable
+ * for tests; production hands a small JSON file.
+ */
+export type SessionMemory = {
+  load(cwd: string): string
+  save(cwd: string, sessionId: string): void
+}
+
+export const noSessionMemory: SessionMemory = { load: () => '', save: () => undefined }
+
+export function createEngineSocket(memory: SessionMemory = noSessionMemory): EngineSocket {
   let session: EngineSession | null = null
   let busy = false
 
@@ -33,6 +45,12 @@ export function createEngineSocket(): EngineSocket {
     // The socket owns the busy flag: a finished or failed task frees the
     // engine for the next one. Everything else is forwarded untouched.
     if (event.kind === 'done' || event.kind === 'error') busy = false
+    if (event.kind === 'session') {
+      // Persisted per workspace, so the next launch of the app can continue
+      // this conversation where it left off. (The live process is tracked by
+      // `session` itself; the memory matters only after the process is gone.)
+      memory.save(input.cwd, event.id)
+    }
     input.onEvent(event)
   }
 
@@ -69,7 +87,10 @@ export function createEngineSocket(): EngineSocket {
         busy = true
         return { ok: true, answer: 'started' }
       }
-      session = start(input)
+      // Fresh start. If this workspace had a session before the app (or the
+      // engine) closed, continue it — the owner's conversation is not lost
+      // just because a process ended.
+      session = start({ ...input, resumeId: memory.load(input.cwd) })
       if (!session.isRunning()) {
         return { ok: false, answer: 'The engine could not be started on this machine.' }
       }

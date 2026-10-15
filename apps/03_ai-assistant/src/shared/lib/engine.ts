@@ -62,6 +62,15 @@ export const DEFAULT_ENGINE: EngineSettings = {
   approval: 'ask',
 }
 
+/** What a turn cost, as the engine itself reports it. */
+export type EngineUsage = {
+  inTokens: number
+  outTokens: number
+  durationMs: number | null
+  /** A cloud brain's cost in dollars, when the engine names one. */
+  costUsd: number | null
+}
+
 /** One brain the engine can use, as the engine itself reports it. */
 export type EngineModelEntry = {
   name: string
@@ -69,6 +78,16 @@ export type EngineModelEntry = {
   cloud: boolean
   /** Gigabytes on disk, for local brains. Cloud brains carry no size. */
   sizeGB: number | null
+}
+
+/** What a whole engine looks like from the machine it runs on. */
+export type EngineAvailability = {
+  id: EngineId
+  found: boolean
+  /** The engine's own version line, when it answers. */
+  version: string
+  /** The one-liner that fixes a missing engine. */
+  install: string
 }
 
 const ENGINES: readonly EngineId[] = ['claude-code', 'agy']
@@ -114,15 +133,40 @@ export type EngineEvent =
   | { kind: 'status'; text: string }
   | { kind: 'text'; text: string }
   | { kind: 'tool'; name: string; summary: string }
-  | { kind: 'permission'; requestId: string; tool: string; summary: string }
-  | { kind: 'done'; text: string }
-  | { kind: 'error'; text: string }
+  | { kind: 'permission'; requestId: string; tool: string; summary: string; detail?: string }
+  /** The engine opened a resumable session (its init sentence carries the id). */
+  | { kind: 'session'; id: string }
+  | { kind: 'done'; text: string; usage?: EngineUsage }
+  | { kind: 'error'; text: string; usage?: EngineUsage }
   | { kind: 'closed' }
 
 /**
  * A short human sentence about a tool call — what it touches, not its whole
  * input. "runs `npm test`" beats forty lines of JSON in a chat bubble.
  */
+/**
+ * The detail a person needs to judge an approval: what exactly would change.
+ * For file tools that is a before/after preview, for commands the line itself.
+ * Everything is truncated — the card is a decision, not a log viewer.
+ */
+export function toolDetail(tool: string, input: unknown): string {
+  const record = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>
+  const str = (key: string): string => (typeof record[key] === 'string' ? (record[key] as string) : '')
+  const clip = (text: string, limit: number): string =>
+    text.length > limit ? `${text.slice(0, limit)}\n… (${text.length - limit} more characters)` : text
+  const cap = 1200
+  if (tool === 'Edit' || tool === 'NotebookEdit') {
+    return clip(`--- before ---\n${str('old_string')}\n--- after ---\n${str('new_string')}`, cap)
+  }
+  if (tool === 'Write') return clip(`--- file content ---\n${str('content')}`, cap)
+  if (tool === 'Bash' || tool === 'PowerShell') return clip(str('command') || str('script'), cap)
+  if (tool === 'Read' || tool === 'Glob' || tool === 'Grep') {
+    return clip(str('file_path') || str('pattern') || str('path'), 300)
+  }
+  const json = JSON.stringify(record) ?? ''
+  return json ? clip(json, 400) : ''
+}
+
 export function toolSummary(name: string, input: unknown): string {
   const value = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>
   const string_ = (key: string): string => (typeof value[key] === 'string' ? (value[key] as string) : '')

@@ -49,6 +49,14 @@ export default function EnginePanel() {
         ))}
       </ul>
 
+      {turn.usage && turn.state !== 'running' ? (
+        <p className="mt-2 text-[11px] text-muted" title="What the engine itself reported for this turn">
+          {turn.usage.inTokens.toLocaleString()} in · {turn.usage.outTokens.toLocaleString()} out
+          {turn.usage.durationMs !== null ? ` · ${(turn.usage.durationMs / 1000).toFixed(1)}s` : ''}
+          {turn.usage.costUsd !== null ? ` · $${turn.usage.costUsd.toFixed(4)}` : ''}
+        </p>
+      ) : null}
+
       {turn.permission ? (
         <div className="mt-2.5 rounded-lg border border-line bg-bg p-2.5">
           <p className="text-[12.5px] text-ink">
@@ -56,6 +64,11 @@ export default function EnginePanel() {
           </p>
           {turn.permission.summary ? (
             <p className="mt-0.5 break-words font-mono text-[11.5px] text-muted">{turn.permission.summary}</p>
+          ) : null}
+          {turn.permission.detail ? (
+            <pre className="mt-1.5 max-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-line bg-panel p-2 font-mono text-[11px] leading-relaxed text-muted">
+              {turn.permission.detail}
+            </pre>
           ) : null}
           <div className="mt-2 flex gap-2">
             <button

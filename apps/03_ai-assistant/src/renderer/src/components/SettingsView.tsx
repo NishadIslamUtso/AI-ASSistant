@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { bridge, isDemo } from '../platform/bridge'
+import HouseRulesSection from './HouseRulesSection'
 import type { VaultState } from '../hooks/useVault'
 import type { ModelState } from '../hooks/useModels'
 import {
@@ -57,7 +58,7 @@ import {
  * browser preview there is no folder to choose and no model to run.
  */
 
-type SectionId = 'agents' | 'system' | 'appearance' | 'models' | 'performance' | 'vault'
+type SectionId = 'agents' | 'house' | 'system' | 'appearance' | 'models' | 'performance' | 'vault'
 
 type Row = {
   /** What the row is called, and what the rail's search matches on. */
@@ -76,6 +77,7 @@ const SECTIONS: readonly {
 }[] = Object.freeze([
   { id: 'system', title: 'System', group: 'This computer' },
   { id: 'agents', title: 'Agent access', group: 'This app', resettable: true },
+  { id: 'house', title: 'House rules', group: 'This app' },
   { id: 'appearance', title: 'Appearance', group: 'This app', resettable: true },
   { id: 'models', title: 'Models', group: 'This app' },
   { id: 'performance', title: 'Performance', group: 'This app', resettable: true },
@@ -87,6 +89,11 @@ const GROUPS = ['This computer', 'This app'] as const
 /** Four glyphs, drawn here rather than pulled from a font or a package. */
 function SectionIcon({ id }: { id: SectionId }) {
   const paths: Record<SectionId, ReactNode> = {
+    house: (
+      <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M4 8.5 10 3l6 5.5V16a1 1 0 0 1-1 1h-3.5v-4.5h-3V17H5a1 1 0 0 1-1-1V8.5Z" />
+      </svg>
+    ),
     system: (
       <>
         <rect x="2" y="3" width="16" height="11" rx="2" />
@@ -905,8 +912,14 @@ export default function SettingsView({
           ]
         : []),
     ],
-    vault: [
+    house: [
       {
+        label: 'The rulebook',
+        terms: 'house rules instructions identity artifacts approvals memory style ask unsure CLAUDE.md AGENTS.md',
+        body: <HouseRulesSection />,
+      },
+    ],
+    vault: [      {
         label: 'Folder',
         terms: 'vault path choose change folder markdown',
         body: isDemo ? (

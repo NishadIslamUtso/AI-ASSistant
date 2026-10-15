@@ -1,4 +1,4 @@
-import { MessageSquare, Shapes } from 'lucide-react'
+import { MessageSquare, Shapes, Sun } from 'lucide-react'
 
 /**
  * The app's own sections, at the top of the sidebar.
@@ -10,11 +10,12 @@ import { MessageSquare, Shapes } from 'lucide-react'
  * keep.
  */
 
-export type View = 'chat' | 'artifacts'
+export type View = 'chat' | 'artifacts' | 'today'
 
 const ITEMS: Array<{ id: View; label: string; Icon: typeof MessageSquare }> = [
   { id: 'chat', label: 'Chat', Icon: MessageSquare },
   { id: 'artifacts', label: 'Artifacts', Icon: Shapes },
+  { id: 'today', label: 'Today', Icon: Sun },
 ]
 
 export default function AppNav({
@@ -61,7 +62,7 @@ export default function AppNav({
 
       {collapsed ? null : (
         <p className="px-2.5 pb-0.5 pt-1 text-[10.5px] leading-relaxed text-muted/70">
-          Code, Projects, Vault and Today are being built — each appears the day it works.
+          Code, Projects and Vault are being built — each appears the day it works.
         </p>
       )}
     </nav>

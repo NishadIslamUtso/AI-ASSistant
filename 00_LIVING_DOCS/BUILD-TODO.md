@@ -385,7 +385,7 @@ The mockups, as the standard to hit:
 | 04-projects | Projects: chats / instructions / context / memory | **not built** |
 | 05-vault | Vault: file tree, search, capsules, reindex, add-to-composer | **not built** (only a folder row in Settings) |
 | 06-code | Code workspace | **not built** |
-| 07-today | Today: stats, worth-doing-next, recent sources, quick actions | **not built** |
+| 07-today | Today: stats, worth-doing-next, recent sources, quick actions | **built** — stats from real records, worth-doing-next from records only, conversations/made/read-today lists, honest empty & missing states |
 | 08-first-run | Welcome: name, model, folder | **not built** |
 
 Order (each step = one landing: built, verified, merged, reported):

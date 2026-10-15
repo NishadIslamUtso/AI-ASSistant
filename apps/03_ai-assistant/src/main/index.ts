@@ -1,6 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, safeStorage, shell } from 'electron'
 import { join } from 'node:path'
-import { existsSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { startLocalApi, type LocalApi } from './api/server'
 import { DEFAULT_EXTENSION_PORT, startExtensionApi, type ExtensionApi } from './extension/server'
 import { createVaultService, resolveVaultRoot } from './vault/service'
@@ -19,7 +19,12 @@ import { normalizePermissions } from '../shared/lib/permissions'
 import { registerArtifactIpc } from './artifacts/ipc'
 import { createEngineSocket, type EngineSocket } from './engine/socket'
 import { normalizeEngine } from '../shared/lib/engine'
-import { APPROVAL_MODES, type ApprovalMode, type EngineEvent, type EngineModelEntry } from '../shared/lib/engine'
+import { APPROVAL_MODES, type ApprovalMode, type EngineEvent, type EngineId, type EngineModelEntry } from '../shared/lib/engine'
+import { agyModelSource, detectEngine } from './engine/availability'
+import { parsePullLine, validateModelName } from './engine/pull'
+import { deployMcp, deploySkill, scanClaudeSkills, type McpServer, type VaultSkill } from './engine/deploy'
+import { deployHouseRules } from './engine/houseRulesDeploy'
+import { DEFAULT_HOUSE_RULES, type HouseRules } from '../shared/lib/houseRules'
 
 /**
  * The main process. Everything that touches the machine lives on this side:
@@ -245,6 +250,7 @@ function registerBridges(): void {
       // folder the owner picked in the engine bay, or the vault when none.
       // The renderer's value is deliberately not consulted (review finding).
       void cwd
+      deployRulesNow()
       return engine.send(text, {
         cwd: settings.engine.workspace || vaultRoot(),
         settings: settings.engine,
@@ -260,9 +266,177 @@ function registerBridges(): void {
     return { ok: true }
   })
 
+  // The two folders skills deploy into: Claude Code reads its skills from
+  // the user's own folder; agy reads workspace skills next to the work.
+  const skillTargets = (): { claudeSkillsDir: string; agySkillsDir: string } => {
+    const home = process.env['USERPROFILE'] || process.env['HOME'] || ''
+    const workspace = settings.engine.workspace || vaultRoot()
+    return {
+      claudeSkillsDir: join(home, '.claude', 'skills'),
+      agySkillsDir: join(workspace, '.agents', 'skills'),
+    }
+  }
+  const mcpFile = join(app.getPath('userData'), 'mcp.json')
+
+  // The canonical rulebook, as the owner edited it (blanks fall back to the
+  // defaults inside the compiler — never an empty rule).
+  const houseRulesFile = join(app.getPath('userData'), 'house-rules.json')
+  const readHouseRules = (): Partial<HouseRules> => {
+    try {
+      return JSON.parse(readFileSync(houseRulesFile, 'utf8')) as Partial<HouseRules>
+    } catch {
+      return {}
+    }
+  }
+  const deployRulesNow = (): void => {
+    try {
+      const home = process.env['USERPROFILE'] || process.env['HOME'] || ''
+      deployHouseRules(settings.engine.id, settings.engine.model, home, readHouseRules())
+    } catch {
+      // A failed rules deploy must never block the work itself.
+    }
+  }
+
+  // What is really installed on this machine — the bay refuses to guess.
+  ipcMain.handle('engine:detect', async (): Promise<Array<{ id: EngineId; found: boolean; version: string; install: string }>> => {
+    const ids: EngineId[] = ['claude-code', 'agy']
+    return Promise.all(ids.map((id) => detectEngine(id)))
+  })
+
   ipcMain.handle('engine:stop', () => {
     engine?.stop()
     return { ok: true }
+  })
+
+  // Bringing a brain home. The door streams progress sentences; each becomes
+  // an event on the same channel the engine's own events use, so the bay can
+  // show a real bar instead of a spinner of lies.
+  ipcMain.handle('engine:pull', async (_event, rawName: string): Promise<{ ok: boolean; answer: string }> => {
+    const name = validateModelName(rawName)
+    if (!name) return { ok: false, answer: 'That is not a model name this app will ask for.' }
+    const door = settings.engine.baseUrl || 'http://localhost:11434'
+    const send = (tick: unknown): void => {
+      for (const window of BrowserWindow.getAllWindows()) window.webContents.send('engine:pull-event', tick)
+    }
+    try {
+      const answer = await fetch(`${door}/api/pull`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ model: name }),
+      })
+      if (!answer.ok || !answer.body) {
+        const why = `the brain door answered ${answer.status}`
+        send({ status: '', total: null, completed: null, done: false, error: why })
+        return { ok: false, answer: why }
+      }
+      const decoder = new TextDecoder()
+      let carry = ''
+      // Node's undici stream is async-iterable at runtime; the type lib here
+      // does not say so, hence the one honest cast.
+      const body = answer.body as unknown as AsyncIterable<Uint8Array>
+      for await (const chunk of body) {
+        carry = `${carry}${decoder.decode(chunk as Buffer, { stream: true })}`
+        const lines = carry.split('\n')
+        carry = lines.at(-1) ?? ''
+        for (const line of lines.slice(0, -1)) {
+          const tick = parsePullLine(line)
+          if (tick.status || tick.error) send(tick)
+          if (tick.error) return { ok: false, answer: `the pull failed: ${tick.error}` }
+        }
+      }
+      const finalTick = parsePullLine(carry)
+      if (finalTick.error) return { ok: false, answer: `the pull failed: ${finalTick.error}` }
+      send({ status: 'success', total: null, completed: null, done: true, error: '' })
+      return { ok: true, answer: `${name} is home — it is in the brain list now` }
+    } catch {
+      const why = 'the brain door (Ollama) is not answering — start it, then try again'
+      send({ status: '', total: null, completed: null, done: false, error: why })
+      return { ok: false, answer: why }
+    }
+  })
+
+  // Taking a brain off the machine, when the owner no longer wants it.
+  ipcMain.handle('engine:model-delete', async (_event, rawName: string): Promise<{ ok: boolean; answer: string }> => {
+    const name = validateModelName(rawName)
+    if (!name) return { ok: false, answer: 'That is not a model name this app will ask for.' }
+    const door = settings.engine.baseUrl || 'http://localhost:11434'
+    try {
+      const answer = await fetch(`${door}/api/delete`, {
+        method: 'DELETE',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ model: name }),
+      })
+      if (!answer.ok) return { ok: false, answer: `the brain door answered ${answer.status}` }
+      return { ok: true, answer: `${name} is gone from this machine` }
+    } catch {
+      return { ok: false, answer: 'the brain door (Ollama) is not answering — start it, then try again' }
+    }
+  })
+
+  // The skills the owner's engine already has — the import list.
+  ipcMain.handle('skills:scan', () => {
+    const home = process.env['USERPROFILE'] || process.env['HOME'] || ''
+    return scanClaudeSkills(join(home, '.claude', 'skills'))
+  })
+
+  // Deploy the app's vault into every engine's own folder. The renderer sends
+  // its vault; the main process validates every name before anything lands.
+  ipcMain.handle('skills:deploy', (_event, skills: VaultSkill[]): { ok: boolean; written: string[] } => {
+    const written: string[] = []
+    for (const skill of Array.isArray(skills) ? skills.slice(0, 200) : []) {
+      if (!skill || typeof skill.name !== 'string' || !skill.name.trim()) continue
+      const clean: VaultSkill = {
+        name: String(skill.name),
+        description: typeof skill.description === 'string' ? skill.description : '',
+        body: typeof skill.body === 'string' ? skill.body.slice(0, 20_000) : '',
+      }
+      if (!clean.body) continue
+      written.push(...deploySkill(clean, skillTargets()))
+    }
+    return { ok: true, written }
+  })
+
+  // The one MCP list, stored once, deployed to every engine's config.
+  ipcMain.handle('mcp:read', () => {
+    try {
+      return JSON.parse(readFileSync(mcpFile, 'utf8')) as { servers: McpServer[] }
+    } catch {
+      return { servers: [] as McpServer[] }
+    }
+  })
+
+  ipcMain.handle('mcp:write', (_event, payload: { servers: McpServer[] }): { ok: boolean; written: string[] } => {
+    const servers = Array.isArray(payload?.servers) ? payload.servers.slice(0, 100) : []
+    writeFileSync(mcpFile, JSON.stringify({ servers }), 'utf8')
+    return { ok: true, written: deployMcp(servers, settings.engine.workspace || vaultRoot()) }
+  })
+
+  // The rulebook itself: read for the edit screen, write to persist and
+  // deploy immediately to every engine's global file.
+  ipcMain.handle('houserules:read', () => {
+    const rules = readHouseRules()
+    return {
+      rules: {
+        identity: rules.identity ?? DEFAULT_HOUSE_RULES.identity,
+        artifacts: rules.artifacts ?? DEFAULT_HOUSE_RULES.artifacts,
+        permissions: rules.permissions ?? DEFAULT_HOUSE_RULES.permissions,
+        memory: rules.memory ?? DEFAULT_HOUSE_RULES.memory,
+        style: rules.style ?? DEFAULT_HOUSE_RULES.style,
+      },
+      defaults: DEFAULT_HOUSE_RULES,
+    }
+  })
+
+  ipcMain.handle('houserules:write', (_event, rules: Partial<HouseRules>): { ok: boolean; written: string[] } => {
+    const clean: Partial<HouseRules> = {}
+    for (const key of Object.keys(DEFAULT_HOUSE_RULES) as Array<keyof HouseRules>) {
+      const value = rules?.[key]
+      if (typeof value === 'string' && value.trim()) clean[key] = value
+    }
+    writeFileSync(houseRulesFile, JSON.stringify(clean), 'utf8')
+    const home = process.env['USERPROFILE'] || process.env['HOME'] || ''
+    const written = deployHouseRules(settings.engine.id, settings.engine.model, home, clean)
+    return { ok: true, written }
   })
 
   // The brains the engine can actually use, straight from the brain door —
@@ -270,6 +444,13 @@ function registerBridges(): void {
   // Ollama reports, with cloud brains flagged because their work leaves the
   // machine and the label must say so.
   ipcMain.handle('engine:models', async (): Promise<{ ok: boolean; models: EngineModelEntry[]; error?: string }> => {
+    // Each engine is served by its OWN source: Claude Code reads its brains
+    // from the owner's door; agy answers only to Google. Never a pickable lie.
+    if (settings.engine.id !== 'claude-code') {
+      const known = await detectEngine(settings.engine.id as EngineId)
+      const answer = await agyModelSource(known.found).models()
+      return answer
+    }
     const door = settings.engine.baseUrl || 'http://localhost:11434'
     try {
       const answer = await fetch(`${door}/api/tags`, { signal: AbortSignal.timeout(4000) })
@@ -485,7 +666,37 @@ if (!gotLock) {
     // file means "nothing chosen yet", never a failed launch.
     settingsFile = join(app.getPath('userData'), 'settings.json')
     settings = readSettings(settingsFile)
-    engine = createEngineSocket()
+    engine = createEngineSocket({
+      // Engine sessions, remembered per workspace so a conversation survives
+      // an app restart (the engine's own --resume). A damaged file means
+      // "nothing to resume", never a failed launch.
+      load: (cwd) => {
+        try {
+          const file = join(app.getPath('userData'), 'engine-sessions.json')
+          const data = JSON.parse(readFileSync(file, 'utf8')) as Record<string, string>
+          return typeof data[cwd] === 'string' ? data[cwd] : ''
+        } catch {
+          return ''
+        }
+      },
+      save: (cwd, sessionId) => {
+        try {
+          const file = join(app.getPath('userData'), 'engine-sessions.json')
+          let data: Record<string, string> = {}
+          try {
+            data = JSON.parse(readFileSync(file, 'utf8')) as Record<string, string>
+          } catch {
+            data = {}
+          }
+          data[cwd] = sessionId
+          // Keep the map small: the twenty most recent workplaces are enough.
+          const entries = Object.entries(data).slice(-20)
+          writeFileSync(file, JSON.stringify(Object.fromEntries(entries)), 'utf8')
+        } catch {
+          // A failed save costs only the resume; the work itself is unaffected.
+        }
+      },
+    })
     registerBridges()
 
     // Keys are sealed by the operating system — safeStorage is the keychain on

@@ -60,6 +60,10 @@ function withFakeEngine(): FakeApi {
       return { ok: true, answer: `engine set to ${id}` }
     },
     models: async () => ({ ok: true, models: fake.brains }),
+    detect: async () => [],
+    pull: async () => ({ ok: false, answer: 'no pulls in this fake' }),
+    deleteModel: async () => ({ ok: false, answer: 'no deletions in this fake' }),
+    onPullEvent: () => () => undefined,
     setModel: async (model: string) => {
       fake.model = model
       return { ok: true, answer: `brain set to ${model}` }

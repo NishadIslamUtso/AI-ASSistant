@@ -134,7 +134,9 @@ test('the wire: a permission request becomes a card, thinking stays private', ()
       JSON.stringify({ type: 'assistant', message: { content: [{ type: 'thinking', thinking: 'hmm' }] } }),
     ].join('\n') + '\n',
   )
-  assert.deepEqual(events, [{ kind: 'permission', requestId: 'req-7', tool: 'Bash', summary: 'npm test' }])
+  assert.deepEqual(events, [
+    { kind: 'permission', requestId: 'req-7', tool: 'Bash', summary: 'npm test', detail: 'npm test' },
+  ])
 })
 
 test('the wire: self-denials, retries and failed tools are news, not silence', () => {

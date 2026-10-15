@@ -13,6 +13,7 @@ import { type View } from './components/AppNav'
 import ChatView from './components/ChatView'
 import { engineStore } from '@/state/engine'
 import ArtifactsView from './components/ArtifactsView'
+import TodayView from './components/TodayView'
 import useArtifactLibrary, { adoptionRecords } from './state/artifactLibrary'
 import type { ArtifactSummary } from '../../main/artifacts/store'
 import useChat from './hooks/useChat'
@@ -174,7 +175,7 @@ export default function App() {
   )
 
   /** The library, loaded when the Artifacts screen is showing. */
-  const library = useArtifactLibrary(view === 'artifacts')
+  const library = useArtifactLibrary(view === 'artifacts' || view === 'today')
 
   /**
    * Artifacts already sitting in saved conversations are written into the
@@ -360,7 +361,20 @@ export default function App() {
           onOpenMemory={() => setMemoryOpen(true)}
           profileName={profile.name}
         />
-        {view === 'artifacts' ? (
+        {view === 'today' ? (
+          <TodayView
+            chats={chats.chats}
+            artifacts={library.items}
+            artifactsLoading={library.loading}
+            onOpenChat={chats.open}
+            onNew={() => {
+              chats.create()
+              setView('chat')
+              setNotice('')
+            }}
+            onView={setView}
+          />
+        ) : view === 'artifacts' ? (
           <ArtifactsView
             items={library.items}
             loading={library.loading}
