@@ -47,6 +47,10 @@ export type DesktopBridge = {
     platform: string
     /** Desktop only: open the vault folder in the file manager. */
     openVaultFolder?: () => Promise<{ ok: boolean }>
+    /** Desktop only: open a github.com link in the person's browser. */
+    openExternal?: (url: string) => Promise<{ ok: boolean }>
+    /** Desktop only: the native menu's events (File > New chat, Go > screens). */
+    onMenu?: (channel: string, callback: () => void) => () => void
   }
   houseRules: {
     /** The rulebook as it stands; blanks already filled from the defaults. */
@@ -99,6 +103,8 @@ export type DesktopBridge = {
     saveHandoff: (name: string, markdown: string) => Promise<{ ok: boolean; answer: string }>
     /** A timestamped portable copy of the vault, written to the exports folder. */
     exportCopy: () => Promise<{ ok: boolean; answer: string }>
+    /** The open conversation, captured into the vault as a capsule. */
+    captureChat: (title: string, markdown: string) => Promise<{ ok: boolean; answer: string }>
   }
   /** Whether the browser extension can reach this app, and where. */
   extension: {
@@ -161,7 +167,7 @@ const demoBridge: DesktopBridge = {
     }),
   },
   skills: { installCatalog: async () => ({ ok: false, answer: 'Installing skills needs the desktop app.' }) },
-  vault: { chooseFolder: async () => null, saveHandoff: async () => ({ ok: false, answer: 'Writing a handoff needs the desktop app.' }), exportCopy: async () => ({ ok: false, answer: 'Exporting needs the desktop app.' }) },
+  vault: { chooseFolder: async () => null, saveHandoff: async () => ({ ok: false, answer: 'Writing a handoff needs the desktop app.' }), exportCopy: async () => ({ ok: false, answer: 'Exporting needs the desktop app.' }), captureChat: async () => ({ ok: false, answer: 'Capturing needs the desktop app.' }) },
   // No socket is open here, and none can be: this is a page, not the app.
   extension: {
     status: async () => ({

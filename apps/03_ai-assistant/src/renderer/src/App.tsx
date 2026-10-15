@@ -17,6 +17,7 @@ import TodayView from './components/TodayView'
 import ProjectsView from './components/ProjectsView'
 import FirstRunView from './components/FirstRunView'
 import MarketplaceModal from './components/MarketplaceModal'
+import useProjects from './state/projects'
 import VaultView from './components/VaultView'
 import CodeView from './components/CodeView'
 import useArtifactLibrary, { adoptionRecords } from './state/artifactLibrary'
@@ -58,6 +59,7 @@ export default function App() {
   const [profile, setProfile] = usePersistentState('ai-assistant.profile', DEFAULT_PROFILE, normalizeProfile, setNotice)
   const [welcomed, setWelcomed] = usePersistentState('ai-assistant.welcomed', false, (value) => value === true, setNotice)
   const [marketOpen, setMarketOpen] = useState(false)
+  const { projects } = useProjects(true)
   const [model, setModel] = usePersistentState(
     'ai-assistant.model',
     DEFAULT_MODEL,
@@ -85,6 +87,27 @@ export default function App() {
   const [memoryOpen, setMemoryOpen] = useState(false)
   /** The project a brand-new chat will belong to, chosen before its first word. */
   const [pendingProject, setPendingProject] = useState<string | null>(null)
+
+  // The native menu (File > New chat, Go > screens) talks to the window over
+  // the app bridge; in the browser there is no menu, and the listener is
+  // simply absent.
+  useEffect(() => {
+    const offNew = bridge.app?.onMenu?.('menu:new-chat', () => {
+      chats.create()
+      setView('chat')
+      setNotice('')
+    })
+    const offSettings = bridge.app?.onMenu?.('menu:settings', () => setSettingsOpen(true))
+    const offViews = (['chat', 'artifacts', 'today', 'projects', 'vault', 'code'] as const).map(view =>
+      bridge.app?.onMenu?.(`menu:view:${view}`, () => setView(view))
+    )
+    return () => {
+      offNew?.()
+      offSettings?.()
+      for (const off of offViews) off?.()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   // Which screen is showing, remembered so the app opens where it was left.
   const [view, setView] = usePersistentState<View>(
     'ai-assistant.view',
@@ -372,6 +395,7 @@ export default function App() {
           }}
           onOpenMemory={() => setMemoryOpen(true)}
           onOpenMarketplace={() => setMarketOpen(true)}
+          onSetChatProject={(chatId, projectId) => chats.setProject(chatId, projectId)}
           profileName={profile.name}
         />
         {view === 'code' ? <CodeView /> : view === 'vault' ? (
@@ -440,6 +464,10 @@ export default function App() {
           live={chatApi.live}
           highlightId={highlight}
           notice={notice}
+          profileName={profile.name}
+          projects={projects}
+          project={pendingProject}
+          onProject={setPendingProject}
           onRewrite={runRewrite}
           onRestore={(artifact, index) => restoreVersion(artifact.id, index)}
           busyArtifactId={rewrite.busyId || ''}

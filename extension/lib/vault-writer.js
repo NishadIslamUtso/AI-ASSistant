@@ -50,7 +50,16 @@ async function postCapture(payload) {
     } catch(e) {}
     return {ok:true};
   } catch (e) {
-    await queueCapture(dataWithTime);
+    // The crash in the approved screenshots: the extension was reloaded (or
+    // its context torn down) while a write was in flight, and the rejection
+    // escaped as an unhandled promise. The queue is best-effort by design —
+    // a dead context has nothing to queue into, so record nothing and stay
+    // quiet. A live context queues as before.
+    try {
+      await queueCapture(dataWithTime);
+    } catch (queued) {
+      // Nothing to do: the context is gone; the page is fine.
+    }
     throw e;
   }
 }

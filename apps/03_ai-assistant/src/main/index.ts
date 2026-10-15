@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, safeStorage, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu, safeStorage, shell } from 'electron'
 import { join } from 'node:path'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { startLocalApi, type LocalApi } from './api/server'
@@ -396,6 +396,27 @@ function registerBridges(): void {
     }
   })
 
+  // Capture the current conversation as a capsule: the digest lands in the
+  // vault's Captures/ folder — the same shape the browser extension queues
+  // into, so both paths feed one memory.
+  ipcMain.handle('vault:capture-chat', (_event, payload: { title: string; markdown: string }): { ok: boolean; answer: string } => {
+    const title = typeof payload?.title === 'string' ? payload.title.trim().slice(0, 80) : ''
+    const markdown = typeof payload?.markdown === 'string' ? payload.markdown : ''
+    if (!title || !markdown || markdown.length > 100_000) {
+      return { ok: false, answer: 'That is not a conversation this app will capture.' }
+    }
+    const service = createVaultService({ vaultPath: vaultRoot() })
+    if (!service.available()) return { ok: false, answer: 'No vault to capture into.' }
+    try {
+      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40)
+      const name = `${stampFor(new Date())}${slug ? `-${slug}` : ''}.md`
+      service.files().write(`Captures/${name}`, markdown)
+      return { ok: true, answer: `Captures/${name}` }
+    } catch (error) {
+      return { ok: false, answer: error instanceof Error ? error.message : 'The vault refused the capture.' }
+    }
+  })
+
   // A handoff: the finished turn, written into the vault as one markdown
   // document any later session (here or in a terminal) can continue from.
   // The name is validated and the vault's own path rules apply.
@@ -544,6 +565,20 @@ function registerBridges(): void {
 
   // Open a folder in the file manager. Guarded to folders that exist and are
   // at least plausible; it is the owner's machine and this is a convenience.
+  // Open a link in the person's browser. Guarded to https and a short list of
+  // hosts we actually name in the interface — this door is not a launcher.
+  ipcMain.handle('app:open-external', async (_event, url: string): Promise<{ ok: boolean }> => {
+    let parsed: URL
+    try {
+      parsed = new URL(String(url ?? ''))
+    } catch {
+      return { ok: false }
+    }
+    if (parsed.protocol !== 'https:' || parsed.hostname !== 'github.com') return { ok: false }
+    await shell.openExternal(parsed.toString())
+    return { ok: true }
+  })
+
   ipcMain.handle('app:open-folder', async (_event, folder: string): Promise<{ ok: boolean }> => {
     const clean = typeof folder === 'string' ? folder.trim() : ''
     if (!clean || clean.length > 4096 || /[\n\r]/.test(clean)) return { ok: false }
@@ -798,6 +833,71 @@ if (!gotLock) {
       existing.focus()
     }
   })
+
+  // The menu bar the approved mockup shows: File Edit View Go Help. Every
+  // item does a real thing — no decoration. "New chat" and the Go section
+  // talk to the window over the same channel the extension bridge uses.
+  const sendToWindow = (channel: string): void => {
+    for (const window of BrowserWindow.getAllWindows()) window.webContents.send(channel)
+  }
+  const menu = Menu.buildFromTemplate([
+    {
+      label: 'File',
+      submenu: [
+        { label: 'New Chat', accelerator: 'CmdOrCtrl+N', click: () => sendToWindow('menu:new-chat') },
+        { type: 'separator' },
+        { label: 'Settings', accelerator: 'CmdOrCtrl+,', click: () => sendToWindow('menu:settings') },
+        { type: 'separator' },
+        { role: 'quit', label: 'Quit' },
+      ],
+    },
+    { label: 'Edit', submenu: [{ role: 'undo' }, { role: 'redo' }, { type: 'separator' }, { role: 'cut' }, { role: 'copy' }, { role: 'paste' }, { role: 'selectAll' }] },
+    {
+      label: 'View',
+      submenu: [
+        { role: 'reload' },
+        { role: 'forceReload' },
+        { type: 'separator' },
+        { role: 'resetZoom' },
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { type: 'separator' },
+        { role: 'toggleDevTools' },
+      ],
+    },
+    {
+      label: 'Go',
+      submenu: [
+        { label: 'Chat', accelerator: 'CmdOrCtrl+1', click: () => sendToWindow('menu:view:chat') },
+        { label: 'Artifacts', accelerator: 'CmdOrCtrl+2', click: () => sendToWindow('menu:view:artifacts') },
+        { label: 'Today', accelerator: 'CmdOrCtrl+3', click: () => sendToWindow('menu:view:today') },
+        { label: 'Projects', accelerator: 'CmdOrCtrl+4', click: () => sendToWindow('menu:view:projects') },
+        { label: 'Vault', accelerator: 'CmdOrCtrl+5', click: () => sendToWindow('menu:view:vault') },
+        { label: 'Code', accelerator: 'CmdOrCtrl+6', click: () => sendToWindow('menu:view:code') },
+      ],
+    },
+    {
+      label: 'Help',
+      submenu: [
+        {
+          label: 'Learn more',
+          click: () => void shell.openExternal('https://github.com/NishadIslamUtso/AI-ASSistant'),
+        },
+        {
+          label: 'About AI ASSistant',
+          click: () => {
+            void dialog.showMessageBox({
+              type: 'info',
+              title: 'About AI ASSistant',
+              message: `AI ASSistant ${app.getVersion()}`,
+              detail: 'The face of your engines. Local vault, local memory, $0.',
+            })
+          },
+        },
+      ],
+    },
+  ])
+  Menu.setApplicationMenu(menu)
 
   void app.whenReady().then(async () => {
     const rendererDir = process.env['ELECTRON_RENDERER_URL']

@@ -243,3 +243,4 @@ async function addCookButton() {
 
 setTimeout(() => { try { addCaptureButton(); addCookButton(); } catch(e) {} }, 1500);
 setInterval(() => { try { addCookButton(); } catch(e) {} }, 4000);
+\n// The approved screenshots' second crash path: a rejection that outlives the\n// extension context must never surface as a page error.\nwindow.addEventListener('unhandledrejection', (event) => {\n  if (String(event.reason || '').includes('Extension context invalidated')) event.preventDefault();\n});\n

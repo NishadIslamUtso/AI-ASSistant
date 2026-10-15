@@ -176,3 +176,18 @@ Trigger: his UI correction. Checked the UI patterns of the live tools, not just 
 - **backchat #64:** composer footer pickers as ONE shared picker discipline — content-fit height, max-height scroll, checkmark-only selection, provider drill-down. Adopted the discipline for our two chips; drill-down queued (our engines are two, not twelve).
 - **Nimbalyst release notes:** model picker GROUPS by provider with full ranges; live model picker per session. Our engine-door list already is per-engine; grouping queued if an engine ever reports many providers.
 - Verdict: our popover design is now at parity with the best pickers studied; the sidebar compact-scroll pattern matches the approved mockups (the authority that outranks all repos).
+
+
+## Sweep #5 — extension injection & capture (2026-10-16)
+
+Question: how do real MV3 extensions inject text into a focused field and queue offline, without the "Extension context invalidated" crashes the approved screenshots show?
+
+| Prior art | What it does | Verdict |
+| --- | --- | --- |
+| SameerInCode/Sk-Promptvault | chrome.storage prompt library; context menu on `editable` rebuilt on `storage.onChanged`; content script tracks last-focused editable via `focusin`; insert at cursor + fire input/change so React notices; warns "refresh tab after install/reload" | ADOPTED — focusin tracking + event firing pattern for capsule-inject; the refresh caveat is inherent to MV3, noted in the popup |
+| hanzla-codes/promptVault | popup "Insert into page" reports "No active text field found" on store/extension pages/sandboxed iframes | ADOPTED — the honest-failure wording for the same situation |
+| HaaswithSai/ContextVault | right-click selection → save text/URL/title/date/surrounding text; badge flash confirm; minimal permissions (storage+contextMenus+scripting) | ADOPTED — capture shape already ours; permission minimality confirmed |
+
+Rejected: none this sweep — all three confirm the existing architecture rather than replace it.
+
+Fix shipped with the receipts (the exact ERROR shots): vault-writer's offline path could reject out of a torn-down context ("Extension context invalidated" at vault-writer.js:51/:30, capsule-inject.js:35) — the queue call is now guarded inside the writer, and capsule-inject swallows context-invalidation rejections it cannot act on. Queue≤200 / activity≤100 caps kept. Manifest 0.1.1 → 0.1.2.

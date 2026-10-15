@@ -15,7 +15,7 @@ import {
 } from '@shared/lib/inference'
 import { CLOUD_PROVIDERS, type CloudProviderView } from '@shared/lib/providers'
 import { DEFAULT_PERMISSIONS, type Permissions } from '@shared/lib/permissions'
-import { ACCENTS, DEFAULT_APPEARANCE, WIDTHS, type Appearance } from '../state/appearance'
+import { ACCENTS, DEFAULT_APPEARANCE, WIDTHS, type Appearance, TEXT_SIZES, FONTS } from '../state/appearance'
 import {
   CUSTOM_FIELDS,
   DEFAULT_INFERENCE,
@@ -646,6 +646,80 @@ export default function SettingsView({
                 aria-pressed={appearance.accent === accent.name}
                 title={accent.label}
               />
+            ))}
+          </div>
+        ),
+      },
+      {
+        label: 'Transcript text size',
+        terms: 'text size small medium large font reading transcript',
+        body: (
+          <div className="flex gap-1.5">
+            {TEXT_SIZES.map(size => (
+              <button
+                key={size.name}
+                type="button"
+                className={`rounded-full border px-3 py-1 text-[12px] ${
+                  appearance.textSize === size.name
+                    ? 'border-accent bg-accent/15 text-ink'
+                    : 'border-line text-muted hover:bg-white/[0.06]'
+                }`}
+                onClick={() => onAppearanceChange({ ...appearance, textSize: size.name })}
+                aria-label={`Transcript text size: ${size.label}`}
+                aria-pressed={appearance.textSize === size.name}
+                title={`${size.px} pixels`}
+              >
+                {size.label}
+              </button>
+            ))}
+          </div>
+        ),
+      },
+      {
+        label: 'Chat font',
+        terms: 'font serif sans reading typeface',
+        body: (
+          <div className="flex gap-1.5">
+            {FONTS.map(font => (
+              <button
+                key={font.name}
+                type="button"
+                className={`rounded-full border px-3 py-1 text-[12px] ${
+                  appearance.font === font.name
+                    ? 'border-accent bg-accent/15 text-ink'
+                    : 'border-line text-muted hover:bg-white/[0.06]'
+                }`}
+                onClick={() => onAppearanceChange({ ...appearance, font: font.name })}
+                aria-label={`Chat font: ${font.label}`}
+                aria-pressed={appearance.font === font.name}
+                style={font.name === 'serif' ? { fontFamily: 'Georgia, serif' } : undefined}
+              >
+                {font.label}
+              </button>
+            ))}
+          </div>
+        ),
+      },
+      {
+        label: 'Motion',
+        terms: 'animation motion reduced still pulse streaming',
+        body: (
+          <div className="flex gap-1.5">
+            {(['system', 'reduced'] as const).map(mode => (
+              <button
+                key={mode}
+                type="button"
+                className={`rounded-full border px-3 py-1 text-[12px] ${
+                  appearance.motion === mode
+                    ? 'border-accent bg-accent/15 text-ink'
+                    : 'border-line text-muted hover:bg-white/[0.06]'
+                }`}
+                onClick={() => onAppearanceChange({ ...appearance, motion: mode })}
+                aria-label={`Motion: ${mode}`}
+                aria-pressed={appearance.motion === mode}
+              >
+                {mode === 'system' ? 'System' : 'Reduced'}
+              </button>
             ))}
           </div>
         ),

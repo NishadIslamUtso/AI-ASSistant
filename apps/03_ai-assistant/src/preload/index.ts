@@ -88,6 +88,14 @@ const api = {
     platform: process.platform,
     /** Open the vault folder in the file manager — the owner's own folder. */
     openVaultFolder: (): Promise<{ ok: boolean }> => ipcRenderer.invoke('vault:open-folder'),
+    /** Open a https://github.com link in the person's browser. */
+    openExternal: (url: string): Promise<{ ok: boolean }> => ipcRenderer.invoke('app:open-external', url),
+    /** The native menu talks to the window through these channels. */
+    onMenu: (channel: string, callback: () => void): (() => void) => {
+      const listener = (): void => callback()
+      ipcRenderer.on(String(channel), listener)
+      return () => ipcRenderer.removeListener(String(channel), listener)
+    },
   },
   projects: {
     read: (): Promise<Project[]> => ipcRenderer.invoke('projects:read'),
@@ -158,6 +166,9 @@ const api = {
       ipcRenderer.invoke('vault:save-handoff', { name, markdown }),
     /** A timestamped portable copy of the vault, written to the exports folder. */
     exportCopy: (): Promise<{ ok: boolean; answer: string }> => ipcRenderer.invoke('vault:export-copy'),
+    /** The open conversation, captured into the vault as a capsule. */
+    captureChat: (title: string, markdown: string): Promise<{ ok: boolean; answer: string }> =>
+      ipcRenderer.invoke('vault:capture-chat', { title, markdown }),
   },
   extension: {
     /**

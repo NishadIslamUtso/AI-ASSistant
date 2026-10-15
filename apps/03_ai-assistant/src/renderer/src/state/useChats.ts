@@ -25,6 +25,8 @@ export type ChatState = {
   create: () => string
   remove: (chatId: string) => void
   rename: (chatId: string, title: string) => void
+  pin: (chatId: string, pinned: boolean) => void
+  setProject: (chatId: string, projectId: string | null) => void
 }
 
 export function useChats(onWarning?: (message: string) => void): ChatState {
@@ -64,6 +66,20 @@ export function useChats(onWarning?: (message: string) => void): ChatState {
     [setChats, setCurrentChat, currentChat]
   )
 
+  const pin = useCallback(
+    (chatId: string, pinned: boolean) => {
+      setChats(previous => previous.map(chat => (chat.id === chatId ? { ...chat, pinned } : chat)))
+    },
+    [setChats]
+  )
+
+  const setProject = useCallback(
+    (chatId: string, projectId: string | null) => {
+      setChats(previous => previous.map(chat => (chat.id === chatId ? { ...chat, projectId } : chat)))
+    },
+    [setChats]
+  )
+
   const rename = useCallback(
     (chatId: string, title: string) => {
       const clean = String(title || '').trim().slice(0, 80)
@@ -76,7 +92,7 @@ export function useChats(onWarning?: (message: string) => void): ChatState {
   )
 
   const value = useMemo<ChatState>(
-    () => ({ chats, setChats, currentChat, open, create, remove, rename }),
+    () => ({ chats, setChats, currentChat, open, create, remove, rename, pin, setProject }),
     [chats, setChats, currentChat, open, create, remove, rename]
   )
 
@@ -89,10 +105,15 @@ export function useChats(onWarning?: (message: string) => void): ChatState {
  * from timestamps, so the headings never disagree with what was stored.
  */
 export function groupChats(chats: Chat[]): Array<{ label: string; chats: Chat[] }> {
+  const pinned: Chat[] = []
   const today: Chat[] = []
   const earlier: Chat[] = []
-  for (const chat of chats) (chat.date === 'Today' ? today : earlier).push(chat)
+  for (const chat of chats) {
+    if (chat.pinned) pinned.push(chat)
+    else (chat.date === 'Today' ? today : earlier).push(chat)
+  }
   return [
+    { label: 'Pinned', chats: pinned },
     { label: 'Today', chats: today },
     { label: 'Older', chats: earlier },
   ].filter(group => group.chats.length > 0)

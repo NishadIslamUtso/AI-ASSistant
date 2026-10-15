@@ -15,10 +15,18 @@ import { readStored } from '@shared/lib/storage'
 
 export type AccentName = 'violet' | 'blue' | 'teal' | 'amber' | 'rose'
 export type WidthName = 'focused' | 'comfortable' | 'wide'
+export type TextSizeName = 'small' | 'medium' | 'large'
+export type FontName = 'sans' | 'serif'
 
 export type Appearance = {
   accent: AccentName
   width: WidthName
+  /** The transcript's text size, as the approved settings mockup offers it. */
+  textSize: TextSizeName
+  /** The reading font for the transcript: the app's sans, or a reading serif. */
+  font: FontName
+  /** Reduced motion stills the streaming pulse and transitions. */
+  motion: 'system' | 'reduced'
 }
 
 export const APPEARANCE_KEY = 'ai-assistant.appearance'
@@ -39,9 +47,23 @@ export const WIDTHS: readonly { name: WidthName; label: string; px: number }[] =
   { name: 'wide', label: 'Wide', px: 1040 },
 ])
 
+export const TEXT_SIZES: readonly { name: TextSizeName; label: string; px: number }[] = Object.freeze([
+  { name: 'small', label: 'Small', px: 13 },
+  { name: 'medium', label: 'Medium', px: 14.5 },
+  { name: 'large', label: 'Large', px: 16.5 },
+])
+
+export const FONTS: readonly { name: FontName; label: string; stack: string }[] = Object.freeze([
+  { name: 'sans', label: 'App sans', stack: "system-ui, 'Segoe UI', sans-serif" },
+  { name: 'serif', label: 'Reading serif', stack: "Georgia, 'Times New Roman', serif" },
+])
+
 export const DEFAULT_APPEARANCE: Appearance = Object.freeze({
   accent: 'violet',
   width: 'comfortable',
+  textSize: 'medium',
+  font: 'sans',
+  motion: 'system',
 })
 
 export function accentHex(name: AccentName): string {
@@ -62,6 +84,11 @@ export function normalizeAppearance(value: unknown): Appearance {
     width: WIDTHS.some(width => width.name === input.width)
       ? (input.width as WidthName)
       : DEFAULT_APPEARANCE.width,
+    textSize: TEXT_SIZES.some(size => size.name === input.textSize)
+      ? (input.textSize as TextSizeName)
+      : DEFAULT_APPEARANCE.textSize,
+    font: FONTS.some(font => font.name === input.font) ? (input.font as FontName) : DEFAULT_APPEARANCE.font,
+    motion: input.motion === 'reduced' ? 'reduced' : 'system',
   }
 }
 
@@ -71,10 +98,21 @@ export function normalizeAppearance(value: unknown): Appearance {
  * component knowing this exists; `--chat-width` is read by the conversation
  * column through an arbitrary utility.
  */
+export function textSizePx(name: TextSizeName): number {
+  return (TEXT_SIZES.find(size => size.name === name) || TEXT_SIZES[1]).px
+}
+
+export function fontStack(name: FontName): string {
+  return (FONTS.find(font => font.name === name) || FONTS[0]).stack
+}
+
 export function appearanceVariables(appearance: Appearance): Record<string, string> {
   return {
     '--color-accent': accentHex(appearance.accent),
     '--chat-width': `${chatWidthPx(appearance.width)}px`,
+    '--transcript-size': `${textSizePx(appearance.textSize)}px`,
+    '--transcript-font': fontStack(appearance.font),
+    '--motion': appearance.motion === 'reduced' ? '0' : '1',
   }
 }
 

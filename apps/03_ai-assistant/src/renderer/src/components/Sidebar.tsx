@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { PanelLeftClose, PanelLeftOpen, Plus, Search, Store, Trash2, X } from 'lucide-react'
+import useProjects from '@/state/projects'
+import { useChats } from '@/state/useChats'
+import { PanelLeftClose, PanelLeftOpen, Plus, Search, Store, X } from 'lucide-react'
 import type { Chat } from '@shared/types'
 import { searchChats } from '@shared/lib/search'
 import { initials } from '@shared/lib/profile'
 import { groupChats } from '@/state/useChats'
+import { bridge } from '@/platform/bridge'
 import usePersistentState from '@/hooks/usePersistentState'
 import AppNav, { type View } from './AppNav'
 
@@ -46,6 +49,8 @@ export default function Sidebar({
   onOpenMemory,
   onOpenMarketplace,
   profileName,
+  /** The chat-row menu's "Add to project" needs the real list. */
+  onSetChatProject,
   view,
   onView,
   artifactQuery,
@@ -64,6 +69,7 @@ export default function Sidebar({
   /** The marketplace: apps, extensions, skills — what the app can reach. */
   onOpenMarketplace: () => void
   profileName: string
+  onSetChatProject: (chatId: string, projectId: string | null) => void
   /** Which screen is showing, so the sidebar can serve it. */
   view: View
   onView: (view: View) => void
@@ -73,6 +79,8 @@ export default function Sidebar({
   artifactCount: number
 }) {
   const [query, setQuery] = useState('')
+  const chats0 = useChats()
+  const { projects } = useProjects(true)
   const [prefs, setPrefs] = usePersistentState<SidebarPrefs>('ai-assistant.sidebar', { collapsed: false, width: 260 }, normalizePrefs)
   const [dragging, setDragging] = useState(false)
   const aside = useRef<HTMLElement | null>(null)
@@ -226,6 +234,10 @@ export default function Sidebar({
                   active={chat.id === currentChat}
                   onOpen={onOpen}
                   onDelete={onDelete}
+                  onPin={chats0.pin}
+                  onRename={chats0.rename}
+                  onSetProject={onSetChatProject}
+                  projects={projects}
                 />
               ))}
             </section>
@@ -258,21 +270,12 @@ export default function Sidebar({
         <span className="text-[12px]">Browsing Maps</span>
       </button>
 
-      <button
-        type="button"
-        onClick={onOpenSettings}
-        aria-label="Settings"
-        title="Settings"
-        className="flex w-full items-center gap-2.5 border-t border-line p-3 text-left hover:bg-white/[0.06]"
-      >
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand/25 text-[12px] font-semibold text-brand">
-          {initials(profileName)}
-        </span>
-        <span className="min-w-0 flex-1 truncate text-[13px]">{profileName}</span>
-        <span className="rounded-full border border-line px-2 py-0.5 text-[10px] text-muted">
-          Local
-        </span>
-      </button>
+      <UserMenu
+        profileName={profileName}
+        onOpenSettings={onOpenSettings}
+        onOpenMarketplace={onOpenMarketplace}
+        onOpenMemory={onOpenMemory}
+      />
 
       {/* The grip on the edge. Invisible until pointed at, so the sidebar does
           not look like it is wearing a handle. */}
@@ -297,34 +300,227 @@ function ChatRow({
   active,
   onOpen,
   onDelete,
+  onPin,
+  onRename,
+  onSetProject,
+  projects,
 }: {
   chat: Chat
   active: boolean
   onOpen: (chatId: string) => void
   onDelete: (chatId: string) => void
+  onPin: (chatId: string, pinned: boolean) => void
+  onRename: (chatId: string, title: string) => void
+  onSetProject: (chatId: string, projectId: string | null) => void
+  projects: Array<{ id: string; name: string }>
+}) {
+  const [menu, setMenu] = useState(false)
+  const [renaming, setRenaming] = useState(false)
+  const [draft, setDraft] = useState(chat.title)
+  const [projectMenu, setProjectMenu] = useState(false)
+  const menuRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (!menu) return
+    const dismiss = (event: PointerEvent): void => {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setMenu(false)
+        setProjectMenu(false)
+      }
+    }
+    const key = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') {
+        setMenu(false)
+        setProjectMenu(false)
+      }
+    }
+    window.addEventListener('pointerdown', dismiss)
+    window.addEventListener('keydown', key)
+    return () => {
+      window.removeEventListener('pointerdown', dismiss)
+      window.removeEventListener('keydown', key)
+    }
+  }, [menu])
+
+  const commitRename = (): void => {
+    if (draft.trim()) onRename(chat.id, draft.trim())
+    setRenaming(false)
+  }
+
+  if (renaming) {
+    return (
+      <input
+        autoFocus
+        value={draft}
+        onChange={event => setDraft(event.target.value)}
+        onBlur={commitRename}
+        onKeyDown={event => {
+          if (event.key === 'Enter') commitRename()
+          if (event.key === 'Escape') setRenaming(false)
+        }}
+        aria-label="Rename the conversation"
+        className="w-full rounded-lg border border-accent/60 bg-card px-2 py-1.5 text-[12.5px] text-ink outline-none"
+      />
+    )
+  }
+
+  return (
+    <div className="relative">
+      <div
+        className={`group flex items-center gap-1 rounded-lg pr-0.5 ${active ? 'bg-white/[0.06]' : 'hover:bg-white/[0.03]'}`}
+        onContextMenu={event => {
+          event.preventDefault()
+          setMenu(true)
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => onOpen(chat.id)}
+          title={chat.title}
+          className={`min-w-0 flex-1 truncate px-2 py-1.5 text-left text-[12.5px] ${active ? 'text-ink' : 'text-muted group-hover:text-ink'}`}
+        >
+          {chat.pinned ? <PinMark /> : null}
+          {chat.title}
+        </button>
+        <button
+          type="button"
+          aria-label={`Options for ${chat.title}`}
+          aria-haspopup="menu"
+          onClick={() => setMenu(value => !value)}
+          className={`rounded p-1 text-muted transition-opacity hover:text-ink focus:opacity-100 ${
+            menu ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+          }`}
+        >
+          <Kebab />
+        </button>
+      </div>
+
+      {menu ? (
+        <div
+          ref={menuRef}
+          role="menu"
+          aria-label={`Options for ${chat.title}`}
+          className="absolute left-2 right-2 z-30 rounded-lg border border-line bg-card p-1 shadow-xl"
+        >
+          {projectMenu ? (
+            <div role="menu" aria-label="Add to project">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  onSetProject(chat.id, null)
+                  setMenu(false)
+                  setProjectMenu(false)
+                }}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[12px] text-muted hover:bg-white/[0.06] hover:text-ink"
+              >
+                No project
+              </button>
+              {projects.map(project => (
+                <button
+                  key={project.id}
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    onSetProject(chat.id, project.id)
+                    setMenu(false)
+                    setProjectMenu(false)
+                  }}
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[12px] text-muted hover:bg-white/[0.06] hover:text-ink"
+                >
+                  {project.name}
+                </button>
+              ))}
+              {projects.length === 0 ? (
+                <p className="px-2 py-1.5 text-[11.5px] text-muted">No projects yet — make one on the Projects screen.</p>
+              ) : null}
+            </div>
+          ) : (
+            <>
+              <MenuItem
+                label={chat.pinned ? 'Unpin' : 'Pin'}
+                hint="P"
+                onClick={() => {
+                  onPin(chat.id, !chat.pinned)
+                  setMenu(false)
+                }}
+              />
+              <MenuItem
+                label="Rename"
+                hint="R"
+                onClick={() => {
+                  setDraft(chat.title)
+                  setRenaming(true)
+                  setMenu(false)
+                }}
+              />
+              <MenuItem
+                label="Add to project"
+                arrow
+                onClick={() => setProjectMenu(true)}
+              />
+              <div className="my-0.5 border-t border-line" />
+              <MenuItem
+                label="Delete"
+                hint="D"
+                danger
+                onClick={() => {
+                  setMenu(false)
+                  onDelete(chat.id)
+                }}
+              />
+            </>
+          )}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function MenuItem({
+  label,
+  hint,
+  arrow,
+  danger,
+  onClick,
+}: {
+  label: string
+  hint?: string
+  arrow?: boolean
+  danger?: boolean
+  onClick: () => void
 }) {
   return (
-    <div
-      className={`group flex items-center gap-1 rounded-lg pr-1 ${active ? 'bg-white/[0.06]' : 'hover:bg-white/[0.03]'}`}
+    <button
+      type="button"
+      role="menuitem"
+      onClick={onClick}
+      className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[12px] ${
+        danger ? 'text-warn hover:bg-warn/10' : 'text-muted hover:bg-white/[0.06] hover:text-ink'
+      }`}
     >
-      <button
-        type="button"
-        onClick={() => onOpen(chat.id)}
-        title={chat.title}
-        className={`min-w-0 flex-1 truncate px-2 py-1.5 text-left text-[12.5px] ${active ? 'text-ink' : 'text-muted group-hover:text-ink'}`}
-      >
-        {chat.title}
-      </button>
-      <button
-        type="button"
-        onClick={() => onDelete(chat.id)}
-        aria-label={`Delete ${chat.title}`}
-        title="Delete this conversation"
-        className="rounded p-1 text-muted opacity-0 transition-opacity hover:text-ink group-hover:opacity-100 focus:opacity-100"
-      >
-        <Trash2 size={13} />
-      </button>
-    </div>
+      <span className="flex-1">{label}</span>
+      {hint ? <span className="text-[10.5px] text-muted/70">{hint}</span> : null}
+      {arrow ? <span className="text-[10.5px] text-muted/70">›</span> : null}
+    </button>
+  )
+}
+
+function PinMark() {
+  return (
+    <svg width="9" height="9" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className="mr-1 inline-block align-[-1px] text-accent">
+      <path d="M10 1.5 12 8l6.5 2-6.5 2-2 6.5-2-6.5L1.5 10 8 8z" />
+    </svg>
+  )
+}
+
+function Kebab() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      <circle cx="10" cy="4" r="1.6" />
+      <circle cx="10" cy="10" r="1.6" />
+      <circle cx="10" cy="16" r="1.6" />
+    </svg>
   )
 }
 
@@ -364,5 +560,79 @@ function SearchResults({
         </button>
       ))}
     </div>
+  )
+}
+
+
+/**
+ * The user menu, as the approved 191608 screen shows it — adapted to what is
+ * honestly true here: there is no account and no plan, so there is nothing to
+ * log out of and nothing to upgrade. Everything in the menu opens a real
+ * thing, and every one of them is local.
+ */
+function UserMenu({
+  profileName,
+  onOpenSettings,
+  onOpenMarketplace,
+  onOpenMemory,
+}: {
+  profileName: string
+  onOpenSettings: () => void
+  onOpenMarketplace: () => void
+  onOpenMemory: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (!open) return
+    const dismiss = (event: PointerEvent): void => {
+      if (!ref.current?.contains(event.target as Node)) setOpen(false)
+    }
+    window.addEventListener('pointerdown', dismiss)
+    return () => window.removeEventListener('pointerdown', dismiss)
+  }, [open])
+  return (
+    <div className="relative border-t border-line" ref={ref}>
+      {open ? (
+        <div role="menu" aria-label="Account" className="absolute bottom-[52px] left-2 right-2 z-30 rounded-lg border border-line bg-card p-1 shadow-xl">
+          <p className="truncate px-2 pb-1 pt-1.5 text-[11px] text-muted">This machine · everything local</p>
+          <UserMenuItem label="Settings" hint="Ctrl+," onClick={() => { setOpen(false); onOpenSettings() }} />
+          <UserMenuItem label="Get apps and extensions" onClick={() => { setOpen(false); onOpenMarketplace() }} />
+          <UserMenuItem label="Browsing Maps" onClick={() => { setOpen(false); onOpenMemory() }} />
+          <div className="my-0.5 border-t border-line" />
+          <UserMenuItem
+            label="Learn more"
+            onClick={() => { setOpen(false); void bridge.app?.openExternal?.('https://github.com/NishadIslamUtso/AI-ASSistant') }}
+          />
+        </div>
+      ) : null}
+      <button
+        type="button"
+        onClick={() => setOpen(value => !value)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="flex w-full items-center gap-2.5 p-2.5 text-left hover:bg-white/[0.06]"
+      >
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand/25 text-[12px] font-semibold text-brand">
+          {initials(profileName)}
+        </span>
+        <span className="min-w-0 flex-1 truncate text-[13px]">{profileName}</span>
+        <span className="rounded-full border border-line px-2 py-0.5 text-[10px] text-muted">Local</span>
+      </button>
+    </div>
+  )
+}
+
+function UserMenuItem({ label, hint, onClick }: { label: string; hint?: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      onClick={onClick}
+      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[12.5px] text-muted hover:bg-white/[0.06] hover:text-ink"
+    >
+      <span className="flex-1">{label}</span>
+      {hint ? <span className="text-[10.5px] text-muted/70">{hint}</span> : null}
+    </button>
   )
 }

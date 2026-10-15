@@ -58,6 +58,32 @@ export default function MarketplaceModal({ open, onClose }: { open: boolean; onC
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+          {/* The hero, as the approved screen shows it: the engine at work in a
+              terminal that is drawing its own honest future. */}
+          <section className="mb-5 grid grid-cols-1 gap-4 rounded-2xl border border-line bg-bg p-5 sm:grid-cols-2">
+            <div>
+              <h2 className="text-[17px] font-semibold text-ink">The engine does the work</h2>
+              <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted">
+                Pick an engine below the composer, hand it real work, approve its steps. The app is its
+                face — it adds no rules and takes no cut.
+              </p>
+              <p className="mt-3 text-[11px] font-medium uppercase tracking-wide text-muted">Or try it in</p>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {['Terminal', 'VS Code', 'Desktop'].map(place => (
+                  <span key={place} className="rounded-lg border border-line px-2.5 py-1 text-[11.5px] text-muted">
+                    {place}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="overflow-hidden rounded-xl border border-line bg-panel p-3 font-mono text-[11.5px] leading-relaxed" aria-hidden="true">
+              <p className="text-ink">{'> fix the auth bug in signup flow'}</p>
+              <p className="mt-1 text-ok">✓ reading src/auth/signup.ts</p>
+              <p className="text-ok">✓ found the issue in validateToken()</p>
+              <p className="text-ok">✓ editing src/auth/validateToken.ts</p>
+              <p className="mt-1.5 animate-pulse text-accent motion-reduce:animate-none">* cooking…</p>
+            </div>
+          </section>
           <section className="flex flex-col gap-2">
             <h2 className="text-[11px] font-medium uppercase tracking-wide text-muted">Engines, on this machine</h2>
             {(engine.detection.engines.length

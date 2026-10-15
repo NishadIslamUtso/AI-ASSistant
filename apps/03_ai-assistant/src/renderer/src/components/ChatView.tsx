@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { Artifact, Chat } from '@shared/types'
 import type { ElementPick } from '@shared/lib/artifacts'
 import { useDesignTokens } from '@/hooks/useDesignTokens'
@@ -7,6 +7,8 @@ import Composer from './Composer'
 import EnginePanel from './EnginePanel'
 import MessageRow from './MessageRow'
 import BrainMark from './BrainMark'
+import type { Project } from '@shared/lib/projects'
+import { bridge } from '@/platform/bridge'
 
 const STARTERS = [
   'Explain how a hash table works, in plain language',
@@ -38,6 +40,10 @@ export default function ChatView({
   rewriteStage,
   rewriteError,
   rewriteErrorFor,
+  profileName = '',
+  projects = [],
+  project = null,
+  onProject,
 }: {
   chat: Chat | null
   draft: string
@@ -62,6 +68,12 @@ export default function ChatView({
   rewriteStage?: string
   rewriteError?: string
   rewriteErrorFor?: string
+  /** The approved greeting uses the owner's name; capture names the capsule. */
+  profileName?: string
+  /** The project picker, passed through to the composer untouched. */
+  projects?: Project[]
+  project?: string | null
+  onProject?: (id: string | null) => void
 }) {
   const scroller = useRef<HTMLDivElement | null>(null)
   const follow = useRef(true)
@@ -90,7 +102,7 @@ export default function ChatView({
       <div ref={scroller} onScroll={trackScroll} className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-[var(--chat-width)] px-6 py-6">
           {messages.length === 0 ? (
-            <EmptyState onPick={setDraft} />
+            <EmptyState onPick={setDraft} name={profileName} />
           ) : (
             <div className="flex flex-col gap-7">
               {messages.map(message => (
@@ -113,6 +125,7 @@ export default function ChatView({
         </div>
       </div>
 
+      {chat && chat.messages.length > 0 ? <CaptureCapsule chat={chat} /> : null}
       <EnginePanel />
       <Composer
         value={draft}
@@ -122,18 +135,24 @@ export default function ChatView({
         busy={busy}
         notice={notice}
         preview={preview}
+        projects={projects}
+        project={project}
+        onProject={onProject}
       />
     </main>
   )
 }
 
-function EmptyState({ onPick }: { onPick: (value: string) => void }) {
+function EmptyState({ onPick, name = '' }: { onPick: (value: string) => void; name?: string }) {
   return (
     <div className="flex flex-col items-center pt-24 text-center">
-      <BrainMark size={64} />
-      <h1 className="mt-5 text-[22px] font-semibold tracking-tight">
-        How can I help you today?
-      </h1>
+      <div className="flex items-center gap-2.5">
+        <BrainMark size={30} />
+        <h1 className="text-[30px] font-semibold tracking-tight [font-family:var(--transcript-font)]">
+          {greetingFor(name)}
+        </h1>
+      </div>
+      <h2 className="mt-5 text-[15px] font-medium">How can I help you today?</h2>
       <p className="mt-2 max-w-[420px] text-[13px] leading-relaxed text-muted">
         Everything here runs on this machine. Nothing is sent anywhere unless you set
         up a cloud provider yourself.
@@ -152,5 +171,46 @@ function EmptyState({ onPick }: { onPick: (value: string) => void }) {
         ))}
       </ul>
     </div>
+  )
+}
+
+
+/** Time-of-day greeting, as the approved home screen shows: the day part, then the name. */
+export function greetingFor(name: string, now: Date = new Date()): string {
+  const hour = now.getHours()
+  const part = hour < 12 ? 'Morning' : hour < 17 ? 'Afternoon' : hour < 21 ? 'Evening' : 'Night'
+  return name.trim() ? `${part}, ${name.trim()}.` : `${part}.`
+}
+
+/**
+ * Capture as Capsule: the open conversation, written into the vault's
+ * Captures/ folder in one click — the same memory the browser extension
+ * feeds, so nothing said here is lost to the folder it was said in.
+ */
+function CaptureCapsule({ chat }: { chat: Chat }) {
+  const [state, setState] = useState<'idle' | 'busy' | 'done' | 'failed'>('idle')
+  const capture = (): void => {
+    setState('busy')
+    const lines = [`# ${chat.title}`, '', `*Captured from a conversation in AI ASSistant, ${new Date().toLocaleString()}.*`, '']
+    for (const message of chat.messages.slice(-30)) {
+      const who = message.role === 'user' ? 'You' : 'The engine'
+      const text = String(message.content ?? '').slice(0, 2000)
+      lines.push(`## ${who}`, '', text, '')
+    }
+    void bridge.vault
+      .captureChat(chat.title, lines.join('\n'))
+      .then((answer) => setState(answer.ok ? 'done' : 'failed'))
+      .catch(() => setState('failed'))
+  }
+  return (
+    <button
+      type="button"
+      onClick={capture}
+      disabled={state === 'busy'}
+      title="Capture this conversation into the vault as a capsule"
+      className="fixed bottom-5 right-5 z-20 rounded-full border border-line bg-card px-3.5 py-2 text-[11.5px] text-muted shadow-lg hover:text-ink disabled:opacity-60"
+    >
+      {state === 'done' ? 'Captured ✓' : state === 'failed' ? 'The vault refused it' : state === 'busy' ? 'Capturing…' : 'Capture as Capsule'}
+    </button>
   )
 }

@@ -43,11 +43,24 @@ test('the conversation column reads the token rather than a fixed number', () =>
   assert.doesNotMatch(chatView, /max-w-\[760px\]/)
 })
 
-test('an appearance rewrites exactly two tokens, and nothing else', () => {
-  const variables = appearanceVariables({ accent: 'teal', width: 'wide' })
-  assert.deepEqual(Object.keys(variables).sort(), ['--chat-width', '--color-accent'])
+test('an appearance rewrites its tokens, and nothing else', () => {
+  const variables = appearanceVariables({ accent: 'teal', width: 'wide', textSize: 'large', font: 'serif', motion: 'reduced' })
+  assert.deepEqual(Object.keys(variables).sort(), [
+    '--chat-width',
+    '--color-accent',
+    '--motion',
+    '--transcript-font',
+    '--transcript-size',
+  ])
   assert.equal(variables['--color-accent'], '#2fb3a2')
   assert.equal(variables['--chat-width'], '1040px')
+  assert.equal(variables['--transcript-size'], '16.5px')
+  assert.match(variables['--transcript-font'], /serif/)
+  assert.equal(variables['--motion'], '0')
+  // The defaults keep the app exactly as it was.
+  const plain = appearanceVariables({ accent: 'violet', width: 'comfortable', textSize: 'medium', font: 'sans', motion: 'system' })
+  assert.equal(plain['--transcript-size'], '14.5px')
+  assert.equal(plain['--motion'], '1')
 })
 
 test('every accent is a plain six-digit colour, and every width is distinct', () => {
@@ -67,11 +80,23 @@ test('a half-written preference falls back field by field, never to nothing', ()
   assert.deepEqual(normalizeAppearance({ accent: 'rose', width: 'enormous' }), {
     accent: 'rose',
     width: 'comfortable',
+    textSize: 'medium',
+    font: 'sans',
+    motion: 'system',
   })
-  assert.deepEqual(normalizeAppearance({ width: 'wide' }), { accent: 'violet', width: 'wide' })
+  assert.deepEqual(normalizeAppearance({ width: 'wide' }), {
+    accent: 'violet',
+    width: 'wide',
+    textSize: 'medium',
+    font: 'sans',
+    motion: 'system',
+  })
   assert.deepEqual(normalizeAppearance({ accent: 'blue', width: 'focused' }), {
     accent: 'blue',
     width: 'focused',
+    textSize: 'medium',
+    font: 'sans',
+    motion: 'system',
   })
 })
 
@@ -85,13 +110,22 @@ test('applying writes both variables onto the root, and nothing besides', () => 
     },
   }
   applyAppearance({ accent: 'amber', width: 'focused' }, root)
-  assert.deepEqual(written, { '--color-accent': '#e0a44a', '--chat-width': '640px' })
+  assert.deepEqual(written, {
+    '--color-accent': '#e0a44a',
+    '--chat-width': '640px',
+    '--transcript-size': '14.5px',
+    '--transcript-font': "system-ui, 'Segoe UI', sans-serif",
+    '--motion': '1',
+  })
 })
 
 test('the boot path applies what is stored before the first paint', () => {
   const written: Record<string, string> = {}
   const store = new Map([
-    ['ai-assistant.appearance', JSON.stringify({ accent: 'blue', width: 'wide' })],
+    [
+      'ai-assistant.appearance',
+      JSON.stringify({ accent: 'blue', width: 'wide', textSize: 'large', font: 'serif', motion: 'reduced' }),
+    ],
   ])
   const globals = globalThis as unknown as { localStorage: unknown; document: unknown }
   const previous = { localStorage: globals.localStorage, document: globals.document }
@@ -115,5 +149,11 @@ test('the boot path applies what is stored before the first paint', () => {
     globals.localStorage = previous.localStorage
     globals.document = previous.document
   }
-  assert.deepEqual(written, { '--color-accent': '#4f8bf5', '--chat-width': '1040px' })
+  assert.deepEqual(written, {
+    '--color-accent': '#4f8bf5',
+    '--chat-width': '1040px',
+    '--transcript-size': '16.5px',
+    '--transcript-font': "Georgia, 'Times New Roman', serif",
+    '--motion': '0',
+  })
 })

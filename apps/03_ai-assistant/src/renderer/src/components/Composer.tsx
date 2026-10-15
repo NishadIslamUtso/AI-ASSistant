@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUp, ChevronDown, Cpu, Layers, Square } from 'lucide-react'
+import { ArrowUp, ChevronDown, CookingPot, Cpu, FolderOpen, Layers, Square } from 'lucide-react'
+import type { Project } from '@shared/lib/projects'
+import { vaultGet } from '@shared/lib/vault'
 import { useEngine, type EngineTurn } from '@/state/engine'
 import useDismiss from '@/hooks/useDismiss'
 
@@ -25,6 +27,9 @@ export default function Composer({
   busy,
   notice,
   preview,
+  projects = [],
+  project = null,
+  onProject,
 }: {
   value: string
   onChange: (value: string) => void
@@ -34,9 +39,14 @@ export default function Composer({
   notice: string
   /** Set in the browser preview, where there is no machine behind the window. */
   preview?: string
+  /** The project picker, as the approved composer shows it. */
+  projects?: Project[]
+  project?: string | null
+  onProject?: (id: string | null) => void
 }) {
   const box = useRef<HTMLTextAreaElement | null>(null)
   const [boxOpen, setBoxOpen] = useState<'engine' | 'models' | null>(null)
+  const [cook, setCook] = useState(false)
   const pickerRef = useRef<HTMLDivElement | null>(null)
   useDismiss(pickerRef, () => setBoxOpen(null), boxOpen !== null)
 
@@ -77,6 +87,8 @@ export default function Composer({
           className="block max-h-[200px] w-full resize-none bg-transparent px-4 pt-3.5 text-[14px] leading-relaxed text-ink outline-none placeholder:text-muted"
         />
         <div className="flex items-center gap-1.5 px-2.5 pb-2 pt-1" ref={pickerRef}>
+          <ProjectDropdown projects={projects} project={project} onProject={onProject} />
+          <span className="ml-auto" />
           <EngineChip open={boxOpen === 'engine'} onToggle={() => setBoxOpen(boxOpen === 'engine' ? null : 'engine')} />
           <ModelChip open={boxOpen === 'models'} onToggle={() => setBoxOpen(boxOpen === 'models' ? null : 'models')} />
           <span className="ml-auto flex items-center gap-2">
@@ -107,8 +119,164 @@ export default function Composer({
         </div>
       </div>
 
+      {value.trim() && !busy ? (
+        <div className="relative px-1 pt-1.5">
+          <button
+            type="button"
+            onClick={() => setCook(open => !open)}
+            aria-expanded={cook}
+            title="Cook this prompt: pull matching vault notes in as [Title: line] context, preview, then send"
+            className="flex h-7 items-center gap-1.5 rounded-lg border border-line bg-card px-2.5 text-[11.5px] text-muted hover:text-ink"
+          >
+            <CookingPot size={11} aria-hidden />
+            Cook This Prompt
+          </button>
+          {cook ? <CookDialog draft={value} onDone={(next) => { if (next !== null) onChange(next); setCook(false) }} /> : null}
+        </div>
+      ) : null}
       {preview ? <p className="px-1 pt-2 text-[12px] text-muted">{preview}</p> : null}
       {notice ? <p className="px-1 pt-2 text-[12px] text-warn">{notice}</p> : null}
+    </div>
+  )
+}
+
+/** The picker on the composer's left: which project this work belongs to. */
+function ProjectDropdown({
+  projects,
+  project,
+  onProject,
+}: {
+  projects: Project[]
+  project: string | null
+  onProject?: (id: string | null) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement | null>(null)
+  useDismiss(ref, () => setOpen(false), open)
+  const current = projects.find(entry => entry.id === project)
+  if (!onProject) return null
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(value => !value)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title="Which project this conversation belongs to"
+        className="flex h-7 min-w-0 items-center gap-1.5 rounded-lg px-2 text-[11.5px] text-muted hover:text-ink"
+      >
+        <FolderOpen size={11} aria-hidden />
+        <span className="min-w-0 max-w-[120px] truncate">{current ? current.name : 'Project'}</span>
+        <ChevronDown size={11} />
+      </button>
+      {open ? (
+        <div role="menu" aria-label="Projects" className="absolute bottom-9 left-0 z-20 w-[220px] rounded-xl border border-line bg-card p-1.5 shadow-xl">
+          <button
+            type="button"
+            role="menuitemradio"
+            aria-checked={project === null}
+            onClick={() => { onProject(null); setOpen(false) }}
+            className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-[12.5px] text-muted hover:text-ink"
+          >
+            No project
+          </button>
+          {projects.map(entry => (
+            <button
+              key={entry.id}
+              type="button"
+              role="menuitemradio"
+              aria-checked={entry.id === project}
+              onClick={() => { onProject(entry.id); setOpen(false) }}
+              className={`flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-[12.5px] ${
+                entry.id === project ? 'bg-white/[0.06] text-ink' : 'text-muted hover:text-ink'
+              }`}
+            >
+              <span className="min-w-0 flex-1 truncate">{entry.name}</span>
+            </button>
+          ))}
+          {projects.length === 0 ? (
+            <p className="px-2.5 py-2 text-[11.5px] leading-relaxed text-muted">
+              No projects yet. Projects is where one is made.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+/**
+ * Cook This Prompt: the vault as context, in the approved format. The draft's
+ * own words are the search against the vault's content; the hits become
+ * `[Title: line]` entries, shown for a yes or no — nothing enters the prompt
+ * unshown, and nothing leaves the machine.
+ */
+function CookDialog({ draft, onDone }: { draft: string; onDone: (next: string | null) => void }) {
+  const [hits, setHits] = useState<Array<{ path: string; line: number; text: string }>>([])
+  const [state, setState] = useState('looking')
+  const [picked, setPicked] = useState<Record<string, boolean>>({})
+
+  useEffect(() => {
+    const words = Array.from(new Set(draft.toLowerCase().split(/[^a-z0-9]+/).filter(word => word.length > 3))).slice(0, 3)
+    if (!words.length) {
+      setState('empty')
+      return
+    }
+    const controller = new AbortController()
+    vaultGet(`/grep?q=${encodeURIComponent(words.join(' '))}`, controller.signal)
+      .then((reply) => {
+        const found = Array.isArray(reply?.hits) ? reply.hits.slice(0, 6) : []
+        setHits(found)
+        setPicked(Object.fromEntries(found.map((hit: { path: string }) => [hit.path, true])))
+        setState(found.length ? 'ready' : 'nothing')
+      })
+      .catch(() => setState('offline'))
+    return () => controller.abort()
+  }, [draft])
+
+  const title = (path: string): string => path.replace(/\.md$/i, '').split('/').at(-1) ?? path
+
+  return (
+    <div className="absolute bottom-9 left-1 z-30 w-[340px] rounded-xl border border-line bg-card p-3 shadow-xl" role="dialog" aria-label="Cook this prompt">
+      <p className="text-[11px] font-medium uppercase tracking-wide text-muted">Enhanced prompt</p>
+      {state === 'looking' ? <p className="mt-2 text-[12px] text-muted">Searching the vault…</p> : null}
+      {state === 'empty' ? <p className="mt-2 text-[12px] text-muted">Write the prompt first — its words are the search.</p> : null}
+      {state === 'offline' ? <p className="mt-2 text-[12px] text-muted">The vault is not reachable right now.</p> : null}
+      {state === 'nothing' ? <p className="mt-2 text-[12px] text-muted">Nothing in the vault matches this prompt.</p> : null}
+      {state === 'ready' ? (
+        <div className="mt-2 flex max-h-[180px] flex-col gap-1 overflow-y-auto">
+          {hits.map(hit => (
+            <label key={`${hit.path}:${hit.line}`} className="flex cursor-pointer items-start gap-2 rounded-lg px-1.5 py-1 hover:bg-white/[0.04]">
+              <input
+                type="checkbox"
+                checked={picked[hit.path] === true}
+                onChange={() => setPicked(previous => ({ ...previous, [hit.path]: previous[hit.path] !== true }))}
+                className="mt-0.5 accent-[var(--color-accent)]"
+              />
+              <span className="min-w-0">
+                <span className="block text-[12px] text-ink">[{title(hit.path)}]</span>
+                <span className="block truncate text-[11px] text-muted">{hit.text}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+      ) : null}
+      <div className="mt-3 flex items-center justify-end gap-2">
+        <button type="button" onClick={() => onDone(null)} className="rounded-lg px-3 py-1 text-[12px] text-muted hover:text-ink">
+          Cancel
+        </button>
+        <button
+          type="button"
+          disabled={state !== 'ready'}
+          onClick={() => {
+            const lines = hits.filter(hit => picked[hit.path] === true).map(hit => `[${title(hit.path)}: ${hit.text.trim().slice(0, 120)}]`)
+            onDone(lines.length ? `${lines.join('\n')}\n\n${draft}` : draft)
+          }}
+          className="rounded-lg bg-accent px-3 py-1 text-[12px] font-medium text-white hover:bg-accent/90 disabled:opacity-50"
+        >
+          OK
+        </button>
+      </div>
     </div>
   )
 }

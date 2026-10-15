@@ -47,7 +47,7 @@ export default function MessageRow({
   if (message.role === 'user') {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[80%] whitespace-pre-wrap break-words rounded-2xl bg-card px-4 py-2.5 text-[14px] leading-relaxed">
+        <div className="max-w-[80%] whitespace-pre-wrap break-words rounded-2xl bg-card px-4 py-2.5 text-[length:var(--transcript-size,14.5px)] leading-relaxed [font-family:var(--transcript-font)]">
           {message.content}
           {message.editedAt && <span className="mt-1 block text-[11px] text-muted">edited</span>}
           {(message.attachments || []).length > 0 && (
@@ -90,7 +90,7 @@ export default function MessageRow({
         ) : null}
 
         {message.content ? (
-          <div className="whitespace-pre-wrap break-words text-[14px] leading-relaxed">
+          <div className="whitespace-pre-wrap break-words text-[length:var(--transcript-size,14.5px)] leading-relaxed [font-family:var(--transcript-font)]">
             {message.content}
           </div>
         ) : null}
