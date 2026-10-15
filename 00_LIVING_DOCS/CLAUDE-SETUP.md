@@ -35,19 +35,19 @@ background-friendly. Skipping both is possible too (free online models instead:
 no install, but internet, queues, and text leaves the machine) — allowed under
 the Free Gate, just a different trade.
 
-- [ ] **0.1 Verify Ollama is up** — cost: $0.
+- [x] **0.1 Verify Ollama is up** ✅ 2026-10-15 — answered; `qwen2.5-coder:3b` already installed, reports `tools`. — cost: $0.
       `curl.exe http://127.0.0.1:11434/api/tags` → lists his models.
       *Done when:* JSON with `models` comes back.
-- [ ] **0.2 Pull the free models** — cost: $0.
+- [x] **0.2 The free models** ✅ — `qwen2.5-coder:3b` (local, unlimited) + `gemma4:cloud` (remote 32.7B, thinking+tools+vision, 262k room, free starter slice — old `kimi-k2.5:cloud` tag is dead). — cost: $0.
       `ollama pull qwen2.5-coder:3b` (≈2 GB → fits the 4 GB card; the daily brain)
       `ollama pull kimi-k2.5:cloud` (optional — free, better quality, needs internet).
       *Done when:* `ollama list` shows both.
-- [ ] **0.3 Install Claude Code** — cost: $0.
+- [x] **0.3 Install Claude Code** ✅ — v2.1.300 via npm (mods-capable). — cost: $0.
       First `node -v`. If Node exists: `npm install -g @anthropic-ai/claude-code`.
       If not: I confirm the current official Windows installer when we hit this
       step (no guessed commands).
       *Done when:* `claude --version` answers.
-- [ ] **0.4 Point Claude Code at the free brain** — cost: $0.
+- [x] **0.4 Point Claude Code at the free brain** ✅ — env-var wiring worked in-session; User-level (permanent) copy delivered with Phase 1. — cost: $0.
       One-liner alternative: `ollama launch claude` (Ollama does the wiring).
       Manual form for a PowerShell 5.1 session:
       `$env:ANTHROPIC_BASE_URL = "http://localhost:11434"`
@@ -56,7 +56,7 @@ the Free Gate, just a different trade.
       then `claude`.
       *Done when:* a prompt inside `claude` gets a local-model reply and no auth
       error. Then persist the three variables as User env vars — only after 0.4 passes.
-- [ ] **0.5 Wobble test** — cost: $0.
+- [x] **0.5 Wobble test** ✅ — passed on `gemma4:cloud` (hello.txt written). Local 3B reads the rulebook now but picks wrong tools (grabbed `ExitPlanMode`) → cloud = default brain for agentic tasks, local = unlimited fallback. — cost: $0.
       One real task (small file edit in a throwaway folder) to check tool-calling
       on the chosen model. If tools fail: switch model (`:cloud` or a different
       coder), not a subscription.
@@ -64,6 +64,11 @@ the Free Gate, just a different trade.
 - [ ] 🅿️ **0.9 Optional taste of real Claude** — ~$5 free starter credits on a new
       console account (no card, expires into paid use). Blocked like any cost until
       he says "buy".
+
+**Phase 0 CLOSED 2026-10-15.** Auto-start: Startup-folder shortcut `OllamaServe.lnk`
+→ hidden wrapper `%USERPROFILE%\ollama-serve-hidden.ps1` (context 16384 baked in).
+Scheduled-task route was denied — non-admin account. Never run `ollama serve`
+by hand again.
 
 ## Phase 1 — Claude in his browser (free plan)
 
