@@ -62,6 +62,10 @@ export type DesktopBridge = {
   engine: {
     /** "Work here": the owner points the engine at a folder explicitly. */
     setWorkspace: (folder: string) => Promise<{ ok: boolean; answer: string }>
+    /** The resumable threads, per workspace. */
+    sessions: () => Promise<Array<{ workspace: string; sessionId: string }>>
+    forgetSession: (workspace: string) => Promise<{ ok: boolean }>
+    openFolder: (folder: string) => Promise<{ ok: boolean }>
   }
   settings: {
     /** What the app has been told to do. */
@@ -231,6 +235,9 @@ const demoBridge: DesktopBridge = {
   },
   engine: {
     setWorkspace: async () => ({ ok: false, answer: 'Choosing a workspace needs the desktop app.' }),
+    sessions: async () => [],
+    forgetSession: async () => ({ ok: false }),
+    openFolder: async () => ({ ok: false }),
   },
 }
 

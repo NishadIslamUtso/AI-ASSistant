@@ -98,6 +98,9 @@ const api = {
   engine: {
     setWorkspace: (folder: string): Promise<{ ok: boolean; answer: string }> =>
       ipcRenderer.invoke('engine:workspace-set', folder),
+    sessions: (): Promise<Array<{ workspace: string; sessionId: string }>> => ipcRenderer.invoke('engine:sessions'),
+    forgetSession: (workspace: string): Promise<{ ok: boolean }> => ipcRenderer.invoke('engine:sessions-forget', workspace),
+    openFolder: (folder: string): Promise<{ ok: boolean }> => ipcRenderer.invoke('app:open-folder', folder),
   },
   houseRules: {
     read: (): Promise<{ rules: HouseRules; defaults: HouseRules }> => ipcRenderer.invoke('houserules:read'),

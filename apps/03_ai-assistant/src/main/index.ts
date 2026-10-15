@@ -444,12 +444,54 @@ function registerBridges(): void {
   // IS the owner's explicit choice, same as the picker.
   ipcMain.handle('engine:workspace-set', (_event, folder: string): { ok: boolean; answer: string } => {
     const clean = typeof folder === 'string' ? folder.trim().slice(0, 4096) : ''
-    if (!clean || /[\n\r]/.test(clean) || /^https?:\/\//.test(clean)) {
+    // Empty is allowed and means "back to the vault" — a real choice, not a mistake.
+    if (clean === '') {
+      settings = writeSettings(settingsFile, { ...settings, engine: { ...settings.engine, workspace: '' } })
+      return { ok: true, answer: '' }
+    }
+    if (/[\n\r]/.test(clean) || /^https?:\/\//.test(clean)) {
       return { ok: false, answer: 'That is not a folder this app will work in.' }
     }
     if (!existsSync(clean)) return { ok: false, answer: 'That folder does not exist on this machine.' }
     settings = writeSettings(settingsFile, { ...settings, engine: { ...settings.engine, workspace: clean } })
     return { ok: true, answer: clean }
+  })
+
+  // The engine sessions, per workspace: the threads a fresh launch will
+  // continue. Read-only for the screen, with an explicit forget.
+  const sessionsFile = (): string => join(app.getPath('userData'), 'engine-sessions.json')
+  ipcMain.handle('engine:sessions', (): Array<{ workspace: string; sessionId: string }> => {
+    try {
+      const data = JSON.parse(readFileSync(sessionsFile(), 'utf8')) as Record<string, string>
+      return Object.entries(data)
+        .filter(([, id]) => typeof id === 'string' && id.length > 3)
+        .map(([workspace, sessionId]) => ({ workspace, sessionId: String(sessionId).slice(0, 64) }))
+        .slice(0, 20)
+    } catch {
+      return []
+    }
+  })
+
+  ipcMain.handle('engine:sessions-forget', (_event, workspace: string): { ok: boolean } => {
+    try {
+      const file = sessionsFile()
+      const data = JSON.parse(readFileSync(file, 'utf8')) as Record<string, string>
+      delete data[String(workspace ?? '')]
+      writeFileSync(file, JSON.stringify(data), 'utf8')
+      return { ok: true }
+    } catch {
+      return { ok: true }
+    }
+  })
+
+  // Open a folder in the file manager. Guarded to folders that exist and are
+  // at least plausible; it is the owner's machine and this is a convenience.
+  ipcMain.handle('app:open-folder', async (_event, folder: string): Promise<{ ok: boolean }> => {
+    const clean = typeof folder === 'string' ? folder.trim() : ''
+    if (!clean || clean.length > 4096 || /[\n\r]/.test(clean)) return { ok: false }
+    if (!existsSync(clean)) return { ok: false }
+    const error = await shell.openPath(clean)
+    return { ok: !error }
   })
 
   // The rulebook itself: read for the edit screen, write to persist and

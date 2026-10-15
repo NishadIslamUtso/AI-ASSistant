@@ -1,4 +1,4 @@
-import { Database, FolderOpen, MessageSquare, Shapes, Sun } from 'lucide-react'
+import { Database, FolderOpen, MessageSquare, Shapes, SquareTerminal, Sun } from 'lucide-react'
 
 /**
  * The app's own sections, at the top of the sidebar.
@@ -10,7 +10,7 @@ import { Database, FolderOpen, MessageSquare, Shapes, Sun } from 'lucide-react'
  * keep.
  */
 
-export type View = 'chat' | 'artifacts' | 'today' | 'projects' | 'vault'
+export type View = 'chat' | 'artifacts' | 'today' | 'projects' | 'vault' | 'code'
 
 const ITEMS: Array<{ id: View; label: string; Icon: typeof MessageSquare }> = [
   { id: 'chat', label: 'Chat', Icon: MessageSquare },
@@ -18,6 +18,7 @@ const ITEMS: Array<{ id: View; label: string; Icon: typeof MessageSquare }> = [
   { id: 'today', label: 'Today', Icon: Sun },
   { id: 'projects', label: 'Projects', Icon: FolderOpen },
   { id: 'vault', label: 'Vault', Icon: Database },
+  { id: 'code', label: 'Code', Icon: SquareTerminal },
 ]
 
 export default function AppNav({
@@ -62,11 +63,6 @@ export default function AppNav({
         )
       })}
 
-      {collapsed ? null : (
-        <p className="px-2.5 pb-0.5 pt-1 text-[10.5px] leading-relaxed text-muted/70">
-          Code is being built — it appears the day it works.
-        </p>
-      )}
     </nav>
   )
 }

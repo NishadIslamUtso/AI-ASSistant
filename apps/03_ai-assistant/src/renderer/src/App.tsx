@@ -16,6 +16,7 @@ import ArtifactsView from './components/ArtifactsView'
 import TodayView from './components/TodayView'
 import ProjectsView from './components/ProjectsView'
 import VaultView from './components/VaultView'
+import CodeView from './components/CodeView'
 import useArtifactLibrary, { adoptionRecords } from './state/artifactLibrary'
 import type { ArtifactSummary } from '../../main/artifacts/store'
 import useChat from './hooks/useChat'
@@ -372,7 +373,7 @@ export default function App() {
           onOpenMemory={() => setMemoryOpen(true)}
           profileName={profile.name}
         />
-        {view === 'vault' ? (
+        {view === 'code' ? <CodeView /> : view === 'vault' ? (
           <VaultView
             onAddToComposer={(path, content) => {
               // A note becomes context: quoted, capped, and named — never a
