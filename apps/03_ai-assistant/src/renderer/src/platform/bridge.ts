@@ -19,6 +19,7 @@
  *      so the UI's own empty state is what the person sees.
  */
 import type { CloudModelsAnswer, CloudTestAnswer, CloudView } from '@shared/lib/providers'
+import { DEFAULT_ENGINE, type EngineEvent, type EngineId, type EngineSettings } from '@shared/lib/engine'
 import { DEFAULT_PERMISSIONS, type Permissions } from '@shared/lib/permissions'
 import type {
   AdoptInput,
@@ -192,6 +193,39 @@ const demoBridge: DesktopBridge = {
 }
 
 export const bridge: DesktopBridge = hasDesktopBridge() ? (window.api as DesktopBridge) : demoBridge
+
+/**
+ * The engine bridge, exactly as the preload exposes it. The browser preview has
+ * no engine — there is no machine behind the window — so its answers are honest
+ * refusals, the same rule every other demo answer here follows.
+ */
+export type EngineBridge = {
+  read: () => Promise<{ engine: EngineSettings; running: boolean; history: EngineEvent[] }>
+  pick: (id: EngineId) => Promise<{ ok: boolean; answer: string }>
+  send: (prompt: string, cwd: string) => Promise<{ ok: boolean; answer: string }>
+  answer: (requestId: string, allow: boolean) => Promise<{ ok: boolean }>
+  stop: () => Promise<{ ok: boolean }>
+  onEvent: (listener: (event: EngineEvent) => void) => () => void
+}
+
+const demoEngineBridge: EngineBridge = {
+  read: async () => ({ engine: { ...DEFAULT_ENGINE }, running: false, history: [] }),
+  pick: async () => ({ ok: false, answer: 'Engines are chosen in the desktop app.' }),
+  send: async () => ({
+    ok: false,
+    answer: 'The engine works in the desktop app: this window is the interface only.',
+  }),
+  answer: async () => ({ ok: false }),
+  stop: async () => ({ ok: false }),
+  onEvent: () => () => undefined,
+}
+
+/** The real engine bridge when there is one, the honest refusal otherwise. */
+export const getEngineApi = (): EngineBridge => {
+  if (!hasDesktopBridge()) return demoEngineBridge
+  const candidate = (window as unknown as { engineApi?: EngineBridge }).engineApi
+  return candidate ?? demoEngineBridge
+}
 
 /** True in the browser preview, where there is no main process behind the UI. */
 export const isDemo = !hasDesktopBridge()

@@ -19,6 +19,8 @@ export default function Composer({
   models,
   notice,
   preview,
+  engineOn,
+  onEngineToggle,
 }: {
   value: string
   onChange: (value: string) => void
@@ -29,6 +31,9 @@ export default function Composer({
   notice: string
   /** Set in the browser preview, where there is no machine behind the window. */
   preview?: string
+  /** Engine mode: sends go to the worker engine instead of the chat brain. */
+  engineOn?: boolean
+  onEngineToggle?: () => void
 }) {
   const box = useRef<HTMLTextAreaElement | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -69,6 +74,20 @@ export default function Composer({
           className="block max-h-[200px] w-full resize-none bg-transparent px-4 pt-3.5 text-[14px] leading-relaxed text-ink outline-none placeholder:text-muted"
         />
         <div className="flex items-center gap-2 px-3 pb-2.5 pt-1.5">
+          {onEngineToggle ? (
+            <button
+              type="button"
+              aria-pressed={engineOn === true}
+              aria-label="Engine mode: give work to the engine instead of the chat"
+              onClick={onEngineToggle}
+              className={`flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[12px] ${
+                engineOn ? 'border-accent text-ink' : 'border-line text-muted hover:text-ink'
+              }`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${engineOn ? 'bg-accent' : 'bg-muted'}`} />
+              Engine
+            </button>
+          ) : null}
           <ModelMenu models={models} open={menuOpen} setOpen={setMenuOpen} menuRef={menuRef} />
           <span className="ml-auto flex items-center gap-2">
             {busy ? (
