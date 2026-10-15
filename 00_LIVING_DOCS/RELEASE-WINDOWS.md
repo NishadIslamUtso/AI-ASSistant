@@ -26,7 +26,7 @@ vanish on every sandbox restart; this is the whole ritual, start to finish.
 | Version | File | Size (B) | SHA-256 | When |
 | --- | --- | --- | --- | --- |
 | 0.4.0 | AI-ASSistant-Setup-0.4.0.exe | 88,049,746 | 0c19f17a… | 2026-10-15 |
-| 0.6.0 | AI-ASSistant-Setup-0.6.0.exe | 88,062,358 | 561b93d945dd7916a5fce12c62f75828c13013dcad0624fc6bd2f10ae39e16fe | 2026-10-16 |
+| 0.6.0 | AI-ASSistant-Setup-0.6.0.exe | 88,062,356 | c0c9c0861873b7b2db69c0d5d924563aa04b9cd53b015c44a8c4a640835ea38c | 2026-10-16 (rebuild; 1st build's copy was lost to the workspace size cap — two 88 MB exes at once exceed it. The 0.4.0 exe was deleted to make room; NSIS timestamps make each build's hash differ) |
 
 ## What the person installing will see
 
