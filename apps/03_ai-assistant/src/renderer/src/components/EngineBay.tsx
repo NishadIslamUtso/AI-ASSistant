@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronDown, FolderOpen, RefreshCw, Cpu, Cloud } from 'lucide-react'
+import { ChevronDown, Download, FolderOpen, RefreshCw, Trash2, Cpu, Cloud } from 'lucide-react'
 import { useEngine, type EngineModels } from '@/state/engine'
 import useDismiss from '@/hooks/useDismiss'
 import type { ApprovalMode, EngineId } from '@shared/lib/engine'
@@ -51,6 +51,7 @@ const THROTTLE: Array<{ id: ApprovalMode; label: string; note: string }> = [
 export default function EngineBay() {
   const engine = useEngine()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [pullName, setPullName] = useState('')
   const menuRef = useRef<HTMLDivElement | null>(null)
   useDismiss(menuRef, () => setMenuOpen(false), menuOpen)
 
@@ -150,9 +151,25 @@ export default function EngineBay() {
                     <span className="flex shrink-0 items-center gap-0.5 rounded-md border border-warn/50 px-1.5 text-[10.5px] text-warn">
                       <Cloud size={9} aria-hidden /> cloud
                     </span>
-                  ) : entry.sizeGB !== null ? (
-                    <span className="shrink-0 text-[11px] text-muted">{entry.sizeGB.toFixed(1)} GB</span>
-                  ) : null}
+                  ) : (
+                    <>
+                      {entry.sizeGB !== null ? (
+                        <span className="shrink-0 text-[11px] text-muted">{entry.sizeGB.toFixed(1)} GB</span>
+                      ) : null}
+                      <button
+                        type="button"
+                        title={`Take ${entry.name} off this machine`}
+                        aria-label={`Take ${entry.name} off this machine`}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          void engine.removeModel(entry.name)
+                        }}
+                        className="shrink-0 rounded p-0.5 text-muted hover:text-warn"
+                      >
+                        <Trash2 size={11} aria-hidden />
+                      </button>
+                    </>
+                  )}
                 </button>
               ))
             )}
@@ -164,9 +181,55 @@ export default function EngineBay() {
             >
               <RefreshCw size={11} aria-hidden /> Refresh the list
             </button>
+
+            {/* Bringing a brain home — no terminal needed. Local machines only:
+                cloud brains come from their own service, never a download. */}
+            {engine.settings.id === 'claude-code' ? (
+              <form
+                className="mt-1 flex items-center gap-1.5 border-t border-line px-1.5 pb-1 pt-2"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  if (pullName.trim()) void engine.startPull(pullName.trim()).then(() => setPullName(''))
+                }}
+              >
+                <input
+                  value={pullName}
+                  onChange={(event) => setPullName(event.target.value)}
+                  placeholder="e.g. llama3.2:3b"
+                  aria-label="The brain to bring home"
+                  className="h-7 min-w-0 flex-1 rounded-md border border-line bg-bg px-2 text-[11.5px] text-ink outline-none placeholder:text-muted focus:border-accent/60"
+                />
+                <button
+                  type="submit"
+                  disabled={engine.pull.active}
+                  title="Download this brain onto this machine"
+                  className="flex h-7 shrink-0 items-center gap-1 rounded-md border border-line px-2 text-[11.5px] text-muted hover:text-ink disabled:opacity-50"
+                >
+                  <Download size={11} aria-hidden /> Get
+                </button>
+              </form>
+            ) : null}
           </div>
         ) : null}
       </div>
+
+      {/* The pull's progress, while it runs. */}
+      {engine.pull.active ? (
+        <div className="mt-1.5 px-1">
+          <div className="h-1 w-full overflow-hidden rounded-full bg-line">
+            <div
+              className="h-full bg-accent transition-all"
+              style={{ width: `${Math.round((engine.pull.fraction ?? 0.05) * 100)}%` }}
+            />
+          </div>
+          <p className="mt-1 text-[10.5px] text-muted">
+            {engine.pull.name} — {engine.pull.status || 'working'}
+          </p>
+        </div>
+      ) : null}
+      {engine.pull.error && !engine.pull.active ? (
+        <p className="mt-1 px-1 text-[10.5px] text-warn">{engine.pull.error}</p>
+      ) : null}
 
       {/* Where the engine works. */}
       <button

@@ -212,6 +212,10 @@ export type EngineBridge = {
   pick: (id: EngineId) => Promise<{ ok: boolean; answer: string }>
   models: () => Promise<{ ok: boolean; models: EngineModelEntry[]; error?: string }>
   detect: () => Promise<EngineAvailability[]>
+  pull: (name: string) => Promise<{ ok: boolean; answer: string }>
+  deleteModel: (name: string) => Promise<{ ok: boolean; answer: string }>
+  /** Pull progress ticks; returns the unsubscribe. */
+  onPullEvent: (listener: (tick: unknown) => void) => () => void
   setModel: (model: string) => Promise<{ ok: boolean; answer: string }>
   setApproval: (mode: ApprovalMode) => Promise<{ ok: boolean; answer: string }>
   pickWorkspace: () => Promise<{ ok: boolean; answer: string }>
@@ -230,6 +234,9 @@ const demoEngineBridge: EngineBridge = {
     error: 'Engine brains are listed in the desktop app: this window is the interface only.',
   }),
   detect: async () => [],
+  pull: async () => ({ ok: false, answer: 'Pulling brains needs the desktop app.' }),
+  deleteModel: async () => ({ ok: false, answer: 'Removing brains needs the desktop app.' }),
+  onPullEvent: () => () => undefined,
   setModel: async () => ({ ok: false, answer: 'Brains are chosen in the desktop app.' }),
   setApproval: async () => ({ ok: false, answer: 'The throttle lives in the desktop app.' }),
   pickWorkspace: async () => ({

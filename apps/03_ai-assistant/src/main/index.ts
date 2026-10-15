@@ -21,6 +21,7 @@ import { createEngineSocket, type EngineSocket } from './engine/socket'
 import { normalizeEngine } from '../shared/lib/engine'
 import { APPROVAL_MODES, type ApprovalMode, type EngineEvent, type EngineId, type EngineModelEntry } from '../shared/lib/engine'
 import { agyModelSource, detectEngine } from './engine/availability'
+import { parsePullLine, validateModelName } from './engine/pull'
 
 /**
  * The main process. Everything that touches the machine lives on this side:
@@ -270,6 +271,71 @@ function registerBridges(): void {
   ipcMain.handle('engine:stop', () => {
     engine?.stop()
     return { ok: true }
+  })
+
+  // Bringing a brain home. The door streams progress sentences; each becomes
+  // an event on the same channel the engine's own events use, so the bay can
+  // show a real bar instead of a spinner of lies.
+  ipcMain.handle('engine:pull', async (_event, rawName: string): Promise<{ ok: boolean; answer: string }> => {
+    const name = validateModelName(rawName)
+    if (!name) return { ok: false, answer: 'That is not a model name this app will ask for.' }
+    const door = settings.engine.baseUrl || 'http://localhost:11434'
+    const send = (tick: unknown): void => {
+      for (const window of BrowserWindow.getAllWindows()) window.webContents.send('engine:pull-event', tick)
+    }
+    try {
+      const answer = await fetch(`${door}/api/pull`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ model: name }),
+      })
+      if (!answer.ok || !answer.body) {
+        const why = `the brain door answered ${answer.status}`
+        send({ status: '', total: null, completed: null, done: false, error: why })
+        return { ok: false, answer: why }
+      }
+      const decoder = new TextDecoder()
+      let carry = ''
+      // Node's undici stream is async-iterable at runtime; the type lib here
+      // does not say so, hence the one honest cast.
+      const body = answer.body as unknown as AsyncIterable<Uint8Array>
+      for await (const chunk of body) {
+        carry = `${carry}${decoder.decode(chunk as Buffer, { stream: true })}`
+        const lines = carry.split('\n')
+        carry = lines.at(-1) ?? ''
+        for (const line of lines.slice(0, -1)) {
+          const tick = parsePullLine(line)
+          if (tick.status || tick.error) send(tick)
+          if (tick.error) return { ok: false, answer: `the pull failed: ${tick.error}` }
+        }
+      }
+      const finalTick = parsePullLine(carry)
+      if (finalTick.error) return { ok: false, answer: `the pull failed: ${finalTick.error}` }
+      send({ status: 'success', total: null, completed: null, done: true, error: '' })
+      return { ok: true, answer: `${name} is home — it is in the brain list now` }
+    } catch {
+      const why = 'the brain door (Ollama) is not answering — start it, then try again'
+      send({ status: '', total: null, completed: null, done: false, error: why })
+      return { ok: false, answer: why }
+    }
+  })
+
+  // Taking a brain off the machine, when the owner no longer wants it.
+  ipcMain.handle('engine:model-delete', async (_event, rawName: string): Promise<{ ok: boolean; answer: string }> => {
+    const name = validateModelName(rawName)
+    if (!name) return { ok: false, answer: 'That is not a model name this app will ask for.' }
+    const door = settings.engine.baseUrl || 'http://localhost:11434'
+    try {
+      const answer = await fetch(`${door}/api/delete`, {
+        method: 'DELETE',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ model: name }),
+      })
+      if (!answer.ok) return { ok: false, answer: `the brain door answered ${answer.status}` }
+      return { ok: true, answer: `${name} is gone from this machine` }
+    } catch {
+      return { ok: false, answer: 'the brain door (Ollama) is not answering — start it, then try again' }
+    }
   })
 
   // The brains the engine can actually use, straight from the brain door —

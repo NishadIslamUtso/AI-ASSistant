@@ -36,6 +36,18 @@ const engineApi = {
     ipcRenderer.invoke('engine:models'),
   /** What engines are really installed on this machine. */
   detect: (): Promise<EngineAvailability[]> => ipcRenderer.invoke('engine:detect'),
+  /** Bring a brain home; progress arrives through onPullEvent. */
+  pull: (name: string): Promise<{ ok: boolean; answer: string }> => ipcRenderer.invoke('engine:pull', name),
+  /** Take a brain off this machine. */
+  deleteModel: (name: string): Promise<{ ok: boolean; answer: string }> =>
+    ipcRenderer.invoke('engine:model-delete', name),
+  /** Pull progress ticks, in the same shape `parsePullLine` produces. */
+  onPullEvent: (listener: (tick: unknown) => void): (() => void) => {
+    const channel = 'engine:pull-event'
+    const wrapped = (_event: unknown, tick: unknown): void => listener(tick)
+    ipcRenderer.on(channel, wrapped)
+    return () => ipcRenderer.removeListener(channel, wrapped)
+  },
   /** Pick which brain the engine thinks with. */
   setModel: (model: string): Promise<{ ok: boolean; answer: string }> =>
     ipcRenderer.invoke('engine:model', model),

@@ -37,6 +37,16 @@ export type EngineModels = { loading: boolean; entries: EngineModelEntry[]; erro
 /** What is really installed on this machine, as the last detection saw it. */
 export type EngineDetection = { loading: boolean; engines: EngineAvailability[] }
 
+/** Bringing a brain home, as the door reports its progress. */
+export type PullState = {
+  active: boolean
+  name: string
+  status: string
+  /** 0..1 while downloading; null when the door gives no sizes. */
+  fraction: number | null
+  error: string
+}
+
 /** One work order, from the moment it is sent to the moment it lands. */
 export type EngineTurn = {
   prompt: string
@@ -56,6 +66,7 @@ export type EngineState = {
   turn: EngineTurn | null
   models: EngineModels
   detection: EngineDetection
+  pull: PullState
   /** Whether the engine process is alive on this machine, as last reported. */
   alive: boolean
 }
@@ -83,6 +94,10 @@ type EngineStore = EngineState & {
   pickWorkspace(): Promise<void>
   /** Ask the machine which engines really exist. */
   checkEngines(): Promise<void>
+  /** Bring a brain home; progress lands in `pull`. */
+  startPull(name: string): Promise<{ ok: boolean; answer: string }>
+  /** Take a brain off this machine. */
+  removeModel(name: string): Promise<{ ok: boolean; answer: string }>
 }
 
 const state: EngineState = {
@@ -91,6 +106,7 @@ const state: EngineState = {
   turn: null,
   models: { loading: false, entries: [], error: '' },
   detection: { loading: false, engines: [] },
+  pull: { active: false, name: '', status: '', fraction: null, error: '' },
   alive: false,
 }
 
@@ -179,6 +195,9 @@ const store: EngineStore = {
   get detection() {
     return state.detection
   },
+  get pull() {
+    return state.pull
+  },
 
   async init(): Promise<void> {
     if (subscribed || initializing) return
@@ -191,6 +210,15 @@ const store: EngineStore = {
       initializing = false
     }
     api.onEvent(ingest)
+    api.onPullEvent((tick) => {
+      const record = (tick && typeof tick === 'object' ? tick : {}) as Record<string, unknown>
+      const status = typeof record.status === 'string' ? record.status : ''
+      const error = typeof record.error === 'string' ? record.error : ''
+      const total = typeof record.total === 'number' ? record.total : null
+      const completed = typeof record.completed === 'number' ? record.completed : null
+      const fraction = total !== null && completed !== null && total > 0 ? Math.min(1, completed / total) : null
+      setState({ pull: { ...state.pull, status, error, fraction } })
+    })
     subscribed = true
   },
 
@@ -262,6 +290,25 @@ const store: EngineStore = {
     setState({ detection: { loading: false, engines } })
   },
 
+  async startPull(name: string): Promise<{ ok: boolean; answer: string }> {
+    if (state.pull.active) return { ok: false, answer: 'A brain is already downloading.' }
+    setState({ pull: { active: true, name, status: 'asking the door', fraction: null, error: '' } })
+    const answer = await getEngineApi().pull(name)
+    setState({
+      pull: answer.ok
+        ? { active: false, name: '', status: 'done', fraction: 1, error: '' }
+        : { ...state.pull, active: false, error: answer.answer },
+    })
+    if (answer.ok) void store.loadModels()
+    return answer
+  },
+
+  async removeModel(name: string): Promise<{ ok: boolean; answer: string }> {
+    const answer = await getEngineApi().deleteModel(name)
+    if (answer.ok) void store.loadModels()
+    return answer
+  },
+
   async pickWorkspace(): Promise<void> {
     const answer = await getEngineApi().pickWorkspace()
     if (answer.ok) setState({ settings: { ...state.settings, workspace: answer.answer } })
@@ -309,6 +356,7 @@ export function resetEngineForTests(): void {
   state.settings = { ...DEFAULT_ENGINE }
   state.models = { loading: false, entries: [], error: '' }
   state.detection = { loading: false, engines: [] }
+  state.pull = { active: false, name: '', status: '', fraction: null, error: '' }
   state.alive = false
   emit()
 }
