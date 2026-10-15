@@ -15,6 +15,7 @@ import { engineStore } from '@/state/engine'
 import ArtifactsView from './components/ArtifactsView'
 import TodayView from './components/TodayView'
 import ProjectsView from './components/ProjectsView'
+import FirstRunView from './components/FirstRunView'
 import VaultView from './components/VaultView'
 import CodeView from './components/CodeView'
 import useArtifactLibrary, { adoptionRecords } from './state/artifactLibrary'
@@ -53,7 +54,8 @@ export default function App() {
   const [notice, setNotice] = useState('')
 
   const chats = useChats(setNotice)
-  const [profile] = usePersistentState('ai-assistant.profile', DEFAULT_PROFILE, normalizeProfile, setNotice)
+  const [profile, setProfile] = usePersistentState('ai-assistant.profile', DEFAULT_PROFILE, normalizeProfile, setNotice)
+  const [welcomed, setWelcomed] = usePersistentState('ai-assistant.welcomed', false, (value) => value === true, setNotice)
   const [model, setModel] = usePersistentState(
     'ai-assistant.model',
     DEFAULT_MODEL,
@@ -335,6 +337,10 @@ export default function App() {
       setDraft('')
       setNotice('')
     }
+  }
+
+  if (!welcomed) {
+    return <FirstRunView onFinish={() => setWelcomed(true)} onName={(name) => setProfile({ ...profile, name })} />
   }
 
   return (
