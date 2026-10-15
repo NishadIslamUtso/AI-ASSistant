@@ -1,6 +1,7 @@
 # HANDOVER_LIVING.md — Current State + Gaps (Living)
 
-> **Taking over? Read in this order:** `BUILD-TODO.md` in this folder (the live
+> **Taking over? Read in this order:** `TODOLIST.md` in this folder (the active
+> checklist — light-shell frame, the Claude-connection plan), then `BUILD-TODO.md` here (the reference
 > plan, screens-first order + the full mockup/feature tables), `CHANGELOG.md`
 > (what landed when, with commit ids), `../memory/sessions/` (why decisions
 > were made, what failed and must not be retried), `../ai/STATE.json`
