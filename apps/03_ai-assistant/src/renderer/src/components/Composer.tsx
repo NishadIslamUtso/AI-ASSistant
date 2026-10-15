@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ArrowUp, ChevronDown, Cpu, Square } from 'lucide-react'
 import { useEngine } from '@/state/engine'
 import type { ModelState } from '@/hooks/useModels'
+import { isCloudModelName } from '@shared/lib/providers'
 import useDismiss from '@/hooks/useDismiss'
 
 /**
@@ -171,6 +172,9 @@ function ModelMenu({
           }`}
         />
         {models.model}
+        {isCloudModelName(models.model) ? (
+          <span className="rounded-md border border-line px-1.5 text-[10.5px] text-muted">cloud</span>
+        ) : null}
         <ChevronDown size={12} />
       </button>
 
@@ -202,9 +206,9 @@ function ModelMenu({
                 }`}
               >
                 <span className="min-w-0 flex-1 truncate">{entry.name}</span>
-                {entry.cloud ? (
+                {entry.cloud || isCloudModelName(entry.name) ? (
                   <span className="shrink-0 rounded-md border border-line px-1.5 text-[10.5px] text-muted">
-                    online
+                    cloud
                   </span>
                 ) : typeof entry.size === 'number' ? (
                   <span className="shrink-0 text-[11px] text-muted">

@@ -29,6 +29,10 @@ const asRecord = (value: unknown): LooseRecord => (value && typeof value === 'ob
 
 export function createEngineParser(): EngineParser {
   let buffer = ''
+  // What has already been shown through deltas for the message being
+  // streamed. When the finished message arrives and says the same thing, it
+  // is not news — showing both would print every answer twice.
+  let streamed = ''
   // How much of `buffer` is already known to hold no newline: everything
   // before this offset was scanned by an earlier feed. A line chopped at a
   // chunk boundary is therefore rescanned only in its new tail — a long-lived
@@ -85,20 +89,39 @@ export function createEngineParser(): EngineParser {
       return events
     }
 
+    if (message.type === 'stream_event') {
+      // A piece of the engine's words as they form. Anything else about the
+      // stream (message envelopes, block boundaries, thinking deltas) is the
+      // wire's business, not the window's.
+      const event = asRecord(message.event)
+      if (event.type !== 'content_block_delta') return []
+      const delta = asRecord(event.delta)
+      if (delta.type !== 'text_delta' || typeof delta.text !== 'string' || !delta.text) return []
+      streamed = streamed.length > 200_000 ? delta.text : streamed + delta.text
+      return [{ kind: 'delta', text: delta.text }]
+    }
+
     if (message.type === 'assistant') {
       // The engine's turn: text pieces and the tools it decided to use.
       const content = asRecord(message.message).content
       if (!Array.isArray(content)) return []
       const events: EngineEvent[] = []
+      let messageText = ''
       for (const block of content) {
         const entry = asRecord(block)
         if (entry.type === 'text' && typeof entry.text === 'string' && entry.text.trim()) {
+          messageText += entry.text
           events.push({ kind: 'text', text: entry.text })
         } else if (entry.type === 'tool_use' && typeof entry.name === 'string') {
           events.push({ kind: 'tool', name: entry.name, summary: toolSummary(entry.name, entry.input) })
         }
         // thinking blocks are the engine's private scratchwork — not shown.
       }
+      // What the stream already showed, word for word, is not shown again.
+      if (messageText && messageText === streamed) {
+        return events.filter((event) => event.kind !== 'text')
+      }
+      streamed = ''
       return events
     }
 

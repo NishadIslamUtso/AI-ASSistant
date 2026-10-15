@@ -71,6 +71,9 @@ export function engineArguments(model: string, approval: ApprovalMode = 'ask', r
   const args = [
     '--output-format', 'stream-json',
     '--input-format', 'stream-json',
+    // The engine's words as they form, not sentence-at-a-time: without this
+    // the CLI reports only finished messages, and a long turn looks frozen.
+    '--include-partial-messages',
     '--verbose',
     '--permission-mode', PERMISSION_MODE[approval],
     '--permission-prompt-tool', 'stdio',

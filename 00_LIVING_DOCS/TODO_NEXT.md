@@ -99,13 +99,13 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
 ## TRACK C — open defects (judge list; fix as encountered, all before 1.0)
 
 - [x] free-gate: empty `baseUrl` still passes machine env through — FIXED: `sanitizeEnvironment` strips ANTHROPIC_* from the inherited env on every launch; the chosen brain is applied on top, none borrowed
-- [ ] cloud/local badge classification in the chat model list
+- [x] cloud/local badge classification — FIXED: one function (`isCloudModelName`) classifies for every list; the composer's trigger badges the chosen brain too, and the list speaks the one canonical word ("cloud")
 - [x] stdin EPIPE guard — FIXED: guarded `writeLine` + stdin error swallow; a dead pipe is "not delivered", never a crash
 - [x] deliberate kill is quiet — FIXED: `deliberate` flag; a stop's close carries no error card, a real crash still says why
 - [x] Windows stop = `taskkill /pid <pid> /T /F` — FIXED: tree-kill through the shell's pid (pinned by test); plain signal elsewhere
 - [x] parser scan-offset — FIXED: `scanned` offset; a chunk-chopped line is rescanned only in its new tail (linear, pinned at every split point)
 - [x] `engine:read` history hydrate-or-drop — FIXED: a window opened mid-turn replays the remembered events; replayed-as-live then reconciled (a dead engine's leftover question is dropped, a cut-off run closes as "engine stopped", empty history shows nothing)
-- [ ] token streaming (incremental text, not end-of-turn)
+- [x] token streaming — FIXED: `--include-partial-messages`; `stream_event` text deltas become `delta` events, the renderer grows one line instead of stacking words, the finished message is shown once, and deltas never crowd the remembered history
 - [x] >1 pending card queue — FIXED: `permissions` queue in arrival order; the first is answered first, the rest counted ("+N more waiting"); nothing lost under the card being looked at
 - [x] ~~settings.permissions → engine flags~~ RESOLVED BY DECISION
   (2026-10-15): the app imposes no rules of its own — owner-favor, documented

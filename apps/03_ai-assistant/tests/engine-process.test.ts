@@ -7,6 +7,7 @@ import {
   sanitizeEnvironment,
   stopArguments,
   startClaudeCodeSession,
+  engineArguments,
 } from '../src/main/engine/claudeCode'
 import { createEngineParser } from '../src/main/engine/stream'
 
@@ -177,4 +178,41 @@ test('the parser rescans only the new tail at a chunk boundary', () => {
 
 test('the tree-kill line is pinned', () => {
   assert.deepEqual(stopArguments(987654), ['/pid', '987654', '/T', '/F'])
+})
+
+
+test('the launch line asks for the stream, not just finished sentences', () => {
+  assert.match(engineArguments('m').join(' '), /--include-partial-messages/)
+})
+
+test('the stream: words arrive as they form, and the finished message is not printed twice', () => {
+  const parser = createEngineParser()
+  const events = [
+    ...parser.feed(`${JSON.stringify({ type: 'stream_event', event: { type: 'message_start' } })}\n`),
+    ...parser.feed(`${JSON.stringify({ type: 'stream_event', event: { type: 'content_block_delta', delta: { type: 'text_delta', text: 'Hel' } } })}\n`),
+    ...parser.feed(`${JSON.stringify({ type: 'stream_event', event: { type: 'content_block_delta', delta: { type: 'text_delta', text: 'lo.' } } })}\n`),
+  ]
+  assert.deepEqual(events, [{ kind: 'delta', text: 'Hel' }, { kind: 'delta', text: 'lo.' }])
+
+  // The finished message says exactly what the stream already showed: kept
+  // for the record, not shown twice.
+  const done = parser.feed(
+    `${JSON.stringify({ type: 'assistant', message: { content: [{ type: 'text', text: 'Hello.' }] } })}\n`
+  )
+  assert.deepEqual(done, [])
+
+  // A different tool-heavy message still comes through whole.
+  const next = parser.feed(
+    `${JSON.stringify({ type: 'assistant', message: { content: [{ type: 'tool_use', name: 'Read', input: { file_path: 'a.md' } }] } })}\n`
+  )
+  assert.deepEqual(next.map((event) => event.kind), ['tool'])
+})
+
+test('the stream: an assistant text that differs from what was streamed still shows', () => {
+  const parser = createEngineParser()
+  parser.feed(`${JSON.stringify({ type: 'stream_event', event: { type: 'content_block_delta', delta: { type: 'text_delta', text: 'partial' } } })}\n`)
+  const events = parser.feed(
+    `${JSON.stringify({ type: 'assistant', message: { content: [{ type: 'text', text: 'the whole truth, differently put' }] } })}\n`
+  )
+  assert.deepEqual(events, [{ kind: 'text', text: 'the whole truth, differently put' }])
 })

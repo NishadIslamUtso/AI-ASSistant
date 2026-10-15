@@ -382,3 +382,21 @@ test('a window opened mid-turn hydrates the remembered work; a phantom is droppe
   await third.init()
   assert.equal(third.turn, null, 'nothing happened, nothing is shown')
 })
+
+
+test('the stream grows the engine\u2019s last words instead of stacking one-word lines', async () => {
+  const { store, fake } = freshStore()
+  await store.send('say something long')
+  fake.listener?.({ kind: 'delta', text: 'Hel' })
+  fake.listener?.({ kind: 'delta', text: 'lo' })
+  fake.listener?.({ kind: 'delta', text: ' there.' })
+  const texts = store.turn?.items.filter((item) => item.kind === 'text') ?? []
+  assert.equal(texts.length, 1, 'one growing line, not three items')
+  assert.equal(texts[0]?.kind === 'text' ? texts[0].text : '', 'Hello there.')
+
+  // The finished answer says the same words: shown once.
+  fake.listener?.({ kind: 'done', text: 'Hello there.' })
+  const after = store.turn?.items.filter((item) => item.kind === 'text') ?? []
+  assert.equal(after.length, 1)
+  assert.equal(store.turn?.state, 'done')
+})

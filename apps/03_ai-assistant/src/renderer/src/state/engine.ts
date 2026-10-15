@@ -144,6 +144,12 @@ const ingest = (event: EngineEvent): void => {
     turn.items.push({ kind: 'status', text: event.text })
   } else if (event.kind === 'text') {
     turn.items.push({ kind: 'text', text: event.text })
+  } else if (event.kind === 'delta') {
+    // The stream, as it forms: the engine's last item grows word by word
+    // instead of a hundred one-word items being stacked up.
+    const last = turn.items.at(-1)
+    if (last?.kind === 'text') last.text += event.text
+    else turn.items.push({ kind: 'text', text: event.text })
   } else if (event.kind === 'tool') {
     turn.items.push({ kind: 'tool', name: event.name, summary: event.summary })
   } else if (event.kind === 'permission') {

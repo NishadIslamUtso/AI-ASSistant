@@ -145,6 +145,17 @@ export function providerById(id: string): CloudProvider | undefined {
  */
 export const cloudModelName = (providerId: string, model: string): string => `${providerId}/${model}`
 
+/**
+ * Is this the name of a brain whose work leaves the machine? Two shapes say
+ * so: a provider's own `provider/model` entry, and Ollama's `:cloud` suffix.
+ * The badge, the trigger and the tests all ask this one function, so a model
+ * can never look local in one list and cloud in another.
+ */
+export function isCloudModelName(name: unknown): boolean {
+  const value = String(name ?? '')
+  return parseCloudModel(value) !== null || /(?::|-)cloud(?:$|:)/i.test(value)
+}
+
 export function parseCloudModel(name: unknown): { provider: CloudProvider; model: string } | null {
   const value = String(name ?? '')
   const slash = value.indexOf('/')
