@@ -1,7 +1,12 @@
 # AI ASSistant — TODOLIST (light-shell reframe)
 
 **Written 2026-10-15**, after the "I do everything in Claude anyway" conversation.
-This is the **active checklist**. `BUILD-TODO.md` keeps its job as the reference
+**PARKED 2026-10-15 (owner):** *"i don't need to make the app, i just need to
+set the claude and claude code the way i want."* The active path is now
+`CLAUDE-SETUP.md`; this list stays as the record of what the app would have been
+— every item remains valid if he returns to it.
+
+This was the **active checklist**. `BUILD-TODO.md` keeps its job as the reference
 (mockup table, feature sections, community-plan pointer). Where the two disagree
 on ORDER, this file wins.
 
