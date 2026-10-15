@@ -1,4 +1,6 @@
 # CHANGELOG.md — What Changed Each Session (Living)
+- **Installer 0.6.0 built** (2026-10-16, his go): `AI-ASSistant-Setup-0.6.0.exe`, 88,062,358 B, SHA-256 `561b93d945dd7916a5fce12c62f75828c13013dcad0624fc6bd2f10ae39e16fe` — one-click, runs after finish, per-user. The full recipe now lives in RELEASE-WINDOWS.md so it can never be lost again.
+
 
 ## 0.6.0 — Track D: the practice — research first, then each feature
 
