@@ -12,6 +12,8 @@ subscription. Other than that, everything must be free."*
   explanation the first time it appears.
 - **App status:** parked (see `TODOLIST.md`), not deleted. No app code unless he
   un-parks it.
+- **GUI-first (owner, 2026-10-15):** he wants APP WINDOWS, not terminal workflows —
+  hand him clickable paths; console pastes only for setup when unavoidable.
 - **Cadence (corrected 2026-10-15):** batched paste-blocks — one paste runs several
   commands (his call: "so i can copy paste a lot at once"). He says **"next"** between blocks.
 
@@ -98,6 +100,14 @@ by hand again.
       Remember: **mods are unsandboxed** (full machine access) — trusted sources
       only; he approves each install. Cost: $0.
       *Done when:* the mod's UI/behavior is visibly active.
+- [ ] **2.4 Claude Code as an APP (owner requirement 2026-10-15: "i want the claude
+      code app, i don't want to do it in terminal"):** install Claude Desktop
+      (claude.com/download, Windows x64), sign in FREE, try the **Code** tab.
+      If it demands a subscription → Free Gate: record paywalled, fall back to
+      VS Code + official Claude Code extension (free, windowed) or a free GUI
+      wrapper. The app also carries the official **Ollama gateway** (local free
+      brains inside the app). Cost: $0. *Done when:* Claude Code works inside a
+      window on free brains, or the wall is recorded and fallback chosen.
 - [ ] **2.3 Vault to Claude Code:** filesystem MCP config or a `CLAUDE.md` at the
       vault root. Cost: $0. *Done when:* Claude Code reads a named note unprompted.
 - [ ] **2.5 Optional — put his existing `agy` to work:** `agy` on his device is the
