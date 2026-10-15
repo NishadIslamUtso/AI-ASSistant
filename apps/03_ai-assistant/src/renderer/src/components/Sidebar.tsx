@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Cpu, PanelLeftClose, PanelLeftOpen, Plus, Search, Trash2, X } from 'lucide-react'
+import { PanelLeftClose, PanelLeftOpen, Plus, Search, Store, Trash2, X } from 'lucide-react'
 import type { Chat } from '@shared/types'
 import { searchChats } from '@shared/lib/search'
 import { initials } from '@shared/lib/profile'
 import { groupChats } from '@/state/useChats'
 import usePersistentState from '@/hooks/usePersistentState'
 import AppNav, { type View } from './AppNav'
-import EngineBay from './EngineBay'
 
 /**
  * The list of conversations, and the app's own sections above them.
@@ -33,7 +32,7 @@ function normalizePrefs(value: unknown): SidebarPrefs {
   const width = Number(raw.width)
   return {
     collapsed: raw.collapsed === true,
-    width: Number.isFinite(width) ? Math.min(Math.max(width, MIN_WIDTH), MAX_WIDTH) : 264,
+    width: Number.isFinite(width) ? Math.min(Math.max(width, MIN_WIDTH), MAX_WIDTH) : 260,
   }
 }
 
@@ -45,6 +44,7 @@ export default function Sidebar({
   onDelete,
   onOpenSettings,
   onOpenMemory,
+  onOpenMarketplace,
   profileName,
   view,
   onView,
@@ -61,6 +61,8 @@ export default function Sidebar({
   onOpenSettings: () => void
   /** Browsing Maps: what was read and when, drawn from the vault. */
   onOpenMemory: () => void
+  /** The marketplace: apps, extensions, skills — what the app can reach. */
+  onOpenMarketplace: () => void
   profileName: string
   /** Which screen is showing, so the sidebar can serve it. */
   view: View
@@ -71,7 +73,7 @@ export default function Sidebar({
   artifactCount: number
 }) {
   const [query, setQuery] = useState('')
-  const [prefs, setPrefs] = usePersistentState<SidebarPrefs>('ai-assistant.sidebar', { collapsed: false, width: 264 }, normalizePrefs)
+  const [prefs, setPrefs] = usePersistentState<SidebarPrefs>('ai-assistant.sidebar', { collapsed: false, width: 260 }, normalizePrefs)
   const [dragging, setDragging] = useState(false)
   const aside = useRef<HTMLElement | null>(null)
 
@@ -126,29 +128,8 @@ export default function Sidebar({
         >
           <Plus size={15} />
         </button>
-        <AppNav view={view} onView={onView} collapsed artifactCount={artifactCount} />
-        <button
-          type="button"
-          onClick={() => setPrefs(previous => ({ ...previous, collapsed: false }))}
-          aria-label="Engine settings"
-          title="Engine — which agent, which brain, which folder"
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-white/[0.06] hover:text-ink"
-        >
-          <Cpu size={15} />
-        </button>
+        {/* Collapsed means conversations only: every other option is hidden. */}
         <span className="flex-1" />
-        <button
-          type="button"
-          onClick={onOpenMemory}
-          aria-label="Browsing Maps"
-          title="Browsing Maps — what was read and when"
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-white/[0.06] hover:text-ink"
-        >
-          <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="9" cy="9" r="6" />
-            <path d="M6.6 9h4.8M9 6.6v4.8" />
-          </svg>
-        </button>
         <button
           type="button"
           onClick={onOpenSettings}
@@ -170,7 +151,7 @@ export default function Sidebar({
       className="relative flex shrink-0 flex-col border-r border-line bg-panel"
       style={{ width: prefs.width }}
     >
-      <div className="flex flex-col gap-2 p-3">
+      <div className="flex flex-col gap-1.5 p-2.5">
         <label className="relative block">
           <Search
             size={14}
@@ -214,12 +195,12 @@ export default function Sidebar({
           New chat
         </button>
 
-        <AppNav view={view} onView={onView} artifactCount={artifactCount} />
-
-        <EngineBay />
       </div>
 
-      <nav className="min-h-0 flex-1 overflow-y-auto px-3 pb-3" aria-label="Conversations">
+      {/* One scroll: the sections and the conversations share it, so the list
+          is always reachable no matter how much sits above it. */}
+      <nav className="min-h-0 flex-1 overflow-y-auto px-2.5 pb-2" aria-label="Conversations">
+        <AppNav view={view} onView={onView} artifactCount={artifactCount} />
         {view === 'artifacts' ? (
           <p className="px-1 py-2 text-[12px] leading-relaxed text-muted">
             {artifactCount
@@ -235,7 +216,7 @@ export default function Sidebar({
         ) : (
           groups.map(group => (
             <section key={group.label} className="mb-3">
-              <h2 className="px-1 pb-1.5 pt-2 text-[11px] font-medium uppercase tracking-wide text-muted">
+              <h2 className="px-1 pb-1 pt-1.5 text-[10px] font-medium uppercase tracking-wide text-muted">
                 {group.label}
               </h2>
               {group.chats.map(chat => (
@@ -254,16 +235,27 @@ export default function Sidebar({
 
       <button
         type="button"
+        onClick={onOpenMarketplace}
+        aria-label="Marketplace"
+        title="Marketplace — apps, extensions, skills"
+        className="flex w-full items-center gap-2.5 border-t border-line px-3 py-2 text-left text-muted hover:bg-white/[0.06] hover:text-ink"
+      >
+        <Store size={14} aria-hidden className="shrink-0" />
+        <span className="text-[12px]">Marketplace</span>
+      </button>
+
+      <button
+        type="button"
         onClick={onOpenMemory}
         aria-label="Browsing Maps"
         title="What was read and when"
-        className="flex w-full items-center gap-2.5 border-t border-line px-3 py-2.5 text-left text-muted hover:bg-white/[0.06] hover:text-ink"
+        className="flex w-full items-center gap-2.5 border-t border-line px-3 py-2 text-left text-muted hover:bg-white/[0.06] hover:text-ink"
       >
         <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0">
           <circle cx="9" cy="9" r="6" />
           <path d="M6.6 9h4.8M9 6.6v4.8" />
         </svg>
-        <span className="text-[12.5px]">Browsing Maps</span>
+        <span className="text-[12px]">Browsing Maps</span>
       </button>
 
       <button
@@ -289,7 +281,7 @@ export default function Sidebar({
           event.preventDefault()
           setDragging(true)
         }}
-        onDoubleClick={() => setPrefs(previous => ({ ...previous, width: 264 }))}
+        onDoubleClick={() => setPrefs(previous => ({ ...previous, width: 260 }))}
         title="Drag to resize · double-click to reset"
         aria-hidden="true"
         className={`absolute right-0 top-0 z-10 h-full w-1 cursor-col-resize transition-colors ${
@@ -319,7 +311,7 @@ function ChatRow({
         type="button"
         onClick={() => onOpen(chat.id)}
         title={chat.title}
-        className={`min-w-0 flex-1 truncate px-2 py-2 text-left text-[13px] ${active ? 'text-ink' : 'text-muted group-hover:text-ink'}`}
+        className={`min-w-0 flex-1 truncate px-2 py-1.5 text-left text-[12.5px] ${active ? 'text-ink' : 'text-muted group-hover:text-ink'}`}
       >
         {chat.title}
       </button>
@@ -350,7 +342,7 @@ function SearchResults({
   }
   return (
     <div className="mb-3">
-      <h2 className="px-1 pb-1.5 pt-2 text-[11px] font-medium uppercase tracking-wide text-muted">
+      <h2 className="px-1 pb-1 pt-1.5 text-[10px] font-medium uppercase tracking-wide text-muted">
         Matches
       </h2>
       {results.map(result => (

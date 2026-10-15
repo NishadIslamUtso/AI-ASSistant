@@ -272,33 +272,46 @@ test('the throttle: the owner sets how much the engine may do before asking', as
   assert.match(adapter, /PERMISSION_MODE\[approval\]/)
 })
 
-test('the shell carries the bay: sidebar has the engine section, the composer defers to it', () => {
+test('the bay lives in Settings, the sidebar carries only sections and the list', () => {
   const sidebar = read('../src/renderer/src/components/Sidebar.tsx')
-  assert.match(sidebar, /import EngineBay from '\.\/EngineBay'/)
-  assert.match(sidebar, /<EngineBay \/>/)
+  assert.doesNotMatch(sidebar, /EngineBay/, 'the bay is out of the sidebar \u2014 the chats lead there now')
+  const settings = read('../src/renderer/src/components/SettingsView.tsx')
+  assert.match(settings, /import EngineBay from '\.\/EngineBay'/)
+  assert.match(settings, /<EngineBay \/>/)
   const bay = read('../src/renderer/src/components/EngineBay.tsx')
   assert.match(bay, /role="radiogroup"/, 'the engine selection system')
   assert.match(bay, /loadModels/, 'the brain list comes from the engine door')
   assert.match(bay, /pickWorkspace/, 'the workplace is choosable')
-  const composer = read('../src/renderer/src/components/Composer.tsx')
-  assert.match(composer, /engine\.settings\.model/)
   const main = read('../src/main/index.ts')
   assert.match(main, /engine:models/)
   assert.match(main, /engine:pick-workspace/)
   assert.match(main, /settings\.engine\.workspace \|\| vaultRoot\(\)/)
 })
 
-test('the face is wired: the panel is in the chat, the toggle is in the composer', () => {
+test('the composer speaks the engine\u2019s own controls: engine chip, models chip, its three modes', () => {
+  const composer = read('../src/renderer/src/components/Composer.tsx')
+  assert.match(composer, /EngineChip/)
+  assert.match(composer, /ModelChip/)
+  assert.match(composer, /engine\.checkEngines/, 'the engine list comes from the machine check')
+  assert.match(composer, /engine\.setApproval/, 'the three modes live in the engine box')
+  assert.match(composer, /engine\.loadModels/, 'the model list is the chosen engine\u2019s own door')
+  assert.match(composer, /engine\.setModel/)
+  // The app adds nothing: no toggle, no second brain, no invented modes.
+  assert.doesNotMatch(composer, /onEngineToggle/)
+  assert.doesNotMatch(composer, /ModelState/)
+  // And the sidebar offers the marketplace.
+  const sidebar = read('../src/renderer/src/components/Sidebar.tsx')
+  assert.match(sidebar, /Marketplace/)
+})
+
+test('the face is wired: the panel is in the chat, and the engine is the only way to talk', () => {
   const chat = read('../src/renderer/src/components/ChatView.tsx')
   assert.match(chat, /import EnginePanel from '\.\/EnginePanel'/)
   assert.match(chat, /<EnginePanel \/>/)
-  assert.match(chat, /engineOn=\{engineOn\}/)
-  const composer = read('../src/renderer/src/components/Composer.tsx')
-  assert.match(composer, /aria-pressed=\{engineOn === true\}/)
-  assert.match(composer, /onEngineToggle\?/)
   const app = read('../src/renderer/src/App.tsx')
-  assert.match(app, /engineStore\(\)\.send\(text\)/)
-  assert.match(app, /setEngineOn\(value => !value\)/)
+  assert.match(app, /engineStore\(\)\.send\(text\)/, 'every send goes to the engine')
+  assert.doesNotMatch(app, /engineOn/, 'there is no engine toggle \u2014 it is not a mode, it is the app')
+  assert.doesNotMatch(app, /chatApi\.send/, 'the old chat-brain path is gone from the send')
   // The shared contract the whole face speaks.
   assert.match(read('../src/renderer/src/state/engine.ts'), /useSyncExternalStore/)
 })

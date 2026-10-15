@@ -1,5 +1,16 @@
 # CHANGELOG.md — What Changed Each Session (Living)
 
+## 0.7.0 — his corrections, applied: the sidebar belongs to the chats, the engine is the only way
+
+- **Sidebar rebuilt:** the EngineBay is OUT (it lived above the chat list and squeezed it out — his exact complaint). Sections + conversations now share ONE scroll, the list is always reachable. Compact rows (28px), chat rows 30px, default width 260px as the approved mockup. Collapse now means CHATS ONLY — every other option hides.
+- **The engine is the only way to talk:** the Engine toggle is deleted — it was never supposed to be a mode. Every send goes to the engine; the app adds nothing of its own.
+- **The composer's two small chips (his spec):** the ENGINE chip opens a box with the engines this machine really has (checked live) and the engine's own three modes (Ask me / Auto-edits / Full speed); the MODELS chip beside it lists what THAT engine can really use, from the engine's own door, cloud brains labelled, searchable when long (pattern adopted from nexu-io's model search and backchat's shared picker).
+- **Marketplace** (the approved "Get apps and extensions" screen): engines with honest install lines, the Chrome extension's real door status, and the skill catalog with working installs — one screen.
+- Engine bay lives in Settings > Engine. 388 tests.
+
+- **Installer 0.6.0 built** (2026-10-16, his go): `AI-ASSistant-Setup-0.6.0.exe`, 88,062,356 B, SHA-256 `c0c9c0861873b7b2db69c0d5d924563aa04b9cd53b015c44a8c4a640835ea38c` (rebuilt after the first copy was lost to the workspace size cap) — one-click, runs after finish, per-user. The full recipe now lives in RELEASE-WINDOWS.md so it can never be lost again.
+
+
 ## 0.6.0 — Track D: the practice — research first, then each feature
 
 - **Handoff:** a finished engine turn becomes one vault document (`handoffs/…`) shaped after three studied repos — instructions to the receiving assistant, the task, the real tool calls, the resumable session id — also copied to the clipboard.

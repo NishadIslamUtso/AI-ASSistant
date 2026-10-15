@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { Artifact, Chat } from '@shared/types'
 import type { ElementPick } from '@shared/lib/artifacts'
-import type { ModelState } from '@/hooks/useModels'
 import { useDesignTokens } from '@/hooks/useDesignTokens'
 import { viewsForMessage, type LiveArtifacts } from '@/state/artifactView'
 import Composer from './Composer'
@@ -29,7 +28,6 @@ export default function ChatView({
   onSend,
   onStop,
   busy,
-  models,
   notice,
   preview,
   live,
@@ -40,8 +38,6 @@ export default function ChatView({
   rewriteStage,
   rewriteError,
   rewriteErrorFor,
-  engineOn,
-  onEngineToggle,
 }: {
   chat: Chat | null
   draft: string
@@ -49,7 +45,6 @@ export default function ChatView({
   onSend: () => void
   onStop: () => void
   busy: boolean
-  models: ModelState
   notice: string
   preview?: string
   /** What the streaming sweep currently has, so a draft redraws as it is written. */
@@ -67,8 +62,6 @@ export default function ChatView({
   rewriteStage?: string
   rewriteError?: string
   rewriteErrorFor?: string
-  engineOn?: boolean
-  onEngineToggle?: () => void
 }) {
   const scroller = useRef<HTMLDivElement | null>(null)
   const follow = useRef(true)
@@ -127,11 +120,8 @@ export default function ChatView({
         onSend={onSend}
         onStop={onStop}
         busy={busy}
-        models={models}
         notice={notice}
         preview={preview}
-        engineOn={engineOn}
-        onEngineToggle={onEngineToggle}
       />
     </main>
   )

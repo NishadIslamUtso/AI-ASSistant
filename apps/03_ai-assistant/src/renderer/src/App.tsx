@@ -16,6 +16,7 @@ import ArtifactsView from './components/ArtifactsView'
 import TodayView from './components/TodayView'
 import ProjectsView from './components/ProjectsView'
 import FirstRunView from './components/FirstRunView'
+import MarketplaceModal from './components/MarketplaceModal'
 import VaultView from './components/VaultView'
 import CodeView from './components/CodeView'
 import useArtifactLibrary, { adoptionRecords } from './state/artifactLibrary'
@@ -56,6 +57,7 @@ export default function App() {
   const chats = useChats(setNotice)
   const [profile, setProfile] = usePersistentState('ai-assistant.profile', DEFAULT_PROFILE, normalizeProfile, setNotice)
   const [welcomed, setWelcomed] = usePersistentState('ai-assistant.welcomed', false, (value) => value === true, setNotice)
+  const [marketOpen, setMarketOpen] = useState(false)
   const [model, setModel] = usePersistentState(
     'ai-assistant.model',
     DEFAULT_MODEL,
@@ -71,7 +73,6 @@ export default function App() {
   const [permissionsRevision, setPermissionsRevision] = useState(0)
   const models = useModels(model, setModel, permissions)
   const [draft, setDraft] = useState('')
-  const [engineOn, setEngineOn] = useState(false)
   // Set for a moment when the rail jumps to an artifact, so a click on something
   // already on screen still shows that it did something.
   const [highlight, setHighlight] = useState('')
@@ -317,25 +318,17 @@ export default function App() {
   const send = async (): Promise<void> => {
     const text = draft
     if (!text.trim()) return
-    // Engine mode: the text is a work order, not a chat message. The same
+    // The only path: the engine. The text is a work order. The same
     // keep-the-draft-on-refusal rule applies, so nothing is ever typed twice.
-    if (engineOn) {
-      const answer = await engineStore().send(text)
-      if (answer.ok) {
-        setDraft('')
-        setNotice('')
-      } else {
-        setNotice(answer.answer)
-      }
-      return
-    }
-    const accepted = await chatApi.send({ content: text, projectId: pendingProject })
-    if (accepted) setPendingProject(null)
-    // The draft is cleared only when the send was accepted. A refused send keeps
-    // the text and every attachment, so nothing has to be typed twice.
-    if (accepted) {
+    const answer = await engineStore().send(text)
+    if (answer.ok) {
       setDraft('')
       setNotice('')
+      if (pendingProject) {
+        setPendingProject(null)
+      }
+    } else {
+      setNotice(answer.answer)
     }
   }
 
@@ -346,8 +339,9 @@ export default function App() {
   return (
     <div className="flex h-full flex-col bg-bg text-ink">
       <TitleBar
-        model={models.model}
-        ollamaStatus={models.status}
+        engineModel={engineStore().settings.model}
+        engineId={engineStore().settings.id}
+        engineAlive={engineStore().alive}
         preview={isDemo}
         // Re-checked when a conversation is kept, so a vault that went missing
         // shows up as a chip rather than as a save that silently did not happen.
@@ -377,6 +371,7 @@ export default function App() {
             setSettingsOpen(true)
           }}
           onOpenMemory={() => setMemoryOpen(true)}
+          onOpenMarketplace={() => setMarketOpen(true)}
           profileName={profile.name}
         />
         {view === 'code' ? <CodeView /> : view === 'vault' ? (
@@ -440,11 +435,8 @@ export default function App() {
           draft={draft}
           setDraft={setDraft}
           onSend={() => void send()}
-          engineOn={engineOn}
-          onEngineToggle={() => setEngineOn(value => !value)}
           onStop={chatApi.stop}
           busy={Boolean(chatApi.busyChatId)}
-          models={isDemo ? { ...models, error: '' } : models}
           live={chatApi.live}
           highlightId={highlight}
           notice={notice}
@@ -503,8 +495,8 @@ export default function App() {
           onAppearanceChange={setAppearance}
           inference={inference}
           onInferenceChange={setInference}
-          models={models}
-        />
+          />
+      <MarketplaceModal open={marketOpen} onClose={() => setMarketOpen(false)} />
       </div>
     </div>
   )

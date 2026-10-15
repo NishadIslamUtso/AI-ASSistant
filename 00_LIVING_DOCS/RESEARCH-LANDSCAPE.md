@@ -168,3 +168,11 @@ Researched BEFORE building each feature (his standing instruction).
 - **Caveman** (JuliusBrussee/caveman, ~111k stars per aggregator): telegraphic style, ~65-75% output-token claims; honest numbers inside: only ~3% median over "be concise", and its own rule block costs ~1,160 input tokens. Copied the idea, two sentences, only for small local brains. The surrounding token-tools list (RTK, Headroom, PromptThrift, Token Savior) noted for future bays — all shrink context, none engine-spine.
 - **anthropics/skills verified live** (repo folder list): academy-guide, algorithmic-art, brand-guidelines, canvas-design, claude-api, discernment-nudge, doc-coauthoring, docx, frontend-design, internal-comms, mcp-builder, pdf, pptx, skill-creator, slack-gif-creator, theme-factory, web-artifacts-builder, webapp-testing, xlsx. Curated 11 into Settings > Skills. Document skills are source-available — their license rides along.
 - Verdict: nothing new threatens the design; the moat (engine-as-spine + local vault + provenance) holds.
+
+
+## Sweep #4 — 2026-10-16 (his "did you actually check other repos?")
+Trigger: his UI correction. Checked the UI patterns of the live tools, not just their existence:
+- **nexu-io/open-design #8642:** model-chip popover opens WITH A SEARCH FIELD; short distinguishing labels when every id shares a prefix. Adopted: filter input in the models popover when the engine lists >8 models.
+- **backchat #64:** composer footer pickers as ONE shared picker discipline — content-fit height, max-height scroll, checkmark-only selection, provider drill-down. Adopted the discipline for our two chips; drill-down queued (our engines are two, not twelve).
+- **Nimbalyst release notes:** model picker GROUPS by provider with full ranges; live model picker per session. Our engine-door list already is per-engine; grouping queued if an engine ever reports many providers.
+- Verdict: our popover design is now at parity with the best pickers studied; the sidebar compact-scroll pattern matches the approved mockups (the authority that outranks all repos).

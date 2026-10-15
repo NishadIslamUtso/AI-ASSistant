@@ -33,7 +33,7 @@ export default function AppNav({
   artifactCount?: number
 }) {
   return (
-    <nav aria-label="Sections" className={collapsed ? 'flex flex-col items-center gap-1 py-1' : 'flex flex-col gap-1'}>
+    <nav aria-label="Sections" className={collapsed ? 'flex flex-col items-center gap-1 py-1' : 'mb-1 flex flex-col gap-0.5 pb-1'}>
       {ITEMS.map(({ id, label, Icon }) => {
         const active = view === id
         return (
@@ -49,12 +49,12 @@ export default function AppNav({
                 ? `flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
                     active ? 'bg-white/[0.08] text-ink' : 'text-muted hover:bg-white/[0.06] hover:text-ink'
                   }`
-                : `flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-left text-[13px] transition-colors ${
+                : `flex h-7 items-center gap-2 rounded-lg px-2 text-left text-[12.5px] transition-colors ${
                     active ? 'bg-white/[0.08] text-ink' : 'text-muted hover:bg-white/[0.04] hover:text-ink'
                   }`
             }
           >
-            <Icon size={14.5} className="shrink-0" />
+            <Icon size={13} className="shrink-0" />
             {collapsed ? null : <span className="flex-1">{label}</span>}
             {collapsed || id !== 'artifacts' || !artifactCount ? null : (
               <span className="text-[11px] text-muted">{artifactCount}</span>
