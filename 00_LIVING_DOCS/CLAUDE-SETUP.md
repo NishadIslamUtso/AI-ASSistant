@@ -110,7 +110,7 @@ by hand again.
       window on free brains, or the wall is recorded and fallback chosen.
       ⛔ OUTCOME 2026-10-15: Code tab = upgrade wall on his free sign-in; no
       local-models/Ollama toggle visible (subscriber-only or newer build). Free
-      Gate: NO pay. → FALLBACK ACTIVE: VS Code + official Claude Code extension
+      Gate: NO pay. → fallback VS Code REJECTED by owner: fixed layout 'destroys the entire purpose of freely changing app layout' (his words). Free-extension fact stands if he ever wants it.
       (same CLI core, same ~/.claude skills/mods, windowed panels); wiring via
       `%USERPROFILE%\.claude\settings.json` env block (scoped to Claude only,
       delete file to undo). If the extension also walls: community GUI wrapper.
