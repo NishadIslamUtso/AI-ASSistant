@@ -208,5 +208,7 @@ will work in the app normally too."*
 - [ ] **6.4 Face refresh + mockup surfaces** (the eight screens, mockups rule).
 - [x] **6.5 Installer BUILT 2026-10-15** — `AI-ASSistant-Setup-0.2.0.exe`
       (~84 MB, one click, no PowerShell, no admin, opens the app when done).
-      SHA-256 a9099b0a…ac4322. His double-click = the acceptance test every
-      judge asked for. ⏳ awaiting his run.
+      First build (0.2.0) surfaced two real findings on his machine — old logo
+      still present + `claude` invisible to the packaged app — BOTH fixed and
+      re-shipped as **0.2.1** (SHA-256 78b9b40f…65de14f) with his canonical
+      butt-brain mark everywhere and engine-PATH prepending. Awaiting his run.
