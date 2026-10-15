@@ -228,3 +228,5 @@ The app icon is the app's own **BrainMark**, rendered from the existing `BrainMa
   cards, per-engine brain routing, engine detection (self-serve agy check),
   pull/delete brains in the bay, skills + MCP deploy to every engine, the
   editable House rules delivered on every send. 343 tests.
+- `AI-ASSistant-Setup-0.4.0.exe` (~84 MB), SHA-256
+  `0c19f17ae64d2d768fe9967669132d1966fcd30e1424943a22d28992bbcaf666`.
