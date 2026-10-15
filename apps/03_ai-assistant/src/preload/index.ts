@@ -5,7 +5,7 @@ import type {
   CloudView,
 } from '../shared/lib/providers'
 import type { Permissions } from '../shared/lib/permissions'
-import type { EngineEvent, EngineId, EngineModelEntry, EngineSettings } from '../shared/lib/engine'
+import type { ApprovalMode, EngineEvent, EngineId, EngineModelEntry, EngineSettings } from '../shared/lib/engine'
 import type {
   AdoptInput,
   ItemAnswer,
@@ -37,6 +37,9 @@ const engineApi = {
   /** Pick which brain the engine thinks with. */
   setModel: (model: string): Promise<{ ok: boolean; answer: string }> =>
     ipcRenderer.invoke('engine:model', model),
+  /** Set the throttle: how much the engine may do before asking. */
+  setApproval: (mode: ApprovalMode): Promise<{ ok: boolean; answer: string }> =>
+    ipcRenderer.invoke('engine:approval', mode),
   /** "Open a folder": choose where the engine works. */
   pickWorkspace: (): Promise<{ ok: boolean; answer: string }> =>
     ipcRenderer.invoke('engine:pick-workspace'),

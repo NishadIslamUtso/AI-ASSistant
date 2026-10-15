@@ -9,7 +9,7 @@
  * preview) gets honest refusals, never invented work.
  */
 import { useSyncExternalStore } from 'react'
-import type { EngineEvent, EngineId, EngineModelEntry, EngineSettings } from '@shared/lib/engine'
+import type { ApprovalMode, EngineEvent, EngineId, EngineModelEntry, EngineSettings } from '@shared/lib/engine'
 import { DEFAULT_ENGINE } from '@shared/lib/engine'
 import { getEngineApi } from '@/platform/bridge'
 
@@ -61,6 +61,8 @@ type EngineStore = EngineState & {
   loadModels(): Promise<void>
   /** Pick the engine's brain; persists. */
   setModel(name: string): Promise<void>
+  /** Set the throttle: how much the engine may do before asking; persists. */
+  setApproval(mode: ApprovalMode): Promise<void>
   /** "Open a folder": pick where the engine works; persists. */
   pickWorkspace(): Promise<void>
 }
@@ -215,6 +217,11 @@ const store: EngineStore = {
   async setModel(name: string): Promise<void> {
     const answer = await getEngineApi().setModel(name)
     if (answer.ok) setState({ settings: { ...state.settings, model: name } })
+  },
+
+  async setApproval(mode: ApprovalMode): Promise<void> {
+    const answer = await getEngineApi().setApproval(mode)
+    if (answer.ok) setState({ settings: { ...state.settings, approval: mode } })
   },
 
   async pickWorkspace(): Promise<void> {

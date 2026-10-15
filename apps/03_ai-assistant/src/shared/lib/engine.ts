@@ -17,6 +17,25 @@ export type EngineId = 'claude-code' | 'agy'
  * The defaults are the ones the owner already verified work on this machine:
  * the big free cloud brain through the local Ollama door.
  */
+/** How much the engine may do before it asks. The app imposes no more. */
+export type ApprovalMode = 'ask' | 'edits' | 'full'
+
+export const APPROVAL_MODES: ApprovalMode[] = ['ask', 'edits', 'full']
+
+/**
+ * The engine's own official values for each setting of the throttle. `manual`
+ * is Claude Code's alias for its default (ask before anything sensitive);
+ * `acceptEdits` lets files change unasked inside the workspace; and
+ * `bypassPermissions` is the engine's own full-speed mode — which still
+ * respects its deny rules and guarded deletions, because even at full speed
+ * an engine keeps its nature.
+ */
+export const PERMISSION_MODE: Record<ApprovalMode, string> = {
+  ask: 'manual',
+  edits: 'acceptEdits',
+  full: 'bypassPermissions',
+}
+
 export type EngineSettings = {
   id: EngineId
   /** The brain the engine thinks with, e.g. `gemma4:cloud`. */
@@ -26,6 +45,8 @@ export type EngineSettings = {
    * in a real code app. Empty means the vault, which is the default workplace.
    */
   workspace: string
+  /** The throttle: how much the engine may do before asking. */
+  approval: ApprovalMode
   /**
    * The door the brain lives behind. Empty means "whatever this machine
    * already has", which lets an Anthropic key work later without app changes.
@@ -38,6 +59,7 @@ export const DEFAULT_ENGINE: EngineSettings = {
   model: 'gemma4:cloud',
   baseUrl: 'http://localhost:11434',
   workspace: '',
+  approval: 'ask',
 }
 
 /** One brain the engine can use, as the engine itself reports it. */
@@ -77,6 +99,9 @@ export function normalizeEngine(raw: unknown): EngineSettings {
     model: MODEL_PATTERN.test(model) ? model : DEFAULT_ENGINE.model,
     baseUrl: text(value.baseUrl, DEFAULT_ENGINE.baseUrl, 2048),
     workspace: typeof value.workspace === 'string' ? value.workspace.trim().slice(0, 4096) : '',
+    approval: APPROVAL_MODES.includes(value.approval as ApprovalMode)
+      ? (value.approval as ApprovalMode)
+      : 'ask',
   }
 }
 
