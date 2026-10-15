@@ -12,6 +12,7 @@
 import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { DEFAULT_PERMISSIONS, normalizePermissions, type Permissions } from '../shared/lib/permissions'
+import { DEFAULT_ENGINE, normalizeEngine, type EngineSettings } from '../shared/lib/engine'
 
 export type AppSettings = {
   /**
@@ -31,12 +32,19 @@ export type AppSettings = {
    * is told the result rather than deciding for itself.
    */
   permissions: Permissions
+  /**
+   * Which engine thinks inside the app and with which brain. Lives with the
+   * other before-the-interface facts: the engine is launched by this process,
+   * so this process is the one that must know.
+   */
+  engine: EngineSettings
 }
 
 export const EMPTY_SETTINGS: AppSettings = {
   vaultPath: '',
   cloud: { baseUrl: '', model: '' },
   permissions: DEFAULT_PERMISSIONS,
+  engine: { ...DEFAULT_ENGINE },
 }
 
 export function readSettings(file: string): AppSettings {
@@ -54,6 +62,7 @@ export function readSettings(file: string): AppSettings {
         model: text(cloud.model, 300),
       },
       permissions: normalizePermissions(parsed.permissions),
+      engine: normalizeEngine(parsed.engine),
     }
   } catch {
     return { ...EMPTY_SETTINGS }
@@ -69,6 +78,7 @@ export function writeSettings(file: string, settings: AppSettings): AppSettings 
       model: String(cloud.model || '').trim().slice(0, 300),
     },
     permissions: normalizePermissions(settings.permissions),
+    engine: normalizeEngine(settings.engine),
   }
   mkdirSync(dirname(file), { recursive: true })
   // Write beside the file and rename over it: a crash mid-write cannot leave a

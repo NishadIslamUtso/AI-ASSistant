@@ -17,6 +17,9 @@ import {
 } from './settings'
 import { normalizePermissions } from '../shared/lib/permissions'
 import { registerArtifactIpc } from './artifacts/ipc'
+import { createEngineSocket, type EngineSocket } from './engine/socket'
+import { normalizeEngine } from '../shared/lib/engine'
+import type { EngineEvent } from '../shared/lib/engine'
 
 /**
  * The main process. Everything that touches the machine lives on this side:
@@ -80,6 +83,19 @@ function cloudView(): {
     ok: true,
     encryption: keyStore?.encryption || 'none',
     providers: cloud?.providers() || [],
+  }
+}
+
+/**
+ * Push an engine event to every open window and remember it, so a window
+ * opened mid-turn still sees what happened. Small on purpose: context for a
+ * person, not a log file.
+ */
+function pushEngineEvent(event: EngineEvent): void {
+  engineHistory.push(event)
+  if (engineHistory.length > 100) engineHistory.shift()
+  for (const window of BrowserWindow.getAllWindows()) {
+    window.webContents.send('engine:event', event)
   }
 }
 
@@ -203,6 +219,51 @@ function registerBridges(): void {
   // the vault is the person's curated notes, and the app does not scatter its
   // own working files through it without being asked.
   registerArtifactIpc(join(app.getPath('userData'), 'artifacts'))
+
+  // The engine: read the choice, change it, hand it a task, answer its
+  // permission cards. Every answer is a value or a plain sentence — a refused
+  // task is information, not an exception.
+  ipcMain.handle('engine:read', () => ({
+    engine: settings.engine,
+    running: engine?.running() === true,
+    history: [...engineHistory],
+  }))
+
+  ipcMain.handle('engine:pick', (_event, id: string): { ok: boolean; answer: string } => {
+    const wanted = normalizeEngine({ id }).id
+    settings = writeSettings(settingsFile, { ...settings, engine: { ...settings.engine, id: wanted } })
+    return { ok: true, answer: `engine set to ${wanted}` }
+  })
+
+  ipcMain.handle(
+    'engine:send',
+    (_event, prompt: string, cwd: string): { ok: boolean; answer: string } => {
+      const text = typeof prompt === 'string' ? prompt.trim().slice(0, 20000) : ''
+      if (!text) return { ok: false, answer: 'Write what the engine should do first.' }
+      if (!engine) return { ok: false, answer: 'The engine is still waking up — try again in a moment.' }
+      const working = typeof cwd === 'string' && cwd ? cwd : vaultRoot()
+      const started = engine.begin({
+        cwd: working,
+        settings: settings.engine,
+        onEvent: pushEngineEvent,
+      })
+      if (!started.ok) return started
+      engine.current()?.send(text)
+      return { ok: true, answer: 'started' }
+    },
+  )
+
+  ipcMain.handle('engine:answer', (_event, requestId: string, allow: boolean): { ok: boolean } => {
+    const session = engine?.current()
+    if (!session || typeof requestId !== 'string' || !requestId) return { ok: false }
+    session.answer(requestId, allow === true)
+    return { ok: true }
+  })
+
+  ipcMain.handle('engine:stop', () => {
+    engine?.stop()
+    return { ok: true }
+  })
 }
 
 const isSmoke = process.argv.includes('--smoke')
@@ -219,6 +280,9 @@ let settings: AppSettings = { ...EMPTY_SETTINGS }
 let settingsFile = ''
 let keyStore: KeyStore | null = null
 let cloud: CloudClient | null = null
+/** The engine plug and the last events it produced, for windows opened mid-turn. */
+let engine: EngineSocket | null = null
+const engineHistory: EngineEvent[] = []
 
 /**
  * The icon file, when this build has one.
@@ -363,6 +427,7 @@ if (!gotLock) {
     // file means "nothing chosen yet", never a failed launch.
     settingsFile = join(app.getPath('userData'), 'settings.json')
     settings = readSettings(settingsFile)
+    engine = createEngineSocket()
     registerBridges()
 
     // Keys are sealed by the operating system — safeStorage is the keychain on
