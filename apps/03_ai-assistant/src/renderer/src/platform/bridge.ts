@@ -29,6 +29,7 @@ import {
   type EngineSettings,
 } from '@shared/lib/engine'
 import { DEFAULT_HOUSE_RULES, type HouseRules } from '@shared/lib/houseRules'
+import { newProject, type Project } from '@shared/lib/projects'
 import { DEFAULT_PERMISSIONS, type Permissions } from '@shared/lib/permissions'
 import type {
   AdoptInput,
@@ -44,12 +45,27 @@ export type DesktopBridge = {
   app: {
     version: string
     platform: string
+    /** Desktop only: open the vault folder in the file manager. */
+    openVaultFolder?: () => Promise<{ ok: boolean }>
   }
   houseRules: {
     /** The rulebook as it stands; blanks already filled from the defaults. */
     read: () => Promise<{ rules: HouseRules; defaults: HouseRules }>
     /** Save the rulebook and deliver it to every engine's global file. */
     write: (rules: HouseRules) => Promise<{ ok: boolean; written: string[] }>
+  }
+  projects: {
+    read: () => Promise<Project[]>
+    write: (projects: Project[]) => Promise<{ ok: boolean; projects: Project[] }>
+    blank: (name: string) => Promise<Project>
+  }
+  engine: {
+    /** "Work here": the owner points the engine at a folder explicitly. */
+    setWorkspace: (folder: string) => Promise<{ ok: boolean; answer: string }>
+    /** The resumable threads, per workspace. */
+    sessions: () => Promise<Array<{ workspace: string; sessionId: string }>>
+    forgetSession: (workspace: string) => Promise<{ ok: boolean }>
+    openFolder: (folder: string) => Promise<{ ok: boolean }>
   }
   settings: {
     /** What the app has been told to do. */
@@ -211,6 +227,17 @@ const demoBridge: DesktopBridge = {
       ok: false,
       written: [],
     }),
+  },
+  projects: {
+    read: async () => [],
+    write: async (projects: Project[]) => ({ ok: false, projects }),
+    blank: async (name: string) => newProject(name),
+  },
+  engine: {
+    setWorkspace: async () => ({ ok: false, answer: 'Choosing a workspace needs the desktop app.' }),
+    sessions: async () => [],
+    forgetSession: async () => ({ ok: false }),
+    openFolder: async () => ({ ok: false }),
   },
 }
 

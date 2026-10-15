@@ -14,6 +14,10 @@ import ChatView from './components/ChatView'
 import { engineStore } from '@/state/engine'
 import ArtifactsView from './components/ArtifactsView'
 import TodayView from './components/TodayView'
+import ProjectsView from './components/ProjectsView'
+import FirstRunView from './components/FirstRunView'
+import VaultView from './components/VaultView'
+import CodeView from './components/CodeView'
 import useArtifactLibrary, { adoptionRecords } from './state/artifactLibrary'
 import type { ArtifactSummary } from '../../main/artifacts/store'
 import useChat from './hooks/useChat'
@@ -50,7 +54,8 @@ export default function App() {
   const [notice, setNotice] = useState('')
 
   const chats = useChats(setNotice)
-  const [profile] = usePersistentState('ai-assistant.profile', DEFAULT_PROFILE, normalizeProfile, setNotice)
+  const [profile, setProfile] = usePersistentState('ai-assistant.profile', DEFAULT_PROFILE, normalizeProfile, setNotice)
+  const [welcomed, setWelcomed] = usePersistentState('ai-assistant.welcomed', false, (value) => value === true, setNotice)
   const [model, setModel] = usePersistentState(
     'ai-assistant.model',
     DEFAULT_MODEL,
@@ -77,6 +82,8 @@ export default function App() {
   )
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [memoryOpen, setMemoryOpen] = useState(false)
+  /** The project a brand-new chat will belong to, chosen before its first word. */
+  const [pendingProject, setPendingProject] = useState<string | null>(null)
   // Which screen is showing, remembered so the app opens where it was left.
   const [view, setView] = usePersistentState<View>(
     'ai-assistant.view',
@@ -127,7 +134,13 @@ export default function App() {
     }
   }, [permissionsRevision])
 
-  const navigate = useCallback((chatId: string) => chats.open(chatId), [chats])
+  const navigate = useCallback(
+    (chatId: string) => {
+      setPendingProject(null)
+      chats.open(chatId)
+    },
+    [chats],
+  )
 
   const chatApi = useChat({
     chats: chats.chats,
@@ -316,13 +329,18 @@ export default function App() {
       }
       return
     }
-    const accepted = await chatApi.send({ content: text })
+    const accepted = await chatApi.send({ content: text, projectId: pendingProject })
+    if (accepted) setPendingProject(null)
     // The draft is cleared only when the send was accepted. A refused send keeps
     // the text and every attachment, so nothing has to be typed twice.
     if (accepted) {
       setDraft('')
       setNotice('')
     }
+  }
+
+  if (!welcomed) {
+    return <FirstRunView onFinish={() => setWelcomed(true)} onName={(name) => setProfile({ ...profile, name })} />
   }
 
   return (
@@ -361,7 +379,34 @@ export default function App() {
           onOpenMemory={() => setMemoryOpen(true)}
           profileName={profile.name}
         />
-        {view === 'today' ? (
+        {view === 'code' ? <CodeView /> : view === 'vault' ? (
+          <VaultView
+            onAddToComposer={(path, content) => {
+              // A note becomes context: quoted, capped, and named — never a
+              // silent paste of a whole file into the draft.
+              const quoted = content.length > 4000 ? `${content.slice(0, 4000)}\n… (the rest stays in ${path})` : content
+              setDraft(previous => (previous ? `${previous}\n\nFrom the vault (${path}):\n${quoted}\n` : `From the vault (${path}):\n${quoted}\n`))
+              setView('chat')
+              setNotice(`${path} added to the composer`)
+            }}
+          />
+        ) : view === 'projects' ? (
+          <ProjectsView
+            chats={chats.chats}
+            onOpenChat={chats.open}
+            onNewChatInProject={(projectId) => {
+              setPendingProject(projectId)
+              chats.create()
+              setView('chat')
+              setNotice('')
+            }}
+            onWorkHere={(folder) => {
+              void bridge.engine.setWorkspace(folder).then((answer) => {
+                setNotice(answer.ok ? `The engine now works in ${folder}` : answer.answer)
+              })
+            }}
+          />
+        ) : view === 'today' ? (
           <TodayView
             chats={chats.chats}
             artifacts={library.items}

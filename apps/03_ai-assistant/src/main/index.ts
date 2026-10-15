@@ -25,6 +25,7 @@ import { parsePullLine, validateModelName } from './engine/pull'
 import { deployMcp, deploySkill, scanClaudeSkills, type McpServer, type VaultSkill } from './engine/deploy'
 import { deployHouseRules } from './engine/houseRulesDeploy'
 import { DEFAULT_HOUSE_RULES, type HouseRules } from '../shared/lib/houseRules'
+import { newProject, normalizeProjects, type Project } from '../shared/lib/projects'
 
 /**
  * The main process. Everything that touches the machine lives on this side:
@@ -297,6 +298,13 @@ function registerBridges(): void {
     }
   }
 
+  // The vault folder, opened in the file manager. The vault root only —
+  // this door is a convenience for the owner, not a general launcher.
+  ipcMain.handle('vault:open-folder', async (): Promise<{ ok: boolean }> => {
+    const error = await shell.openPath(vaultRoot())
+    return { ok: !error }
+  })
+
   // What is really installed on this machine — the bay refuses to guess.
   ipcMain.handle('engine:detect', async (): Promise<Array<{ id: EngineId; found: boolean; version: string; install: string }>> => {
     const ids: EngineId[] = ['claude-code', 'agy']
@@ -409,6 +417,81 @@ function registerBridges(): void {
     const servers = Array.isArray(payload?.servers) ? payload.servers.slice(0, 100) : []
     writeFileSync(mcpFile, JSON.stringify({ servers }), 'utf8')
     return { ok: true, written: deployMcp(servers, settings.engine.workspace || vaultRoot()) }
+  })
+
+  // Projects: the owner's named homes for related work. Stored once,
+  // validated on the way in and the way out; a damaged file means "no
+  // projects yet", never a failed launch.
+  const projectsFile = join(app.getPath('userData'), 'projects.json')
+  ipcMain.handle('projects:read', (): Project[] => {
+    try {
+      return normalizeProjects(JSON.parse(readFileSync(projectsFile, 'utf8')))
+    } catch {
+      return []
+    }
+  })
+
+  ipcMain.handle('projects:write', (_event, projects: unknown): { ok: boolean; projects: Project[] } => {
+    const clean = normalizeProjects(projects)
+    writeFileSync(projectsFile, JSON.stringify(clean, null, 2), 'utf8')
+    return { ok: true, projects: clean }
+  })
+
+  ipcMain.handle('projects:new', (_event, name: string): Project => newProject(String(name ?? '')))
+
+  // "Work here" — the owner points the engine at a project's folder. The
+  // window never chooses a working folder behind the app's back; this door
+  // IS the owner's explicit choice, same as the picker.
+  ipcMain.handle('engine:workspace-set', (_event, folder: string): { ok: boolean; answer: string } => {
+    const clean = typeof folder === 'string' ? folder.trim().slice(0, 4096) : ''
+    // Empty is allowed and means "back to the vault" — a real choice, not a mistake.
+    if (clean === '') {
+      settings = writeSettings(settingsFile, { ...settings, engine: { ...settings.engine, workspace: '' } })
+      return { ok: true, answer: '' }
+    }
+    if (/[\n\r]/.test(clean) || /^https?:\/\//.test(clean)) {
+      return { ok: false, answer: 'That is not a folder this app will work in.' }
+    }
+    if (!existsSync(clean)) return { ok: false, answer: 'That folder does not exist on this machine.' }
+    settings = writeSettings(settingsFile, { ...settings, engine: { ...settings.engine, workspace: clean } })
+    return { ok: true, answer: clean }
+  })
+
+  // The engine sessions, per workspace: the threads a fresh launch will
+  // continue. Read-only for the screen, with an explicit forget.
+  const sessionsFile = (): string => join(app.getPath('userData'), 'engine-sessions.json')
+  ipcMain.handle('engine:sessions', (): Array<{ workspace: string; sessionId: string }> => {
+    try {
+      const data = JSON.parse(readFileSync(sessionsFile(), 'utf8')) as Record<string, string>
+      return Object.entries(data)
+        .filter(([, id]) => typeof id === 'string' && id.length > 3)
+        .map(([workspace, sessionId]) => ({ workspace, sessionId: String(sessionId).slice(0, 64) }))
+        .slice(0, 20)
+    } catch {
+      return []
+    }
+  })
+
+  ipcMain.handle('engine:sessions-forget', (_event, workspace: string): { ok: boolean } => {
+    try {
+      const file = sessionsFile()
+      const data = JSON.parse(readFileSync(file, 'utf8')) as Record<string, string>
+      delete data[String(workspace ?? '')]
+      writeFileSync(file, JSON.stringify(data), 'utf8')
+      return { ok: true }
+    } catch {
+      return { ok: true }
+    }
+  })
+
+  // Open a folder in the file manager. Guarded to folders that exist and are
+  // at least plausible; it is the owner's machine and this is a convenience.
+  ipcMain.handle('app:open-folder', async (_event, folder: string): Promise<{ ok: boolean }> => {
+    const clean = typeof folder === 'string' ? folder.trim() : ''
+    if (!clean || clean.length > 4096 || /[\n\r]/.test(clean)) return { ok: false }
+    if (!existsSync(clean)) return { ok: false }
+    const error = await shell.openPath(clean)
+    return { ok: !error }
   })
 
   // The rulebook itself: read for the edit screen, write to persist and

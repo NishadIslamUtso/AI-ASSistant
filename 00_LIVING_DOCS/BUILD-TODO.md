@@ -382,11 +382,11 @@ The mockups, as the standard to hit:
 | 01-chat | Chat + artifacts rail + sidebar groups | built (missing: the six-item nav, composer chips) |
 | 02-settings | Full-window Settings | built |
 | 03-artifacts | Artifacts library (grid of creations) | **built** — the library on disk (`index.json` + version files, `.trash/`, damaged-index rebuild), the screen with real thumbnails, Open/Export/rename/duplicate/remove, and "Save v1 again" appending instead of truncating |
-| 04-projects | Projects: chats / instructions / context / memory | **not built** |
-| 05-vault | Vault: file tree, search, capsules, reindex, add-to-composer | **not built** (only a folder row in Settings) |
-| 06-code | Code workspace | **not built** |
+| 04-projects | Projects: chats / instructions / context / memory | **built** — strict storage doors, per-project instruction + folder, chats link by id (pipe existed), Work-here points the engine via the app's door, honest empty states |
+| 05-vault | Vault: file tree, search, file preview, reindex, add-to-composer; capsules only for real files | **built** — /files /file /grep vault routes (escape-refusing, capped), grouped tree, name filter + content search, preview pane, add-to-composer as quoted context, Open folder door |
+| 06-code | Code workspace | **built** — the engine's workspace on screen: folder (choose/clear/open), throttle quick-set, the real resumable threads per folder with forget |
 | 07-today | Today: stats, worth-doing-next, recent sources, quick actions | **built** — stats from real records, worth-doing-next from records only, conversations/made/read-today lists, honest empty & missing states |
-| 08-first-run | Welcome: name, model, folder | **not built** |
+| 08-first-run | First run: name, brain, folder | **built** — three real skippable choices: name into the one profile, brain from the engine's own door, vault folder via the real picker; remembered (welcomed flag), never shown twice |
 
 Order (each step = one landing: built, verified, merged, reported):
 1. ~~**Artifacts, made real**~~ — **DONE** (`55...`/`9555499` + rail fix `5da2fa9`, merged `1e7dce2`/`1f97e3a`).
