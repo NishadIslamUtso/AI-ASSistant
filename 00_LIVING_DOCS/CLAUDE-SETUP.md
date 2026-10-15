@@ -1,78 +1,136 @@
-# CLAUDE-SETUP — the new way (no app build)
+# THE PLAN — free-first TODO + how we work
 
-**Owner decision, 2026-10-15:** *"i don't need to make the app, i just need to set
-the claude and claude code the way i want."* The AI ASSistant app is **parked** —
-branch, handover, archives and TODOLIST intact, nothing deleted. **This file is
-the active path.** One step per turn; he says "next" (or "skip").
+**Owner mandate, 2026-10-15 (standing):** *"the priority is to make it and use it
+for free… except the API cost if and only if I ever decide to purchase a
+subscription. Other than that, everything must be free."*
 
-## Phase 0 — choose the brain (free first)
+- **Free Gate:** every step below is labeled with its cost. Default = **$0**.
+  Any item marked 🅿️ stays blocked until the owner literally says **"buy"** —
+  and only he can say it. API credits *and* subscriptions both count as "cost".
+- **App status:** parked (see `TODOLIST.md`), not deleted. No app code unless he
+  un-parks it.
+- **Cadence:** one step per turn. He says **"next"** (or "skip" / "reorder").
 
-- [ ] **0a. Free-forever default:** Claude Code ← Ollama — `ollama launch claude`
-      (Ollama ≥0.14 speaks the Anthropic Messages format). Local coder model for the
-      4 GB card (`qwen2.5-coder:3b` class) or free `:cloud` models (`kimi-k2.5:cloud`,
-      `glm-5:cloud`) when online. $0 forever.
-- [ ] **0b. Optional taste of real Claude:** a new `console.anthropic.com` account
-      ships ≈ $5 starter credits, no card — a few days of genuine Claude, then it stops.
-- [ ] **0c. Claude Desktop:** free chat plan (usage caps apply). Cowork/Chrome per Phase 1.
+---
 
-## Phase 1 — Claude in the browser (the Cowork question)
+## The goal
 
-Facts (checked 2026-10-15): **"Claude for Chrome"** (the real extension, free to all
-users since late 2025) **now runs full Cowork sessions** since 2026-08-12 — shared
-history, skills and connectors between extension, desktop, web and mobile.
-Rollout: Cowork-in-Chrome for **Max/Team now, Pro "in weeks"**; Enterprise off by
-default; **Chrome only** (no other Chromium, no mobile). Separately, Cowork desktop
-got its **own sandboxed built-in browser** (2026-08-26, Pro/Max/Team) that never
-touches your real tabs.
+Claude + Claude Code set up the way he wants — browsing, notes, skills, mods,
+memory — running on his ASUS TUF (RTX 3050 4 GB / 8 GB RAM) with zero spend.
 
-- [ ] **1a.** Install "Claude for Chrome" from the Chrome Web Store. On a free plan
-      expect the base extension; the Cowork sidebar appears only on paid tiers — check
-      his account and note what actually shows.
-- [ ] **1b.** Connect his notes: add a filesystem/Obsidian **MCP connector** in Claude
-      Desktop settings so Claude can read the vault (AI-Brain folder) directly.
-- [ ] **1b-alt.** If MCP connectors are paywalled on his plan, skip to Phase 2 — Claude
-      Code gets the same access via `--mcp`/config and runs free.
+---
+
+## Phase 0 — free brain for Claude Code (foundation)
+
+- [ ] **0.1 Verify Ollama is up** — cost: $0.
+      `curl.exe http://127.0.0.1:11434/api/tags` → lists his models.
+      *Done when:* JSON with `models` comes back.
+- [ ] **0.2 Pull the free models** — cost: $0.
+      `ollama pull qwen2.5-coder:3b` (≈2 GB → fits the 4 GB card; the daily brain)
+      `ollama pull kimi-k2.5:cloud` (optional — free, better quality, needs internet).
+      *Done when:* `ollama list` shows both.
+- [ ] **0.3 Install Claude Code** — cost: $0.
+      First `node -v`. If Node exists: `npm install -g @anthropic-ai/claude-code`.
+      If not: I confirm the current official Windows installer when we hit this
+      step (no guessed commands).
+      *Done when:* `claude --version` answers.
+- [ ] **0.4 Point Claude Code at the free brain** — cost: $0.
+      One-liner alternative: `ollama launch claude` (Ollama does the wiring).
+      Manual form for a PowerShell 5.1 session:
+      `$env:ANTHROPIC_BASE_URL = "http://localhost:11434"`
+      `$env:ANTHROPIC_AUTH_TOKEN = "ollama"`
+      `$env:ANTHROPIC_API_KEY = ""`
+      then `claude`.
+      *Done when:* a prompt inside `claude` gets a local-model reply and no auth
+      error. Then persist the three variables as User env vars — only after 0.4 passes.
+- [ ] **0.5 Wobble test** — cost: $0.
+      One real task (small file edit in a throwaway folder) to check tool-calling
+      on the chosen model. If tools fail: switch model (`:cloud` or a different
+      coder), not a subscription.
+      *Done when:* the edit actually happened on disk.
+- [ ] 🅿️ **0.9 Optional taste of real Claude** — ~$5 free starter credits on a new
+      console account (no card, expires into paid use). Blocked like any cost until
+      he says "buy".
+
+## Phase 1 — Claude in his browser (free plan)
+
+- [ ] **1.1 Sign into Claude** (desktop app or web) with a free account; confirm
+      chat works. Cost: $0. *Done when:* a conversation saves to history.
+- [ ] **1.2 Install "Claude for Chrome"** from the Chrome Web Store (Chrome only —
+      no other Chromium). Cost: $0. Record what his plan actually shows: the
+      Cowork sidebar is Max/Team (Pro "soon"); free gets the base extension.
+      *Done when:* the side panel answers about the current tab.
+- [ ] **1.3 Notes → Claude:** try adding a filesystem/Obsidian **MCP connector** in
+      Claude's settings. If it's paywalled on free → tick "skip", Phase 2 covers
+      the same ground free. Cost: $0. *Done when:* Claude names a file from the
+      vault folder, or the skip is recorded.
 
 ## Phase 2 — Claude Code, his way
 
-- [ ] **2a.** Install: `npm install -g @anthropic-ai/claude-code` (PowerShell 5.1:
-      separate lines, no `&&`, `.\` for relative executables).
-- [ ] **2b.** Point it at the free brain — either `ollama launch claude` or the env
-      form:
-      `$env:ANTHROPIC_BASE_URL = "http://localhost:11434"` ·
-      `$env:ANTHROPIC_AUTH_TOKEN = "ollama"` · `$env:ANTHROPIC_API_KEY = ""` · `claude`.
-      (Free cloud alt: OpenRouter `:free` models via `claude-code-router`.)
-- [ ] **2c.** Skills: copy `refs/replica-skill/replica-*` → `%USERPROFILE%\.claude\skills\`.
-      Then `/replica-recon` etc. work as plain commands.
-- [ ] **2d.** Mods: inside Claude Code run `/plugin`, add marketplace
-      `whyashthakker/awesome-claude-code-mods`, install only trusted/MIT mods. Ask
-      Claude Code to write his own — that is the sanctioned way (it hot-reloads).
-- [ ] **2e.** Vault access: point a filesystem MCP server (or CLAUDE.md context) at the
-      notes folder so both Claude Desktop and Claude Code know where the brain-dump lives.
+- [ ] **2.1 Skills:** copy `refs/replica-skill/replica-*` →
+      `%USERPROFILE%\.claude\skills\`. Cost: $0 (MIT).
+      *Done when:* `claude` shows the replica commands.
+- [ ] **2.2 Mods:** inside Claude Code — `/plugin`, add marketplace
+      `whyashthakker/awesome-claude-code-mods`, install 1–2 MIT, reviewed mods.
+      Remember: **mods are unsandboxed** (full machine access) — trusted sources
+      only; he approves each install. Cost: $0.
+      *Done when:* the mod's UI/behavior is visibly active.
+- [ ] **2.3 Vault to Claude Code:** filesystem MCP config or a `CLAUDE.md` at the
+      vault root. Cost: $0. *Done when:* Claude Code reads a named note unprompted.
+- [ ] **2.4 First real workflow:** one actual job of his, start to finish, free.
+      *Done when:* he uses it without me standing over it.
 
-## Phase 3 — his eight "screens", rebuilt as skills and mods (the app replacement)
+## Phase 3 — his eight surfaces as skills & mods (the app replacement)
 
-Each surface gets the cheapest vehicle that works — never an app screen:
+Each surface gets the cheapest free vehicle: **skill** (command) · **mod** (pane)
+· **MCP** (data). Never an app screen unless he un-parks.
 
-- [ ] **3a.** `/today` skill → greeting, counts, worth-doing, recent sources, quick
-      actions (Today 07): reads Chrome history + vault files, prints the dashboard.
-- [ ] **3b.** `/vault-map` skill → browsing/vault summary (Browsing Maps 05).
-- [ ] **3c.** Artifacts-as-files → Claude Code already writes real files to a folder;
-      declare one folder the artifact home (Artifacts 03 without the app).
-- [ ] **3d.** Always-on panels (status, CI, token weather) → **mods** (Claude Code panes).
-- [ ] **3e.** Anything data-shaped (vault, sources, later artifact store) → **MCP server**
-      so *any* Claude surface can read it (the bridge the app used to be).
+- [ ] **3.1 `/today`** — greeting, counts, worth-doing, recent sources: reads
+      Chrome history + vault files, prints the dashboard (Today 07, free).
+- [ ] **3.2 `/vault-map`** — browsing/vault summary (Browsing Maps 05).
+- [ ] **3.3 Artifacts home** — one declared folder Claude Code writes files into
+      (Artifacts 03 without the app).
+- [ ] **3.4 Always-on panels** (status/token-weather style) → mods.
+- [ ] **3.5 Standing rule** — every new surface: skill, mod, or MCP first; app
+      only if un-parked.
 
-## Phase 4 — memory & notes (optional, later)
+## Phase 4 — memory & notes
 
-- [ ] **4a.** Obsidian on the vault (he planned it anyway) — Claude connectors read it.
-- [ ] **4b.** `claude-os` memory layer: genuine candidate, but Mac-first — evaluate a
-      Windows path before installing; fallback = CLAUDE.md + skills (no install).
-- [ ] **4c.** `CLAUDE.md` at the vault root = standing context for every Claude Code session.
+- [ ] **4.1 Obsidian** on the vault folder (free plan suffices for local vaults).
+- [ ] **4.2 `CLAUDE.md`** at the vault root = standing context for every session.
+- [ ] **4.3 `claude-os` memory layer** — evaluate Windows viability first
+      (it is Mac-first); fallback stays CLAUDE.md + skills. Cost must stay $0.
 
-## Free-tier edges to remember
+## Phase 5 — free-tier upkeep (recurring)
 
-- Free claude.ai plan = chat with caps; **no Claude Code agent** (Phase 2b is the free path).
-- Cowork inside Chrome = Max/Team now, Pro soon; base extension = broadly available; Chrome only.
-- All RPM/RPD numbers drift — verify on the pricing page at signup; treat Gemini's table as
-  directionally right, not contractual.
+- [ ] **5.1 My duty, before every phase:** re-check Anthropic's changelog, Ollama's
+      blog, and the free-tier numbers of anything we rely on — tiers drift; the
+      owner never brings release news to the build.
+- [ ] **5.2 The Paid Moment:** if free caps genuinely start hurting, I lay out the
+      menu (researched Oct 2026: Pro ≈ $20/mo, Max ≈ $100/mo — verify at the time)
+      with exactly what each unlocks (native Claude Code on real Claude models,
+      Cowork-in-Chrome, higher caps). He alone decides. Until an explicit "buy":
+      **$0, no exceptions**.
+
+---
+
+## The structure we follow now
+
+1. **One step per turn.** I never stack two steps. He says "next".
+2. **Every step ships with:** exact commands (PowerShell 5.1-safe: no `&&`,
+   `.\` for relatives), a **cost label**, and a **done-when check**. No step
+   without all three.
+3. **My duties:** research before he has to; verify free claims with sources;
+   keep this file + session log pushed to the branch → main; hand over exact
+   commands instead of assumed environments; never make a paid path the default.
+4. **His duties:** run the commands on his machine (I have no access there),
+   paste back errors/output verbatim, and hold the only "buy" button.
+5. **Files:** this file = active plan · `TODOLIST.md` = parked app record ·
+   `00_LIVING_DOCS/` = repo mirrors (fresh at every landing) ·
+   `memory/sessions/` = why + what failed.
+6. **Free Gate is law:** cost > $0 ⇒ blocked until "buy". Free tiers change
+   without warning ⇒ we re-plan, we don't quietly pay.
+7. **The app stays parked** — repo, branches, archives intact; un-parking is a
+   "next" like any other.
+
+**First step on "next": Phase 0.1 (verify Ollama).**
