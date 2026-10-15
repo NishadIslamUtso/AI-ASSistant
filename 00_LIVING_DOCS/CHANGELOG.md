@@ -1,5 +1,15 @@
 # CHANGELOG.md — What Changed Each Session (Living)
 
+## 0.5.0 — Track B: the whole designed surface, real
+
+- **Projects (04):** the engine can live inside a project — instruction it always wears, a folder it truly works in, per-project conversations, "Work here" (real workspace door), all validated and damage-tolerant.
+- **Vault (05):** the folder on screen — real file tree grouped by folder, name filter, content search naming file and line, capped preview, add-to-composer as quoted named context, Open folder door.
+- **Code (06):** the engine's workspace wearing its face — folder (choose / back to the vault / open), throttle quick-set, and the real resumable threads per folder with forget.
+- **First run (08):** the welcome — three real skippable choices (name, brain from the engine's own door, vault folder via the real picker), remembered once.
+- **Appearance (09):** verified as built — accent/width tokens, sidebar and rail remembered.
+- Nav complete: six sections, every one a working screen. 361 tests.
+
+
 **Last Updated:** 2026-10-14 (late evening) Asia/Dhaka
 **Rule:** Log every change with date, what, why. This is memory for next AI.
 
