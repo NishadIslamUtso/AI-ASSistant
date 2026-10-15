@@ -111,7 +111,7 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
   (2026-10-15): the app imposes no rules of its own — owner-favor, documented
   in ARCHITECTURE-ENGINE.md.
 
-## TRACK D — hygiene (continuous)
+## TRACK D — hygiene (continuous) — core landed 2026-10-16 (handoff, skills sourcing, vault export, caveman hint, sweep #3, JUDGE-BRIEF, mirrors); installer explicitly LAST (his word)
 
 - [ ] **Landscape sweep — STANDING DUTY (his correction, 2026-10-16):** every
   working session includes a proactive scan of the four spaces (CC GUIs,
