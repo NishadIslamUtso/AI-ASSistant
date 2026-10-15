@@ -51,6 +51,8 @@ export type StartSessionInput = {
    * out and gets the real `spawn`.
    */
   spawnProcess?: typeof spawn
+  /** Overridable for tests — which platform's stop rules apply. */
+  platform?: string
 }
 
 /**
@@ -69,6 +71,9 @@ export function engineArguments(model: string, approval: ApprovalMode = 'ask', r
   const args = [
     '--output-format', 'stream-json',
     '--input-format', 'stream-json',
+    // The engine's words as they form, not sentence-at-a-time: without this
+    // the CLI reports only finished messages, and a long turn looks frozen.
+    '--include-partial-messages',
     '--verbose',
     '--permission-mode', PERMISSION_MODE[approval],
     '--permission-prompt-tool', 'stdio',
@@ -98,6 +103,32 @@ export function enginePathPrepend(platform = process.platform, env = process.env
     .join(';')
 }
 
+/** The machine's own Anthropic credentials — never the app's business. */
+const ANTHROPIC_ENV_KEYS = ['ANTHROPIC_API_KEY', 'ANTHROPIC_AUTH_TOKEN', 'ANTHROPIC_BASE_URL']
+
+/**
+ * The free gate, kept honest: the engine thinks with the brain the owner
+ * chose in this app, never with whatever credentials happen to sit in the
+ * machine's environment. The Anthropic variables are stripped from the
+ * inherited environment on every launch; the chosen brain is then applied on
+ * top. An empty brain choice means the engine starts with none of these —
+ * no silent borrowing of a machine account. (A login the owner made directly
+ * with the CLI on their own machine is their own affair; this app neither
+ * forwards it through settings nor plants it there.)
+ */
+export function sanitizeEnvironment(env: NodeJS.ProcessEnv = process.env): Record<string, string> {
+  const clean: Record<string, string> = {}
+  for (const [key, value] of Object.entries(env)) {
+    if (value !== undefined && !ANTHROPIC_ENV_KEYS.includes(key)) clean[key] = value
+  }
+  return clean
+}
+
+/** The Windows tree-kill line, in one place so a test can pin it. */
+export function stopArguments(pid: number): string[] {
+  return ['/pid', String(pid), '/T', '/F']
+}
+
 /**
  * The environment the engine needs to think with the app's chosen brain.
  * With the local Ollama door there is no key and no account — the token is
@@ -121,7 +152,7 @@ export function startClaudeCodeSession(input: StartSessionInput): EngineSession 
     child = start('claude', args, {
       cwd: input.cwd,
       env: {
-        ...process.env,
+        ...sanitizeEnvironment(process.env),
         ...brainEnvironment(input.settings.baseUrl),
         ...(enginePathPrepend() ? { PATH: `${enginePathPrepend()};${process.env['PATH'] ?? ''}` } : {}),
       },
@@ -143,6 +174,11 @@ export function startClaudeCodeSession(input: StartSessionInput): EngineSession 
     input.onEvent({ kind: 'error', text: notFoundMessage() })
   })
 
+  // A pipe the engine already closed (EPIPE) reports on stdin, out of band
+  // and after every check — swallowed here, because the close below is the
+  // event that tells the truth about the engine's death.
+  child.stdin?.on?.('error', () => undefined)
+
   const parser = createEngineParser()
   // Bytes can be chopped in the middle of a multi-byte character (Bangla
   // characters are three bytes long, and pipe chunks land wherever they
@@ -153,6 +189,10 @@ export function startClaudeCodeSession(input: StartSessionInput): EngineSession 
   const decoder = new StringDecoder('utf8')
   let stderrTail = ''
   let finished = false
+  // A stop the OWNER pressed is not an engine failure: its close must be
+  // quiet — the 'stopped by you' line is the interface's business, and an
+  // error card over a deliberate stop would be the app crying wolf.
+  let deliberate = false
 
   const deliver = (text: string): void => {
     for (const event of parser.feed(text)) input.onEvent(event)
@@ -172,24 +212,34 @@ export function startClaudeCodeSession(input: StartSessionInput): EngineSession 
     } catch {
       // A decoder error at the very end must not mask the close itself.
     }
-    if (stderrTail.trim() && code !== 0) {
+    if (!deliberate && stderrTail.trim() && code !== 0) {
       input.onEvent({ kind: 'error', text: `engine closed with an error: ${stderrTail.trim()}` })
     }
     input.onClose?.(code)
     input.onEvent({ kind: 'closed' })
   })
 
+  // One wire sentence out. An engine that dies between the running check and
+  // the write must not crash the app — the write is guarded, and a failed
+  // write is simply "not delivered".
+  const writeLine = (line: string): boolean => {
+    if (!isRunning()) return false
+    try {
+      child.stdin?.write(line)
+      return true
+    } catch {
+      return false
+    }
+  }
+
   return {
     send(prompt: string): boolean {
-      if (!isRunning()) return false
-      child.stdin?.write(`${JSON.stringify({ type: 'user', message: { role: 'user', content: [{ type: 'text', text: prompt }] } })}\n`)
-      return true
+      return writeLine(`${JSON.stringify({ type: 'user', message: { role: 'user', content: [{ type: 'text', text: prompt }] } })}\n`)
     },
     answer(requestId: string, allow: boolean): void {
-      if (!isRunning()) return
       // The deny shape needs a `message` — the real CLI rejects a bare deny
       // as an invalid permission result (proven against v2.1.300).
-      child.stdin?.write(
+      void writeLine(
         `${JSON.stringify({
           type: 'control_response',
           response: {
@@ -203,7 +253,23 @@ export function startClaudeCodeSession(input: StartSessionInput): EngineSession 
       )
     },
     stop(): void {
-      if (isRunning()) child.kill()
+      if (!isRunning()) return
+      deliberate = true
+      const platform = input.platform ?? process.platform
+      // On Windows the launch went through the shell, so child.pid is the
+      // shell's — killing it alone would orphan the engine. taskkill with /T
+      // takes the whole tree down, and /F because a polite request cannot
+      // reach a stuck child. Elsewhere a signal reaches the process itself.
+      if (platform === 'win32' && child.pid) {
+        try {
+          const kill = (input.spawnProcess ?? spawn)('taskkill', stopArguments(child.pid))
+          kill.on?.('error', () => child.kill())
+        } catch {
+          child.kill()
+        }
+        return
+      }
+      child.kill()
     },
     isRunning,
   }

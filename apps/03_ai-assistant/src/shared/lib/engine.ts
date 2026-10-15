@@ -136,6 +136,8 @@ export type EngineEvent =
   | { kind: 'permission'; requestId: string; tool: string; summary: string; detail?: string }
   /** The engine opened a resumable session (its init sentence carries the id). */
   | { kind: 'session'; id: string }
+  /** A piece of the engine's words as they form — the stream, not the summary. */
+  | { kind: 'delta'; text: string }
   | { kind: 'done'; text: string; usage?: EngineUsage }
   | { kind: 'error'; text: string; usage?: EngineUsage }
   | { kind: 'closed' }

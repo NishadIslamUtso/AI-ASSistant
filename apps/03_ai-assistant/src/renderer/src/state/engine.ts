@@ -51,7 +51,13 @@ export type PullState = {
 export type EngineTurn = {
   prompt: string
   items: EngineItem[]
-  permission: EnginePermission | null
+  /**
+   * The questions waiting for a person, in arrival order. The engine can ask
+   * faster than a person answers: a queue means no question is lost under
+   * the one being looked at (the old single card silently dropped all but
+   * the last, and the engine waited forever on a card nobody held).
+   */
+  permissions: EnginePermission[]
   state: 'running' | 'done' | 'error'
   /** The engine's own session id, when it opened one — the resumable thread. */
   sessionId: string | null
@@ -138,15 +144,21 @@ const ingest = (event: EngineEvent): void => {
     turn.items.push({ kind: 'status', text: event.text })
   } else if (event.kind === 'text') {
     turn.items.push({ kind: 'text', text: event.text })
+  } else if (event.kind === 'delta') {
+    // The stream, as it forms: the engine's last item grows word by word
+    // instead of a hundred one-word items being stacked up.
+    const last = turn.items.at(-1)
+    if (last?.kind === 'text') last.text += event.text
+    else turn.items.push({ kind: 'text', text: event.text })
   } else if (event.kind === 'tool') {
     turn.items.push({ kind: 'tool', name: event.name, summary: event.summary })
   } else if (event.kind === 'permission') {
-    turn.permission = {
+    turn.permissions.push({
       requestId: event.requestId,
       tool: event.tool,
       summary: event.summary,
       detail: event.detail,
-    }
+    })
   } else if (event.kind === 'done') {
     // The wire says the same goodbye twice (once as the engine's last words,
     // once as the result) — show it once.
@@ -155,7 +167,7 @@ const ingest = (event: EngineEvent): void => {
     if (event.text && !alreadySaid) turn.items.push({ kind: 'text', text: event.text })
     if (event.usage) turn.usage = event.usage
     turn.state = 'done'
-    turn.permission = null
+    turn.permissions = []
   } else if (event.kind === 'closed') {
     // The engine process ended. After a finished task this changes nothing;
     // after a Stop or a crash it is what closes the turn — without it the
@@ -163,13 +175,13 @@ const ingest = (event: EngineEvent): void => {
     if (turn.state === 'running') {
       turn.items.push({ kind: 'status', text: 'engine stopped' })
       turn.state = 'done'
-      turn.permission = null
+      turn.permissions = []
     }
   } else {
     turn.items.push({ kind: 'error', text: event.text })
     if ('usage' in event && event.usage) turn.usage = event.usage
     turn.state = 'error'
-    turn.permission = null
+    turn.permissions = []
   }
   emit()
 }
@@ -206,6 +218,40 @@ const store: EngineStore = {
     try {
       const read = await api.read()
       setState({ settings: read.engine, alive: read.running })
+      // Hydrate-or-drop. A window opened mid-turn (or reloaded after one)
+      // replays the remembered events so the work is not invisible. A turn
+      // that cannot be told whole is dropped, never half-shown: whatever
+      // still says "running" when the engine is not is a phantom, and is
+      // closed as one.
+      const remembered = (Array.isArray(read.history) ? read.history : []).filter(
+        (event): event is EngineEvent => Boolean(event && typeof event === 'object' && 'kind' in event)
+      )
+      const worthShowing = remembered.some((event) =>
+        ['status', 'text', 'tool', 'permission', 'done', 'error'].includes(event.kind)
+      )
+      if (worthShowing && !state.turn) {
+        state.turn = {
+          prompt: '(from before this window opened)',
+          items: [],
+          permissions: [],
+          // Replayed as if live; reconciled with the machine below.
+        state: 'running',
+          sessionId: null,
+          usage: null,
+        }
+        for (const event of remembered) ingest(event)
+        // The engine being gone changes the story: a still-"running" replay
+        // is closed honestly, and a question it still waits on is dropped —
+        // nobody can answer it anymore.
+        if (!read.running) {
+          state.turn.permissions = []
+          if (state.turn.state === 'running') {
+            state.turn.items.push({ kind: 'status', text: 'engine stopped' })
+            state.turn.state = 'done'
+          }
+        }
+        emit()
+      }
     } finally {
       initializing = false
     }
@@ -232,7 +278,7 @@ const store: EngineStore = {
       return { ok: false, answer: 'The engine is already working on the last task.' }
     }
     void store.init()
-    const turn: EngineTurn = { prompt, items: [], permission: null, state: 'running', sessionId: null, usage: null }
+    const turn: EngineTurn = { prompt, items: [], permissions: [], state: 'running', sessionId: null, usage: null }
     setState({ turn })
     const answer = await getEngineApi().send(prompt, '')
     if (answer.ok) state.alive = true
@@ -248,9 +294,9 @@ const store: EngineStore = {
 
   async answer(allow: boolean): Promise<void> {
     const turn = state.turn
-    const permission = turn?.permission
+    const permission = turn?.permissions[0]
     if (!permission) return
-    turn.permission = null
+    turn.permissions = turn.permissions.slice(1)
     emit()
     await getEngineApi().answer(permission.requestId, allow)
   },
@@ -323,7 +369,7 @@ const store: EngineStore = {
     if (turn?.state === 'running') {
       turn.items.push({ kind: 'status', text: 'stopped by you' })
       turn.state = 'done'
-      turn.permission = null
+      turn.permissions = []
       emit()
     }
   },

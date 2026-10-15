@@ -57,17 +57,23 @@ export default function EnginePanel() {
         </p>
       ) : null}
 
-      {turn.permission ? (
+      {turn.permissions.length > 0 ? (
         <div className="mt-2.5 rounded-lg border border-line bg-bg p-2.5">
           <p className="text-[12.5px] text-ink">
-            The engine wants to use <span className="font-medium">{turn.permission.tool}</span>
+            The engine wants to use{' '}
+            <span className="font-medium">{turn.permissions[0].tool}</span>
+            {turn.permissions.length > 1 ? (
+              <span className="ml-2 rounded-md border border-line px-1.5 py-0.5 text-[10.5px] text-muted">
+                +{turn.permissions.length - 1} more waiting
+              </span>
+            ) : null}
           </p>
-          {turn.permission.summary ? (
-            <p className="mt-0.5 break-words font-mono text-[11.5px] text-muted">{turn.permission.summary}</p>
+          {turn.permissions[0].summary ? (
+            <p className="mt-0.5 break-words font-mono text-[11.5px] text-muted">{turn.permissions[0].summary}</p>
           ) : null}
-          {turn.permission.detail ? (
+          {turn.permissions[0].detail ? (
             <pre className="mt-1.5 max-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-line bg-panel p-2 font-mono text-[11px] leading-relaxed text-muted">
-              {turn.permission.detail}
+              {turn.permissions[0].detail}
             </pre>
           ) : null}
           <div className="mt-2 flex gap-2">

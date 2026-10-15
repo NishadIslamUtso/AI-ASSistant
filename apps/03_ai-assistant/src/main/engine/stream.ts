@@ -29,6 +29,15 @@ const asRecord = (value: unknown): LooseRecord => (value && typeof value === 'ob
 
 export function createEngineParser(): EngineParser {
   let buffer = ''
+  // What has already been shown through deltas for the message being
+  // streamed. When the finished message arrives and says the same thing, it
+  // is not news — showing both would print every answer twice.
+  let streamed = ''
+  // How much of `buffer` is already known to hold no newline: everything
+  // before this offset was scanned by an earlier feed. A line chopped at a
+  // chunk boundary is therefore rescanned only in its new tail — a long-lived
+  // engine feeding small chunks stays linear, not quadratic.
+  let scanned = 0
 
   const parseLine = (line: string): EngineEvent[] => {
     const text = line.trim()
@@ -80,20 +89,39 @@ export function createEngineParser(): EngineParser {
       return events
     }
 
+    if (message.type === 'stream_event') {
+      // A piece of the engine's words as they form. Anything else about the
+      // stream (message envelopes, block boundaries, thinking deltas) is the
+      // wire's business, not the window's.
+      const event = asRecord(message.event)
+      if (event.type !== 'content_block_delta') return []
+      const delta = asRecord(event.delta)
+      if (delta.type !== 'text_delta' || typeof delta.text !== 'string' || !delta.text) return []
+      streamed = streamed.length > 200_000 ? delta.text : streamed + delta.text
+      return [{ kind: 'delta', text: delta.text }]
+    }
+
     if (message.type === 'assistant') {
       // The engine's turn: text pieces and the tools it decided to use.
       const content = asRecord(message.message).content
       if (!Array.isArray(content)) return []
       const events: EngineEvent[] = []
+      let messageText = ''
       for (const block of content) {
         const entry = asRecord(block)
         if (entry.type === 'text' && typeof entry.text === 'string' && entry.text.trim()) {
+          messageText += entry.text
           events.push({ kind: 'text', text: entry.text })
         } else if (entry.type === 'tool_use' && typeof entry.name === 'string') {
           events.push({ kind: 'tool', name: entry.name, summary: toolSummary(entry.name, entry.input) })
         }
         // thinking blocks are the engine's private scratchwork — not shown.
       }
+      // What the stream already showed, word for word, is not shown again.
+      if (messageText && messageText === streamed) {
+        return events.filter((event) => event.kind !== 'text')
+      }
+      streamed = ''
       return events
     }
 
@@ -147,19 +175,26 @@ export function createEngineParser(): EngineParser {
       buffer += chunk
       // A single line longer than this is not a sentence, it is a runaway —
       // drop the oldest half rather than grow without limit.
-      if (buffer.length > 2_000_000) buffer = buffer.slice(-1_000_000)
+      if (buffer.length > 2_000_000) {
+        const cut = buffer.length - 1_000_000
+        buffer = buffer.slice(cut)
+        scanned = Math.max(0, scanned - cut)
+      }
       const events: EngineEvent[] = []
-      let index = buffer.indexOf('\n')
+      let index = buffer.indexOf('\n', Math.min(scanned, buffer.length))
       while (index !== -1) {
         events.push(...parseLine(buffer.slice(0, index)))
         buffer = buffer.slice(index + 1)
-        index = buffer.indexOf('\n')
+        scanned = 0
+        index = buffer.indexOf('\n', scanned)
       }
+      scanned = buffer.length
       return events
     },
     flush(): EngineEvent[] {
       const rest = buffer
       buffer = ''
+      scanned = 0
       return parseLine(rest)
     },
   }

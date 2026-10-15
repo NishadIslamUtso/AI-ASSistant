@@ -98,7 +98,10 @@ function cloudView(): {
  * person, not a log file.
  */
 function pushEngineEvent(event: EngineEvent): void {
-  engineHistory.push(event)
+  // Stream pieces are for the live window only: a hundred of them would
+  // crowd out the real story from the small remembered history, and the
+  // finished text arrives in its own event for whoever reads it later.
+  if (event.kind !== 'delta') engineHistory.push(event)
   if (engineHistory.length > 100) engineHistory.shift()
   for (const window of BrowserWindow.getAllWindows()) {
     window.webContents.send('engine:event', event)

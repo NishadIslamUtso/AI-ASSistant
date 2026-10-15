@@ -1,5 +1,18 @@
 # CHANGELOG.md — What Changed Each Session (Living)
 
+## 0.5.1 — Track C: every open defect closed, each pinned by test
+
+- **Free gate held honest:** machine Anthropic credentials are stripped from the engine's environment on every launch; the chosen brain or nothing, never a silent machine account.
+- **Quiet deliberate stop:** pressing Stop no longer produces an error card; real crashes still say why.
+- **Windows stop:** `taskkill /pid <pid> /T /F` through the shell's pid — the whole engine tree dies, not just the shell.
+- **Dead pipes:** a send into a closing engine is "not delivered", never a crash.
+- **Parser scan-offset:** chunk-chopped lines rescan only their new tail (linear at chunk boundaries).
+- **Card queue:** permission questions queue in arrival order — the first answered first, "+N more waiting" counted, nothing lost.
+- **Hydrate-or-drop:** a window opened mid-turn replays the remembered events; a dead engine's leftover question is dropped, a cut-off run closes honestly.
+- **Token streaming:** the engine's words arrive as they form (`--include-partial-messages`), grow one line in place, and are never printed twice.
+- **One badge:** `isCloudModelName` classifies for every list; the composer trigger badges the chosen brain. 375 tests.
+
+
 ## 0.5.0 — Track B: the whole designed surface, real
 
 - **Projects (04):** the engine can live inside a project — instruction it always wears, a folder it truly works in, per-project conversations, "Work here" (real workspace door), all validated and damage-tolerant.
