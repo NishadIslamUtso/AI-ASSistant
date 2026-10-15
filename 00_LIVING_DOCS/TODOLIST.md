@@ -34,6 +34,10 @@ The frame, in the owner's words:
 - [ ] **Today (07)** — next in line; mockup already fetched and read this session.
 - [ ] Remaining screens in BUILD-TODO's order (04 Projects, 05 Vault, 06 Code,
   08 first-run, 09 appearance, 10 agent-access polish) — reorder here if you want.
+- [ ] **Shell screen or mod? (decide per surface):** a view that belongs *inside a Claude Code session*
+  (a status pane, a context strip) may be cheaper as a Mod than as a shell screen. Whole-machine surfaces —
+  browsing history, the vault, artifacts across apps — stay in the shell: a mod only appears while you are
+  sitting in Claude Code.
 - [ ] **Drop-candidates (yours to strike):** if you decide the Claude app already
   covers a screen for you, tick it here before it gets built — e.g. "Projects if
   Claude Projects suffices". Nothing is built the day before you decide against it.
@@ -45,6 +49,12 @@ The frame, in the owner's words:
   our data directly**. MCP is the standard both Claude apps already speak — this
   is literally the "add-on that connects to Claude" you described, built the way
   Claude supports it.
+- [ ] **Claude Mods = the Claude Code half of the bridge** (shipped 2026-10-01, v2.1.287, on by default):
+  JS/TS function hooks that draw panes/commands in the session, rewrite tool calls, approve or deny
+  permissions, redact output, replace built-ins (`/diff` is already a mod). Installed via `/plugin`;
+  a 50-mod MIT marketplace exists. Anything we want *inside* Claude Code's UI is a mod — not a shell screen.
+  Caveats to respect: mods are not sandboxed (they run with your machine's access — trusted sources only)
+  and they do not reach the claude.ai chat app.
 - [ ] Keep the extension port `127.0.0.1:8765` as the capture endpoint and
   document the loop: extension → vault → Today / Browsing Maps.
 - [ ] Keep the Anthropic provider prominent: paste a key → Claude's brain inside
@@ -78,6 +88,13 @@ The frame, in the owner's words:
   `qwen3.5:cloud`-class Ollama cloud models are free with limits).
 - [ ] Optional — set it up on your machine: say the word and I write the exact
   PowerShell steps (5.1 rules: no `&&`, `.\` for relative executables).
+- [x] **Refined by research (2026-10-15):** the free claude.ai plan does **not** include Claude Code.
+  Genuinely free paths: (1) ~**$5 starter credits** on a new console account (no card — a few days, not a
+  plan); (2) **`ollama launch claude`** — Ollama ≥0.14 serves the Anthropic Messages format and ships a
+  launcher that wires Claude Code to local models (`qwen3.5`) or free `:cloud` models (`kimi-k2.5:cloud`),
+  $0 forever on your own card; (3) **free endpoints** — OpenRouter free models (~50 req/day), Google AI
+  Studio, Groq — via claude-code-router / free-claude-code / LiteLLM; (4) the **Claude for Open Source**
+  program (rolling spots, 6 months of Max-tier — check whether intake is open before counting on it).
 - Note: Claude Code is a **separate tool for code in repos** — it belongs in the
   "don't duplicate" column, not in our app.
 
@@ -123,6 +140,9 @@ The frame, in the owner's words:
 - [ ] Plan → your "go" → one screen per turn → verify (tests, typecheck,
   checkers, **imgdiff parity vs the mockup**) → merge to main → push.
 - [ ] Docs stay in sync per landing; handover docs live in `00_LIVING_DOCS/`.
+- [ ] **Research cadence = mine, not yours:** before any scope decision, check the Claude Code changelog,
+  Anthropic's release notes and Ollama's blog. Raised 2026-10-15 — *"why am i the one who is saying these
+  to you"* — the owner should never be the one bringing release news to the build.
 - [ ] Plan first; code only after you say go.
 
 ## 9 · Parked, one click of yours
