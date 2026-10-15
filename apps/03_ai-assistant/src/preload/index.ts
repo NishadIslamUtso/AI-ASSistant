@@ -7,6 +7,7 @@ import type {
 import type { Permissions } from '../shared/lib/permissions'
 import type { ApprovalMode, EngineAvailability, EngineEvent, EngineId, EngineModelEntry, EngineSettings } from '../shared/lib/engine'
 import type { HouseRules } from '../shared/lib/houseRules'
+import type { Project } from '../shared/lib/projects'
 import type {
   AdoptInput,
   ItemAnswer,
@@ -85,6 +86,16 @@ const api = {
     /** Which build is running. Used by the About panel and bug reports. */
     version: process.env['npm_package_version'] ?? '0.1.0',
     platform: process.platform,
+  },
+  projects: {
+    read: (): Promise<Project[]> => ipcRenderer.invoke('projects:read'),
+    write: (projects: Project[]): Promise<{ ok: boolean; projects: Project[] }> =>
+      ipcRenderer.invoke('projects:write', projects),
+    blank: (name: string): Promise<Project> => ipcRenderer.invoke('projects:new', name),
+  },
+  engine: {
+    setWorkspace: (folder: string): Promise<{ ok: boolean; answer: string }> =>
+      ipcRenderer.invoke('engine:workspace-set', folder),
   },
   houseRules: {
     read: (): Promise<{ rules: HouseRules; defaults: HouseRules }> => ipcRenderer.invoke('houserules:read'),
