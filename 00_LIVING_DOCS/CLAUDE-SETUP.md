@@ -74,14 +74,16 @@ by hand again.
 
 - [ ] **1.1 Sign into Claude** (desktop app or web) with a free account; confirm
       chat works. Cost: $0. *Done when:* a conversation saves to history.
-- [ ] **1.2 Install "Claude for Chrome"** from the Chrome Web Store (Chrome only —
-      no other Chromium). Cost: $0. Record what his plan actually shows: the
-      Cowork sidebar is Max/Team (Pro "soon"); free gets the base extension.
-      *Done when:* the side panel answers about the current tab.
-- [ ] **1.3 Notes → Claude:** try adding a filesystem/Obsidian **MCP connector** in
-      Claude's settings. If it's paywalled on free → tick "skip", Phase 2 covers
-      the same ground free. Cost: $0. *Done when:* Claude names a file from the
-      vault folder, or the skip is recorded.
+- [x] **1.2 "Claude for Chrome" — SKIPPED (paywalled, Free Gate holds).** ✅ 2026-10-15:
+      since GA 2026-08-26 the extension is paid-plans-only (Pro/Max/Team/Enterprise;
+      pricing table "No on Free" verified 2026-10-06). His exact wall: "This account
+      doesn't have a plan that includes Claude in Chrome." NO upgrade — owner mandate.
+      Free replacement queued: Claude Code + Playwright MCP (browser-driving, $0) in a
+      later phase. Cowork-in-Chrome question moot.
+- [ ] **1.3 Notes → Claude (OPTIONAL — may fold into Phase 2/4):** filesystem/Obsidian
+      **MCP** for Claude. If paywalled on free → tick "skip", Phase 2 covers the same
+      ground free. Cost: $0. *Done when:* Claude names a file from the vault folder,
+      or the skip is recorded.
 
 ## Phase 2 — Claude Code, his way
 
