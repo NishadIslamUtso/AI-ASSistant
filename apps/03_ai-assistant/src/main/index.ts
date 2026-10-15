@@ -22,6 +22,7 @@ import { normalizeEngine } from '../shared/lib/engine'
 import { APPROVAL_MODES, type ApprovalMode, type EngineEvent, type EngineId, type EngineModelEntry } from '../shared/lib/engine'
 import { agyModelSource, detectEngine } from './engine/availability'
 import { parsePullLine, validateModelName } from './engine/pull'
+import { deployMcp, deploySkill, scanClaudeSkills, type McpServer, type VaultSkill } from './engine/deploy'
 
 /**
  * The main process. Everything that touches the machine lives on this side:
@@ -262,6 +263,18 @@ function registerBridges(): void {
     return { ok: true }
   })
 
+  // The two folders skills deploy into: Claude Code reads its skills from
+  // the user's own folder; agy reads workspace skills next to the work.
+  const skillTargets = (): { claudeSkillsDir: string; agySkillsDir: string } => {
+    const home = process.env['USERPROFILE'] || process.env['HOME'] || ''
+    const workspace = settings.engine.workspace || vaultRoot()
+    return {
+      claudeSkillsDir: join(home, '.claude', 'skills'),
+      agySkillsDir: join(workspace, '.agents', 'skills'),
+    }
+  }
+  const mcpFile = join(app.getPath('userData'), 'mcp.json')
+
   // What is really installed on this machine — the bay refuses to guess.
   ipcMain.handle('engine:detect', async (): Promise<Array<{ id: EngineId; found: boolean; version: string; install: string }>> => {
     const ids: EngineId[] = ['claude-code', 'agy']
@@ -336,6 +349,44 @@ function registerBridges(): void {
     } catch {
       return { ok: false, answer: 'the brain door (Ollama) is not answering — start it, then try again' }
     }
+  })
+
+  // The skills the owner's engine already has — the import list.
+  ipcMain.handle('skills:scan', () => {
+    const home = process.env['USERPROFILE'] || process.env['HOME'] || ''
+    return scanClaudeSkills(join(home, '.claude', 'skills'))
+  })
+
+  // Deploy the app's vault into every engine's own folder. The renderer sends
+  // its vault; the main process validates every name before anything lands.
+  ipcMain.handle('skills:deploy', (_event, skills: VaultSkill[]): { ok: boolean; written: string[] } => {
+    const written: string[] = []
+    for (const skill of Array.isArray(skills) ? skills.slice(0, 200) : []) {
+      if (!skill || typeof skill.name !== 'string' || !skill.name.trim()) continue
+      const clean: VaultSkill = {
+        name: String(skill.name),
+        description: typeof skill.description === 'string' ? skill.description : '',
+        body: typeof skill.body === 'string' ? skill.body.slice(0, 20_000) : '',
+      }
+      if (!clean.body) continue
+      written.push(...deploySkill(clean, skillTargets()))
+    }
+    return { ok: true, written }
+  })
+
+  // The one MCP list, stored once, deployed to every engine's config.
+  ipcMain.handle('mcp:read', () => {
+    try {
+      return JSON.parse(readFileSync(mcpFile, 'utf8')) as { servers: McpServer[] }
+    } catch {
+      return { servers: [] as McpServer[] }
+    }
+  })
+
+  ipcMain.handle('mcp:write', (_event, payload: { servers: McpServer[] }): { ok: boolean; written: string[] } => {
+    const servers = Array.isArray(payload?.servers) ? payload.servers.slice(0, 100) : []
+    writeFileSync(mcpFile, JSON.stringify({ servers }), 'utf8')
+    return { ok: true, written: deployMcp(servers, settings.engine.workspace || vaultRoot()) }
   })
 
   // The brains the engine can actually use, straight from the brain door —
