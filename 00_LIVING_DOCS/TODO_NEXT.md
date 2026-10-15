@@ -139,3 +139,14 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
 **Standing rules:** ✅ only after a real turn with the real engine on his
 machine; every item individually checkable; docs in sync each landing; no
 quiet descope — "everything, done correctly."
+
+
+## LOCKED QUEUE (his order, 2026-10-16: "lock these for now") — do not re-derive; he reopens it
+
+**A. Research takings, in order:** 1. needs-you pulse (Claudette: title-bar/tray when a permission card waits) → 2. per-hunk accept/reject diff cards (Nimbalyst/Claudette) → 3. extension focusin tracking (sweep #5, capsule-inject) → 4. session kanban + session↔file links (Nimbalyst, Projects/Code) → 5. engine-queries-browser (onUI: engine reads marked-up page via the capture door) → 6. a11y-tree capture (Prophet) → 7. picker drill-down + provider grouping (when engines >2) → 8. previewer SDK (parked, Community Store).
+
+**B. Approved-screenshot debts, awaiting his call:** row-menu "Open in new window" (build or drop — his decision) + rename Add-to-project→"Move to group"; Connectors page (proposal: engines + extension + API keys, real connections only); Voice section (no dead switches — real scope or skip); Microsoft 365 card; Quick actions + Current Snapshot (biggest chunk); small: "Get API keys" account-menu entry, width labels Narrow/Medium/Wide, Anthropic Serif font choice.
+
+**C. Extension locked state:** v0.1.2, ships in installer (`resources/extension`, extraResources), one-time load-unpacked, posts 127.0.0.1:8765 (door opened by the app), queue≤200/activity≤100 when offline, never-collect list untouched, popup Capsules/Never-Check/Activity. Future = A.3, A.5, A.6 only (+ native-messaging-host evaluation parked; port stays until it breaks).
+
+**D. v1.0 path (unchanged):** finish B (his picks) → installer rebuild LAST (one exe, delete the old first) → TUF A15 acceptance run = the real gate.
