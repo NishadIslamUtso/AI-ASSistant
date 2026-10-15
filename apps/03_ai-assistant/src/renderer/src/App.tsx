@@ -15,6 +15,7 @@ import { engineStore } from '@/state/engine'
 import ArtifactsView from './components/ArtifactsView'
 import TodayView from './components/TodayView'
 import ProjectsView from './components/ProjectsView'
+import VaultView from './components/VaultView'
 import useArtifactLibrary, { adoptionRecords } from './state/artifactLibrary'
 import type { ArtifactSummary } from '../../main/artifacts/store'
 import useChat from './hooks/useChat'
@@ -371,7 +372,18 @@ export default function App() {
           onOpenMemory={() => setMemoryOpen(true)}
           profileName={profile.name}
         />
-        {view === 'projects' ? (
+        {view === 'vault' ? (
+          <VaultView
+            onAddToComposer={(path, content) => {
+              // A note becomes context: quoted, capped, and named — never a
+              // silent paste of a whole file into the draft.
+              const quoted = content.length > 4000 ? `${content.slice(0, 4000)}\n… (the rest stays in ${path})` : content
+              setDraft(previous => (previous ? `${previous}\n\nFrom the vault (${path}):\n${quoted}\n` : `From the vault (${path}):\n${quoted}\n`))
+              setView('chat')
+              setNotice(`${path} added to the composer`)
+            }}
+          />
+        ) : view === 'projects' ? (
           <ProjectsView
             chats={chats.chats}
             onOpenChat={chats.open}

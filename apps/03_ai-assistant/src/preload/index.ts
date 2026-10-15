@@ -86,6 +86,8 @@ const api = {
     /** Which build is running. Used by the About panel and bug reports. */
     version: process.env['npm_package_version'] ?? '0.1.0',
     platform: process.platform,
+    /** Open the vault folder in the file manager — the owner's own folder. */
+    openVaultFolder: (): Promise<{ ok: boolean }> => ipcRenderer.invoke('vault:open-folder'),
   },
   projects: {
     read: (): Promise<Project[]> => ipcRenderer.invoke('projects:read'),

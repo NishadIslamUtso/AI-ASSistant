@@ -34,7 +34,9 @@ export function createVaultFiles(root: string, clock: () => Date) {
 
   function filePath(relative: string): string {
     const full = resolve(root, relative)
-    if (!full.startsWith(root + sep)) throw new InputError('Path outside vault.')
+    // The root itself is inside the vault (an empty relative path); anything
+    // short of it that does not sit under the root is an escape.
+    if (full !== root && !full.startsWith(root + sep)) throw new InputError('Path outside vault.')
     return full
   }
 

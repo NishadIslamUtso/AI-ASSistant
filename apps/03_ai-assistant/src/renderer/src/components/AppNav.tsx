@@ -1,4 +1,4 @@
-import { FolderOpen, MessageSquare, Shapes, Sun } from 'lucide-react'
+import { Database, FolderOpen, MessageSquare, Shapes, Sun } from 'lucide-react'
 
 /**
  * The app's own sections, at the top of the sidebar.
@@ -10,13 +10,14 @@ import { FolderOpen, MessageSquare, Shapes, Sun } from 'lucide-react'
  * keep.
  */
 
-export type View = 'chat' | 'artifacts' | 'today' | 'projects'
+export type View = 'chat' | 'artifacts' | 'today' | 'projects' | 'vault'
 
 const ITEMS: Array<{ id: View; label: string; Icon: typeof MessageSquare }> = [
   { id: 'chat', label: 'Chat', Icon: MessageSquare },
   { id: 'artifacts', label: 'Artifacts', Icon: Shapes },
   { id: 'today', label: 'Today', Icon: Sun },
   { id: 'projects', label: 'Projects', Icon: FolderOpen },
+  { id: 'vault', label: 'Vault', Icon: Database },
 ]
 
 export default function AppNav({
@@ -63,7 +64,7 @@ export default function AppNav({
 
       {collapsed ? null : (
         <p className="px-2.5 pb-0.5 pt-1 text-[10.5px] leading-relaxed text-muted/70">
-          Code and Vault are being built — each appears the day it works.
+          Code is being built — it appears the day it works.
         </p>
       )}
     </nav>

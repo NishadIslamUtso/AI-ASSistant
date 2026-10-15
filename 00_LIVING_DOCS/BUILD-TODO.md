@@ -383,7 +383,7 @@ The mockups, as the standard to hit:
 | 02-settings | Full-window Settings | built |
 | 03-artifacts | Artifacts library (grid of creations) | **built** — the library on disk (`index.json` + version files, `.trash/`, damaged-index rebuild), the screen with real thumbnails, Open/Export/rename/duplicate/remove, and "Save v1 again" appending instead of truncating |
 | 04-projects | Projects: chats / instructions / context / memory | **built** — strict storage doors, per-project instruction + folder, chats link by id (pipe existed), Work-here points the engine via the app's door, honest empty states |
-| 05-vault | Vault: file tree, search, capsules, reindex, add-to-composer | **not built** (only a folder row in Settings) |
+| 05-vault | Vault: file tree, search, file preview, reindex, add-to-composer; capsules only for real files | **built** — /files /file /grep vault routes (escape-refusing, capped), grouped tree, name filter + content search, preview pane, add-to-composer as quoted context, Open folder door |
 | 06-code | Code workspace | **not built** |
 | 07-today | Today: stats, worth-doing-next, recent sources, quick actions | **built** — stats from real records, worth-doing-next from records only, conversations/made/read-today lists, honest empty & missing states |
 | 08-first-run | Welcome: name, model, folder | **not built** |

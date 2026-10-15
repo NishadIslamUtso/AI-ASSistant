@@ -298,6 +298,13 @@ function registerBridges(): void {
     }
   }
 
+  // The vault folder, opened in the file manager. The vault root only —
+  // this door is a convenience for the owner, not a general launcher.
+  ipcMain.handle('vault:open-folder', async (): Promise<{ ok: boolean }> => {
+    const error = await shell.openPath(vaultRoot())
+    return { ok: !error }
+  })
+
   // What is really installed on this machine — the bay refuses to guess.
   ipcMain.handle('engine:detect', async (): Promise<Array<{ id: EngineId; found: boolean; version: string; install: string }>> => {
     const ids: EngineId[] = ['claude-code', 'agy']

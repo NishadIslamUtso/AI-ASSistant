@@ -45,6 +45,8 @@ export type DesktopBridge = {
   app: {
     version: string
     platform: string
+    /** Desktop only: open the vault folder in the file manager. */
+    openVaultFolder?: () => Promise<{ ok: boolean }>
   }
   houseRules: {
     /** The rulebook as it stands; blanks already filled from the defaults. */

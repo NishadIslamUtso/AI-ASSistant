@@ -36,6 +36,9 @@ const ROUTES: Record<string, string[]> = {
   '/capsules': ['GET'],
   '/context': ['GET'],
   '/sources': ['GET'],
+  '/files': ['GET'],
+  '/file': ['GET'],
+  '/grep': ['GET'],
   '/capture': ['POST'],
   '/export-zip': ['POST'],
 }
@@ -65,6 +68,45 @@ export function handleVaultRequest(service: VaultService, request: VaultRouteReq
       if (route === '/blacklist') return { status: 200, body: { excluded_patterns: service.blacklist() } }
       if (route === '/capsules') return { status: 200, body: { capsules: service.capsules(query) } }
       if (route === '/context') return { status: 200, body: service.context(query) }
+      if (route === '/files') {
+        // The tree the vault really has: every markdown file, relative paths,
+        // stopped at a limit and honest about stopping.
+        const walk = service.files().walkFiles('', '.md', 2000)
+        return { status: 200, body: { ok: true, root: service.root, files: walk.files, capped: walk.capped } }
+      }
+      if (route === '/file') {
+        // One file's content for the preview pane. The vault's own path rules
+        // apply (nothing outside the root, symlinks refused), and previews are
+        // capped — a preview is a reading, not a download.
+        const relative = String(request.query.get('path') || '')
+        if (!relative || relative.includes('\\')) return { status: 400, body: { ok: false, error: 'A file path is required.' } }
+        const content = service.files().read(relative)
+        return { status: 200, body: { ok: true, path: relative, content: content.slice(0, 200_000), truncated: content.length > 200_000 } }
+      }
+      if (route === '/grep') {
+        // Content search: which files mention this, with the matching line.
+        const needle = query.trim().toLowerCase()
+        if (!needle) return { status: 400, body: { ok: false, error: 'A search word is required.' } }
+        const walk = service.files().walkFiles('', '.md', 600)
+        const hits: Array<{ path: string; line: number; text: string }> = []
+        for (const file of walk.files) {
+          if (hits.length >= 40) break
+          let content = ''
+          try {
+            content = service.files().read(file)
+          } catch {
+            continue
+          }
+          const lines = content.split('\n')
+          for (let index = 0; index < lines.length; index += 1) {
+            if (lines[index].toLowerCase().includes(needle)) {
+              hits.push({ path: file, line: index + 1, text: lines[index].trim().slice(0, 160) })
+              break
+            }
+          }
+        }
+        return { status: 200, body: { ok: true, hits, capped: walk.capped } }
+      }
       if (route === '/sources') {
         // The map of what was read and when: the vault's own sources, read for
         // exactly what each one says. `days` is a window, 0 or absent means all.
