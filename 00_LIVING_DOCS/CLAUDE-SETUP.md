@@ -72,7 +72,7 @@ by hand again.
 
 ## Phase 1 — Claude in his browser (free plan)
 
-- [ ] **1.1 Sign into Claude** (desktop app or web) with a free account; confirm
+- [x] **1.1 Sign into Claude** ✅ 2026-10-15 — nishadislamutso@gmail.com, free plan, chat works.
       chat works. Cost: $0. *Done when:* a conversation saves to history.
 - [x] **1.2 "Claude for Chrome" — SKIPPED (paywalled, Free Gate holds).** ✅ 2026-10-15:
       since GA 2026-08-26 the extension is paid-plans-only (Pro/Max/Team/Enterprise;
