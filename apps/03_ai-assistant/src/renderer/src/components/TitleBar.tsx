@@ -1,5 +1,6 @@
 import BrainMark from './BrainMark'
 import type { VaultState } from '../hooks/useVault'
+import { usePermissionsWaiting } from '../state/engine'
 
 /**
  * The bar across the top. The window frame is the operating system's, so this is
@@ -12,6 +13,7 @@ export default function TitleBar({
   engineAlive,
   preview = false,
   vault,
+  onOpenEngine,
 }: {
   /** Which engine the app drives, and with which brain — the engine's facts. */
   engineId: string
@@ -22,7 +24,12 @@ export default function TitleBar({
   /** The vault, when the app is running where one can exist. The chip is the
    *  mockup's second indicator: green when conversations are being kept. */
   vault?: VaultState
+  /** Where the "needs you" chip takes a person — the screen with the cards. */
+  onOpenEngine?: () => void
 }) {
+  // A slice, not the whole store: this re-renders only when the COUNT of
+  // waiting questions changes, not on every streamed token.
+  const waiting = usePermissionsWaiting()
   const state = preview ? 'Preview' : `${engineId} · ${engineModel}`
 
   return (
@@ -46,6 +53,21 @@ export default function TitleBar({
           />
           {state}
         </span>
+
+        {/* Needs you: a question from the engine is waiting on a person and a
+            person may be three screens away. Claudette's tray idea, wearing our
+            header's face. Clicking it opens the screen with the cards. */}
+        {!preview && waiting > 0 && (
+          <button
+            type="button"
+            onClick={onOpenEngine}
+            title={`${waiting} question${waiting === 1 ? '' : 's'} from the engine ${waiting === 1 ? 'is' : 'are'} waiting for you. Click to open the cards.`}
+            className="flex items-center gap-1.5 rounded-full border border-warn/60 bg-warn/10 px-2.5 py-1 text-[11px] text-ink"
+          >
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-warn motion-reduce:animate-none" />
+            Needs you{waiting > 1 ? ` · ${waiting}` : ''}
+          </button>
+        )}
 
         {!preview && vault && vault.state !== 'unknown' && (
           <span

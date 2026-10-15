@@ -365,6 +365,7 @@ export default function App() {
         engineModel={engineStore().settings.model}
         engineId={engineStore().settings.id}
         engineAlive={engineStore().alive}
+        onOpenEngine={() => setView('chat')}
         preview={isDemo}
         // Re-checked when a conversation is kept, so a vault that went missing
         // shows up as a chip rather than as a save that silently did not happen.

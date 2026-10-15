@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AI ASSistant - Vault Collector",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Local-only collector + context suggester. AI sites by default, optional broad capture. Capsule Hub + Quillbot style.",
   "permissions": ["storage", "activeTab", "scripting", "contextMenus"],
   "optional_permissions": ["history"],

@@ -394,6 +394,22 @@ export function engineStore(): EngineStore {
   return store
 }
 
+/**
+ * How many engine questions are waiting on a person, as a subscription that
+ * re-renders only when THAT number changes — a header pulse must not redraw
+ * on every streamed word, and the full store hook would make it.
+ */
+export function usePermissionsWaiting(): number {
+  useSyncExternalStore(
+    (listener) => {
+      listeners.add(listener)
+      return () => listeners.delete(listener)
+    },
+    () => store.turn?.permissions.length ?? 0,
+  )
+  return store.turn?.permissions.length ?? 0
+}
+
 /** Test seam: put the store back to its first day. */
 export function resetEngineForTests(): void {
   subscribed = false

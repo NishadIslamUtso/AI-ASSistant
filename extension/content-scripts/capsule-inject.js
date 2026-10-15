@@ -2,6 +2,32 @@ function isExtensionValid() {
   try { return !!(chrome.runtime && chrome.runtime.id); } catch(e) { return false; }
 }
 
+// Sweep #5 adoption (Promptvault's pattern): remember the last box the person
+// actually clicked into, so an insert lands where their cursor was — not in
+// "the first textarea on the page". A torn-down context must never throw here.
+var __lastFocusedField = null;
+document.addEventListener('focusin', function (e) {
+  try {
+    if (!isExtensionValid()) return;
+    var t = e.target;
+    if (!t || !t.tagName) return;
+    var editable = t.tagName === 'TEXTAREA' || t.tagName === 'INPUT' || t.isContentEditable === true;
+    if (editable) __lastFocusedField = t;
+  } catch (err) {}
+}, true);
+
+function pickInsertTarget() {
+  try {
+    var t = __lastFocusedField;
+    if (t && t.isConnected) {
+      var editable = t.tagName === 'TEXTAREA' || t.tagName === 'INPUT' || t.isContentEditable === true;
+      if (editable) return t;
+    }
+  } catch (err) {}
+  return document.querySelector('textarea, [contenteditable="true"], div[contenteditable="true"]');
+}
+
+
 let modalStyleInjected = false;
 function injectModalStyle() {
   if (modalStyleInjected) return;
@@ -175,8 +201,8 @@ document.addEventListener('drop', async e => {
     if (!capsuleData) return;
     e.preventDefault();
     const capsule = JSON.parse(capsuleData);
-    const input = document.querySelector('textarea, [contenteditable="true"], div[contenteditable="true"]');
-    if (!input) { showToast("No chat input found"); return; }
+    const input = pickInsertTarget();
+    if (!input) { showToast("No active text field found"); return; }
     const text = `Context: ${capsule.title}\nGoals: ${capsule.goals.join(', ')}\nConstraints: ${capsule.constraints.join(', ')}\nBackground: ${capsule.background.slice(0,400)}`;
     const enhanced = await showCookModal("", text, [capsule]);
     if (!enhanced) return;
@@ -243,4 +269,9 @@ async function addCookButton() {
 
 setTimeout(() => { try { addCaptureButton(); addCookButton(); } catch(e) {} }, 1500);
 setInterval(() => { try { addCookButton(); } catch(e) {} }, 4000);
-\n// The approved screenshots' second crash path: a rejection that outlives the\n// extension context must never surface as a page error.\nwindow.addEventListener('unhandledrejection', (event) => {\n  if (String(event.reason || '').includes('Extension context invalidated')) event.preventDefault();\n});\n
+
+// The approved screenshots' second crash path: a rejection that outlives the
+// extension context must never surface as a page error.
+window.addEventListener('unhandledrejection', (event) => {
+  if (String(event.reason || '').includes('Extension context invalidated')) event.preventDefault();
+});
