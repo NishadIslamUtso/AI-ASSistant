@@ -29,6 +29,11 @@ const asRecord = (value: unknown): LooseRecord => (value && typeof value === 'ob
 
 export function createEngineParser(): EngineParser {
   let buffer = ''
+  // How much of `buffer` is already known to hold no newline: everything
+  // before this offset was scanned by an earlier feed. A line chopped at a
+  // chunk boundary is therefore rescanned only in its new tail — a long-lived
+  // engine feeding small chunks stays linear, not quadratic.
+  let scanned = 0
 
   const parseLine = (line: string): EngineEvent[] => {
     const text = line.trim()
@@ -147,19 +152,26 @@ export function createEngineParser(): EngineParser {
       buffer += chunk
       // A single line longer than this is not a sentence, it is a runaway —
       // drop the oldest half rather than grow without limit.
-      if (buffer.length > 2_000_000) buffer = buffer.slice(-1_000_000)
+      if (buffer.length > 2_000_000) {
+        const cut = buffer.length - 1_000_000
+        buffer = buffer.slice(cut)
+        scanned = Math.max(0, scanned - cut)
+      }
       const events: EngineEvent[] = []
-      let index = buffer.indexOf('\n')
+      let index = buffer.indexOf('\n', Math.min(scanned, buffer.length))
       while (index !== -1) {
         events.push(...parseLine(buffer.slice(0, index)))
         buffer = buffer.slice(index + 1)
-        index = buffer.indexOf('\n')
+        scanned = 0
+        index = buffer.indexOf('\n', scanned)
       }
+      scanned = buffer.length
       return events
     },
     flush(): EngineEvent[] {
       const rest = buffer
       buffer = ''
+      scanned = 0
       return parseLine(rest)
     },
   }

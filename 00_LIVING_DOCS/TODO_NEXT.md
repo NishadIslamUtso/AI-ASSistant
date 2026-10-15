@@ -98,12 +98,12 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
 
 ## TRACK C — open defects (judge list; fix as encountered, all before 1.0)
 
-- [ ] free-gate: empty `baseUrl` still passes machine env through
+- [x] free-gate: empty `baseUrl` still passes machine env through — FIXED: `sanitizeEnvironment` strips ANTHROPIC_* from the inherited env on every launch; the chosen brain is applied on top, none borrowed
 - [ ] cloud/local badge classification in the chat model list
-- [ ] stdin EPIPE guard on engine stdin
-- [ ] deliberate kill still emits an error card (should be quiet)
-- [ ] Windows stop via `taskkill /pid <pid> /T /F`
-- [ ] parser scan-offset (chunk-boundary scan)
+- [x] stdin EPIPE guard — FIXED: guarded `writeLine` + stdin error swallow; a dead pipe is "not delivered", never a crash
+- [x] deliberate kill is quiet — FIXED: `deliberate` flag; a stop's close carries no error card, a real crash still says why
+- [x] Windows stop = `taskkill /pid <pid> /T /F` — FIXED: tree-kill through the shell's pid (pinned by test); plain signal elsewhere
+- [x] parser scan-offset — FIXED: `scanned` offset; a chunk-chopped line is rescanned only in its new tail (linear, pinned at every split point)
 - [ ] `engine:read` history hydrate-or-drop
 - [ ] token streaming (incremental text, not end-of-turn)
 - [ ] >1 pending card queue
