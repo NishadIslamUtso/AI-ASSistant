@@ -124,9 +124,8 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
 - [x] **Skills sourcing** — LANDED: Settings > Skills lists a curated catalog (verified live against anthropics/skills' real folder list: docx/pptx/xlsx/pdf, mcp-builder, skill-creator, webapp-testing, frontend-design, web-artifacts-builder, doc-coauthoring, internal-comms); one click fetches the raw SKILL.md (catalog names only — the door fetches nothing else) and deploys to both engines through Track A's deploy. The Skills pane UI debt is hereby settled by this section.
 
 - [ ] Real-CLI harness (settle `-p/--print` and `initialize` disputes) — honestly blocked: no claude binary in the build sandbox; runs on his TUF A15 (the detect door self-serves).
-- [ ] JUDGE-BRIEF.md refresh: engine spine, throttle, house rules, freedom
-  matrix, memory guards (branch must stay judgeable)
-- [ ] `/home/user/` doc mirrors re-sync (CLAUDE-SETUP/ARCHITECTURE/FEATURE-AUDIT)
+- [x] JUDGE-BRIEF.md refresh — done 2026-10-16 (v0.6.0 section).
+- [x] `/home/user/` doc mirrors re-sync — done 2026-10-16 (stamped).
 - [ ] RELEASE-WINDOWS.md stays current per installer build
 
 **Standing rules:** ✅ only after a real turn with the real engine on his
