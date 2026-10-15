@@ -160,3 +160,11 @@ exactly this.
 - Two live, plausibly-legit newcomers to study (ideas only until checked against the rubric): **ittop** (pottz91 — Electron, xterm, session multiplexer, active Oct 12) and **moontors** (ADE-style parallel agents, git-worktree orchestration, active Oct 14).
 - Opcode/Claudia still the most-cited GUI; AGPL (claudia.so confirms) — read ideas, never code; earlier unmaintained verdict stands.
 - Verdict: nothing changes Track B/C priorities. Carried queues (worktree isolation, browser capture, vault-skill injection) unchanged.
+
+
+## Sweep #3 + feature research — 2026-10-16 (Track D)
+Researched BEFORE building each feature (his standing instruction).
+- **Handoff (3 repos studied):** briansmith80/claude-handoff (/handoff → git-syncable HANDOFF.md, /catchup resumes, SessionStart hook), Vasilispapg/claude-handoff (MIT — clean handoff.md opening with instructions to the RECEIVING assistant, files/commands distilled, clipboard mode, project-memory brief), barley-dev/claude-handoff-skill (queue + index + completion gate: "evidence, not declarations"). Copied: receiver-first document shape, session-id resume block, evidence-not-declarations. Skipped: JSONL post-hoc parsing (our turn is already in memory), auto-commit/push (his git, not ours).
+- **Caveman** (JuliusBrussee/caveman, ~111k stars per aggregator): telegraphic style, ~65-75% output-token claims; honest numbers inside: only ~3% median over "be concise", and its own rule block costs ~1,160 input tokens. Copied the idea, two sentences, only for small local brains. The surrounding token-tools list (RTK, Headroom, PromptThrift, Token Savior) noted for future bays — all shrink context, none engine-spine.
+- **anthropics/skills verified live** (repo folder list): academy-guide, algorithmic-art, brand-guidelines, canvas-design, claude-api, discernment-nudge, doc-coauthoring, docx, frontend-design, internal-comms, mcp-builder, pdf, pptx, skill-creator, slack-gif-creator, theme-factory, web-artifacts-builder, webapp-testing, xlsx. Curated 11 into Settings > Skills. Document skills are source-available — their license rides along.
+- Verdict: nothing new threatens the design; the moat (engine-as-spine + local vault + provenance) holds.
