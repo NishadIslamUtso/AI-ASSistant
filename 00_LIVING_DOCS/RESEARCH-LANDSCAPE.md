@@ -51,3 +51,53 @@ engine · the engine bay as first-class UI · no account, no key, no telemetry
 · artifacts library with versions · the vault that remembers what was read.
 None of the surveyed apps unify engines + free brains + a vault + captures;
 that union is the product.
+
+---
+
+## 2026-10-16 (day) — the ones HE found: ContextFlow, capsule-hub-skills
+
+### Tilantra/capsule-hub-skills — the cloud product's Claude Code pack
+Capsule Hub is a COMMERCIAL service (capsulehub.tilantra.com, accounts,
+teams, backend.tilantra.com): save conversations as "capsules" in their
+cloud. This repo is its Claude Code skills: /capsule-login, -search, -read,
+-save, -version, -team. Requires their account + API base; MCP-based auth.
+**Why it matters to us:** our own extension's spec literally says
+"Capsule Hub + Quillbot style" — this is the product our capture was
+designed against. It validates the niche is real and people PAY for it.
+**The one idea worth taking (better than the MCP plan):** they teach Claude
+Code to operate capsules via SKILLS — markdown instructions — explicitly to
+avoid loading tool schemas into context every turn. Our queued
+"extension→engine MCP" becomes: **vault skills + our local vault HTTP API**
+(already running, already local) — same capability as their paid cloud flow,
+zero account, zero cloud, zero schema bloat. Upgrade to the queued idea.
+
+### jeshiomurmu/ContextFlow — the "free local alternative", with red flags
+Chrome extension: capture conversations as capsules, inject into any AI
+site, chrome.storage.local, JSON export/import, MIT license claimed.
+**Red flags (the pattern to learn):** entire history is 2 commits on ONE day
+(3 Jul 2026); the latest commit is "Change copyright to Jeshio Murmu"; its
+own README's bug/contribute/clone links point to a DIFFERENT account
+(github.com/contextflow/extension); no tags, no tests, no releases. Classic
+rebrand/clone profile — treat as unverified provenance; do not install, do
+not take code. **Worth taking as IDEAS only:** keyboard shortcuts
+(Ctrl+Shift+S capture, Ctrl+Shift+K panel), pins in the popup, and the
+universal clipboard-fallback inject for sites without an adapter.
+
+### The triage rubric (for the "way many like this" problem)
+Every repo in this space gets five questions, in order:
+1. **Provenance** — one-day history? copyright-swap commit? links pointing
+   to another account? Then it is a rebrand: ideas maybe, code never.
+2. **Cloud or local** — needs an account/backend? Then it is against the
+   product's religion; at most study its API shape.
+3. **Liveness** — commits, issues answered, releases? Dead = read, don't rely.
+4. **Genuinely new or wrapper?** — most are thin wrappers around the same
+   three ideas: capture, inject, store. The wrapper layer is not the moat.
+5. **License** — MIT/Apache ideas free; code only with license review; AGPL
+   never enters the repo.
+
+### Standing conclusion
+A paid cloud Capsule Hub + free clones + skills packs all prove the
+capture/capsule niche pays. Our position is the strongest slot in it:
+local + free + versioned vault + THE ENGINE can use what was captured
+(nobody else wires capture to an agent). The niche being crowded is
+validation, not threat.
