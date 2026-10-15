@@ -1081,3 +1081,13 @@ screen), plugin packs (blocked on agy formats).
   was made today, or one honest "start something") — never an invented task.
   Conversations/Made/Read lists with honest empty and missing states. 348
   tests.
+
+## 2026-10-16 (morning II) — the landscape study
+
+He asked what similar repos are worth taking from. RESEARCH-LANDSCAPE.md
+written: Nimbalyst/Pane/Claudette/CodeAgentSwarm on the app side, Prophet/
+open-claude-in-chrome/onUI/BrowserKing on the extension side — each with
+license and a verdict. Six ideas queued (per-hunk diffs, needs-you pulse,
+session board, extension→engine MCP, a11y-tree capture, SDK contract),
+all ideas-only (AGPL never enters). Also recorded what none of them have:
+our union of engines + free brains + house rules + vault + captures.

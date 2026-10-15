@@ -57,6 +57,17 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
 - [x] **Usage display** (landing 1): tokens/time/cost from the engine's own
   result sentence, on the work card.
 - [ ] **Plugin packs (level 2)** — still honestly blocked on agy's formats.
+- [ ] **Per-hunk accept/reject on approval cards** (from the landscape study:
+  Nimbalyst/Claudette) — upgrade the before/after card to accept part of an
+  edit; lands with Code 06.
+- [ ] **Needs-you notification** (Claudette): tray/title pulse when a
+  permission card waits — after the card-queue defect fix.
+- [ ] **Session board** (Nimbalyst): the resumable sessions get a kanban in
+  Projects 04 / Code 06, with session-to-file links feeding the context pane.
+- [ ] **Extension → engine MCP** (onUI idea): captured/annotated pages become
+  queryable by Claude Code/agy, not just saved to the vault.
+- [ ] **Accessibility-tree capture** (Prophet): the better capture default if
+  we go beyond text, replacing screenshots.
 - [x] **House-rules edit screen** (landing 5): Settings → House rules — five
   fields, save-and-deliver; every send deploys the rules + brain footnote to
   each engine's own global file as a marker-bounded block (his words in
