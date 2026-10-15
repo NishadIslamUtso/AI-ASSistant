@@ -24,7 +24,7 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
 
 ## NOW — the acceptance round-trip (everything hangs on this)
 
-- [ ] **His run on the TUF A15** with the v0.6.0 installer (BUILT 2026-10-16 — AI-ASSistant-Setup-0.6.0.exe, 88,062,356 B, sha256 c0c9c086…5ea38c):
+- [ ] **His run on the TUF A15** with the v0.6.0 installer (BUILT 2026-10-16 — AI-ASSistant-Setup-0.6.0.exe, 88,062,358 B, sha256 561b93d9…e16fe):
 - [ ] **His run on the TUF A15:** install → Engine on → pick a brain in the
   bay (cloud badge = leaves machine; local = offline) → pick a folder →
   set the throttle → give real work → approve via the card → see artifacts
