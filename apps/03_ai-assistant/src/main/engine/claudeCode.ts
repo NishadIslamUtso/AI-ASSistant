@@ -20,6 +20,7 @@
  */
 import { spawn, type ChildProcess } from 'node:child_process'
 import { StringDecoder } from 'node:string_decoder'
+import { join } from 'node:path'
 import type { EngineEvent, EngineSettings } from '../../shared/lib/engine'
 import { createEngineParser } from './stream'
 
@@ -70,6 +71,26 @@ export function engineArguments(model: string): string[] {
 }
 
 /**
+ * Where Windows keeps the `claude` command, which a packaged app cannot see
+ * on its own: the installer put it in the USER's npm folder (or the native
+ * installer's bin), and PowerShell finds it through the user's PATH — but a
+ * launched app gets a slim PATH that knows neither. Prepending those folders
+ * to the engine's PATH is the fix, verified by the owner's own error:
+ * "'claude' is not recognized as an internal or external command".
+ */
+export function enginePathPrepend(platform = process.platform, env = process.env): string {
+  if (platform !== 'win32') return ''
+  const appData = env['APPDATA'] ?? ''
+  const userProfile = env['USERPROFILE'] ?? ''
+  return [
+    appData ? join(appData, 'npm') : '',
+    userProfile ? join(userProfile, '.local', 'bin') : '',
+  ]
+    .filter(Boolean)
+    .join(';')
+}
+
+/**
  * The environment the engine needs to think with the app's chosen brain.
  * With the local Ollama door there is no key and no account — the token is
  * the literal word `ollama`, which that door accepts.
@@ -91,7 +112,11 @@ export function startClaudeCodeSession(input: StartSessionInput): EngineSession 
   try {
     child = start('claude', args, {
       cwd: input.cwd,
-      env: { ...process.env, ...brainEnvironment(input.settings.baseUrl) },
+      env: {
+        ...process.env,
+        ...brainEnvironment(input.settings.baseUrl),
+        ...(enginePathPrepend() ? { PATH: `${enginePathPrepend()};${process.env['PATH'] ?? ''}` } : {}),
+      },
       // On Windows the command lives behind an npm `.cmd` shim, which only
       // runs through the shell. The one argument that is not a fixed flag is
       // the model name, which the settings layer validates against a strict
@@ -190,5 +215,9 @@ export function startClaudeCodeSession(input: StartSessionInput): EngineSession 
 }
 
 function notFoundMessage(): string {
-  return 'Claude Code was not found on this machine. Install it once with: npm install -g @anthropic-ai/claude-code'
+  return (
+    'Claude Code was not found on this machine. Install it once in PowerShell: ' +
+    'npm install -g @anthropic-ai/claude-code — then fully close AI ASSistant (right-click its tray/taskbar icon, Quit) ' +
+    'and open it again, so it can see the fresh install.'
+  )
 }
