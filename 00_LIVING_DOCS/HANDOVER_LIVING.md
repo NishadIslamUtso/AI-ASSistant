@@ -1,5 +1,13 @@
 # HANDOVER_LIVING.md — Current State + Gaps (Living)
 
+> **Taking over? Read in this order:** `BUILD-TODO.md` in this folder (the live
+> plan, screens-first order + the full mockup/feature tables), `CHANGELOG.md`
+> (what landed when, with commit ids), `../memory/sessions/` (why decisions
+> were made, what failed and must not be retried), `../ai/STATE.json`
+> (branches, versions, verification results). Working branch:
+> `arena/3c06e1bf-ai-assistant-v3`, merged into `main` after each landing.
+> Archives: `archive/workspace` + `archive/ai-assistant-app` branches.
+
 **Last Updated:** 2026-10-14 (late evening) Asia/Dhaka
 **Purpose:** everything a new AI or developer needs to continue, without trusting anybody's memory.
 
