@@ -38,7 +38,8 @@
  */
 import { spawn, type ChildProcess } from 'node:child_process'
 import type { EngineSettings } from '../../shared/lib/engine'
-import { enginePathPrepend, sanitizeEnvironment, stopArguments, type EngineStartInput } from './claudeCode'
+import { sanitizeEnvironment, stopArguments, type EngineStartInput } from './claudeCode'
+import { enginePathSync } from './enginePath'
 import type { EngineSession } from './claudeCode'
 
 /** The throttle setting → agy's own documented flags (verified in --help). */
@@ -90,7 +91,7 @@ export function startAgySession(input: EngineStartInput & { spawnProcess?: typeo
       cwd: input.cwd,
       env: {
         ...sanitizeEnvironment(process.env),
-        ...(enginePathPrepend() ? { PATH: `${enginePathPrepend()};${process.env['PATH'] ?? ''}` } : {}),
+        ...(enginePathSync() !== (process.env['PATH'] ?? '') ? { PATH: enginePathSync() } : {}),
       },
       shell: process.platform === 'win32',
     })

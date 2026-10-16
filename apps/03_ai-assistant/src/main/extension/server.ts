@@ -86,7 +86,7 @@ export function extensionOrigin(
   })
   if (!origin) {
     return refuse(
-      'This port answers the AI ASSistant browser extension, which always says where it is calling from. Nothing was written.'
+      'This port answers the OddBrain browser extension, which always says where it is calling from. Nothing was written.'
     )
   }
   if (origin.startsWith('chrome-extension://')) return { allowed: true, allow: origin, error: '' }
@@ -105,7 +105,7 @@ export function extensionOrigin(
     return { allowed: true, allow: origin, error: '' }
   }
   return refuse(
-    'Only the AI ASSistant browser extension may post captures to this port. A web page cannot: this refusal is not sent to pages, it is sent to whoever asked.'
+    'Only the OddBrain browser extension may post captures to this port. A web page cannot: this refusal is not sent to pages, it is sent to whoever asked.'
   )
 }
 
@@ -220,7 +220,7 @@ export function startExtensionApi(options: {
         200,
         {
           ok: true,
-          app: 'AI ASSistant',
+          app: 'OddBrain',
           port,
           vault: service.root,
           available: service.available(),

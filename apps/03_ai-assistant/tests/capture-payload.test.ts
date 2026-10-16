@@ -42,7 +42,7 @@ const chat = (over: Partial<Chat> = {}): Chat => ({
 test('a finished conversation is captured as full, with its timestamps kept', () => {
   const payload = conversationCapture(chat(), { now: NOW })
   assert.equal(payload.type, 'conversation')
-  assert.equal(payload.provider, 'AI ASSistant')
+  assert.equal(payload.provider, 'OddBrain')
   assert.equal(payload.conversation_id, 'chat-1')
   assert.equal(payload.title, 'A conversation worth keeping')
   assert.equal(payload.captured_at, NOW.toISOString())

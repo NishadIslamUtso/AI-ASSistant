@@ -56,7 +56,7 @@ function fixture(t: { after: (fn: () => unknown) => void }, files: Record<string
 
 const conversation = (extra: Record<string, unknown> = {}): Record<string, any> => ({
   type: 'conversation',
-  provider: 'AI ASSistant',
+  provider: 'OddBrain',
   conversation_id: 'chat-1',
   title: 'Original source',
   captured_at: '2026-10-10T19:00:00Z',
@@ -208,7 +208,7 @@ test('a conversation is written under its provider, and a retry is one file', (t
   const first = service.capture(conversation())
   assert.equal(first.ok, true)
   assert.equal(first.duplicate, false)
-  assert.match(String(first.source), new RegExp(`^02 Sources/Conversations/AI ASSistant/${YEAR}/chat-1-[0-9a-f]+\\.md$`))
+  assert.match(String(first.source), new RegExp(`^02 Sources/Conversations/OddBrain/${YEAR}/chat-1-[0-9a-f]+\\.md$`))
 
   const original = read(String(first.source))
   assert.match(original, /Original user message/)
@@ -285,7 +285,7 @@ test('unusable stores are refused instead of half-written', (t) => {
     conversation({ messages: [] }),
     conversation({ messages: [{ role: 'observer', text: 'x' }] }),
     { type: 'web_page', url: 'file:///private', content: 'x' },
-    { type: 'conversation', provider: 'AI ASSistant', conversation_id: 'x', messages: [{ role: 'user', text: 'x' }], captured_at: 'not-a-date' },
+    { type: 'conversation', provider: 'OddBrain', conversation_id: 'x', messages: [{ role: 'user', text: 'x' }], captured_at: 'not-a-date' },
   ]) {
     assert.throws(() => service.capture(payload), InputError, JSON.stringify(payload).slice(0, 60))
   }

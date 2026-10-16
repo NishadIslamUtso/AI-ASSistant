@@ -23,6 +23,7 @@
 import { spawn, type ChildProcess } from 'node:child_process'
 import { StringDecoder } from 'node:string_decoder'
 import { join } from 'node:path'
+import { enginePathSync } from './enginePath'
 import type { ApprovalMode, EngineEvent, EngineSettings } from '../../shared/lib/engine'
 import { PERMISSION_MODE } from '../../shared/lib/engine'
 import { createEngineParser } from './stream'
@@ -181,7 +182,7 @@ export function startClaudeCodeSession(input: StartSessionInput): EngineSession 
         ...(input.auth?.apiKey
           ? brainEnvironment('https://api.anthropic.com/v1', input.auth.apiKey)
           : brainEnvironment(input.settings.baseUrl)),
-        ...(enginePathPrepend() ? { PATH: `${enginePathPrepend()};${process.env['PATH'] ?? ''}` } : {}),
+        ...(enginePathSync() !== (process.env['PATH'] ?? '') ? { PATH: enginePathSync() } : {}),
         // The engine's own extended-thinking knob, its documented variable,
         // set only when the owner asked for it through the chip.
         ...(input.settings.thinking === 'extended' ? { MAX_THINKING_TOKENS: '31999' } : {}),
@@ -301,7 +302,7 @@ export function startClaudeCodeSession(input: StartSessionInput): EngineSession 
               subtype: 'success',
               response: allow
                 ? { behavior: 'allow' }
-                : { behavior: 'deny', message: 'The owner said no to this action in AI ASSistant.' },
+                : { behavior: 'deny', message: 'The owner said no to this action in OddBrain.' },
             },
           })}\n`,
         )
@@ -353,7 +354,7 @@ export function startClaudeCodeSession(input: StartSessionInput): EngineSession 
 function notFoundMessage(): string {
   return (
     'Claude Code was not found on this machine. Install it once in PowerShell: ' +
-    'npm install -g @anthropic-ai/claude-code, then fully close AI ASSistant (right-click its tray/taskbar icon, Quit) ' +
+    'npm install -g @anthropic-ai/claude-code, then fully close OddBrain (right-click its tray/taskbar icon, Quit) ' +
     'and open it again, so it can see the fresh install.'
   )
 }

@@ -59,7 +59,7 @@ export function handleVaultRequest(service: VaultService, request: VaultRouteReq
             available: status.available,
             vault: service.root,
             counts: status.counts,
-            message: 'AI ASSistant Markdown vault, served by the app itself',
+            message: 'OddBrain Markdown vault, served by the app itself',
             timezone: 'Asia/Dhaka',
             ...(status.error ? { error: status.error } : {}),
           },

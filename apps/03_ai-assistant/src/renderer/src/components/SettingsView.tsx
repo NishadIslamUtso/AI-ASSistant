@@ -21,6 +21,7 @@ import {
 } from '@shared/lib/inference'
 import { CLOUD_PROVIDERS, type CloudProviderView } from '@shared/lib/providers'
 import { DEFAULT_PERMISSIONS, type Permissions } from '@shared/lib/permissions'
+import usePersistentState from '../hooks/usePersistentState'
 import { ACCENTS, DEFAULT_APPEARANCE, WIDTHS, TEXT_SIZES, FONTS, THEMES, MOTIONS, type Appearance } from '../state/appearance'
 import {
   CUSTOM_FIELDS,
@@ -524,7 +525,7 @@ export default function SettingsView({
         terms: 'version platform about',
         body: (
           <span className="text-[12.5px]">
-            AI ASSistant <span className="text-muted">{bridge.app.version}</span>
+            OddBrain <span className="text-muted">{bridge.app.version}</span>
           </span>
         ),
       },
@@ -808,6 +809,13 @@ export default function SettingsView({
               </button>
             ))}
           </div>
+        ),
+      },
+      {
+        label: 'Quick window',
+        terms: 'quick window hotkey global shortcut ask anywhere Ctrl+Shift+O',
+        body: (
+          <QuickShortcutRow />
         ),
       },
       {
@@ -1300,6 +1308,37 @@ export default function SettingsView({
           )}
         </div>
       </section>
+    </div>
+  )
+}
+
+
+/** The quick window's global hotkey (Ctrl+Shift+O). One toggle; the main
+ *  window always keeps its own Send — this only moves the system-wide key. */
+function QuickShortcutRow(): React.JSX.Element {
+  const [on, setOn] = usePersistentState<boolean>('oddbrain.quickShortcut', true)
+  return (
+    <div className="flex gap-1.5">
+      {[
+        { label: 'On', value: true },
+        { label: 'Off', value: false },
+      ].map(option => (
+        <button
+          key={option.label}
+          type="button"
+          className={`rounded-full border px-3 py-1 text-[12px] ${
+            on === option.value ? 'border-accent bg-accent/15 text-ink' : 'border-line text-muted hover:bg-white/[0.06]'
+          }`}
+          onClick={() => {
+            setOn(option.value)
+            void bridge.quick.shortcut(option.value)
+          }}
+          aria-pressed={on === option.value}
+        >
+          {option.label}
+        </button>
+      ))}
+      <span className="ml-2 self-center text-[11.5px] text-muted">Ctrl+Shift+O opens the small window — the same engine, the same cards.</span>
     </div>
   )
 }

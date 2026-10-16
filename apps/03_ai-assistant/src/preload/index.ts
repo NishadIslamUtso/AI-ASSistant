@@ -324,6 +324,20 @@ const api = {
    * so in a sentence the screen can show, because an exception here would be a
    * blank grid with no explanation.
    */
+  /** The quick-ask door: open the small window, or move its global hotkey. */
+  quick: {
+    open: (): Promise<{ ok: boolean }> => ipcRenderer.invoke('quick:open'),
+    shortcut: (enabled: boolean): Promise<{ ok: boolean; enabled: boolean }> => ipcRenderer.invoke('quick:shortcut', { enabled }),
+  },
+
+  /** An artifact outside the chat: its own window, or a PDF in the vault. */
+  artifactWindow: {
+    popout: (html: string, title: string): Promise<{ ok: boolean }> =>
+      ipcRenderer.invoke('artifact:popout', { html, title }),
+    savePdf: (html: string, name: string): Promise<{ ok: boolean; answer: string }> =>
+      ipcRenderer.invoke('artifact:pdf', { html, name }),
+  },
+
   artifacts: {
     list: (): Promise<ListAnswer> => ipcRenderer.invoke('artifacts:list'),
     /** One document. `version` is 1-based, the number the chips show. */

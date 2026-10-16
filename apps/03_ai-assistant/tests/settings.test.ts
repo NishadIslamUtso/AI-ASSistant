@@ -179,7 +179,7 @@ test('pointing the app at another vault takes effect on the running app', async 
 
   const conversation = (id: string) => ({
     type: 'conversation',
-    provider: 'AI ASSistant',
+    provider: 'OddBrain',
     conversation_id: id,
     title: `In ${id}`,
     captured_at: '2026-10-10T19:00:00Z',

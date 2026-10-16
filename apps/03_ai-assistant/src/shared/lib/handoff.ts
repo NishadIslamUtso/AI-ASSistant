@@ -43,7 +43,7 @@ export function buildHandoff(source: HandoffSource): string {
   const lines: string[] = [
     '# Handoff',
     '',
-    `*Written ${source.date} by AI ASSistant. This document is for the assistant that continues this work, human or engine. Everything below is the record of one real task; nothing is guessed.*`,
+    `*Written ${source.date} by OddBrain. This document is for the assistant that continues this work, human or engine. Everything below is the record of one real task; nothing is guessed.*`,
     '',
     '## The task',
     '',

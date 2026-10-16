@@ -85,7 +85,7 @@ export function conversationCapture(
 
   return {
     type: 'conversation',
-    provider: options.provider || 'AI ASSistant',
+    provider: options.provider || 'OddBrain',
     conversation_id: chat.id,
     title: chat.title,
     captured_at: captured,

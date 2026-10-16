@@ -21,8 +21,8 @@ describe('house rules', () => {
   test('compiling for both engines yields the same body, only the wrapper differs', () => {
     const cc = compileFor('claude-code')
     const agy = compileFor('agy')
-    expect(cc).toContain('# House rules (AI ASSistant)')
-    expect(agy).toContain('# House rules (AI ASSistant)')
+    expect(cc).toContain('# House rules (OddBrain)')
+    expect(agy).toContain('# House rules (OddBrain)')
     // The portable core: every section appears in both projections.
     for (const section of ['Who you are', 'Artifacts', 'Approvals', 'Memory and searching', 'What you keep', 'How you write']) {
       expect(cc).toContain(`## ${section}`)
@@ -88,7 +88,7 @@ describe('house rules', () => {
 
   test('the full instruction block is rules + footnote, and stable', () => {
     const withHints = instructionBlock('claude-code', 'gemma4:cloud')
-    expect(withHints).toContain('# House rules (AI ASSistant)')
+    expect(withHints).toContain('# House rules (OddBrain)')
     expect(withHints).toContain('Notes for this brain')
     expect(instructionBlock('claude-code', 'unknown-brain')).toBe(compileFor('claude-code'))
   })

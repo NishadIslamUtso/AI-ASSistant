@@ -144,3 +144,13 @@ body {
 *::-webkit-scrollbar-track {
   background: transparent;
 }
+
+/* Find in the conversation: painted ranges, never DOM mutations. */
+::highlight(ob-find) {
+  background-color: rgba(224, 164, 74, 0.35);
+  color: inherit;
+}
+::highlight(ob-find-current) {
+  background-color: rgba(224, 164, 74, 0.75);
+  color: #141417;
+}

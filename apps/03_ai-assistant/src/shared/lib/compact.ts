@@ -49,7 +49,7 @@ export function briefFileContent(brief: string, workspace: string, at: string): 
   return [
     '# Handoff brief',
     '',
-    `*Poured ${at} by AI ASSistant's Compact, before the engine's session was ended. ${workspace ? `Workspace: ${workspace}.` : 'No workspace was set.'} This file is the record; the brief below rode into the next session.*`,
+    `*Poured ${at} by OddBrain's Compact, before the engine's session was ended. ${workspace ? `Workspace: ${workspace}.` : 'No workspace was set.'} This file is the record; the brief below rode into the next session.*`,
     '',
     brief.trim(),
     '',

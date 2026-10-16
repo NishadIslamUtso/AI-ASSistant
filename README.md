@@ -1,10 +1,10 @@
-# AI ASSistant — Master Github Repo (AI-Optimized)
+# OddBrain — Master Github Repo (AI-Optimized)
 
 **THIS REPO IS MEMORY FOR AIS, NOT FOR HUMANS.** Human polish is secondary. Structure is optimized for LLM handover, continuity, and RAG.
 
 **Owner:** Utso (nishadislamutso@gmail.com) — Dhaka, BD — TUF A15 — 8GB RAM / 4GB VRAM / 500GB storage
 **Date:** 2026-10-14 Asia/Dhaka
-**App Name:** `AI ASSistant` (preserve the double S). It is its own application, not a Claude clone.
+**App Name:** `OddBrain` (preserve the double S). It is its own application, not a Claude clone.
 **Goal:** a local-first desktop assistant that drives an Obsidian vault (the vault is the memory that outlives
 the app), runs local models through Ollama at 127.0.0.1:11434, and reaches the network only when the user
 grants it, from Settings.
@@ -13,7 +13,7 @@ grants it, from Settings.
 
 | Path | What it is | State |
 |---|---|---|
-| `apps/03_ai-assistant/` | **THE APP.** Electron + React + TypeScript + Tailwind 4. Chat driven by real agent engines (Claude Code CLI, Google Antigravity, headless Ollama) through one honest UI: permission cards, artifacts, vault writes, Battles, Split, Recipes, Compaction, watch mode, checkpoints, adversary review, extended thinking, the work line, the turn journal, auto memory, store/mods, engine downloads, Browsing Maps, full-window Settings. | Active. 76 test files / 615 tests, typecheck and build green in the sandbox; every feature live-driven with screenshot receipts shipped in-repo at `00_LIVING_DOCS/receipts/` (g27–g68). Engines wired today: claude-code (its stream-json wire) and agy (its own wire, verified against the real v1.4.0 binary; models and sign-in stay Google's, in the owner's terminal). Windows installer `AI-ASSistant-Setup-0.9.0.exe` (unsigned → SmartScreen warning; recipe + hashes in `00_LIVING_DOCS/RELEASE-WINDOWS.md`). **The owner's acceptance run on his TUF A15 is the one open item.** |
+| `apps/03_ai-assistant/` | **THE APP.** Electron + React + TypeScript + Tailwind 4. Chat driven by real agent engines (Claude Code CLI, Google Antigravity, headless Ollama) through one honest UI: permission cards, artifacts, vault writes, Battles, Split, Recipes, Compaction, watch mode, checkpoints, adversary review, extended thinking, the work line, the turn journal, auto memory, store/mods, engine downloads, Browsing Maps, full-window Settings. | Active. 77 test files / 621 tests, typecheck and build green in the sandbox; every feature live-driven with screenshot receipts shipped in-repo at `00_LIVING_DOCS/receipts/` (g27–g68). Engines wired today: claude-code (its stream-json wire) and agy (its own wire, verified against the real v1.4.0 binary; models and sign-in stay Google's, in the owner's terminal). Windows installer `AI-ASSistant-Setup-0.9.0.exe` (unsigned → SmartScreen warning; recipe + hashes in `00_LIVING_DOCS/RELEASE-WINDOWS.md`). **The owner's acceptance run on his TUF A15 is the one open item.** |
 | `apps/01_claude-exact-pixel-clone/` | The first clone, built to match six Claude screenshots. | Historical. Kept as the port source for libs/hooks/server logic. Not the app. |
 | `apps/02_electron-claude-clone-v6/` | An older Electron fork with more features. | Historical reference. |
 | `extension/` | MV3 browser extension: collector + context suggester. | Starter + spec. **The app now has the port it needs** (127.0.0.1:8765, capture side only), but the extension itself has not been loaded or run against it yet. |
@@ -55,7 +55,7 @@ docs/originals/               <- The original requirement files (historical)
 
 **Tests** (no machine required, this is what CI would run):
 ```bash
-cd apps/03_ai-assistant && npm ci && npx vitest run      # 615 tests, 76 files
+cd apps/03_ai-assistant && npm ci && npx vitest run      # 621 tests, 77 files
 ```
 
 **Desktop app** (needs Ollama running with a model pulled):
@@ -99,7 +99,7 @@ These are the owner's own words and corrections. They outrank anything a later A
   key is saved by hand. Keys belong to the machine, not to the interface.
 - Permissions belong in one place — "put everything in settings, so i can give access to the cloud agent or the
   local agent of something when I want to" — and every switch must govern something real, or it is not shown.
-- App name is **AI ASSistant**; no Claude branding in user-facing copy.
+- App name is **OddBrain**; no Claude branding in user-facing copy.
 - Do not look at other branches for design. From other branches take only finished logic, never JSX.
 - Open-source ready for anyone's machine: no hardcoded names, emails, paths or model tags.
 - As customizable as possible; smooth and seamless.

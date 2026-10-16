@@ -3,6 +3,7 @@ import { PanelRightOpen } from 'lucide-react'
 import { DEFAULT_MODEL } from '@shared/lib/storage'
 import { DEFAULT_PROFILE, normalizeProfile } from '@shared/lib/profile'
 import TitleBar from './components/TitleBar'
+import EnginePanel from './components/EnginePanel'
 import ArtifactsRail from './components/ArtifactsRail'
 import { chatArtifacts } from './state/artifactView'
 import { restoredInPlace, withNewVersion } from './state/artifactEdits'
@@ -56,7 +57,68 @@ import { conversationCapture } from '@shared/lib/capture'
  * library's search, the transcript from the chat hook — so there is no second
  * implementation of anything to drift out of step.
  */
+
+/** The quick window's whole surface: the engine's card, one box, nothing else. */
+import BrainMark from './components/BrainMark'
+
+function QuickMode(): React.JSX.Element {
+  const engine = useEngine()
+  const [draft, setDraft] = useState('')
+  const send = (): void => {
+    const prompt = draft.trim()
+    if (!prompt || engine.running()) return
+    setDraft('')
+    void engine.send(prompt)
+  }
+  return (
+    <div className="flex h-screen flex-col bg-bg px-3 py-2.5">
+      <header className="flex items-center gap-1.5 pb-1.5">
+        <BrainMark size={14} />
+        <span className="text-[12px] font-medium tracking-tight text-ink">OddBrain — quick ask</span>
+        <span className="ml-auto text-[10.5px] text-muted">the same engine, the same cards</span>
+      </header>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <EnginePanel />
+      </div>
+      <div className="mt-2 flex items-end gap-1.5">
+        <textarea
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+              event.preventDefault()
+              send()
+            }
+          }}
+          rows={2}
+          aria-label="Message"
+          placeholder="Ask anything — Ctrl+Enter sends"
+          className="min-h-0 flex-1 resize-none rounded-xl border border-line bg-card px-3 py-2 text-[13px] text-ink outline-none placeholder:text-muted"
+        />
+        <button
+          type="button"
+          onClick={send}
+          disabled={!draft.trim() || engine.running()}
+          aria-label="Send"
+          className="rounded-xl bg-accent px-3 py-2 text-[12.5px] font-medium text-white hover:bg-accent/90 disabled:opacity-50"
+        >
+          Send
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
+  // The quick window: the SAME app, one small door of it. Same engine store,
+  // same queue, same cards — never a second engine.
+  if (new URLSearchParams(window.location.search).has('quick')) return <QuickMode />
+  // The quick window's hotkey: the persisted choice, applied every boot.
+  useEffect(() => {
+    if (isDemo) return
+    const on = window.localStorage.getItem('oddbrain.quickShortcut') !== '"false"'
+    void bridge.quick.shortcut(on).catch(() => undefined)
+  }, [])
   // One line of text, not a dialog. A warning the person has to dismiss is a
   // warning they will learn to dismiss without reading.
   const [notice, setNotice] = useState('')

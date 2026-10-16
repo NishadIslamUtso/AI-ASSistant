@@ -116,7 +116,7 @@ test('the extension can ask whether the app is there — and is told what answer
   const { api, root, call } = await withPort(t)
   const health = await call('GET', '/health', { origin: EXT })
   assert.equal(health.status, 200)
-  assert.equal(health.body.app, 'AI ASSistant')
+  assert.equal(health.body.app, 'OddBrain')
   assert.equal(health.body.vault, root)
   assert.equal(health.body.available, true)
   assert.equal(health.body.timezone, 'Asia/Dhaka')
@@ -124,7 +124,7 @@ test('the extension can ask whether the app is there — and is told what answer
   assert.equal(health.headers.get('access-control-allow-origin'), EXT)
   assert.equal(health.headers.get('vary'), 'Origin')
   // And the same answer on '/', which is what someone typing the address gets.
-  assert.equal((await call('GET', '/', { origin: EXT })).body.app, 'AI ASSistant')
+  assert.equal((await call('GET', '/', { origin: EXT })).body.app, 'OddBrain')
   assert.ok(api.port > 0)
 })
 

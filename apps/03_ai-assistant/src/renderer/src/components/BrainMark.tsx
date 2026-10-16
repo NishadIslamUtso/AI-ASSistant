@@ -1,7 +1,7 @@
 import { useId, type SVGProps } from 'react'
 
 /**
- * BrainMark — the AI ASSistant logo.
+ * BrainMark — the OddBrain logo.
  *
  * THE mark, replaced 2026-10-15 with the owner's own export: the distinguished
  * butt-brain (his words: "use this only"). The previous smiling-brain artwork
@@ -25,7 +25,7 @@ type BrainMarkProps = {
   title?: string
 } & SVGProps<SVGSVGElement>
 
-export default function BrainMark({ size = 20, className = '', title = 'AI ASSistant', ...rest }: BrainMarkProps) {
+export default function BrainMark({ size = 20, className = '', title = 'OddBrain', ...rest }: BrainMarkProps) {
   // React's useId has changed shape between versions — React 19 returns ids
   // wrapped in punctuation, older ones return `:r0:`. Punctuation is legal in an
   // id attribute but NOT safe inside `url(#…)` references, which is how this

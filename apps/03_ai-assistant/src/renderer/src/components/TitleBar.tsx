@@ -1,4 +1,5 @@
 import BrainMark from './BrainMark'
+import FindBar from './FindBar'
 import type { VaultState } from '../hooks/useVault'
 import { usePermissionsWaiting } from '../state/engine'
 
@@ -33,9 +34,11 @@ export default function TitleBar({
   const state = preview ? 'Preview' : `${engineId} · ${engineModel}`
 
   return (
-    <header className="flex h-11 shrink-0 items-center gap-2.5 border-b border-line px-3.5">
-      <BrainMark size={20} />
-      <span className="text-[13px] font-medium tracking-tight">AI ASSistant</span>
+    <>
+      <FindBar />
+      <header className="flex h-11 shrink-0 items-center gap-2.5 border-b border-line px-3.5">
+        <BrainMark size={20} />
+        <span className="text-[13px] font-medium tracking-tight">OddBrain</span>
 
       <div className="ml-auto flex items-center gap-2">
         <span
@@ -101,6 +104,7 @@ export default function TitleBar({
           </span>
         )}
       </div>
-    </header>
+      </header>
+    </>
   )
 }

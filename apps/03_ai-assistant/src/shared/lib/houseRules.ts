@@ -34,7 +34,7 @@ export type HouseRules = {
 
 export const DEFAULT_HOUSE_RULES: HouseRules = {
   identity:
-    'You are the engine inside AI ASSistant, a desktop app on the owner\u2019s machine. ' +
+    'You are the engine inside OddBrain, a desktop app on the owner\u2019s machine. ' +
     'You work in the folder the app gives you. The app shows your work, so keep machine-readable output exact and your words plain.',
   artifacts:
     'Anything visual or shareable, a page, a chart, a diagram, a document, is written as a standalone file in the ' +
@@ -82,8 +82,8 @@ export const HOUSE_RULES_FILENAME: Record<EngineId, string> = {
 
 /** A heading per engine, so the projection reads native, not translated. */
 const HEADING: Record<EngineId, string> = {
-  'claude-code': '# House rules (AI ASSistant)',
-  agy: '# House rules (AI ASSistant)',
+  'claude-code': '# House rules (OddBrain)',
+  agy: '# House rules (OddBrain)',
 }
 
 /**

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Artifact } from '@shared/types'
+import { bridge } from '@/platform/bridge'
 import { buildPreviewHtml, parseElementPick, sourceSignature, type ElementPick } from '@shared/lib/artifacts'
 
 /**
@@ -107,8 +108,42 @@ export default function ArtifactPreview({
     if (problem) setProblem('')
   }
 
+  const [windowNote, setWindowNote] = useState('')
+  // Two doors out of the chat, both keeping the SAME sandboxed html: its own
+  // window to read beside work, and a PDF in the vault to keep.
+  const popOut = (): void => {
+    void bridge.artifactWindow.popout(html, `${artifact.title} — OddBrain`).then((reply) => {
+      setWindowNote(reply.ok ? 'Opened in its own window.' : 'The window refused to open.')
+    })
+  }
+  const savePdf = (): void => {
+    setWindowNote('Rendering the PDF…')
+    void bridge.artifactWindow.savePdf(html, artifact.title).then((reply) => {
+      setWindowNote(reply.ok ? `Saved: ${reply.answer}` : `The PDF failed: ${reply.answer}`)
+    })
+  }
+
   return (
     <div className="overflow-hidden rounded-xl border border-line bg-card">
+      <div className="flex items-center gap-1.5 border-b border-line px-2.5 py-1.5">
+        <span className="min-w-0 flex-1 truncate text-[11px] text-muted">{artifact.title}</span>
+        <button
+          type="button"
+          onClick={popOut}
+          title="Open this artifact in its own window, so it can sit beside your work"
+          className="rounded-lg border border-line px-2 py-0.5 text-[11px] text-muted hover:text-ink"
+        >
+          Pop out
+        </button>
+        <button
+          type="button"
+          onClick={savePdf}
+          title="Save this artifact as a PDF inside your vault, under Artifacts PDF"
+          className="rounded-lg border border-line px-2 py-0.5 text-[11px] text-muted hover:text-ink"
+        >
+          Save as PDF
+        </button>
+      </div>
       <iframe
         ref={frame}
         // Keyed on the source: a changed document gets a fresh frame rather than a
@@ -141,6 +176,7 @@ export default function ArtifactPreview({
           Still being written. The preview redraws as the model works.
         </p>
       ) : null}
+      {windowNote ? <p className="border-t border-line px-3 py-2 text-[11px] text-muted">{windowNote}</p> : null}
     </div>
   )
 }

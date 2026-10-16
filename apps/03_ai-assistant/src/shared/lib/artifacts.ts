@@ -465,3 +465,10 @@ export function sourceSignature(source = ''): string {
   for (let index = 0; index < source.length; index += 1) hash = ((hash * 33) ^ source.charCodeAt(index)) >>> 0
   return `${source.length}:${hash.toString(36)}`
 }
+
+
+/** A file name a Windows disk accepts, derived from the artifact's title. */
+export function pdfSafeName(title: string): string {
+  const cleaned = title.replace(/[^A-Za-z0-9 _-]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60).trim()
+  return cleaned || 'artifact'
+}

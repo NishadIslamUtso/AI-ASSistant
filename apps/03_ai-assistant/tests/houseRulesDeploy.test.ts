@@ -33,7 +33,7 @@ test('upsert: a fresh file gains the block; a second deploy replaces only the bl
   assert.match(once, /House rules/)
   const twice = upsertBlock(once, `${BLOCK_START}\nNEW RULES\n${BLOCK_END}`)
   assert.match(twice, /NEW RULES/)
-  assert.doesNotMatch(twice, /House rules \(AI ASSistant\)/, 'the old block is gone, not stacked')
+  assert.doesNotMatch(twice, /House rules \(OddBrain\)/, 'the old block is gone, not stacked')
   assert.equal(twice.split(BLOCK_START).length - 1, 1)
 })
 

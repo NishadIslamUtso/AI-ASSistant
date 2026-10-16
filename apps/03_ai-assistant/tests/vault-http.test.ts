@@ -63,7 +63,7 @@ async function withApi(t: { after: (fn: () => unknown) => void }): Promise<{
 
 const conversation = (): Record<string, unknown> => ({
   type: 'conversation',
-  provider: 'AI ASSistant',
+  provider: 'OddBrain',
   conversation_id: 'chat-1',
   title: 'A kept conversation',
   captured_at: '2026-10-10T19:00:00Z',

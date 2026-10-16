@@ -23,10 +23,10 @@ export const LOCAL_ORIGIN = LOCAL_DOOR
 export const BROWSER_PAGE_SKILL: VaultSkill = {
   name: 'browser-page',
   description:
-    'See the page the user has open in their browser (as last captured by the AI ASSistant extension). Use before asking the user to paste what they see.',
+    'See the page the user has open in their browser (as last captured by the OddBrain extension). Use before asking the user to paste what they see.',
   body: `# browser-page
 
-The AI ASSistant desktop app keeps a local, private door for reading what
+The OddBrain desktop app keeps a local, private door for reading what
 its browser extension captured. When a task needs the page the user is
 looking at, ask the door instead of the user.
 
@@ -73,9 +73,9 @@ export function starterPackFiles(): Record<string, string> {
     'manifest.json': JSON.stringify(
       {
         id: 'ai-assistant.starter',
-        name: 'AI ASSistant starter pack',
+        name: 'OddBrain starter pack',
         version: '1.0.0',
-        author: 'AI ASSistant',
+        author: 'OddBrain',
         description: 'The app'+String.fromCharCode(39)+'s browser-page skill: see the page the user has open, through the local door. One look to start from.',
         license: 'unspecified',
         permissions: { shell: false },

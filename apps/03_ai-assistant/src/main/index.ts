@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu, safeStorage, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu, safeStorage, shell, globalShortcut } from 'electron'
 import { dirname, join, resolve } from 'node:path'
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { startLocalApi, type LocalApi } from './api/server'
@@ -31,6 +31,8 @@ import { createJournalManager } from './journal'
 import { createMemoryManager } from './memoryFiles'
 import { createDownloadManager, type DownloadTick } from './engine/downloads'
 import { agyModelSource, detectEngine } from './engine/availability'
+import { enginePath } from './engine/enginePath'
+import { pdfSafeName } from '../shared/lib/artifacts'
 import { parsePullLine, validateModelName } from './engine/pull'
 import { deployMcp, deploySkill, scanClaudeSkills, type McpServer, type VaultSkill } from './engine/deploy'
 import { installCatalogSkill } from './engine/skillCatalogInstall'
@@ -139,6 +141,10 @@ function stampFor(now: Date): string {
   const get = (type: string): string => parts.find((part) => part.type === type)?.value ?? '00'
   return `${get('year')}-${get('month')}-${get('day')}-${get('hour')}${get('minute')}`
 }
+
+// The engines' PATH is asked from the owner's shell once at boot, so the
+// first engine start never hunts folders with a slim inherited PATH.
+void enginePath()
 
 function pushEngineEvent(event: EngineEvent): void {
   // Stream pieces are for the live window only: a hundred of them would
@@ -336,7 +342,7 @@ function registerBridges(): void {
   ipcMain.handle('vault:choose-folder', async () => {
     const [window] = BrowserWindow.getAllWindows()
     const chosen = await dialog.showOpenDialog(window, {
-      title: 'Choose the folder AI ASSistant keeps its notes in',
+      title: 'Choose the folder OddBrain keeps its notes in',
       buttonLabel: 'Use this folder',
       properties: ['openDirectory', 'createDirectory'],
     })
@@ -718,6 +724,54 @@ function registerBridges(): void {
   ipcMain.handle('engine:detect', async (): Promise<Array<{ id: EngineId; found: boolean; version: string; install: string }>> => {
     const ids: EngineId[] = ['claude-code', 'agy']
     return Promise.all(ids.map((id) => detectEngine(id)))
+  })
+
+  ipcMain.handle('quick:open', () => {
+    createQuickWindow()
+    return { ok: true }
+  })
+
+  ipcMain.handle('quick:shortcut', (_event, payload: { enabled: boolean }) => {
+    quickShortcutEnabled = payload.enabled !== false
+    applyQuickShortcut()
+    return { ok: true, enabled: quickShortcutEnabled }
+  })
+
+  // An artifact in ITS OWN window: the same sandboxed preview HTML the
+  // in-app iframe shows, at full reading size. Nothing new executes — the
+  // CSP travels with the html.
+  ipcMain.handle('artifact:popout', (_event, payload: { html: string; title: string }) => {
+    const win = new BrowserWindow({
+      width: 760,
+      height: 860,
+      title: payload.title || 'OddBrain — artifact',
+      autoHideMenuBar: true,
+      backgroundColor: '#141417',
+    })
+    void win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(payload.html))
+    return { ok: true }
+  })
+
+  // Save as PDF: rendered offscreen, written into the vault so it sits with
+  // the owner's work, never into a temp folder nobody can find.
+  ipcMain.handle('artifact:pdf', async (_event, payload: { html: string; name: string }): Promise<{ ok: boolean; answer: string }> => {
+    try {
+      const safe = pdfSafeName(payload.name) + '.pdf'
+      const dir = join(vaultRoot(), 'Artifacts PDF')
+      mkdirSync(dir, { recursive: true })
+      const target = join(dir, safe)
+      const win = new BrowserWindow({ show: false, width: 820, height: 1160, webPreferences: { sandbox: true } })
+      try {
+        await win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(payload.html))
+        const bytes = await win.webContents.printToPDF({ printBackground: true })
+        writeFileSync(target, bytes)
+      } finally {
+        win.destroy()
+      }
+      return { ok: true, answer: target }
+    } catch (error) {
+      return { ok: false, answer: String((error as Error)?.message ?? error) }
+    }
   })
 
   ipcMain.handle('engine:stop', () => {
@@ -1317,6 +1371,55 @@ const consoleErrors: string[] = []
 const consoleWarnings: string[] = []
 
 let api: LocalApi | null = null
+
+// ---- The quick window: the whole app's engine, one keypress away -------
+// The SAME renderer, the SAME queue, the SAME cards — a second window is
+// only a smaller door into the one send path. Never a second engine.
+let quickWindow: BrowserWindow | null = null
+
+function createQuickWindow(): void {
+  if (quickWindow && !quickWindow.isDestroyed()) {
+    quickWindow.show()
+    quickWindow.focus()
+    return
+  }
+  const icon = windowIcon()
+  quickWindow = new BrowserWindow({
+    width: 440,
+    height: 620,
+    minWidth: 360,
+    minHeight: 420,
+    title: 'OddBrain — quick ask',
+    autoHideMenuBar: true,
+    ...(icon ? { icon } : {}),
+    backgroundColor: '#141417',
+    webPreferences: {
+      preload: join(__dirname, '../preload/index.js'),
+      sandbox: true,
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  })
+  const devServer = process.env['ELECTRON_RENDERER_URL']
+  if (devServer) void quickWindow.loadURL(`${devServer}/?quick=1`)
+  else if (api?.url) void quickWindow.loadURL(`${api.url}/?quick=1`)
+  else void quickWindow.loadFile(join(__dirname, '../renderer/index.html'), { query: { quick: '1' } })
+  quickWindow.on('closed', () => {
+    quickWindow = null
+  })
+}
+
+const QUICK_SHORTCUT = 'CommandOrControl+Shift+O'
+let quickShortcutEnabled = true
+
+function applyQuickShortcut(): void {
+  globalShortcut.unregister(QUICK_SHORTCUT)
+  if (quickShortcutEnabled) {
+    globalShortcut.register(QUICK_SHORTCUT, () => createQuickWindow())
+  }
+}
+
+
 let extensionApi: ExtensionApi | null = null
 let settings: AppSettings = { ...EMPTY_SETTINGS }
 let settingsFile = ''
@@ -1356,7 +1459,7 @@ function createWindow(): BrowserWindow {
     ...(icon ? { icon } : {}),
     // The window paints this before the renderer draws, so there is never a white flash.
     backgroundColor: '#141417',
-    title: 'AI ASSistant',
+    title: 'OddBrain',
     autoHideMenuBar: true,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -1514,12 +1617,12 @@ if (!gotLock) {
           click: () => void shell.openExternal('https://github.com/NishadIslamUtso/AI-ASSistant'),
         },
         {
-          label: 'About AI ASSistant',
+          label: 'About OddBrain',
           click: () => {
             void dialog.showMessageBox({
               type: 'info',
-              title: 'About AI ASSistant',
-              message: `AI ASSistant ${app.getVersion()}`,
+              title: 'About OddBrain',
+              message: `OddBrain ${app.getVersion()}`,
               detail: 'The face of your engines. Local vault, local memory, $0.',
             })
           },
@@ -1529,7 +1632,11 @@ if (!gotLock) {
   ])
   // Inside whenReady, as Electron requires — set before ready and the menu is
   // silently ignored, which is exactly the "Ctrl+4 does nothing" this once was.
-  void app.whenReady().then(async () => {
+  void app.on('will-quit', () => {
+  globalShortcut.unregisterAll()
+})
+
+app.whenReady().then(async () => {
     Menu.setApplicationMenu(menu)
     console.log(`[menu] application menu set: ${Menu.getApplicationMenu()?.items.length ?? 0} top items`)
     const rendererDir = process.env['ELECTRON_RENDERER_URL']
@@ -1539,6 +1646,10 @@ if (!gotLock) {
     // file means "nothing chosen yet", never a failed launch.
     settingsFile = join(app.getPath('userData'), 'settings.json')
     settings = readSettings(settingsFile)
+    // The quick window's hotkey is system-wide from boot; --quick opens it
+    // immediately (drives and tests use this door).
+    applyQuickShortcut()
+    if (process.argv.includes('--quick')) createQuickWindow()
     engine = createEngineSocket({
       // Engine sessions, remembered per workspace so a conversation survives
       // an app restart (the engine's own --resume). A damaged file means

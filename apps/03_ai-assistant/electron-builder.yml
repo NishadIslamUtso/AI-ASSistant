@@ -16,8 +16,8 @@
 # - No code-signing certificate is configured, and that is stated rather than
 #   left to be discovered: an unsigned installer makes Windows show the "unknown
 #   publisher" warning. Signing needs a certificate this project does not have.
-appId: com.aiassistant.desktop
-productName: AI ASSistant
+appId: com.oddbrain.desktop
+productName: OddBrain
 
 directories:
   output: dist
@@ -98,8 +98,16 @@ nsis:
   createDesktopShortcut: true
   createStartMenuShortcut: true
   shortcutName: AI ASSistant
-  artifactName: AI-ASSistant-Setup-${version}.exe
+  artifactName: OddBrain-Setup-${version}.exe
   # Uninstall leaves the person's own data alone. The vault lives where they chose
   # it, and the app's settings live in the user's app-data folder — neither is the
   # installer's business to remove.
   deleteAppDataOnUninstall: false
+
+# Electron fuses: the packaged app refuses the classic abuse paths — no
+# Node-eval backdoor through ELECTRON_RUN_AS_NODE, no NODE_OPTIONS injection,
+# no --inspect on the production binary. Cheap, standard hardening.
+electronFuses:
+  enableRunAsNode: false
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false

@@ -13,11 +13,12 @@
  * a CLI is cheap, but launching it on every redraw is not.
  */
 import { execFile } from 'node:child_process'
+import { enginePathSync } from './enginePath'
 import type { EngineAvailability, EngineId } from '../../shared/lib/engine'
 
 const INSTALL_HINT: Record<EngineId, string> = {
   'claude-code':
-    'Install it once in PowerShell: npm install -g @anthropic-ai/claude-code, then fully quit and reopen AI ASSistant.',
+    'Install it once in PowerShell: npm install -g @anthropic-ai/claude-code, then fully quit and reopen OddBrain.',
   agy: 'Install it from google-antigravity/antigravity-cli (antigravity.google), beware fake "gemini-antigravity-cli" repos that hand out exe files.',
 }
 
@@ -44,7 +45,7 @@ export function checkBinary(
   const run =
     options.runner ??
     ((cmd: string, args: string[], onDone: (error: unknown, stdout: string) => void) => {
-      execFile(cmd, args, { shell: process.platform === 'win32', timeout: options.timeoutMs ?? 4000 }, (error, stdout) =>
+      execFile(cmd, args, { shell: process.platform === 'win32', timeout: options.timeoutMs ?? 4000, env: { ...process.env, PATH: enginePathSync() } }, (error, stdout) =>
         onDone(error, typeof stdout === 'string' ? stdout : ''),
       )
     })

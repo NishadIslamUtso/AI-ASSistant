@@ -108,7 +108,7 @@ export default function ChatView({
 
   return (
     <main className="flex min-w-0 flex-1 flex-col">
-      <div ref={scroller} onScroll={trackScroll} className="min-h-0 flex-1 overflow-y-auto">
+      <div ref={scroller} data-find-root onScroll={trackScroll} className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-[var(--chat-width)] px-6 py-6">
           {messages.length === 0 ? (
             <EmptyState onPick={setDraft} name={profileName} />
@@ -207,7 +207,7 @@ function CaptureCapsule({ chat }: { chat: Chat }) {
   const [state, setState] = useState<'idle' | 'busy' | 'done' | 'failed'>('idle')
   const capture = (): void => {
     setState('busy')
-    const lines = [`# ${chat.title}`, '', `*Captured from a conversation in AI ASSistant, ${new Date().toLocaleString()}.*`, '']
+    const lines = [`# ${chat.title}`, '', `*Captured from a conversation in OddBrain, ${new Date().toLocaleString()}.*`, '']
     for (const message of chat.messages.slice(-30)) {
       const who = message.role === 'user' ? 'You' : 'The engine'
       const text = String(message.content ?? '').slice(0, 2000)

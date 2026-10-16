@@ -65,7 +65,7 @@ export default function FirstRunView({
       <div className="w-full max-w-[440px] rounded-2xl border border-line bg-card p-6">
         <div className="flex items-center gap-2.5">
           <BrainMark size={18} title="" />
-          <h1 className="text-[19px] font-semibold text-ink">Welcome to AI ASSistant</h1>
+          <h1 className="text-[19px] font-semibold text-ink">Welcome to OddBrain</h1>
         </div>
 
         <div className="mt-3 flex items-center gap-1.5" aria-hidden>
