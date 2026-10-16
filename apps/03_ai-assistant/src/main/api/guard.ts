@@ -26,6 +26,7 @@ export const LOCAL_API_ROUTES = new Map<string, string[]>([
   ['/api/vault/capsules', ['GET']],
   // Content search — Cook This Prompt reads the vault through it.
   ['/api/vault/grep', ['GET']],
+  ['/api/vault/onui', ['GET']],
   // The Vault screen's file list.
   ['/api/vault/files', ['GET']],
   ['/api/vault/status', ['GET']],

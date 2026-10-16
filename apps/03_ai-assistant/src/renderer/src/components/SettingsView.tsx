@@ -494,7 +494,7 @@ export default function SettingsView({
                 {isDemo
                   ? 'The port the browser extension posts to belongs to the desktop app.'
                   : extension.listening
-                    ? 'The extension posts pages and conversations here. Nothing else answers on that port.'
+                    ? 'The extension posts pages and conversations here. Nothing else answers on that port. The engine reads this door too: the built-in browser-page skill teaches it GET /onui — the latest captured page, with visit-only lines reported as metadata, never as reading.'
                     : extension.error || 'The extension cannot reach this app at the moment.'}
               </div>
             </div>

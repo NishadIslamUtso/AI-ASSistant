@@ -12,8 +12,8 @@
  * Electron, open a socket or write to the console, so every rule below is
  * testable directly.
  */
-import { existsSync } from 'node:fs'
-import { basename, resolve } from 'node:path'
+import { existsSync, readdirSync } from 'node:fs'
+import { basename, join, resolve } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { InputError, VaultMissingError } from './errors'
 import { createVaultFiles, type VaultFiles } from './files'
@@ -512,6 +512,72 @@ export function createVaultService({
     }
   }
 
+  /**
+   * onui — the page on the user's screen, as the capture door last saw it
+   * (A.6: the engine queries the browser). Reads the newest line of the
+   * newest browser-activity log; when that line carries a captured page,
+   * the readable text rides along, capped. A visit-only line is reported as
+   * exactly that: metadata, never proof of reading. Nothing here is
+   * invented — no capture, no page.
+   */
+  function onui(): Record<string, unknown> {
+    const store = vault()
+    // The logs are .jsonl, so they are walked directly (listMarkdown only
+    // lists .md); the root comes from the store, so the path rules hold.
+    const activityRoot = `02 Sources/Browser Activity`
+    const root = store.root
+    if (!existsSync(join(root, activityRoot))) {
+      return { page: null, message: 'No browser capture yet. When the extension captures a page, this answers with it.' }
+    }
+    const years = readdirSync(join(root, activityRoot))
+      .filter(entry => /^\d{4}$/.test(entry))
+      .sort()
+      .reverse()
+    let newest = ''
+    for (const year of years) {
+      const files = readdirSync(join(root, activityRoot, year))
+        .filter(entry => entry.endsWith('.jsonl'))
+        .sort()
+        .reverse()
+      if (files.length) {
+        newest = join(activityRoot, year, files[0])
+        break
+      }
+    }
+    if (!newest) return { page: null, message: 'No browser capture yet. When the extension captures a page, this answers with it.' }
+    const lines = store.read(newest).split('\n').filter(line => line.trim())
+    if (!lines.length) return { page: null, message: 'The newest browser-activity log is empty.' }
+    let event: Record<string, unknown>
+    try {
+      event = JSON.parse(lines[lines.length - 1])
+    } catch {
+      return { page: null, message: 'The newest browser-activity entry is damaged, so nothing is reported.' }
+    }
+    const page: Record<string, unknown> = {
+      url: typeof event.url === 'string' ? event.url : '',
+      title: typeof event.title === 'string' ? event.title : '',
+      captured_at: typeof event.captured_at === 'string' ? event.captured_at : '',
+      capture_status: typeof event.capture_status === 'string' ? event.capture_status : 'unknown',
+      source: newest,
+    }
+    if (typeof event.visited_at === 'string' && event.visited_at) page.visited_at = event.visited_at
+    if (typeof event.source_id === 'string' && event.source_id) {
+      const document = store.read(event.source_id)
+      const marker = '\n## Content\n'
+      const at = document.indexOf(marker)
+      if (at !== -1) {
+        const raw = document.slice(at + marker.length).trim()
+        const capped = raw.slice(0, 12_000)
+        page.content = capped
+        if (capped.length < raw.length) page.content_truncated = true
+      }
+    }
+    if (page.capture_status === 'visit-only') {
+      page.note = 'A visit was recorded; the page content was never captured, so nothing about reading it is claimed.'
+    }
+    return { page }
+  }
+
   return {
     root,
     available,
@@ -522,6 +588,7 @@ export function createVaultService({
     blacklist,
     updateBlacklist,
     capture,
+    onui,
     listEntries,
     capsules,
     context,

@@ -25,6 +25,7 @@ import { parsePullLine, validateModelName } from './engine/pull'
 import { deployMcp, deploySkill, scanClaudeSkills, type McpServer, type VaultSkill } from './engine/deploy'
 import { installCatalogSkill } from './engine/skillCatalogInstall'
 import { installPackFromFolder, listPacks, removePack } from './engine/packs'
+import { deployBuiltInSkills } from './engine/vaultSkills'
 import { normalizeBoard } from '../shared/lib/sessionsBoard'
 import { exportVaultCopy } from './vault/exportCopy'
 import { deployHouseRules } from './engine/houseRulesDeploy'
@@ -734,8 +735,18 @@ function registerBridges(): void {
     }
     const workspace = answer.filePaths[0]
     settings = writeSettings(settingsFile, { ...settings, engine: { ...settings.engine, workspace } })
+    // The agy skills copy follows the workspace; refresh so a brand-new
+    // workplace gets the hint files the moment it is picked.
+    const moved = deployBuiltInSkills(skillTargets())
+    if (moved.length) console.log(`[skills] refreshed ${moved.length} built-in engine skill file(s)`)
     return { ok: true, answer: workspace }
   })
+
+  // The engines' hint skills (ours, not from any catalog) refresh on every
+  // launch, here at the end of bridge registration — settings are loaded by
+  // the time this runs, so the workspace path they need is known.
+  const placedSkills = deployBuiltInSkills(skillTargets())
+  if (placedSkills.length) console.log(`[skills] refreshed ${placedSkills.length} built-in engine skill file(s)`)
 }
 
 const isSmoke = process.argv.includes('--smoke')
@@ -1063,7 +1074,6 @@ if (!gotLock) {
     if (extensionApi.listening) {
       console.log(`[extension] listening at ${extensionApi.url} — captures, context and the never-check list only`)
     }
-
     createWindow()
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow()

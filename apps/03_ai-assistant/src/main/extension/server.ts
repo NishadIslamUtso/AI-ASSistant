@@ -47,6 +47,8 @@ export const EXTENSION_ROUTES = new Map<string, string[]>([
   ['/status', ['GET']],
   ['/context', ['GET']],
   ['/capsules', ['GET']],
+  ['/grep', ['GET']],
+  ['/onui', ['GET']],
   ['/blacklist', ['GET', 'POST']],
   ['/capture', ['POST']],
 ])

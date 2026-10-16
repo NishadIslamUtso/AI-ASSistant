@@ -39,6 +39,7 @@ const ROUTES: Record<string, string[]> = {
   '/files': ['GET'],
   '/file': ['GET'],
   '/grep': ['GET'],
+  '/onui': ['GET'],
   '/capture': ['POST'],
   '/export-zip': ['POST'],
 }
@@ -67,6 +68,7 @@ export function handleVaultRequest(service: VaultService, request: VaultRouteReq
       if (route === '/today') return { status: 200, body: service.today() }
       if (route === '/blacklist') return { status: 200, body: { excluded_patterns: service.blacklist() } }
       if (route === '/capsules') return { status: 200, body: { capsules: service.capsules(query) } }
+      if (route === '/onui') return { status: 200, body: service.onui() }
       if (route === '/context') return { status: 200, body: service.context(query) }
       if (route === '/files') {
         // The tree the vault really has: every markdown file, relative paths,
