@@ -9,6 +9,7 @@
  * one trusted host.
  */
 import { existsSync } from 'node:fs'
+import { spawn } from 'node:child_process'
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { inflateRawSync } from 'node:zlib'
@@ -33,6 +34,24 @@ export type DownloadManager = {
   /** v1 guard: a staged installer may run only on Windows, only from our folder. */
   runInstaller(engine: string, platform?: string): { ok: boolean; answer: string; command?: string[] }
   ollamaBinary(): string | null
+  /** The staged Ollama runtime, started and stopped by the app, for real. */
+  ollamaStart(): Promise<{ ok: boolean; answer: string }>
+  ollamaStop(): Promise<{ ok: boolean; answer: string }>
+  ollamaStatus(): Promise<{ ok: boolean; answer: string; running: boolean }>
+}
+
+
+/** Is anything answering the local Ollama door, right now? */
+async function answering(): Promise<boolean> {
+  try {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 700)
+    const reply = await fetch('http://127.0.0.1:11434/api/version', { signal: controller.signal })
+    clearTimeout(timer)
+    return reply.ok
+  } catch {
+    return false
+  }
 }
 
 export function createDownloadManager(options: {
@@ -40,6 +59,8 @@ export function createDownloadManager(options: {
   fetchImpl?: FetchLike
   onTick?: (tick: DownloadTick) => void
   join?: typeof join
+  /** Overridable for tests — how the app knocks on the runtime's door. */
+  probe?: () => Promise<boolean>
 }): DownloadManager {
   const root = options.root
   const doFetch: FetchLike = options.fetchImpl ?? (async (url) => {
@@ -146,7 +167,7 @@ export function createDownloadManager(options: {
         }
       }
       const answer = info.kind === 'zip'
-        ? 'Downloaded, verified and unpacked into the app\u2019s own engines folder.'
+        ? 'Downloaded from the official endpoint and unpacked into the app\u2019s own engines folder. (The file\u2019s SHA-256 is recorded below; the official source is pinned by URL.)'
         : 'Staged. Running the official installer is a separate permission, shown in full before it runs.'
       onTick({ engine, got: bytes.length, total: bytes.length, phase: 'staged', answer })
       return { ok: true, answer }
@@ -187,6 +208,68 @@ export function createDownloadManager(options: {
         if (existsSync(candidate)) return candidate
       }
       return null
+    },
+
+    /** The staged runtime, started detached: its pid lives in our folder. */
+    async ollamaStart() {
+      const binary = this.ollamaBinary()
+      if (!binary) return { ok: false, answer: 'The Ollama runtime is not staged yet. Download it first.' }
+      if ((await this.ollamaStatus()).running) {
+        return { ok: true, answer: 'The local runtime is already answering at 127.0.0.1:11434.' }
+      }
+      const pidFile = join(root, 'ollama', 'serve.pid')
+      try { await rm(pidFile, { force: true }) } catch {}
+      const child = spawn(binary, ['serve'], {
+        cwd: join(root, 'ollama', 'app'),
+        detached: true,
+        stdio: 'ignore',
+      })
+      child.unref()
+      if (!child.pid) return { ok: false, answer: 'The runtime could not be started.' }
+      await writeFile(pidFile, String(child.pid), 'utf8')
+      // Give it a moment, then say the truth about whether it came up.
+      const knock = options.probe ?? answering
+      for (let attempt = 0; attempt < 10; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, options.probe ? 5 : 500))
+        if (await knock()) {
+          return { ok: true, answer: `The local runtime is up at 127.0.0.1:11434 (started by the app, pid ${child.pid}).` }
+        }
+        if (child.exitCode !== null) break
+      }
+      return { ok: true, answer: `The runtime was started (pid ${child.pid}), but 127.0.0.1:11434 is not answering yet — give it a moment.` }
+    },
+
+    async ollamaStop() {
+      const pidFile = join(root, 'ollama', 'serve.pid')
+      let recorded = ''
+      try { recorded = (await readFile(pidFile, 'utf8')).trim() } catch {
+        return { ok: false, answer: 'The app has not started the runtime, so it will not stop it. If you started Ollama yourself, stop it your way.' }
+      }
+      const pid = Number(recorded)
+      if (!Number.isInteger(pid) || pid <= 0) return { ok: false, answer: 'The recorded pid is not usable; stop the runtime by hand.' }
+      try {
+        if (process.platform === 'win32') spawn('taskkill', ['/pid', String(pid), '/T', '/F'], { stdio: 'ignore' })
+        else process.kill(pid, 'SIGTERM')
+      } catch (failure) {
+        return { ok: false, answer: `The runtime could not be stopped: ${(failure as Error).message}` }
+      }
+      await rm(pidFile, { force: true })
+      return { ok: true, answer: `The runtime the app started (pid ${pid}) was stopped.` }
+    },
+
+    async ollamaStatus() {
+      if (await (options.probe ?? answering)()) return { ok: true, running: true, answer: 'Answering at 127.0.0.1:11434.' }
+      const pidFile = join(root, 'ollama', 'serve.pid')
+      try {
+        const pid = Number((await readFile(pidFile, 'utf8')).trim())
+        if (Number.isInteger(pid) && pid > 0) {
+          process.kill(pid, 0)
+          return { ok: true, running: true, answer: `The process is up (pid ${pid}) but the door is not answering yet.` }
+        }
+      } catch {
+        // no pid file or dead pid: not running by our hand
+      }
+      return { ok: true, running: false, answer: 'Not running. Start it here, or run your own Ollama.' }
     },
   }
 }

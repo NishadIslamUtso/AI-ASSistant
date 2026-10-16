@@ -4,7 +4,7 @@
  * renderer (it owns the send path and the busy flag); this side only sees
  * and reports, bounded — a chatty folder cannot flood the window.
  */
-import { watch, type FSWatcher } from 'node:fs'
+import { existsSync, watch, type FSWatcher } from 'node:fs'
 import { join } from 'node:path'
 
 export type WatchTick = { folder: string; names: string[]; at: number }
@@ -26,7 +26,17 @@ export function createFolderWatcher(onTick: (tick: WatchTick) => void): FolderWa
   const flush = (): void => {
     timer = null
     if (!pending.size) return
-    const names = [...pending].slice(0, MAX_NAMES_PER_TICK)
+    // A DELETION never fires the watcher: fs.watch reports a deleted file's
+    // name under 'rename' exactly like a created one, so the truth is checked
+    // against the disk — a name with nothing behind it is a deletion (or a
+    // rename away) and stays out of the tick. The engine's own note about
+    // this rule is backed by exactly this check.
+    const names: string[] = []
+    for (const name of pending) {
+      if (names.length >= MAX_NAMES_PER_TICK) break
+      if (!existsSync(join(folder, name))) continue
+      names.push(name)
+    }
     pending = new Set()
     onTick({ folder, names, at: Date.now() })
   }
@@ -34,6 +44,7 @@ export function createFolderWatcher(onTick: (tick: WatchTick) => void): FolderWa
   return {
     start(next: string): { ok: boolean; answer: string } {
       if (watcher) this.stop()
+      pending = new Set()
       try {
         watcher = watch(next, { recursive: true }, (_event, name) => {
           if (!name) return

@@ -12,12 +12,17 @@
  */
 import type { EngineEvent } from '../../shared/lib/engine'
 import { startClaudeCodeSession, type EngineSession, type EngineStartInput } from './claudeCode'
+import { startAgySession } from './agy'
 
 export type EngineAnswer = { ok: boolean; answer: string }
 
 export type EngineSocket = {
   /** Hand the engine a task — starts it on the first one, reuses it after. */
-  send(prompt: string, input: EngineStartInput & { images?: Array<{ mime: string; data: string }> }): EngineAnswer
+  send(prompt: string, input: EngineStartInput & {
+    images?: Array<{ mime: string; data: string }>
+    /** Overridable for tests — which process starts. Production leaves this out. */
+    spawnProcess?: typeof import('node:child_process').spawn
+  }): EngineAnswer
   current(): EngineSession | null
   /** True only while a TASK is in flight, not merely while the process lives. */
   turnBusy(): boolean
@@ -43,6 +48,7 @@ export const noSessionMemory: SessionMemory = { load: () => '', save: () => unde
 
 export function createEngineSocket(memory: SessionMemory = noSessionMemory): EngineSocket {
   let session: EngineSession | null = null
+  let sessionEngine: string | null = null
   let busy = false
   let currentCwd = ''
 
@@ -59,30 +65,36 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
     input.onEvent(event)
   }
 
-  const start = (input: EngineStartInput): EngineSession => {
-    return startClaudeCodeSession({
+  const start = (input: EngineStartInput & { spawnProcess?: typeof import('node:child_process').spawn }): EngineSession => {
+    const spawnArgs = {
       ...input,
-      onEvent: (event) => onEvent(input, event),
-      onClose: (code) => {
+      onEvent: (event: EngineEvent) => onEvent(input, event),
+      onClose: (code: number | null) => {
         busy = false
         input.onClose?.(code)
       },
-    })
+    }
+    // One plug, two adapters: each engine's own file speaks its own wire and
+    // emits the same EngineEvents. The face never learns the difference.
+    sessionEngine = input.settings.id
+    return input.settings.id === 'agy' ? startAgySession(spawnArgs) : startClaudeCodeSession(spawnArgs)
   }
 
   return {
     send(prompt: string, input: EngineStartInput & { images?: Array<{ mime: string; data: string }> }): EngineAnswer {
       currentCwd = input.cwd
 
-      // Engine #2 arrives after its Windows check (architecture doc, 6.3).
-      // Until then it refuses honestly instead of pretending to start.
-      if (input.settings.id === 'agy') {
-        const text = 'agy is not wired in yet, its Windows check comes first (plan 6.3).'
-        queueMicrotask(() => {
-          input.onEvent({ kind: 'error', text } satisfies EngineEvent)
-          input.onClose?.(null)
-        })
-        return { ok: false, answer: text }
+      // Both engines are wired: claude-code on its stream-json wire, agy on
+      // its own (verified against the real v1.4.0 binary). An engine that is
+      // missing from the machine says so honestly at spawn time — the branch
+      // below routes to the right adapter by the setting, nothing else.
+      // A different engine was picked: the old process is not asked to speak
+      // the other's wire — it is set aside and the chosen engine starts fresh.
+      if (session && sessionEngine && input.settings.id !== sessionEngine) {
+        session.stop()
+        session = null
+        sessionEngine = null
+        busy = false
       }
       if (session?.isRunning()) {
         if (busy) {

@@ -46,6 +46,20 @@ describe('memory file reader', () => {
     expect(await manager.read('06 Review/Memory/keep.md')).toMatchObject({ ok: true })
   })
 
+  it('a symlink inside the memory folder is not memory: skipped in lists, refused on read', async () => {
+    const { symlinkSync, writeFileSync } = await import('node:fs')
+    const secret = join(root, 'secret.md')
+    writeFileSync(secret, 'outside the memory folder', 'utf8')
+    try {
+      symlinkSync(secret, join(root, '06 Review', 'Memory', 'leak.md'))
+    } catch {
+      return // this filesystem denies symlinks; the guard is still pinned below
+    }
+    const listed = await manager.list()
+    expect(listed.files?.some(file => file.name === 'leak.md')).toBe(false)
+    await expect(manager.read('06 Review/Memory/leak.md')).resolves.toMatchObject({ ok: false })
+  })
+
   it('refuses names outside the memory folder before touching anything', async () => {
     const answer = await manager.remove('../settings.json')
     expect(answer.ok).toBe(false)

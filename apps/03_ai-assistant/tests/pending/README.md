@@ -1,8 +1,9 @@
 # Tests waiting for the code they test
 
 These test files are ported and kept here on purpose, but they are **not in
-the run yet**, because the thing each one tests does not exist in this app so
-far. They are not deleted and they are not passing-by-accident; they are parked
+the run yet**. (Refreshed 2026-10-17: the composer menu and renderer props
+they waited for EXIST now — restoring them is a matter of rewriting against
+the current components; they stayed parked so nothing passes by accident.) They are not deleted and they are not passing-by-accident; they are parked
 where nobody can mistake them for coverage.
 
 | file | waits for |

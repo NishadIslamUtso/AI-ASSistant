@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import { getEngineApi } from '@/platform/bridge'
-import { engineStore } from './engine'
+import { engineStore, subscribeEngine } from './engine'
 import {
   shouldWatchFire,
   watchOrder,
@@ -54,6 +54,27 @@ let cooldownUntil = 0
 let suppressed: string[] = []
 let gathered = new Set<string>()
 let quiet: ReturnType<typeof setTimeout> | null = null
+let harvestDue = false
+let subscribed = false
+
+/**
+ * The engine's writes are harvested when its turn CLOSES — not when the send
+ * is acknowledged. Capturing at send time read the PREVIOUS turn's paths; the
+ * fix watches the store: running → anything-else means the writes are final.
+ */
+const harvestWhenClosed = (): void => {
+  if (subscribed) return
+  subscribed = true
+  let wasRunning = false
+  subscribeEngine(() => {
+    const running = engineStore().turn?.state === 'running'
+    if (wasRunning && !running && harvestDue) {
+      harvestDue = false
+      suppressed = toolPathsOfLastTurn()
+    }
+    wasRunning = running
+  })
+}
 
 /** Files to stop watching for one window: what the engine's last run touched. */
 const toolPathsOfLastTurn = (): string[] => {
@@ -91,9 +112,13 @@ const maybeFire = (names: string[]): void => {
     lastFireAt = Date.now()
     cooldownUntil = lastFireAt + WATCH_COOLDOWN_MS
     void (async () => {
-      await store.send(prompt)
-      // Whatever the engine just wrote is ignored for one cooldown.
-      suppressed = toolPathsOfLastTurn()
+      harvestWhenClosed()
+      const sent = await store.send(prompt)
+      if (sent.ok) {
+        // Whatever the engine writes in THIS turn is ignored for one cooldown,
+        // harvested the moment the turn closes (see harvestWhenClosed).
+        harvestDue = true
+      }
       patch({ runs: state.runs + 1, lastFired: decision.names.join(', ') })
     })()
   }, WATCH_DEBOUNCE_MS)

@@ -421,6 +421,9 @@ export type EngineBridge = {
     status: () => Promise<Record<string, { engine: string; endpoint: string; sha256: string; at: string } | undefined>>
     run: (engine: string) => Promise<{ ok: boolean; answer: string; command?: string[] }>
     remove: (engine: string) => Promise<{ ok: boolean; answer: string }>
+    serveStart: () => Promise<{ ok: boolean; answer: string }>
+    serveStop: () => Promise<{ ok: boolean; answer: string }>
+    serveStatus: () => Promise<{ ok: boolean; answer: string; running: boolean }>
     onEvent: (listener: (tick: { engine: string; got: number; total: number | null; phase: string; answer?: string }) => void) => () => void
   }
   answer: (requestId: string, allow: boolean) => Promise<{ ok: boolean }>
@@ -501,6 +504,9 @@ const demoEngineBridge: EngineBridge = {
     status: async () => ({}),
     run: async () => ({ ok: false, answer: 'Installers live in the desktop app.' }),
     remove: async () => ({ ok: false, answer: 'Downloads live in the desktop app.' }),
+    serveStart: async () => ({ ok: false, answer: 'The runtime starts in the desktop app.' }),
+    serveStop: async () => ({ ok: false, answer: 'The runtime stops in the desktop app.' }),
+    serveStatus: async () => ({ ok: true, running: false, answer: 'The desktop app knows the runtime state.' }),
     onEvent: () => () => undefined,
   },
   stop: async () => ({ ok: false }),

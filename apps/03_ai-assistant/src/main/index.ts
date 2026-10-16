@@ -560,6 +560,11 @@ function registerBridges(): void {
   ipcMain.handle('engine:download:status', () => downloads.status())
   ipcMain.handle('engine:download:run', (_event, engine: string) => downloads.runInstaller(typeof engine === 'string' ? engine : ''))
   ipcMain.handle('engine:download:remove', (_event, engine: string) => downloads.remove(typeof engine === 'string' ? engine : ''))
+  // The staged Ollama runtime, started and stopped HERE — the download
+  // module's copy says this, so the doors must exist to make it true.
+  ipcMain.handle('engine:download:serve-start', () => downloads.ollamaStart())
+  ipcMain.handle('engine:download:serve-stop', () => downloads.ollamaStop())
+  ipcMain.handle('engine:download:serve-status', () => downloads.ollamaStatus())
 
   // The battle tally: a PRIVATE local ledger of what won for this person.
   // Real counts only, capped, never sent anywhere. No public scoreboard.

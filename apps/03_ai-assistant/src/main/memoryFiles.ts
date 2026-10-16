@@ -4,8 +4,8 @@
  * against tricks before anything opens — and deletes are exactly one file,
  * never a glob.
  */
-import { readFile, readdir, rm, stat } from 'node:fs/promises'
-import { join } from 'node:path'
+import { lstat, readFile, realpath, readdir, rm } from 'node:fs/promises'
+import { join, sep } from 'node:path'
 import { MEMORY_DIR, MEMORY_READ_CAP, safeMemoryRelative, type MemoryFile } from '../shared/lib/memory'
 
 export type MemoryListAnswer = {
@@ -30,7 +30,11 @@ export function createMemoryManager(vaultRoot: () => string) {
     for (const name of names) {
       const full = join(folder(), name)
       try {
-        const info = await stat(full)
+        // A symlink inside the memory folder is NOT memory — it can point
+        // anywhere on the disk, so listing follows only real files (the vault
+        // service makes the same refusal with the same reasoning).
+        const info = await lstat(full)
+        if (info.isSymbolicLink()) continue
         const raw = await readFile(full, 'utf8')
         files.push({
           name,
@@ -46,11 +50,25 @@ export function createMemoryManager(vaultRoot: () => string) {
     return { ok: true, folder: folder(), files }
   }
 
+  /**
+   * The real folder, resolved: the final containment check. The name guard is
+   * lexical; this one is the filesystem's own truth — a symlink that slipped
+   * in resolves to somewhere else and is refused before it is read or removed.
+   */
+  const realFolder = async (): Promise<string> => realpath(folder())
+
+  const contained = async (full: string): Promise<boolean> => {
+    const realFile = await realpath(full)
+    return realFile === (await realFolder()) || realFile.startsWith(`${await realFolder()}${sep}`)
+  }
+
   const remove = async (name: string): Promise<{ ok: boolean; answer: string }> => {
     const checked = safeMemoryRelative(name)
     if (!checked.ok) return checked
+    const full = join(vaultRoot(), checked.rel)
     try {
-      await rm(join(vaultRoot(), checked.rel), { force: false })
+      if (!(await contained(full))) return { ok: false, answer: 'That path is not really inside the memory folder.' }
+      await rm(full, { force: false })
       return { ok: true, answer: `Removed ${checked.rel}. The lines are gone; nothing was kept in secret.` }
     } catch (failure) {
       const code = (failure as NodeJS.ErrnoException).code
@@ -62,8 +80,10 @@ export function createMemoryManager(vaultRoot: () => string) {
   const read = async (name: string): Promise<{ ok: boolean; content?: string; answer?: string }> => {
     const checked = safeMemoryRelative(name)
     if (!checked.ok) return checked
+    const full = join(vaultRoot(), checked.rel)
     try {
-      return { ok: true, content: await readFile(join(vaultRoot(), checked.rel), 'utf8') }
+      if (!(await contained(full))) return { ok: false, answer: 'That path is not really inside the memory folder.' }
+      return { ok: true, content: await readFile(full, 'utf8') }
     } catch (failure) {
       const code = (failure as NodeJS.ErrnoException).code
       if (code === 'ENOENT') return { ok: false, answer: 'That memory file does not exist yet.' }

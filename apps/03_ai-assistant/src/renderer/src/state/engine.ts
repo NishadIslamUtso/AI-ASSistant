@@ -585,6 +585,12 @@ export function engineStore(): EngineStore {
   return store
 }
 
+/** Subscribe to store changes without React (the watcher harvests on close). */
+export function subscribeEngine(listener: () => void): () => void {
+  listeners.add(listener)
+  return () => listeners.delete(listener)
+}
+
 /**
  * How many engine questions are waiting on a person, as a subscription that
  * re-renders only when THAT number changes — a header pulse must not redraw

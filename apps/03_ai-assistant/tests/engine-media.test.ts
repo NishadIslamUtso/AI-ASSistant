@@ -20,6 +20,7 @@ import {
   listCheckpoints,
   takeCheckpoint,
 } from '../src/main/engine/checkpoints'
+import { DEFAULT_ENGINE } from '../src/shared/lib/engine'
 
 /**
  * Media and checkpoints: what the machine gives everyone, and the way back.
@@ -73,7 +74,7 @@ test('checkpoint rules: file tools only, honest names', () => {
   assert.equal(checkpointWorthTaking('Bash'), false, 'a command can touch anything; no pretending')
   assert.equal(checkpointWorthTaking('WebFetch'), false)
   const name = copyName(join('C:', 'my notes', 'thesis a.md'), 1729075200000)
-  assert.match(name, /^1729075200000-thesis_a\.md$/, 'epoch, then a safe name')
+  assert.match(name, /^1729075200000-[0-9a-f]{8}-thesis_a\.md$/, 'epoch, a path hash, then a safe name')
 })
 
 test('a checkpoint keeps the old self; restore puts it back', async () => {
@@ -117,6 +118,74 @@ test('a file that does not exist yet is kept as a ghost; restoring removes it; a
   assert.match(noRecord.answer, /no record of where it came from/)
   await rm(dir, { recursive: true, force: true })
   await rm(empty, { recursive: true, force: true })
+})
+
+test('the Allow answer leaves only AFTER the checkpoint finished (no race)', async () => {
+  const { mkdtempSync, writeFileSync, readFileSync, existsSync } = await import('node:fs')
+  const { tmpdir } = await import('node:os')
+  const { join } = await import('node:path')
+  const { EventEmitter } = await import('node:events')
+  const { startClaudeCodeSession } = await import('../src/main/engine/claudeCode')
+  const dir = mkdtempSync(join(tmpdir(), 'ckpt-race-'))
+  const target = join(dir, 'notes.md')
+  writeFileSync(target, 'the old self', 'utf8')
+  const sent: string[] = []
+  const child = new EventEmitter() as unknown as import('node:child_process').ChildProcess & {
+    stdout: EventEmitter; stderr: EventEmitter; stdin: { write(data: string): boolean }
+    pid: number; killed: boolean; exitCode: number | null; signalCode: null
+  }
+  ;(child as unknown as { stdout: EventEmitter }).stdout = new EventEmitter()
+  ;(child as unknown as { stderr: EventEmitter }).stderr = new EventEmitter()
+  ;(child as unknown as { stdin: unknown }).stdin = {
+    write: (line: string) => { sent.push(line); return true },
+  }
+  ;(child as unknown as { pid: number }).pid = 4242
+  ;(child as unknown as { killed: boolean }).killed = false
+  ;(child as unknown as { signalCode: null }).signalCode = null
+  ;(child as unknown as { exitCode: number | null }).exitCode = null
+  const session = startClaudeCodeSession({
+    cwd: dir,
+    settings: { ...DEFAULT_ENGINE, workspace: dir, approval: 'ask' },
+    checkpointDir: join(dir, 'checkpoints'),
+    onEvent: () => undefined,
+    spawnProcess: (() => child) as unknown as typeof spawn,
+  })
+  // the engine asks to Write; the owner allows
+  ;(child as unknown as { stdout: EventEmitter }).stdout.emit('data', Buffer.from(
+    JSON.stringify({ type: 'control_request', request_id: 'r1', request: { subtype: 'can_use_tool', tool_name: 'Write', input: { file_path: target } } }) + '\n',
+  ))
+  session.answer('r1', true)
+  await new Promise(resolve => setTimeout(resolve, 60))
+  // the control_response must be the LAST thing on the wire, and the kept
+  // copy must already be on disk when it left
+  const responseLine = sent.find(line => line.includes('control_response'))
+  assert.ok(responseLine, 'the allow was answered on the wire')
+  assert.ok(existsSync(join(dir, 'checkpoints')), 'the checkpoint folder exists')
+  assert.match(readFileSync(join(dir, 'checkpoints', 'index.json'), 'utf8'), /notes\.md/)
+  assert.equal(sent.indexOf(responseLine), sent.length - 1)
+})
+
+test('a ghost checkpoint is listed and its restore is the undo of a creation', async () => {
+  const { mkdtempSync, writeFileSync, existsSync } = await import('node:fs')
+  const { tmpdir } = await import('node:os')
+  const { join } = await import('node:path')
+  const dir = mkdtempSync(join(tmpdir(), 'ckpt-ghost-'))
+  const target = join(dir, 'fresh.md')
+  await takeCheckpoint(dir, target) // nothing there yet: a ghost
+  const listed = await listCheckpoints(dir)
+  assert.ok(listed.some(record => record.original === target && record.existed === false), 'the ghost is listed')
+  writeFileSync(target, 'the engine made this', 'utf8')
+  const ghost = listed.find(record => record.original === target)!
+  const answer = await restoreCheckpoint(dir, ghost.copy) // copy === ''
+  assert.equal(answer.ok, true)
+  assert.equal(existsSync(target), false)
+})
+
+test('two files with the same basename never collide in the checkpoint folder', () => {
+  const epoch = 1700000000000
+  const a = copyName('/vault/alpha/notes.md', epoch)
+  const b = copyName('/vault/beta/notes.md', epoch)
+  assert.notEqual(a, b)
 })
 
 test('the engine takes the checkpoint the instant an Allow would change a file', async () => {

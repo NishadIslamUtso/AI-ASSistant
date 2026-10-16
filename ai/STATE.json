@@ -22,11 +22,11 @@
   "apps": {
     "03_ai-assistant": {
       "path": "apps/03_ai-assistant",
-      "status": "ACTIVE - the app, version 0.9.0. Verified in the sandbox: 73 test files / 589 tests, tsc clean, build green, and every feature live-driven against a real stream-json wire with screenshot receipts (00_LIVING_DOCS/receipts/, g27-g64). All fourteen OFFERED features + media + auto memory BUILT. The one open item: the owner's acceptance run on his TUF A15 (Windows) with AI-ASSistant-Setup-0.9.0.exe (sha256 267a7530...).",
+      "status": "ACTIVE - the app, version 0.9.0. Verified in the sandbox: 74 test files / 604 tests, tsc clean, build green, and every feature live-driven against a real stream-json wire with screenshot receipts (00_LIVING_DOCS/receipts/, g27-g64). All fourteen OFFERED features + media + auto memory BUILT. The one open item: the owner's acceptance run on his TUF A15 (Windows) with AI-ASSistant-Setup-0.9.0.exe (sha256 267a7530...).",
       "tech": "Electron 40 + electron-vite 5 + Vite 6 + React 19 + TypeScript 5.7 + Tailwind 4 + Vitest 2; engines are EXTERNAL binaries (claude CLI, agy, ollama) - no engine SDK is a dependency",
       "engines": {
         "claude-code": "Claude Code CLI on its native stream-json wire (src/main/engine/claudeCode.ts + stream.ts); house rules deploy into its CLAUDE.md block",
-        "agy": "Google Antigravity CLI on its own wire (src/main/engine/socket.ts); house rules deploy into its AGENTS.md block",
+        "agy": "wired (src/main/engine/agy.ts) on its verified stream-json wire: chat, errors (the auth gate says the exact next step), usage, resume via --conversation; throttle maps to its own --mode/plan/full-speed flags; models are Google plan-gated (sign-in from his terminal/browser); pictures wait for a verified shape \u2014 honest refusal for now",
         "ollama": "headless local brains; functions only, no desktop app assumed"
       },
       "layout": {
@@ -34,7 +34,7 @@
         "src/preload": "index.ts - the ONLY bridge between main and renderer",
         "src/renderer/src": "components (App, Sidebar, TitleBar, ChatView/EnginePanel, Composer, ArtifactsView, BrainView, VaultView, CodeView, ProjectsView, TodayView, FirstRun, SettingsView + panes incl. MemorySection, EngineBay, WatchSection, dialogs), state (engine, split, battle, compact, review, watch, memory, chats, library, ...), platform/bridge.ts",
         "src/shared": "lib (engine, houseRules, memory, watchMode, review, split, compact, recipes, battles, capture, chat, markdown, prompts, skills, storage, vault, ...), types.ts",
-        "tests": "73 files / 589 tests; includes the 44-cut wire-chunk regression and real-filesystem memory reader tests"
+        "tests": "74 files / 604 tests; includes the wire-chunk regression (37-cut chop), the agy wire contract, watch deletion/suppression behavior, the checkpoint-before-allow race test, and real-filesystem memory reader tests"
       },
       "features_landed_2026_10_16": [
         "Engine downloads (official endpoints only, staged+recorded, installer a separate permission)",
@@ -43,7 +43,7 @@
         "Compaction: handoff brief + fresh session + seed exactly once (g54)",
         "Repo map: bounded honest tree of the working folder (g55)",
         "Hooks: owner commands at turn-done/error/permission, hand-added only (g56)",
-        "Split: engine writes 2-6 steps, app runs them in order; finished-block-wins parsing + 44-cut wire test (g57)",
+        "Split: engine writes 2-6 steps, app runs them in order; finished-block-wins parsing + the wire-chop test (g57)",
         "Watch mode: quiet-debounce, gap, tail-chase cooldown, deletions never fire (g58)",
         "Adversary reviewer: report-only, CLEAN strict, verdict on the card (g59)",
         "Copy/Edit on the finished card; Edit returns the order to the composer",
@@ -53,7 +53,12 @@
         "Turn journal: engine-journal.json cap 60, 'Earlier sessions' on cold load (g62)",
         "Cold-window init fix: the engine wires on mount, not on first send",
         "Auto memory: 'What you keep' section deploys in every engine's rulebook (auto-keep, g64); Settings > Memory pane: order shown before send, list with clip note, per-file remove; path guard (folder-only, no traversal, markdown only); engine writes ride the permission cards (g63)",
-        "Memory home fix: the pane reads the same root the engine spawns in (workspace || vault)"
+        "Memory home fix: the pane reads the same root the engine spawns in (workspace || vault)",
+        "agy wired for real: the 6.3 gate PASSED (the real v1.4.0 CLI has --input-format/--output-format stream-json, --conversation, --mode accept-edits|plan, --dangerously-skip-permissions, --effort); src/main/engine/agy.ts speaks its verified wire behind the same socket; live drive g67 (the real binary ran through the app, its auth gate translated honestly)",
+        "watch mode made true: deletions never fire (the watcher checks the disk), engine-write suppression matches absolute paths to relative names and harvests on turn close; live g68 (deletion -> 0 runs, touch -> 1 run)",
+        "checkpoints: the keep COMPLETES before the Allow leaves (race test), ghosts listed and undoable in the panel (g66), path-hash in copy names, index writes serialized",
+        "downloader: staged ollama runtime starts/stops for real (pid recorded, tree-killed, probe seam); agy note names the verified official script; copy no longer says verified beyond its truth",
+        "landing sentence now tracks the cloud badge truth; Electron 40.10.6; composer busy/Stop wired to the engine"
       ],
       "installer": {
         "file": "AI-ASSistant-Setup-0.9.0.exe",
@@ -62,8 +67,9 @@
         "note": "unsigned (SmartScreen expected); NSIS per-user; rebuild recipe in 00_LIVING_DOCS/RELEASE-WINDOWS.md"
       },
       "open_items": [
-        "The owner's TUF A15 acceptance run on the 0.9.0 exe - the only gate",
-        "The owner will redo the UI/UX himself later (his words, 2026-10-16)"
+        "The owner signs in to agy once in his terminal (the app refuses to touch logins), then agy turns answer; TUF A15 acceptance run on his machine \u2014 the only gate",
+        "The owner will redo the UI/UX himself later (his words, 2026-10-16)",
+        "agy pictures: the wire shape is unverified, so the adapter refuses honestly instead of inventing it"
       ]
     },
     "01_claude-exact-pixel-clone": {
@@ -75,6 +81,6 @@
       "status": "HISTORICAL reference."
     }
   },
-  "receipts": "00_LIVING_DOCS/receipts/SCREENS-GALLERY.html - 74 figures (g27-g64), each captured from a live drive of the shipped build on a real stream-json wire; the CHANGELOG cites figure ids per feature.",
+  "receipts": "00_LIVING_DOCS/receipts/SCREENS-GALLERY.html + shots/ \u2014 live-drive figures, cited per feature by the CHANGELOG; counts per batch are named in the captions (they grew 446 -> 604 across the day); the gallery stamp names its capture build.",
   "judge_entry": "00_LIVING_DOCS/JUDGE-BRIEF.md"
 }

@@ -34,14 +34,14 @@ export const ENGINE_DOWNLOADS: Record<string, EngineDownloadInfo | undefined> = 
     windows: 'https://ollama.com/download/ollama-windows-amd64.zip',
     kind: 'zip',
     host: 'ollama.com',
-    note: 'The headless runtime only, from ollama.com\u2019s own zip. No desktop app, no tray, nothing autostarts: the app starts and stops it.',
+    note: 'The headless runtime only, from ollama.com\u2019s own zip. No desktop app, no tray, nothing autostarts: start and stop it right here — or run your own Ollama and leave this staged copy alone.',
   },
   agy: {
     windows: '',
     kind: 'page',
     host: 'antigravity.google',
     page: 'https://antigravity.google',
-    note: 'Google has not published a stable direct endpoint this app can verify, so no downloader: the official page opens instead. Never an invented URL.',
+    note: 'Google\u2019s official page (the CLI is the thing, not the IDE). On macOS/Linux the official installer is antigravity.google/cli/install.sh — verified live; on Windows the page points at the official installer. Never an invented URL.',
   },
 }
 

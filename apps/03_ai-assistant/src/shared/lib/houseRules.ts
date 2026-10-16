@@ -6,7 +6,8 @@ import type { EngineId } from './engine'
  * The problem: Claude Code and agy each arrive with their own instructions
  * hard-coded inside them, and no app can rewrite those. But both engines were
  * built with official channels for the house rules of the place they run in:
- * Claude Code reads CLAUDE.md, agy reads AGENTS.md (and .agents/rules/). So
+ * Claude Code reads CLAUDE.md; agy reads GEMINI.md and AGENTS.md (plus
+ * .agents/rules/). So
  * the app keeps ONE canonical rulebook and each adapter projects it into the
  * file that engine already obeys. The engines keep their nature; the house
  * keeps its rules.
@@ -68,10 +69,15 @@ export const REMEMBERING_SECTION =
   'Never delete or rewrite lines that are already there; if nothing is worth keeping, write nothing. ' +
   'Your writes go through the usual approval channel, so the owner sees every change before it lands.'
 
-/** Where each engine expects its house rules file, by name. */
+/**
+ * Where each engine expects its house rules file, by name. agy's own docs
+ * name BOTH GEMINI.md and AGENTS.md as rule files it reads; the deployer
+ * writes ~/.gemini/GEMINI.md (see houseRulesDeploy.ts) — one file, no
+ * contradiction once the comment tells the whole truth.
+ */
 export const HOUSE_RULES_FILENAME: Record<EngineId, string> = {
   'claude-code': 'CLAUDE.md',
-  agy: 'AGENTS.md',
+  agy: 'GEMINI.md',
 }
 
 /** A heading per engine, so the projection reads native, not translated. */

@@ -6,6 +6,7 @@
  * was taken FROM. Restore puts that copy back exactly where it came from.
  */
 import { copyFile, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
 import { join, basename } from 'node:path'
 
 export type Checkpoint = {
@@ -27,10 +28,14 @@ export function checkpointWorthTaking(tool: string): boolean {
   return CHECKPOINT_TOOLS.has(tool)
 }
 
-/** The name a copy carries: epoch, a short hash of the path, the basename. */
+/**
+ * The name a copy carries: epoch, a short hash OF THE PATH (so two files with
+ * the same basename in different folders can never collide), the basename.
+ */
 export function copyName(original: string, epochMs: number): string {
   const safe = basename(original).replace(/[^A-Za-z0-9._-]/g, '_').slice(-60)
-  return `${epochMs}-${safe}`
+  const hash = createHash('sha256').update(original).digest('hex').slice(0, 8)
+  return `${epochMs}-${hash}-${safe}`
 }
 
 /**
@@ -91,16 +96,28 @@ async function readIndex(dir: string): Promise<CheckpointRecord[]> {
 }
 
 export async function writeIndex(dir: string, records: CheckpointRecord[]): Promise<void> {
-  await mkdir(dir, { recursive: true })
-  await writeFile(join(dir, 'index.json'), JSON.stringify(records.slice(-200), null, 2))
+  const previous = indexWrites.get(dir) ?? Promise.resolve()
+  const run = previous.catch(() => undefined).then(async () => {
+    await mkdir(dir, { recursive: true })
+    await writeFile(join(dir, 'index.json'), JSON.stringify(records.slice(-200), null, 2))
+  })
+  indexWrites.set(dir, run)
+  await run
 }
 
-/** The latest checkpoints, newest first, capped. Ghosts ride along. */
+/** One write chain per checkpoints folder: index writes never interleave. */
+const indexWrites = new Map<string, Promise<void>>()
+
+/**
+ * The latest checkpoints, newest first, capped. Ghosts ride along — a ghost
+ * records a file the engine was about to CREATE, and restoring it deletes
+ * that file, so hiding ghosts hid half the guarantee.
+ */
 export async function listCheckpoints(dir: string, cap = 20): Promise<CheckpointRecord[]> {
   const records = await readIndex(dir)
   const known = new Set(await readdir(dir).catch(() => [] as string[]))
   return records
-    .filter(record => known.has(record.copy.split(/[\\/]/).pop() ?? ''))
+    .filter(record => record.existed === false || known.has(record.copy.split(/[\\/]/).pop() ?? ''))
     .reverse()
     .slice(0, cap)
 }

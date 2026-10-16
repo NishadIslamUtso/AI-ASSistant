@@ -11,7 +11,7 @@ import type { ElementPick } from '@shared/lib/artifacts'
 import Sidebar from './components/Sidebar'
 import { type View } from './components/AppNav'
 import ChatView from './components/ChatView'
-import { engineStore } from '@/state/engine'
+import { engineStore, useEngine } from '@/state/engine'
 import { seedWrap } from '@/state/compact'
 import ArtifactsView from './components/ArtifactsView'
 import TodayView from './components/TodayView'
@@ -188,6 +188,7 @@ export default function App() {
     [chats],
   )
 
+  const engine = useEngine()
   const chatApi = useChat({
     chats: chats.chats,
     setChats: chats.setChats,
@@ -555,8 +556,8 @@ export default function App() {
           draft={draft}
           setDraft={setDraft}
           onSend={() => void send()}
-          onStop={chatApi.stop}
-          busy={Boolean(chatApi.busyChatId)}
+          onStop={() => void engine.stop()}
+          busy={engine.turn?.state === 'running'}
           live={chatApi.live}
           highlightId={highlight}
           notice={notice}

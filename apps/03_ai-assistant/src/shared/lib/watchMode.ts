@@ -50,9 +50,26 @@ export function shouldWatchFire(input: WatchFireInput): WatchFireDecision {
   if (input.lastFireAt > 0 && input.now - input.lastFireAt < WATCH_MIN_GAP_MS) return { fire: false, why: 'gap' }
   const names = input.names
     .filter(name => watchableName(name))
-    .filter(name => !input.suppressed.some(hidden => name === hidden || name.startsWith(`${hidden}/`)))
+    .filter(name => !input.suppressed.some(hidden => samePath(name, hidden)))
   if (!names.length) return { fire: false, why: 'nothing-watchable' }
   return { fire: true, names: names.slice(0, WATCH_MAX_NAMES) }
+}
+
+
+/**
+ * True when a watched name and a suppressed path name the same file. The
+ * engine's tool lines carry absolute paths; fs.watch reports folder-relative
+ * names; both are normalized (`\\`→`/`) and matched as a path suffix on
+ * segments — `notes.md` matches `C:/vault/notes.md` and `sub/x.md` matches
+ * `C:/vault/sub/x.md`, but `notes.md` never matches `my-notes.md`.
+ */
+export function samePath(watchName: string, toolPath: string): boolean {
+  const norm = (value: string): string[] => value.replace(/\\/g, '/').split('/').filter(part => part.length > 0 && part !== '.')
+  const nameParts = norm(watchName)
+  const toolParts = norm(toolPath)
+  if (!nameParts.length || nameParts.length > toolParts.length) return false
+  const tail = toolParts.slice(-nameParts.length)
+  return nameParts.every((part, index) => part === tail[index])
 }
 
 /** The one-time order the watcher sends. Plain, checkable, no loops of its own. */

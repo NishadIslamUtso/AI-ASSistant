@@ -32,13 +32,13 @@
   <h1>AI ASSistant — every screen</h1>
   <p class="sub">Shipped in the repo at <code>00_LIVING_DOCS/receipts/</code> since 2026-10-16 — 74 live-drive figures (g27–g64), every one from a real wire turn. Judges: start at <code>00_LIVING_DOCS/JUDGE-BRIEF.md</code>.</p>
   <p class="sub">Full re-check gallery, captured live from the running app today.</p>
-  <p class="stamp">2026-10-16 · build = v3 HEAD <code>6cdab5f</code> · Xephyr :100 · real Chromium via CDP · 1280×820</p>
+  <p class="stamp">2026-10-16 → 2026-10-17 · figures captured in batches as the branch grew (per-batch test counts ride the captions; the early-batch stamp below names its build) · Xephyr :100 · real Chromium via CDP · 1280×820</p>
 </header>
 
 <section class="checks">
   <b>Re-check before capture</b>
   <ul>
-    <li><span class="ok">446/446 tests pass</span> (55 files) · TypeScript <span class="ok">clean</span> · production build <span class="ok">✓</span></li>
+    <li>Early-batch recheck: <span class="ok">446/446 tests</span> (55 files) at <code>6cdab5f</code> — the suite kept growing through g64 (589) and g66–g68 (604) · TypeScript <span class="ok">clean</span> · production build <span class="ok">✓</span></li>
     <li>Git tree <span class="ok">clean</span> · HEAD <code>6cdab5f</code> == <code>origin/v3</code> (ls-remote confirmed) · main frozen at <code>8ab95ef</code></li>
     <li>Chain landed this session: <code>d8d6c54</code> B screenshot debts → <code>6d7a447</code> Mods P2 (index client) → <code>6cdab5f</code> Mods P3 (export + starter pack)</li>
     <li>Every screenshot below is the real running app — no mockups, no mock data</li>
@@ -263,6 +263,21 @@
 </figure>
 
 </main>
+
+<h2 id="fixes">The judges' findings, fixed live — g66–g68 (2026-10-17)</h2>
+<p class="note">604/604 tests · external AI judges audited v3; every code finding was fixed and re-proven on the running build the same day.</p>
+<figure id="g66">
+  <img src="shots/g66-checkpoint-ghost.png" alt="A ghost checkpoint listed with its undo" loading="lazy" />
+  <figcaption><b>g66 · The ghost, listed and undoable</b> — the engine created g66-demo.md with permission; the card lists the kept-before record as "new file" and one press (Undo the creation) removes it — verified gone on disk. The checkpoint now completes BEFORE the Allow leaves the app (a race test pins the wire order).</figcaption>
+</figure>
+<figure id="g67">
+  <img src="shots/g67-agy-real.png" alt="The real agy binary driven through the app" loading="lazy" />
+  <figcaption><b>g67 · agy, for real</b> — the REAL agy v1.4.0 binary, spawned by the app on its verified stream-json wire, hitting its genuine Google sign-in gate, translated into the exact next step ("run `agy` once in a terminal…"). Both engines green in the picker; the engine-switch guard proven in the same drive.</figcaption>
+</figure>
+<figure id="g68">
+  <img src="shots/g68-watch-truths.png" alt="The watch line: 1 run, the deleted file never counted" loading="lazy" />
+  <figcaption><b>g68 · The watch promises, now true</b> — in one drive: a deleted file produced ZERO runs; a real touch fired exactly one, named ("last: 00 System/watch-g68-touch.md"). The watcher checks the disk for deletions; suppression matches the engine's absolute paths to the folder's relative names.</figcaption>
+</figure>
 </body>
 </html>
 
@@ -404,10 +419,14 @@
 
 <hr />
 <h2 id="watch-review">Watch mode &amp; the reviewer — g58, g59 (2026-10-16)</h2>
-<p class="note">574/574 tests · the fired run and the review in these pictures are REAL turns on the engine's wire.</p>
+<p class="note">574/574 tests · the fired run and the review here are REAL turns on the engine's wire — the engine behind it being the sandbox's scripted stand-in (the brief states exactly what that means).</p>
 <figure id="g58">
   <img src="shots/g58-watch-set.png" alt="Watch mode set on the working folder" loading="lazy" />
   <figcaption><b>g58 · Watching the working folder</b> — the saved order runs itself when the files change. The limits are on the face: quiet first, deletions don't fire, and the engine's own writes can't trigger a chase. The fired turn named the changed file and said watched.</figcaption>
+</figure>
+<figure id="g58b">
+  <img src="shots/g58-watch-ran.png" alt="The watch run the folder change fired" loading="lazy" />
+  <figcaption><b>g58b · The fired run, on the card</b> — the turn the folder change triggered, through the one send path. (This picture was in the batch but missing from the gallery until a judge caught it, 2026-10-17.)</figcaption>
 </figure>
 <figure id="g59">
   <img src="shots/g59-review.png" alt="The review verdict on the engine card" loading="lazy" />

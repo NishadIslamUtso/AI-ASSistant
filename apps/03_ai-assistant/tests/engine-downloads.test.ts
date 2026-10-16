@@ -147,6 +147,51 @@ test('a poisoned archive path is refused, never written', async () => {
   await rm(target, { recursive: true, force: true })
 })
 
+test('the staged ollama runtime: started by the app, pid recorded, stopped for real', async () => {
+  const { mkdtempSync, writeFileSync, mkdirSync, chmodSync, existsSync } = await import('node:fs')
+  const { readFile } = await import('node:fs/promises')
+  const { tmpdir } = await import('node:os')
+  const { join } = await import('node:path')
+  const root = mkdtempSync(join(tmpdir(), 'serve-'))
+  const appDir = join(root, 'ollama', 'app')
+  mkdirSync(appDir, { recursive: true })
+  // a stand-in runtime: a long-lived process for the app to own
+  const binary = join(appDir, 'ollama')
+  writeFileSync(binary, '#!/usr/bin/env node\nsetInterval(() => {}, 1000)\n', 'utf8')
+  chmodSync(binary, 0o755)
+  // the door never answers in this sandbox: the app starts the process anyway
+  // and says honestly that the door is quiet yet
+  const manager = createDownloadManager({ root, probe: async () => false })
+  const started = await manager.ollamaStart()
+  assert.equal(started.ok, true)
+  assert.match(started.answer, /not answering yet/)
+  const pid = Number((await readFile(join(root, 'ollama', 'serve.pid'), 'utf8')).trim())
+  assert.ok(Number.isInteger(pid) && pid > 0, 'a real pid was recorded')
+  const stopped = await manager.ollamaStop()
+  assert.equal(stopped.ok, true)
+  await new Promise(resolve => setTimeout(resolve, 300))
+  assert.equal(existsSync(join(root, 'ollama', 'serve.pid')), false)
+  let alive = true
+  try { process.kill(pid, 0) } catch { alive = false }
+  assert.equal(alive, false, 'the process the app started is gone')
+})
+
+test('a runtime already answering is never started twice', async () => {
+  const { mkdtempSync, mkdirSync, writeFileSync, chmodSync, existsSync } = await import('node:fs')
+  const { tmpdir } = await import('node:os')
+  const { join } = await import('node:path')
+  const root = mkdtempSync(join(tmpdir(), 'serve2-'))
+  const appDir = join(root, 'ollama', 'app')
+  mkdirSync(appDir, { recursive: true })
+  const binary = join(appDir, 'ollama')
+  writeFileSync(binary, '#!/usr/bin/env node\nsetInterval(() => {}, 1000)\n', 'utf8')
+  chmodSync(binary, 0o755)
+  const manager = createDownloadManager({ root, probe: async () => true })
+  const answer = await manager.ollamaStart()
+  assert.match(answer.answer, /already answering/)
+  assert.equal(existsSync(join(root, 'ollama', 'serve.pid')), false, 'no process was started')
+})
+
 test('the staged installer runs only on Windows, and the command is shown in full', async () => {
   const root = await mkdtemp(join(tmpdir(), 'dl4-'))
   const manager = createDownloadManager({

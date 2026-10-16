@@ -168,8 +168,9 @@ function EmptyState({ onPick, name = '' }: { onPick: (value: string) => void; na
       </div>
       <h2 className="mt-5 text-[15px] font-medium">How can I help you today?</h2>
       <p className="mt-2 max-w-[420px] text-[13px] leading-relaxed text-muted">
-        Everything here runs on this machine. Nothing is sent anywhere unless you set
-        up a cloud provider yourself.
+        The engines run on this machine. A brain without the <b>cloud</b> badge never
+        sends work anywhere; a brain wearing it sends its work to that brain&rsquo;s own
+        service — the chip says which kind is picked.
       </p>
       <ul className="mt-7 flex w-full max-w-[520px] flex-col gap-2">
         {STARTERS.map(starter => (

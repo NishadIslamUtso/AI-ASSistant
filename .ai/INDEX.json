@@ -14,7 +14,7 @@
     },
     {
       "path": "00_LIVING_DOCS/receipts/",
-      "purpose": "The screenshots gallery shipped in-repo: 74 live-drive figures (g27-g64), cited per feature by the CHANGELOG",
+      "purpose": "The screenshots gallery shipped in-repo: live-drive figures (g27-g68), cited per feature by the CHANGELOG; per-batch test counts in the captions",
       "type": "receipts"
     },
     {
@@ -39,7 +39,7 @@
     },
     {
       "path": "apps/03_ai-assistant/src/main/engine/",
-      "purpose": "The engine spine: availability, claudeCode (stream-json), socket (agy), stream, deploy, downloads, checkpoints, packs, pull, skillCatalogInstall, storeIndex, exportPack, vaultSkills, houseRulesDeploy",
+      "purpose": "The engine spine: availability, claudeCode (stream-json), agy (its own verified wire), socket, stream, deploy, downloads (with a real ollama start/stop), checkpoints (race-free), packs, pull, skillCatalogInstall, storeIndex, exportPack, vaultSkills, houseRulesDeploy",
       "type": "app-source"
     },
     {

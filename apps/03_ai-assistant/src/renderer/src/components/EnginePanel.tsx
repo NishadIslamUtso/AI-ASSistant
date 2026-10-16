@@ -17,7 +17,7 @@ import { clearReviewError, runReview, useReview } from '@/state/review'
  * the same visual language as the rest of the app (the same tokens, the same
  * rounded cards, nothing new invented).
  */
-type Kept = { copy: string; original: string; at: string }
+type Kept = { copy: string; original: string; at: string; existed?: boolean }
 
 export default function EnginePanel() {
   const engine = useEngine()
@@ -147,7 +147,7 @@ export default function EnginePanel() {
           <button
             type="button"
             onClick={() => void runReview()}
-            title="Review: the engine checks its own work — report only, nothing is changed by the review"
+            title="Review: the engine checks its own work and is asked to report only — a report, not a technical lock"
             className="flex items-center gap-1 rounded-lg border border-line px-2 py-0.5 text-[11px] text-muted hover:text-ink"
           >
             <Eye size={10} /> Review
@@ -240,13 +240,16 @@ export default function EnginePanel() {
           <p className="text-[11px] text-muted">Kept before the engine changed a file, newest first:</p>
           <ul className="mt-1 flex flex-col gap-1">
             {kept.map(entry => (
-              <li key={entry.copy} className="flex items-center gap-2 text-[11.5px]">
+              <li key={entry.copy || entry.original} className="flex items-center gap-2 text-[11.5px]">
                 <span className="min-w-0 flex-1 truncate text-muted" title={entry.original}>
                   {entry.original.split(/[\\/]/).filter(Boolean).at(-1)} · {new Date(entry.at).toLocaleTimeString()}
+                  {entry.existed === false ? ' · new file' : ''}
                 </span>
                 <button
                   type="button"
-                  title={`Put the older self of ${entry.original} back`}
+                  title={entry.existed === false
+                    ? `Remove ${entry.original} — the engine created it; it did not exist before`
+                    : `Put the older self of ${entry.original} back`}
                   onClick={() => {
                     void bridge.engine.checkpoints.restore(entry.copy).then((answer) => {
                       setRestored(answer.answer)
@@ -255,7 +258,7 @@ export default function EnginePanel() {
                   }}
                   className="rounded-lg border border-line px-2 py-0.5 text-[11px] text-muted hover:text-ink"
                 >
-                  Restore
+                  {entry.existed === false ? 'Undo the creation' : 'Restore'}
                 </button>
               </li>
             ))}

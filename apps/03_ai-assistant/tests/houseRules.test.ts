@@ -15,7 +15,7 @@ import {
 describe('house rules', () => {
   test('every engine has an official channel to project into', () => {
     expect(HOUSE_RULES_FILENAME['claude-code']).toBe('CLAUDE.md')
-    expect(HOUSE_RULES_FILENAME.agy).toBe('AGENTS.md')
+    expect(HOUSE_RULES_FILENAME.agy).toBe('GEMINI.md')
   })
 
   test('compiling for both engines yields the same body, only the wrapper differs', () => {

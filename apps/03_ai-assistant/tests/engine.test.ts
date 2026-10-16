@@ -1,6 +1,7 @@
 import { EventEmitter } from 'node:events'
 import { sep as pathSep } from 'node:path'
 import test from 'node:test'
+import { spawn } from 'node:child_process'
 import assert from 'node:assert/strict'
 import { createEngineParser } from '../src/main/engine/stream'
 import {
@@ -431,19 +432,57 @@ test('the socket: a stop frees the turn even before any event arrives', () => {
   assert.equal(socket.running(), false)
 })
 
-test('the socket: agy answers honestly and does not pretend to start', async () => {
+test('the socket: agy routes to its own adapter and an engine switch starts fresh', async () => {
+  const { EventEmitter } = await import('node:events')
+  type FakeChild = import('node:child_process').ChildProcess & {
+    stdout: import('node:events').EventEmitter
+    stderr: import('node:events').EventEmitter
+    stdin: { write(data: string): boolean }
+    pid: number; killed: boolean; exitCode: number | null; signalCode: null
+    kill(): void
+  }
+  const makeChild = (): FakeChild => {
+    const child = new EventEmitter() as unknown as FakeChild
+    child.stdout = new EventEmitter()
+    child.stderr = new EventEmitter()
+    child.stdin = { write: () => true }
+    child.pid = 4321
+    child.killed = false
+    child.exitCode = null
+    child.signalCode = null
+    child.kill = () => { child.killed = true }
+    return child
+  }
+  const started: Array<{ command: string; args: string[] }> = []
+  const children: FakeChild[] = []
+  const fake = ((command: string, args: string[]) => {
+    started.push({ command, args: args as string[] })
+    const child = makeChild()
+    children.push(child)
+    return child
+  }) as unknown as typeof spawn
+
   const rec = recorder()
   const socket = createEngineSocket()
-  const answer = socket.send('x', {
+  socket.send('x', {
     cwd: '.',
-    settings: { ...DEFAULT_ENGINE, id: 'agy' },
+    settings: { ...DEFAULT_ENGINE, id: 'agy', model: 'gemini-3-pro' },
     onEvent: rec.on,
+    spawnProcess: fake,
   })
-  assert.equal(answer.ok, false)
-  assert.match(answer.answer, /not wired in yet/)
-  await new Promise((resolve) => setTimeout(resolve, 10))
-  const error = rec.last('error') as Extract<EngineEvent, { kind: 'error' }>
-  assert.match(error.text, /not wired in yet/)
+  assert.equal(started[0].command, 'agy', 'the agy adapter spawns the agy binary')
+  assert.deepEqual(started[0].args.slice(0, 4), ['--input-format', 'stream-json', '--output-format', 'stream-json'])
+  assert.ok(started[0].args.includes('gemini-3-pro'))
+
+  // an engine switch sets the old process aside and starts the chosen engine
+  socket.send('y', {
+    cwd: '.',
+    settings: { ...DEFAULT_ENGINE, id: 'claude-code', model: 'm' },
+    onEvent: rec.on,
+    spawnProcess: fake,
+  })
+  assert.equal(started[1].command, 'claude', 'the claude adapter spawns claude')
+  assert.equal(children[0].killed, true, 'the old engine is not asked to speak the other wire')
 })
 
 test('engine settings: a damaged file falls back to the defaults that work', () => {

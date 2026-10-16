@@ -12,7 +12,9 @@
  * and decides for itself (no card is ever sent); without
  * `--permission-prompt-tool stdio` the "may I use this tool?" question never
  * reaches this process, so the app's Allow/Deny cards can never appear.
- * Both were proven by six independent reviewers running the real binary.
+ * Both were verified by driving the real binary end to end (an independent
+ * judge's sandbox run, 2026-10-17, repeated the proof: no prompt-tool flag, no
+ * card; no manual mode, writes happen with no card at all).
  *
  * The brain wiring (which door, which brain) is set per launch from the app's
  * own settings, so the engine works no matter what environment variables the
@@ -280,28 +282,37 @@ export function startClaudeCodeSession(input: StartSessionInput): EngineSession 
       return writeLine(`${JSON.stringify({ type: 'user', message: { role: 'user', content } })}\n`)
     },
     answer(requestId: string, allow: boolean): void {
-      // THE CHECKPOINT: the instant before the engine is allowed to change a
-      // file, the file's current self is kept. App-side on purpose: it works
-      // no matter which engine, and no engine offers it on this wire.
+      // THE CHECKPOINT: the file's current self is kept, and the Allow only
+      // leaves AFTER the keep has finished — an unawaited snapshot could lose
+      // the race against the engine's write, and "the old self, kept first"
+      // would be a promise the code did not keep. A failed keep still answers
+      // (with the reason noted in the story by the checkpoint module), and a
+      // deny never needs a keep at all.
       const asked = pending.get(requestId)
       pending.delete(requestId)
-      if (allow && asked && checkpointWorthTaking(asked.tool) && asked.file && input.checkpointDir) {
-        void takeCheckpoint(input.checkpointDir, asked.file).catch(() => undefined)
+      const respond = (): void => {
+        // The deny shape needs a `message` — the real CLI rejects a bare deny
+        // as an invalid permission result (proven against v2.1.300).
+        writeLine(
+          `${JSON.stringify({
+            type: 'control_response',
+            response: {
+              request_id: requestId,
+              subtype: 'success',
+              response: allow
+                ? { behavior: 'allow' }
+                : { behavior: 'deny', message: 'The owner said no to this action in AI ASSistant.' },
+            },
+          })}\n`,
+        )
       }
-      // The deny shape needs a `message` — the real CLI rejects a bare deny
-      // as an invalid permission result (proven against v2.1.300).
-      void writeLine(
-        `${JSON.stringify({
-          type: 'control_response',
-          response: {
-            request_id: requestId,
-            subtype: 'success',
-            response: allow
-              ? { behavior: 'allow' }
-              : { behavior: 'deny', message: 'The owner said no to this action in AI ASSistant.' },
-          },
-        })}\n`,
-      )
+      if (allow && asked && checkpointWorthTaking(asked.tool) && asked.file && input.checkpointDir) {
+        void takeCheckpoint(input.checkpointDir, asked.file)
+          .catch(() => undefined)
+          .then(() => respond())
+      } else {
+        respond()
+      }
     },
     stop(): void {
       if (!isRunning()) return

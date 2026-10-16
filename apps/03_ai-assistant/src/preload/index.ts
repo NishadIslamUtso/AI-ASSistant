@@ -134,6 +134,9 @@ const engineApi = {
       ipcRenderer.invoke('engine:download:run', engine),
     remove: (engine: string): Promise<{ ok: boolean; answer: string }> =>
       ipcRenderer.invoke('engine:download:remove', engine),
+    serveStart: (): Promise<{ ok: boolean; answer: string }> => ipcRenderer.invoke('engine:download:serve-start'),
+    serveStop: (): Promise<{ ok: boolean; answer: string }> => ipcRenderer.invoke('engine:download:serve-stop'),
+    serveStatus: (): Promise<{ ok: boolean; answer: string; running: boolean }> => ipcRenderer.invoke('engine:download:serve-status'),
     onEvent: (listener: (tick: { engine: string; got: number; total: number | null; phase: string; answer?: string }) => void): (() => void) => {
       const channel = (_outer: unknown, tick: { engine: string; got: number; total: number | null; phase: string; answer?: string }): void => listener(tick)
       ipcRenderer.on('engine:download-event', channel)

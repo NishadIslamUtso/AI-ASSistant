@@ -1,6 +1,17 @@
 # Release notes — the Windows installer
 
-## 0.1.2 — the owner's own artwork, verbatim
+## 0.9.0 — current (the audit build, 2026-10-16)
+
+| | |
+|---|---|
+| Name | `AI-ASSistant-Setup-0.9.0.exe` |
+| Size | 88,204,306 bytes |
+| SHA-256 | `267a753011b0431d749b9b6c7bc26971664efc7bdaa9c8f802b61cbb54c58c07` |
+| Signed | No — SmartScreen will say "unknown publisher" |
+
+**What it is:** the full v3 feature set as of the audit build (auto-keep memory, engine downloads, watch mode, checkpoints, store/mods, Split, Battles, Recipes) with the typecheck and full test suite green. Built with electron-builder NSIS on this branch; one exe kept at a time by rule. The judges' fix batch (2026-10-17) landed AFTER this exe was cut — the next installer carries it.
+
+## 0.1.2 — historical: the owner's own artwork, verbatim
 
 | | |
 |---|---|

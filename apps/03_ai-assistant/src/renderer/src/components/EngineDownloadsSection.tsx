@@ -66,6 +66,30 @@ export default function EngineDownloadsSection() {
                 >
                   Official page <ExternalLink size={10} />
                 </a>
+              ) : record && engine === 'ollama' ? (
+                <span className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    title="Start the staged runtime on 127.0.0.1:11434 — the app owns this process"
+                    onClick={() => {
+                      say('Starting the local runtime...')
+                      void getEngineApi().downloads.serveStart().then(answer => say(answer.answer))
+                    }}
+                    className="rounded-lg border border-line px-2 py-0.5 text-[11px] text-ink hover:border-accent"
+                  >
+                    Start
+                  </button>
+                  <button
+                    type="button"
+                    title="Stop the runtime the app started (a runtime you started yourself stays yours)"
+                    onClick={() => {
+                      void getEngineApi().downloads.serveStop().then(answer => say(answer.answer))
+                    }}
+                    className="rounded-lg border border-line px-2 py-0.5 text-[11px] text-muted hover:text-ink"
+                  >
+                    Stop
+                  </button>
+                </span>
               ) : record ? (
                 <button
                   type="button"
