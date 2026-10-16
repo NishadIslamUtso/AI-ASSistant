@@ -380,6 +380,12 @@ export type EngineBridge = {
     list: () => Promise<{ ok: boolean; checkpoints: Array<{ copy: string; original: string; at: string }> }>
     restore: (copy: string) => Promise<{ ok: boolean; answer: string }>
   }
+  watch: {
+    start: (folder: string) => Promise<{ ok: boolean; answer: string }>
+    stop: () => Promise<{ ok: boolean; answer: string }>
+    status: () => Promise<{ folder: string; active: boolean }>
+    onEvent: (listener: (tick: { folder: string; names: string[]; at: number }) => void) => () => void
+  }
   hooks: {
     list: () => Promise<{ ok: boolean; hooks: Array<{ id: string; name: string; event: string; command: string }> }>
     save: (hook: unknown) => Promise<{ ok: boolean; answer: string }>
@@ -443,6 +449,12 @@ const demoEngineBridge: EngineBridge = {
   checkpoints: {
     list: async () => ({ ok: true, checkpoints: [] }),
     restore: async () => ({ ok: false, answer: 'Checkpoints live in the desktop app.' }),
+  },
+  watch: {
+    start: async () => ({ ok: false, answer: 'Watching lives in the desktop app.' }),
+    stop: async () => ({ ok: false, answer: 'Watching lives in the desktop app.' }),
+    status: async () => ({ folder: '', active: false }),
+    onEvent: () => () => undefined,
   },
   hooks: {
     list: async () => ({ ok: true, hooks: [] }),

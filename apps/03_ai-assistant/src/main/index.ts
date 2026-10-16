@@ -26,6 +26,7 @@ import { createRecipeManager } from './recipes'
 import { createCompactManager } from './compact'
 import { buildRepoMap } from './repoMap'
 import { createHookRunner } from './hooks'
+import { createFolderWatcher, type WatchTick } from './watcher'
 import { createDownloadManager, type DownloadTick } from './engine/downloads'
 import { agyModelSource, detectEngine } from './engine/availability'
 import { parsePullLine, validateModelName } from './engine/pull'
@@ -639,6 +640,15 @@ function registerBridges(): void {
   ipcMain.handle('hooks:save', (_event, hook: unknown) => hookRunner.upsert(hook as never))
   ipcMain.handle('hooks:remove', (_event, id: string) => hookRunner.remove(typeof id === 'string' ? id : ''))
   ipcMain.handle('hooks:test', (_event, command: string) => hookRunner.test(typeof command === 'string' ? command : ''))
+
+  // Watch mode: one watched folder; events are REPORTED to the window, and
+  // the renderer decides whether a run fires (it owns the one send path).
+  const watcher = createFolderWatcher((tick: WatchTick) => {
+    for (const window of BrowserWindow.getAllWindows()) window.webContents.send('watch:event', tick)
+  })
+  ipcMain.handle('watch:start', (_event, folder: string) => watcher.start(typeof folder === 'string' ? folder : ''))
+  ipcMain.handle('watch:stop', () => watcher.stop())
+  ipcMain.handle('watch:status', () => watcher.status())
 
   // Checkpoints: what the app kept the moment before an allowed write, and
   // the way back. Read from the folder the engine was handed at send time.

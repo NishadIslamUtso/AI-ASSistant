@@ -75,6 +75,16 @@ const engineApi = {
     restore: (copy: string): Promise<{ ok: boolean; answer: string }> =>
       ipcRenderer.invoke('engine:checkpoint:restore', copy),
   },
+  watch: {
+    start: (folder: string): Promise<{ ok: boolean; answer: string }> => ipcRenderer.invoke('watch:start', folder),
+    stop: (): Promise<{ ok: boolean; answer: string }> => ipcRenderer.invoke('watch:stop'),
+    status: (): Promise<{ folder: string; active: boolean }> => ipcRenderer.invoke('watch:status'),
+    onEvent: (listener: (tick: { folder: string; names: string[]; at: number }) => void): (() => void) => {
+      const hear = (_event: unknown, tick: { folder: string; names: string[]; at: number }): void => listener(tick)
+      ipcRenderer.on('watch:event', hear)
+      return () => ipcRenderer.removeListener('watch:event', hear)
+    },
+  },
   hooks: {
     list: (): Promise<{ ok: boolean; hooks: Array<{ id: string; name: string; event: string; command: string }> }> =>
       ipcRenderer.invoke('hooks:list'),
