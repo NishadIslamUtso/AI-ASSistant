@@ -30,6 +30,16 @@
 | Rulebook refresh — newer wording replaces only on the owner's press; fix-history lessons in the rules | COG-second-brain | Settings › Vault |
 | The working word + the thinking, shown | Claude Code's manner (not code) | Engine card — `5926d5e`, shipped ahead of the discussion; reverts on his word |
 
+## FROM ARENA.AI — researched 2026-10-16 (his ask: "compare the app to arena.ai")
+
+*Arena's whole trick is that it is a HARNESS above many brains — exactly what our app is. Every take below is Layer-2/app-built; no single CLI can offer any of them.*
+
+1. **OFFERED — Brain battles, side by side (the flagship take).** Arena's Battle Mode: one prompt, TWO models answer, the person picks. For us: one work order, two brains (cloud Sonnet via claude-code, local Qwen via the same claude-code on the Ollama door), two engine cards side by side, keep the better answer. For file-changing work the brand-new checkpoints make it safe: run A, snapshot; restore; run B; pick which survives. NO CLI can battle brains against each other — only the harness can. v1: text/answer battles; code battles via checkpoint sequencing.
+2. **OFFERED — Blind pick + the private scoreboard.** Arena votes blind to kill brand bias; and its leaderboards come from win/loss, not lab benchmarks. For us: a "blind" toggle (identities hidden until the pick), and a LOCAL, private win/loss ledger per brain per task kind. Over time the app may SUGGEST a default brain per project from real counts ("local Qwen won 7 of 10 code edits for you") — real numbers only, never invented, nothing leaves the machine (no public Elo: one person's N is tiny and the data is private by nature).
+3. **OFFERED — Honest turn signals, Agent-Arena style.** Arena's agent leaderboard scores error recovery and tool hallucination. For us, one line on the finished card/handoff: "2 tool errors, both recovered; 1 retry." The events already carry it — it is counting, not building. Keeps the app's print-usage-everywhere honesty.
+4. **TAKE NOTHING from:** the public leaderboard itself (his data is local and private; a cloud scoreboard contradicts the app's soul), anonymous-cloud free models (his app runs local/own keys), Elo math (meaningless at N=1 person).
+5. **Already ours:** starter prompts (FirstRun chips), history search (sidebar), multimodal input (g46–g50 just shipped), agent runs on real files (the whole engine story).
+
 ## BETTER OR UNIQUE — what the harnesses have that we don't (researched 2026-10-16, ALL OFFERED, ranked)
 
 1. **TAKEN `his go, 2026-10-16` — Checkpoints (file half)** — app-side: the file's old self kept the instant an Allow would change it; Restore on the finished card; proven live. Bash is honestly never snapshotted, and code/conversation-both restore is v2. Still OFFERED: conversation restore.
