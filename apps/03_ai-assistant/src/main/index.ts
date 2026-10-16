@@ -27,6 +27,7 @@ import { createCompactManager } from './compact'
 import { buildRepoMap } from './repoMap'
 import { createHookRunner } from './hooks'
 import { createFolderWatcher, type WatchTick } from './watcher'
+import { createJournalManager } from './journal'
 import { createDownloadManager, type DownloadTick } from './engine/downloads'
 import { agyModelSource, detectEngine } from './engine/availability'
 import { parsePullLine, validateModelName } from './engine/pull'
@@ -1245,6 +1246,19 @@ function registerBridges(): void {
       : 'ask'
     settings = writeSettings(settingsFile, { ...settings, engine: { ...settings.engine, approval: mode } })
     return { ok: true, answer: mode }
+  })
+
+  // The turn journal: finished turns kept as a small record a reopened
+  // window can show. Bounded, plain, never a fake resumable transcript.
+  const journal = createJournalManager(join(app.getPath('userData'), 'engine-journal.json'))
+  ipcMain.handle('journal:list', () => journal.list())
+  ipcMain.handle('journal:append', (_event, entry: unknown) => journal.append(entry as never))
+  ipcMain.handle('journal:clear', () => journal.clear())
+
+  ipcMain.handle('engine:thinking', (_event, thinking: string): { ok: boolean; answer: string } => {
+    const mode = thinking === 'extended' ? 'extended' : 'default'
+    settings = writeSettings(settingsFile, { ...settings, engine: { ...settings.engine, thinking: mode } })
+    return { ok: true, answer: mode === 'extended' ? 'Extended thinking: the engine gets its own big budget.' : 'Default thinking.' }
   })
 
   ipcMain.handle('engine:model', (_event, model: string, provider?: string): { ok: boolean; answer: string } => {

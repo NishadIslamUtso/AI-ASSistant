@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import { getEngineApi } from '@/platform/bridge'
 import { engineStore } from './engine'
+import { registerLineHold } from './engine'
 
 /**
  * Brain battles, the app's own.
@@ -50,6 +51,9 @@ const initial: BattleState = {
 let state: BattleState = initial
 let version = 0
 const listeners = new Set<() => void>()
+
+// While a battle drives its two sides, the line holds.
+registerLineHold(() => state.active)
 
 const emit = (): void => {
   version += 1

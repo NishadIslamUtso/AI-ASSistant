@@ -19,6 +19,9 @@ export type EngineId = 'claude-code' | 'agy'
  */
 /** How much the engine may do before it asks. The app imposes no more. */
 export type ApprovalMode = 'ask' | 'plan' | 'edits' | 'full'
+/** How much room the engine's own thinking gets: its flag, our switch. */
+export const THINKING_MODES = ['default', 'extended'] as const
+export type ThinkingMode = (typeof THINKING_MODES)[number]
 
 export const APPROVAL_MODES: ApprovalMode[] = ['ask', 'plan', 'edits', 'full']
 
@@ -48,6 +51,8 @@ export type EngineSettings = {
   workspace: string
   /** The throttle: how much the engine may do before asking. */
   approval: ApprovalMode
+  /** The engine's own thinking budget, as its environment variable. */
+  thinking: ThinkingMode
   /**
    * The door the brain lives behind. Empty means "whatever this machine
    * already has", which lets an Anthropic key work later without app changes.
@@ -67,6 +72,7 @@ export const DEFAULT_ENGINE: EngineSettings = {
   baseUrl: 'http://localhost:11434',
   workspace: '',
   approval: 'ask',
+  thinking: 'default',
   cloudProvider: '',
 }
 
@@ -136,6 +142,7 @@ export function normalizeEngine(raw: unknown): EngineSettings {
     approval: APPROVAL_MODES.includes(value.approval as ApprovalMode)
       ? (value.approval as ApprovalMode)
       : 'ask',
+    thinking: value.thinking === 'extended' ? 'extended' : 'default',
     cloudProvider: value.cloudProvider === 'anthropic' ? 'anthropic' : '',
   }
 }

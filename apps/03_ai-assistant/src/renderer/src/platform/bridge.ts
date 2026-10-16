@@ -374,6 +374,12 @@ export type EngineBridge = {
   writeHouseRules: (rules: HouseRules) => Promise<{ ok: boolean; written: string[] }>
   setModel: (model: string, provider?: 'anthropic') => Promise<{ ok: boolean; answer: string }>
   setApproval: (mode: ApprovalMode) => Promise<{ ok: boolean; answer: string }>
+  setThinking: (mode: 'default' | 'extended') => Promise<{ ok: boolean; answer: string }>
+  journal: {
+    list: () => Promise<{ ok: boolean; entries: Array<{ at: string; prompt: string; answer: string; sessionId: string | null; usage: string; workspace: string }> }>
+    append: (entry: { at: string; prompt: string; answer: string; sessionId: string | null; usage: string; workspace: string }) => Promise<{ ok: boolean; answer: string }>
+    clear: () => Promise<{ ok: boolean; answer: string }>
+  }
   pickWorkspace: () => Promise<{ ok: boolean; answer: string }>
   send: (prompt: string, cwd: string, pictures?: Array<{ mime: string; data: string }>) => Promise<{ ok: boolean; answer: string }>
   checkpoints: {
@@ -446,6 +452,12 @@ const demoEngineBridge: EngineBridge = {
     answer: 'The engine works in the desktop app: this window is the interface only.',
   }),
   answer: async () => ({ ok: false }),
+  setThinking: async () => ({ ok: false, answer: 'Thinking lives in the desktop app.' }),
+  journal: {
+    list: async () => ({ ok: true, entries: [] }),
+    append: async () => ({ ok: false, answer: 'The record lives in the desktop app.' }),
+    clear: async () => ({ ok: false, answer: 'The record lives in the desktop app.' }),
+  },
   checkpoints: {
     list: async () => ({ ok: true, checkpoints: [] }),
     restore: async () => ({ ok: false, answer: 'Checkpoints live in the desktop app.' }),

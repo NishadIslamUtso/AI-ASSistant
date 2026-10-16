@@ -62,6 +62,15 @@ const engineApi = {
   /** Set the throttle: how much the engine may do before asking. */
   setApproval: (mode: ApprovalMode): Promise<{ ok: boolean; answer: string }> =>
     ipcRenderer.invoke('engine:approval', mode),
+  setThinking: (mode: 'default' | 'extended'): Promise<{ ok: boolean; answer: string }> =>
+    ipcRenderer.invoke('engine:thinking', mode),
+  journal: {
+    list: (): Promise<{ ok: boolean; entries: Array<{ at: string; prompt: string; answer: string; sessionId: string | null; usage: string; workspace: string }> }> =>
+      ipcRenderer.invoke('journal:list'),
+    append: (entry: { at: string; prompt: string; answer: string; sessionId: string | null; usage: string; workspace: string }): Promise<{ ok: boolean; answer: string }> =>
+      ipcRenderer.invoke('journal:append', entry),
+    clear: (): Promise<{ ok: boolean; answer: string }> => ipcRenderer.invoke('journal:clear'),
+  },
   /** "Open a folder": choose where the engine works. */
   pickWorkspace: (): Promise<{ ok: boolean; answer: string }> =>
     ipcRenderer.invoke('engine:pick-workspace'),

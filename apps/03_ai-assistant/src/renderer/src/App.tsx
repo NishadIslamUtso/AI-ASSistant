@@ -390,14 +390,32 @@ export default function App() {
     if (taken.length) setAttachments(current => [...current, ...taken].slice(0, 4))
   }
 
+  // The window wires the engine up once, cold: settings, events, the
+  // record of earlier sessions. Waiting for the first send would leave a
+  // fresh window deaf and its history invisible.
+  useEffect(() => {
+    void engineStore().init()
+  }, [])
+
+  // Edit from the card: the work order goes back in the composer, changed and sent again by the owner.
+  useEffect(() => {
+    const hear = (event: Event): void => {
+      const detail = (event as CustomEvent<string>).detail
+      if (typeof detail === 'string' && detail.trim()) setDraft(detail)
+    }
+    window.addEventListener('app:draft', hear)
+    return () => window.removeEventListener('app:draft', hear)
+  }, [])
+
   const send = async (): Promise<void> => {
     const text = draft
     if (!text.trim() && attachments.length === 0) return
     // The only path: the engine. The text is a work order. The same
     // keep-the-draft-on-refusal rule applies, so nothing is ever typed twice.
     // After a Compact, the brief rides along with exactly one send.
+    const order = seedWrap(text.trim() || (attachments.length ? 'Read what I attached and tell me what you see.' : ''))
     const answer = await engineStore().send(
-      seedWrap(text.trim() || (attachments.length ? 'Read what I attached and tell me what you see.' : '')),
+      order,
       attachments.filter(entry => entry.kind === 'image' && entry.data).map(entry => ({ mime: entry.mime || 'image/png', data: entry.data || '' })),
     )
     if (answer.ok) {
@@ -407,6 +425,13 @@ export default function App() {
       if (pendingProject) {
         setPendingProject(null)
       }
+    } else if (answer.answer.startsWith('The engine is already working')) {
+      // Busy is not a refusal here: the owner typed a work order, so it
+      // waits in the line and runs the moment the engine is free.
+      engineStore().enqueue(order)
+      setDraft('')
+      setAttachments([])
+      setNotice('Added to the line. It runs when the current work finishes; the card shows the queue.')
     } else {
       setNotice(answer.answer)
     }

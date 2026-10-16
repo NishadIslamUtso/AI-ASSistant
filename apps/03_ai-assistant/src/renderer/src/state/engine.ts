@@ -80,6 +80,30 @@ export type EngineState = {
   pull: PullState
   /** Whether the engine process is alive on this machine, as last reported. */
   alive: boolean
+  /** What the engine's context holds, as far as this window honestly knows. */
+  totals: ContextTotals
+  /** Work orders waiting to run when the current turn closes. */
+  line: LineItem[]
+  /** Finished turns kept from before this window opened. */
+  journal: JournalEntry[]
+}
+
+export type ContextTotals = {
+  turns: number
+  inTokens: number
+  outTokens: number
+  costUsd: number
+}
+
+export type LineItem = { id: number; prompt: string }
+
+export type JournalEntry = {
+  at: string
+  prompt: string
+  answer: string
+  sessionId: string | null
+  usage: string
+  workspace: string
 }
 
 type EngineStore = EngineState & {
@@ -101,6 +125,12 @@ type EngineStore = EngineState & {
   setModel(name: string, provider?: 'anthropic'): Promise<void>
   /** Set the throttle: how much the engine may do before asking; persists. */
   setApproval(mode: ApprovalMode): Promise<void>
+  /** The engine's own thinking budget; persists. */
+  setThinking(mode: 'default' | 'extended'): Promise<void>
+  /** Park a work order for when the current turn closes. */
+  enqueue(prompt: string): LineItem
+  removeFromLine(id: number): void
+  clearLine(): void
   /** "Open a folder": pick where the engine works; persists. */
   pickWorkspace(): Promise<void>
   /** Ask the machine which engines really exist. */
@@ -119,6 +149,68 @@ const state: EngineState = {
   detection: { loading: false, engines: [] },
   pull: { active: false, name: '', status: '', fraction: null, error: '' },
   alive: false,
+  totals: { turns: 0, inTokens: 0, outTokens: 0, costUsd: 0 },
+  line: [],
+  journal: [],
+}
+
+/** The window's own totals, honestly scoped to what it has seen. */
+const totals = (): ContextTotals => ({ ...state.totals })
+
+/** Sequencers (battle, split, compact) hold the line while they drive. */
+const lineHolds = new Set<() => boolean>()
+export function registerLineHold(hold: () => boolean): () => void {
+  lineHolds.add(hold)
+  return () => lineHolds.delete(hold)
+}
+const lineHeld = (): boolean => [...lineHolds].some(hold => hold())
+
+/** A finished turn is recorded once, whichever event closes it first. */
+const journaled = new WeakSet<EngineTurn>()
+
+let lineId = 0
+let drainTimer: ReturnType<typeof setTimeout> | null = null
+
+const usageLine = (usage: EngineUsage | null): string =>
+  usage
+    ? `${usage.inTokens} in · ${usage.outTokens} out${usage.costUsd !== null ? ` · $${usage.costUsd.toFixed(4)}` : ''}`
+    : ''
+
+/** When a turn closes: keep the record, then let the next queued task go. */
+const afterTurnClosed = (turn: EngineTurn): void => {
+  if (journaled.has(turn)) return
+  journaled.add(turn)
+  const record = {
+    at: new Date().toISOString(),
+    prompt: turn.prompt,
+    answer: turn.items
+      .filter((item): item is Extract<EngineItem, { text: string }> => item.kind === 'text')
+      .map(item => item.text)
+      .join(' ')
+      .slice(0, 400),
+    sessionId: turn.sessionId,
+    usage: usageLine(turn.usage),
+    workspace: state.settings.workspace,
+  }
+  void getEngineApi()
+    .journal?.append?.(record)
+    ?.catch?.(() => undefined)
+  if (drainTimer) clearTimeout(drainTimer)
+  drainTimer = setTimeout(() => {
+    drainTimer = null
+    drainLine()
+  }, 600)
+}
+
+/** The line: parked work orders, run in order when the engine is free. */
+const drainLine = (): void => {
+  if (lineHeld()) return
+  const turn = state.turn
+  if (turn && turn.state === 'running') return
+  const next = state.line[0]
+  if (!next) return
+  setState({ line: state.line.slice(1) })
+  void store.send(next.prompt)
 }
 
 let subscribed = false
@@ -200,9 +292,18 @@ const ingest = (event: EngineEvent): void => {
     const last = turn.items.at(-1)
     const alreadySaid = event.text && last?.kind === 'text' && last.text === event.text
     if (event.text && !alreadySaid) turn.items.push({ kind: 'text', text: event.text })
-    if (event.usage) turn.usage = event.usage
+    if (event.usage) {
+      turn.usage = event.usage
+      state.totals = {
+        turns: state.totals.turns + 1,
+        inTokens: state.totals.inTokens + event.usage.inTokens,
+        outTokens: state.totals.outTokens + event.usage.outTokens,
+        costUsd: state.totals.costUsd + (event.usage.costUsd ?? 0),
+      }
+    }
     turn.state = 'done'
     turn.permissions = []
+    afterTurnClosed(turn)
   } else if (event.kind === 'closed') {
     // The engine process ended. After a finished task this changes nothing;
     // after a Stop or a crash it is what closes the turn — without it the
@@ -211,12 +312,22 @@ const ingest = (event: EngineEvent): void => {
       turn.items.push({ kind: 'status', text: 'engine stopped' })
       turn.state = 'done'
       turn.permissions = []
+      afterTurnClosed(turn)
     }
   } else {
     turn.items.push({ kind: 'error', text: event.text })
-    if ('usage' in event && event.usage) turn.usage = event.usage
+    if ('usage' in event && event.usage) {
+      turn.usage = event.usage
+      state.totals = {
+        turns: state.totals.turns + 1,
+        inTokens: state.totals.inTokens + event.usage.inTokens,
+        outTokens: state.totals.outTokens + event.usage.outTokens,
+        costUsd: state.totals.costUsd + (event.usage.costUsd ?? 0),
+      }
+    }
     turn.state = 'error'
     turn.permissions = []
+    afterTurnClosed(turn)
   }
   emit()
 }
@@ -244,6 +355,15 @@ const store: EngineStore = {
   },
   get pull() {
     return state.pull
+  },
+  get totals() {
+    return totals()
+  },
+  get line() {
+    return state.line
+  },
+  get journal() {
+    return state.journal
   },
 
   async init(): Promise<void> {
@@ -289,6 +409,15 @@ const store: EngineStore = {
       }
     } finally {
       initializing = false
+    }
+    // The record of earlier sessions, bounded and read-only.
+    const earlier = api.journal?.list?.()
+    if (earlier && typeof earlier.then === 'function') {
+      earlier
+        .then((answer: { entries?: JournalEntry[] }) => {
+          if (answer?.entries?.length) setState({ journal: answer.entries })
+        })
+        .catch(() => undefined)
     }
     api.onEvent(ingest)
     api.onPullEvent((tick) => {
@@ -364,6 +493,31 @@ const store: EngineStore = {
   async setApproval(mode: ApprovalMode): Promise<void> {
     const answer = await getEngineApi().setApproval(mode)
     if (answer.ok) setState({ settings: { ...state.settings, approval: mode } })
+  },
+
+  async setThinking(mode: 'default' | 'extended'): Promise<void> {
+    const answer = await getEngineApi().setThinking(mode)
+    if (answer.ok) setState({ settings: { ...state.settings, thinking: mode } })
+  },
+
+  enqueue(prompt: string): LineItem {
+    lineId += 1
+    const item: LineItem = { id: lineId, prompt }
+    state.line = [...state.line, item]
+    emit()
+    // Nothing running? The line is a straight pass-through.
+    if (!state.turn || state.turn.state !== 'running') drainLine()
+    return item
+  },
+
+  removeFromLine(id: number): void {
+    state.line = state.line.filter(item => item.id !== id)
+    emit()
+  },
+
+  clearLine(): void {
+    state.line = []
+    emit()
   },
 
   async checkEngines(): Promise<void> {

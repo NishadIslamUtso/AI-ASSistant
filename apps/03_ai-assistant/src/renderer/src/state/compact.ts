@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import { getEngineApi } from '@/platform/bridge'
-import { engineStore, type EngineItem } from './engine'
+import { engineStore, registerLineHold, type EngineItem } from './engine'
 import { BRIEF_ORDER, briefWorthKeeping, buildSeededPrompt, countWords, type CompactPhase } from '@shared/lib/compact'
 
 /**
@@ -31,6 +31,9 @@ let state: CompactState = {
 }
 
 const listeners = new Set<() => void>()
+
+// While compaction drives its two steps, the line holds.
+registerLineHold(() => state.phase === 'briefing' || state.phase === 'ending')
 let version = 0
 
 const emit = (): void => {

@@ -180,6 +180,9 @@ export function startClaudeCodeSession(input: StartSessionInput): EngineSession 
           ? brainEnvironment('https://api.anthropic.com/v1', input.auth.apiKey)
           : brainEnvironment(input.settings.baseUrl)),
         ...(enginePathPrepend() ? { PATH: `${enginePathPrepend()};${process.env['PATH'] ?? ''}` } : {}),
+        // The engine's own extended-thinking knob, its documented variable,
+        // set only when the owner asked for it through the chip.
+        ...(input.settings.thinking === 'extended' ? { MAX_THINKING_TOKENS: '31999' } : {}),
       },
       // On Windows the command lives behind an npm `.cmd` shim, which only
       // runs through the shell. The one argument that is not a fixed flag is

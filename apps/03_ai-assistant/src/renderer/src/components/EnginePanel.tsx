@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Eye, Handshake, Minimize2, Wrench, FilePen, Terminal, Search, CircleCheck, TriangleAlert, Square, X } from 'lucide-react'
+import { Copy, Eye, Handshake, ListOrdered, Minimize2, Pencil, Wrench, FilePen, Terminal, Search, CircleCheck, TriangleAlert, Square, X } from 'lucide-react'
 import { buildHandoff, handoffFileName } from '@shared/lib/handoff'
 import { pickGerund } from '@shared/lib/gerunds'
 import { BRIEF_ORDER } from '@shared/lib/compact'
 import { bridge } from '@/platform/bridge'
 import { useEngine, type EngineItem } from '@/state/engine'
 import { cancelBrief, clearCompactNotice, finishCompact, useCompact, writeBrief } from '@/state/compact'
+import { formatTotals, turnCopyText } from '@shared/lib/turnCopy'
 import { clearReviewError, runReview, useReview } from '@/state/review'
 
 /**
@@ -45,7 +46,34 @@ export default function EnginePanel() {
   const [compacting, setCompacting] = useState(false)
   const compact = useCompact()
   const review = useReview()
-  if (!turn) return null
+  const [copied, setCopied] = useState(false)
+  // No live turn: the card waits, but the record of earlier sessions still
+  // shows — a fresh window should know what happened here before it opened.
+  if (!turn) {
+    return (
+      <>
+        {engine.journal.length ? (
+          <details aria-label="Earlier sessions" className="mx-auto mb-3 w-full max-w-[var(--chat-width)] rounded-xl border border-line bg-card px-4 py-2.5">
+            <summary className="cursor-pointer text-[12px] font-medium text-muted">
+              Earlier sessions on this machine ({engine.journal.length} {engine.journal.length === 1 ? 'turn' : 'turns'})
+            </summary>
+            <ul className="mt-2 space-y-1.5">
+              {engine.journal.slice(0, 10).map((entry, index) => (
+                <li key={index} className="rounded-lg border border-line bg-bg px-2.5 py-1.5">
+                  <p className="truncate text-[11.5px] text-ink">▸ {entry.prompt}</p>
+                  <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-muted">{entry.answer || '(nothing said)'}</p>
+                  <p className="mt-0.5 text-[10.5px] text-muted">{entry.at.slice(0, 16).replace('T', ' ')}{entry.usage ? ` · ${entry.usage}` : ''}</p>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-1.5 text-[10.5px] leading-relaxed text-muted">
+              A record, not a transcript: the engine's own resume already carries the context forward.
+            </p>
+          </details>
+        ) : null}
+      </>
+    )
+  }
 
   // The handoff: the finished turn written into the vault as one document a
   // later session can continue from — and copied, so it can go anywhere.
@@ -85,6 +113,7 @@ export default function EnginePanel() {
           Engine · {engine.settings.id} · {engine.settings.model}
           {' · ' + (engine.settings.workspace ? engine.settings.workspace.split(/[\\/]/).filter(Boolean).at(-1) : 'vault')}
           {turn.state === 'running' ? ` · ${word}…` : turn.state === 'error' ? ' · stopped' : ' · done'}
+          {` · ${formatTotals(engine.totals)}`}
         </h2>
         {turn.state === 'running' ? (
           <button
@@ -124,6 +153,27 @@ export default function EnginePanel() {
             <Eye size={10} /> Review
           </button>
         ) : null}
+        {turn.state !== 'running' ? (
+          <button
+            type="button"
+            onClick={() => { void navigator.clipboard?.writeText(turnCopyText(turn.prompt, turn.items)).catch(() => undefined); setCopied(true) }}
+            title="Copy this turn: the work order and the engine's words"
+            aria-label="Copy this turn"
+            className="flex items-center gap-1 rounded-lg border border-line px-2 py-0.5 text-[11px] text-muted hover:text-ink"
+          >
+            <Copy size={10} /> {copied ? 'Copied' : 'Copy'}
+          </button>
+        ) : null}
+        {turn.state !== 'running' ? (
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent('app:draft', { detail: turn.prompt }))}
+            title="Edit the work order: put it back in the composer, change what you want, send again"
+            className="flex items-center gap-1 rounded-lg border border-line px-2 py-0.5 text-[11px] text-muted hover:text-ink"
+          >
+            <Pencil size={10} /> Edit
+          </button>
+        ) : null}
       </header>
 
       {review.error ? (
@@ -139,6 +189,25 @@ export default function EnginePanel() {
             <span className="mt-1 block whitespace-pre-wrap text-muted">{review.verdict.lines.join('\n')}</span>
           ) : null}
         </p>
+      ) : null}
+
+      {engine.line.length ? (
+        <div className="mt-1.5 rounded-lg border border-line bg-bg px-2 py-1.5" aria-label="Work waiting in the line">
+          <div className="flex items-center justify-between gap-2">
+            <p className="flex items-center gap-1 text-[11.5px] font-medium text-ink">
+              <ListOrdered size={10} aria-hidden /> In the line: {engine.line.length}
+            </p>
+            <button type="button" onClick={() => engine.clearLine()} className="text-[11px] text-muted hover:text-ink">Clear the line</button>
+          </div>
+          <ul className="mt-1 space-y-0.5">
+            {engine.line.map(item => (
+              <li key={item.id} className="flex items-start justify-between gap-2 text-[11.5px] text-muted">
+                <span className="min-w-0 flex-1 truncate">▸ {item.prompt}</span>
+                <button type="button" onClick={() => engine.removeFromLine(item.id)} aria-label="Remove from the line" className="shrink-0 text-muted hover:text-warn">×</button>
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : null}
 
       {compact.notice ? (
@@ -237,6 +306,25 @@ export default function EnginePanel() {
         </div>
       ) : null}
     </section>
+    {engine.journal.length ? (
+      <details aria-label="Earlier sessions" className="mx-auto mb-3 w-full max-w-[var(--chat-width)] rounded-xl border border-line bg-card px-4 py-2.5">
+        <summary className="cursor-pointer text-[12px] font-medium text-muted">
+          Earlier sessions on this machine ({engine.journal.length} {engine.journal.length === 1 ? 'turn' : 'turns'})
+        </summary>
+        <ul className="mt-2 space-y-1.5">
+          {engine.journal.slice(0, 10).map((entry, index) => (
+            <li key={index} className="rounded-lg border border-line bg-bg px-2.5 py-1.5">
+              <p className="truncate text-[11.5px] text-ink">▸ {entry.prompt}</p>
+              <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-muted">{entry.answer || '(nothing said)'}</p>
+              <p className="mt-0.5 text-[10.5px] text-muted">{entry.at.slice(0, 16).replace('T', ' ')}{entry.usage ? ` · ${entry.usage}` : ''}{entry.workspace ? ` · ${entry.workspace.split(/[\\/]/).filter(Boolean).at(-1)}` : ''}</p>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-1.5 text-[10.5px] leading-relaxed text-muted">
+          A record, not a transcript: the engine's own resume already carries the context forward. Clear it in Settings &gt; System.
+        </p>
+      </details>
+    ) : null}
     {compacting ? <CompactDialog onClose={() => setCompacting(false)} /> : null}
     </>
   )

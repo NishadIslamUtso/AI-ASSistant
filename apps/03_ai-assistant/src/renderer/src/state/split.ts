@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import { engineStore, type EngineItem } from './engine'
+import { engineStore, registerLineHold, type EngineItem } from './engine'
 import { parseSteps, SPLIT_ORDER, SOLE_VERDICT, splitSummary } from '@shared/lib/split'
 
 /**
@@ -35,6 +35,15 @@ let state: SplitState = {
 }
 
 const listeners = new Set<() => void>()
+
+// While Split runs its steps, the line holds.
+registerLineHold(() => {
+  const { phase } = splitStateNow()
+  return phase === 'running' || phase === 'splitting'
+})
+function splitStateNow(): { phase: string } {
+  return state
+}
 let version = 0
 
 const emit = (): void => {

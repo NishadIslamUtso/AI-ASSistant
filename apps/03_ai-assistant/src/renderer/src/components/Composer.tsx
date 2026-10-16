@@ -519,6 +519,24 @@ function EngineChip({ open, onToggle }: { open: boolean; onToggle: () => void })
               {mode.label}
             </button>
           ))}
+          <div className="mt-1 flex items-center justify-between gap-1.5 border-t border-line px-2.5 pb-1 pt-2" role="group" aria-label="The engine's own thinking budget">
+            <span className="text-[10.5px] uppercase tracking-wide text-muted">Thinking</span>
+            <div className="flex items-center gap-1">
+              {([['default', 'Default'], ['extended', 'Extended']] as const).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={(engine.settings.thinking ?? 'default') === value}
+                  title={value === 'extended' ? 'The engine gets its own big thinking budget (its MAX_THINKING_TOKENS, set at launch).' : 'The engine decides how much to think.'}
+                  onClick={() => void engine.setThinking(value)}
+                  className={`rounded-lg px-2 py-1 text-[11px] ${ (engine.settings.thinking ?? 'default') === value ? 'bg-white/[0.06] text-ink' : 'text-muted hover:text-ink' }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
           <p className="px-2.5 pb-1.5 pt-1.5 text-[10.5px] leading-relaxed text-muted">
             These are the engine's own modes. The app adds no rules of its own.
           </p>
