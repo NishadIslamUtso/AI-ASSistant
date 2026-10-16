@@ -1331,7 +1331,7 @@ function QuickShortcutRow(): React.JSX.Element {
           }`}
           onClick={() => {
             setOn(option.value)
-            void bridge.quick.shortcut(option.value)
+            if (!isDemo) void bridge.quick.shortcut(option.value)
           }}
           aria-pressed={on === option.value}
         >

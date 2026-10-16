@@ -227,6 +227,15 @@ export const hasDesktopBridge = (): boolean =>
 
 /** Empty, and honest about it. See rule 2 above. */
 const demoBridge: DesktopBridge = {
+  quick: {
+    open: () => Promise.resolve({ ok: false }),
+    shortcut: () => Promise.resolve({ ok: false, enabled: false }),
+  },
+  artifactWindow: {
+    popout: () => Promise.resolve({ ok: false }),
+    savePdf: () => Promise.resolve({ ok: false, answer: 'Windows and PDFs are desktop work — this browser preview has no machine behind it.' }),
+  },
+
   app: { version: 'web preview', platform: 'web' },
   settings: {
     read: async () => ({
@@ -283,16 +292,6 @@ const demoBridge: DesktopBridge = {
    * No disk, no library. Every answer says that rather than showing an empty
    * grid that implies nothing was ever made.
    */
-    quick: {
-    open: () => window.api!.quick.open(),
-    shortcut: (enabled: boolean) => window.api!.quick.shortcut(enabled),
-  },
-
-  artifactWindow: {
-    popout: (html: string, title: string) => window.api!.artifactWindow.popout(html, title),
-    savePdf: (html: string, name: string) => window.api!.artifactWindow.savePdf(html, name),
-  },
-
 artifacts: {
     list: async (): Promise<ListAnswer> => ({
       ok: false,

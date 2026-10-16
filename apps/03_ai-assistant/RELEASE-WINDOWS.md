@@ -1,5 +1,13 @@
 # Release notes — the Windows installer
 
+## The name changed (2026-10-17): the app is OddBrain now
+
+The 0.9.0 exe below was cut BEFORE the rename and still says the old name on
+disk — identical features, older label. The NEXT installer carries the new
+name: `OddBrain-Setup-0.9.0.exe` (appId `com.oddbrain.desktop`). A packaged
+app named OddBrain also gets a fresh userData folder, so a 0.9.0-era install
+starts with clean settings — the vault folder is chosen by hand either way.
+
 ## 0.9.0 — current (the audit build, 2026-10-16)
 
 | | |

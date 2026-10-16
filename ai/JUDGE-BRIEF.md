@@ -98,13 +98,13 @@ The app: Electron + React + TypeScript + Tailwind 4, at `apps/03_ai-assistant/`.
 ```bash
 git clone -b v3 https://github.com/NishadIslamUtso/AI-ASSistant.git
 cd AI-ASSistant/apps/03_ai-assistant
-npm ci && npx vitest run      # 74 files / 604 tests (as of 2026-10-17)
+npm ci && npx vitest run      # 77 files / 621 tests (as of 2026-10-17, evening)
 npx tsc --noEmit              # clean
 npm run build                 # electron-vite build
 ```
 
 - **Receipts:** `00_LIVING_DOCS/receipts/SCREENS-GALLERY.html` + `shots/` —
-  live-drive figures g27–g68 captured from the running shipped build driving an
+  live-drive figures g27–g73 captured from the running shipped build driving an
   engine-shaped wire. THE HONEST CAVEAT, stated here AND in the brief's claim
   list: in this sandbox the engine behind those drives was a scripted stand-in
   CLI (not shipped; no test depends on it). The receipts prove the app's half
@@ -123,6 +123,24 @@ npm run build                 # electron-vite build
   them, the evidence base is: the tests, the wire-level parser/chunk tests (a
   byte-chop regression test chops the wire at a step of 37 and demands identical events), the code itself,
   and the receipts.
+
+- **The OddBrain Motion Kit 3.0.1 (his concept, applied 2026-10-17).** 77 scene
+  SVGs ship byte-exact (`scripts/extract-motion-kit.py` re-extracts from the kit
+  gallery's own JSON); test-pinned: all 76 scenes reachable through real app
+  states, all 304 status words paired with the animations the kit measured them
+  for, the kit's loader on the permission card, the two one-shots saved for
+  done. Calm slows 1.6×, Still and the OS reduced-motion preference stop
+  everything; at most six scenes animate at once; off-screen pauses. g69–g71.
+- **The app is OddBrain (his rename, 2026-10-17 evening).** Title bar,
+  installer (`OddBrain-Setup-0.9.0.exe` next build), appId, every user-facing
+  sentence; a test asserts NO source file claims the old name. CAVEAT: the
+  acceptance exe below was cut BEFORE the rename — same features, older label.
+- **Taken from the claudereverse study as clean code (patterns, never
+  Anthropic bytes):** real shell PATH resolution (PowerShell registry truth /
+  login shell, merged app-first, cached; every engine spawn uses it), the
+  quick-ask window on Ctrl+Shift+O riding the ONE send path (g72), Ctrl+F
+  find via the CSS Custom Highlight API with zero DOM mutation (g73),
+  artifact pop-out + printToPDF into the vault, Electron fuses.
 
 ## 5 · Deliberately open (do not count these as failures)
 

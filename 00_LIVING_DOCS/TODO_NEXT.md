@@ -1,6 +1,7 @@
 # TODO — next
 
 **Same day, later: the OddBrain Motion Kit 3.0.1 landed (his "apply all of them") — 615 tests, g69–g71. His agy sign-in + the TUF A15 acceptance run remain his; his UI/UX redo owns all look-and-feel axes (structures/palettes/sizes deliberately untouched).**
+**Evening: renamed OddBrain; the claudereverse shortlist TAKEN (PATH resolution, quick window, Ctrl+F, pop-out+PDF, fuses) — 621 tests, g72–g74. The 0.9.0 exe predates the rename (same features, old label). His gates unchanged: agy sign-in, TUF A15 run, his UI/UX redo.**
 **2026-10-17: the judges' fix batch + the real agy adapter LANDED (604 tests; g66–g68). Remaining: HIS agy sign-in → the TUF A15 acceptance run on the 0.9.0 exe (the one open gate); his UI/UX redo after. Everything below is the pre-verdict queue, kept for history.**
 
 **Last Updated:** 2026-10-15 (late night) Asia/Dhaka — rewritten after the

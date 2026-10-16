@@ -83,7 +83,7 @@
 
 Source: his public repo `claudereverse` (recovered Claude Desktop v2.42304.0, compiled MSIX — its own inventory admits the main chat UI loads from claude.ai; six local windows only). Judges reviewed stale trees (v0.7.0 / 8ab95ef / 3fb6945); their "fix trust first" lists are ALREADY DONE at 4c77abb (agy g67, watch g68, checkpoints g66, landing sentence, ollama start/stop, honest test policy). Verified myself: globalShortcut / findInPage / printToPDF / node-pty / xterm / mermaid / protocol / login-item = 0 hits at tip; one BrowserWindow; no fuses in electron-builder.yml. `@anthropic-ai/claude-agent-sdk` 0.3.301 and `@anthropic-ai/mcpb` 2.1.2 ARE public on npm — ARCHITECTURE-ENGINE.md's reason (1) ("SDK can't be installed in my sandbox") is now stale, but reasons 2–4 (drives the verified CLI, the wire is test-pinned 604 strong, mods door) still stand; re-evaluate AFTER the acceptance run, not before.
 
-**Queue candidates (his GO needed, in my proposed order):**
+**Queue candidates — items 1–5 BUILT 2026-10-17 evening (his "did you take it"): PATH resolution, Ctrl+F, pop-out+PDF, quick window, fuses. Items 6–10 remain candidates.**
 1. Real PATH resolution (their shell-path-worker pattern): at startup ask the user's own shell for %PATH%/env, cache, fall back to today's hardcoded prepend. Directly de-risks the TUF A15 acceptance ("'claude' is not recognized" = boring failure). S.
 2. Find in the transcript, Ctrl+F: in-app overlay (NOT webContents.findInPage — React-rendered text), next/prev, count, Esc. S.
 3. Artifact pop-out window + Save as PDF (printToPDF), same CSP, read-only first. S.
