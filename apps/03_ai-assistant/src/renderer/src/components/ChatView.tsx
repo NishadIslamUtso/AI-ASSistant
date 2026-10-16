@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import type { Attachment } from '@shared/types'
 import type { Artifact, Chat } from '@shared/types'
 import type { ElementPick } from '@shared/lib/artifacts'
 import { useDesignTokens } from '@/hooks/useDesignTokens'
@@ -44,6 +45,9 @@ export default function ChatView({
   projects = [],
   project = null,
   onProject,
+  attachments = [],
+  onFiles,
+  onDetach,
 }: {
   chat: Chat | null
   draft: string
@@ -68,6 +72,9 @@ export default function ChatView({
   rewriteStage?: string
   rewriteError?: string
   rewriteErrorFor?: string
+  attachments?: Attachment[]
+  onFiles?: (files: File[]) => void
+  onDetach?: (id: string) => void
   /** The approved greeting uses the owner's name; capture names the capsule. */
   profileName?: string
   /** The project picker, passed through to the composer untouched. */
@@ -138,6 +145,9 @@ export default function ChatView({
         projects={projects}
         project={project}
         onProject={onProject}
+        attachments={attachments}
+        onFiles={onFiles}
+        onDetach={onDetach}
       />
     </main>
   )

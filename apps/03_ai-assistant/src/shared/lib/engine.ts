@@ -18,9 +18,9 @@ export type EngineId = 'claude-code' | 'agy'
  * the big free cloud brain through the local Ollama door.
  */
 /** How much the engine may do before it asks. The app imposes no more. */
-export type ApprovalMode = 'ask' | 'edits' | 'full'
+export type ApprovalMode = 'ask' | 'plan' | 'edits' | 'full'
 
-export const APPROVAL_MODES: ApprovalMode[] = ['ask', 'edits', 'full']
+export const APPROVAL_MODES: ApprovalMode[] = ['ask', 'plan', 'edits', 'full']
 
 /**
  * The engine's own official values for each setting of the throttle. `manual`
@@ -32,6 +32,7 @@ export const APPROVAL_MODES: ApprovalMode[] = ['ask', 'edits', 'full']
  */
 export const PERMISSION_MODE: Record<ApprovalMode, string> = {
   ask: 'manual',
+  plan: 'plan',
   edits: 'acceptEdits',
   full: 'bypassPermissions',
 }
@@ -148,7 +149,7 @@ export type EngineEvent =
   | { kind: 'status'; text: string }
   | { kind: 'text'; text: string }
   | { kind: 'tool'; name: string; summary: string }
-  | { kind: 'permission'; requestId: string; tool: string; summary: string; detail?: string }
+  | { kind: 'permission'; requestId: string; tool: string; summary: string; detail?: string; file?: string }
   /** The engine opened a resumable session (its init sentence carries the id). */
   | { kind: 'session'; id: string }
   /** A piece of the engine's words as they form — the stream, not the summary. */

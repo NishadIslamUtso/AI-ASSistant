@@ -1,5 +1,8 @@
+import { useState } from 'react'
+import { Volume2, Square as StopSquare } from 'lucide-react'
 import type { Artifact, Message } from '@shared/types'
 import type { ElementPick } from '@shared/lib/artifacts'
+import { ttsSupported } from '@shared/lib/media'
 import { parseCloudModel } from '@shared/lib/providers'
 import type { ArtifactView } from '@/state/artifactView'
 import ArtifactCard from './ArtifactCard'
@@ -13,6 +16,41 @@ import BrainMark from './BrainMark'
  * app's mark beside it. Thinking, when the model reports it separately, is folded
  * away rather than mixed into the answer.
  */
+
+/**
+ * Read one reply aloud, with the window's own voice. Its own component so the
+ * speaking state is a hook that never depends on which branch rendered.
+ */
+function SpeakButton({ text }: { text: string }) {
+  const [speaking, setSpeaking] = useState(false)
+  if (!ttsSupported()) return null
+  const toggle = (): void => {
+    if (speaking) {
+      window.speechSynthesis.cancel()
+      setSpeaking(false)
+      return
+    }
+    const voice = new SpeechSynthesisUtterance(text)
+    voice.onend = () => setSpeaking(false)
+    voice.onerror = () => setSpeaking(false)
+    window.speechSynthesis.cancel()
+    window.speechSynthesis.speak(voice)
+    setSpeaking(true)
+  }
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={speaking ? 'Stop reading aloud' : 'Read aloud'}
+      title={speaking ? 'Stop reading aloud' : 'Read this reply aloud'}
+      className="mt-2 flex items-center gap-1 rounded-lg border border-line px-1.5 py-0.5 text-[10.5px] text-muted hover:text-ink"
+    >
+      {speaking ? <StopSquare size={10} /> : <Volume2 size={10} />}
+      {speaking ? 'Stop' : 'Listen'}
+    </button>
+  )
+}
+
 export default function MessageRow({
   message,
   artifacts = [],
@@ -94,6 +132,7 @@ export default function MessageRow({
             {message.content}
           </div>
         ) : null}
+        {message.content && message.status !== 'streaming' ? <SpeakButton text={message.content} /> : null}
 
         {streaming && !message.content && !message.stage ? (
           <p className="text-[13px] text-muted">Thinking…</p>

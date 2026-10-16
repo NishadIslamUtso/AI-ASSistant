@@ -24,10 +24,11 @@ import { join } from 'node:path'
 import type { ApprovalMode, EngineEvent, EngineSettings } from '../../shared/lib/engine'
 import { PERMISSION_MODE } from '../../shared/lib/engine'
 import { createEngineParser } from './stream'
+import { checkpointWorthTaking, takeCheckpoint } from './checkpoints'
 
 export type EngineSession = {
   /** Hand the engine a task. Returns false if the session already closed. */
-  send(prompt: string): boolean
+  send(prompt: string, images?: Array<{ mime: string; data: string }>): boolean
   /** Answer a permission the engine asked for. */
   answer(requestId: string, allow: boolean): void
   /** Close the engine now. */
@@ -38,6 +39,10 @@ export type EngineSession = {
 export type StartSessionInput = {
   cwd: string
   settings: EngineSettings
+  /** Pictures for THIS task, already validated by the door. */
+  images?: Array<{ mime: string; data: string }>
+  /** Where kept copies go, when the app asked for checkpoints at all. */
+  checkpointDir?: string
   /**
    * A provider key from Models, resolved by the door that received the send.
    * Present only when the chosen brain is a provider brain; the engine is
@@ -161,6 +166,9 @@ export function brainEnvironment(baseUrl: string, apiKey?: string): Record<strin
 export function startClaudeCodeSession(input: StartSessionInput): EngineSession {
   const args = engineArguments(input.settings.model, input.settings.approval, input.resumeId)
 
+  // Permission questions still waiting on a person, with what they would touch.
+  const pending = new Map<string, { tool: string; file: string }>()
+
   let child: ChildProcess
   const start = input.spawnProcess ?? spawn
   try {
@@ -212,7 +220,14 @@ export function startClaudeCodeSession(input: StartSessionInput): EngineSession 
   let deliberate = false
 
   const deliver = (text: string): void => {
-    for (const event of parser.feed(text)) input.onEvent(event)
+    for (const event of parser.feed(text)) {
+      // A permission the engine asked for is remembered until it is answered:
+      // an Allow of a file write takes the file's old self FIRST.
+      if (event.kind === 'permission') {
+        pending.set(event.requestId, { tool: event.tool, file: event.file ?? '' })
+      }
+      input.onEvent(event)
+    }
   }
 
   child.stdout?.on('data', (chunk: Buffer) => deliver(decoder.write(chunk)))
@@ -250,10 +265,26 @@ export function startClaudeCodeSession(input: StartSessionInput): EngineSession 
   }
 
   return {
-    send(prompt: string): boolean {
-      return writeLine(`${JSON.stringify({ type: 'user', message: { role: 'user', content: [{ type: 'text', text: prompt }] } })}\n`)
+    send(
+      prompt: string,
+      /** Pictures ride as the wire's own base64 image blocks, after the words. */
+      images: Array<{ mime: string; data: string }> = [],
+    ): boolean {
+      const content: Array<Record<string, unknown>> = [{ type: 'text', text: prompt }]
+      for (const image of images) {
+        content.push({ type: 'image', source: { type: 'base64', media_type: image.mime, data: image.data } })
+      }
+      return writeLine(`${JSON.stringify({ type: 'user', message: { role: 'user', content } })}\n`)
     },
     answer(requestId: string, allow: boolean): void {
+      // THE CHECKPOINT: the instant before the engine is allowed to change a
+      // file, the file's current self is kept. App-side on purpose: it works
+      // no matter which engine, and no engine offers it on this wire.
+      const asked = pending.get(requestId)
+      pending.delete(requestId)
+      if (allow && asked && checkpointWorthTaking(asked.tool) && asked.file && input.checkpointDir) {
+        void takeCheckpoint(input.checkpointDir, asked.file).catch(() => undefined)
+      }
       // The deny shape needs a `message` — the real CLI rejects a bare deny
       // as an invalid permission result (proven against v2.1.300).
       void writeLine(

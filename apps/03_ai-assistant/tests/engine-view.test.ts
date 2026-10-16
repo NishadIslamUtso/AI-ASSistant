@@ -311,7 +311,7 @@ test('the face is wired: the panel is in the chat, and the engine is the only wa
   assert.match(chat, /import EnginePanel from '\.\/EnginePanel'/)
   assert.match(chat, /<EnginePanel \/>/)
   const app = read('../src/renderer/src/App.tsx')
-  assert.match(app, /engineStore\(\)\.send\(text\)/, 'every send goes to the engine')
+  assert.match(app, /engineStore\(\)\.send\(/, 'every send goes to the engine')
   assert.doesNotMatch(app, /engineOn/, 'there is no engine toggle \u2014 it is not a mode, it is the app')
   assert.doesNotMatch(app, /chatApi\.send/, 'the old chat-brain path is gone from the send')
   // The shared contract the whole face speaks.

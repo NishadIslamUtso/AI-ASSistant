@@ -1,0 +1,216 @@
+// @vitest-environment jsdom
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { readFileSync } from 'node:fs'
+import {
+  framePoints,
+  dictationSupported,
+  ttsSupported,
+  MAX_ENGINE_ATTACHMENTS,
+  ENGINE_IMAGE_MIMES,
+} from '../src/shared/lib/media'
+import {
+  checkpointWorthTaking,
+  copyName,
+  snapshotFile,
+  restoreCheckpoint,
+  listCheckpoints,
+  takeCheckpoint,
+} from '../src/main/engine/checkpoints'
+
+/**
+ * Media and checkpoints: what the machine gives everyone, and the way back.
+ * The media rule is his: pictures, voice and video work no matter the engine.
+ * The checkpoint rule is Replit's and Claude Code's idea, app-side: the file's
+ * old self is kept the instant before an allowed write, and one press returns.
+ */
+
+test('frame points are even, inside the clip, never at the edges', () => {
+  assert.deepEqual(framePoints(0, 4), [])
+  assert.deepEqual(framePoints(-3, 4), [])
+  assert.deepEqual(framePoints(10, 1), [5])
+  const four = framePoints(10, 4)
+  assert.equal(four.length, 4)
+  assert.ok(four[0] > 0.7 && four[0] < 0.9, 'first frame just inside the clip')
+  assert.ok(four[3] > 9.1 && four[3] < 9.3, 'last frame just before the end')
+  for (let i = 1; i < four.length; i += 1) assert.ok(four[i] > four[i - 1], 'strictly increasing')
+  const ten = framePoints(100, 10)
+  assert.equal(ten.length, 10)
+})
+
+test('the media guards answer for machines without the hardware', () => {
+  assert.equal(dictationSupported({}), false)
+  assert.equal(dictationSupported({ webkitSpeechRecognition: function Fake() {} }), true)
+  assert.equal(ttsSupported({}), false)
+  assert.equal(ttsSupported({ speechSynthesis: {} }), true)
+  assert.ok(MAX_ENGINE_ATTACHMENTS === 4, 'four attachments ride with one task')
+  assert.deepEqual([...ENGINE_IMAGE_MIMES], ['image/png', 'image/jpeg', 'image/webp'])
+})
+
+const read = (path: string): string => readFileSync(new URL(path, import.meta.url), 'utf8')
+
+test('the composer carries the media front door, the ear, and honest titles', () => {
+  const composer = read('../src/renderer/src/components/Composer.tsx')
+  assert.match(composer, /aria-label="Attach"/, 'the paperclip exists')
+  assert.match(composer, /aria-label=\{listening \? 'Stop dictation' : 'Dictate'\}/, 'the ear exists')
+  assert.match(composer, /onPaste=\{paste\}/, 'pasted files ride like picked ones')
+  assert.match(composer, /video\/mp4,video\/webm/, 'videos are offered to the picker')
+  assert.match(composer, /no speech listener/, 'a machine without a listener is told so')
+  const row = read('../src/renderer/src/components/MessageRow.tsx')
+  assert.match(row, /Read aloud/, 'replies can be read aloud')
+  assert.match(row, /ttsSupported\(\)/, 'the speaker honours the guard')
+  const panel = read('../src/renderer/src/components/EnginePanel.tsx')
+  assert.match(panel, /pictures/, 'the turn card says how many pictures rode')
+  assert.match(panel, /checkpoints.list/, 'finished turns ask what was kept')
+})
+
+test('checkpoint rules: file tools only, honest names', () => {
+  assert.equal(checkpointWorthTaking('Write'), true)
+  assert.equal(checkpointWorthTaking('Edit'), true)
+  assert.equal(checkpointWorthTaking('Bash'), false, 'a command can touch anything; no pretending')
+  assert.equal(checkpointWorthTaking('WebFetch'), false)
+  const name = copyName(join('C:', 'my notes', 'thesis a.md'), 1729075200000)
+  assert.match(name, /^1729075200000-thesis_a\.md$/, 'epoch, then a safe name')
+})
+
+test('a checkpoint keeps the old self; restore puts it back', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'ckpt-'))
+  const file = join(dir, 'note.md')
+  await writeFile(file, 'the first words')
+  const kept = await takeCheckpoint(dir, file, 1729075200000)
+  assert.ok(kept, 'a file with content is kept')
+  await writeFile(file, 'the engine rewrote everything')
+  const restored = await restoreCheckpoint(dir, kept?.copy ?? '')
+  assert.equal(restored.ok, true, restored.answer)
+  assert.equal(await readFile(file, 'utf8'), 'the first words', 'the old self came back')
+  const listed = await listCheckpoints(dir)
+  assert.equal(listed.length, 1)
+  assert.equal(listed[0].original, file)
+  await rm(dir, { recursive: true, force: true })
+})
+
+test('a file that does not exist yet is honestly not kept; a foreign copy is refused', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'ckpt2-'))
+  const ghost = join(dir, 'was-never-here.md')
+  assert.equal(await snapshotFile(dir, ghost), null, 'nothing to keep, nothing claimed')
+  const kept = await takeCheckpoint(dir, join(dir, 'real.md'), Date.now())
+  assert.equal(kept, null)
+  const foreign = await restoreCheckpoint(dir, join(tmpdir(), 'elsewhere-copy.md'))
+  assert.equal(foreign.ok, false)
+  assert.match(foreign.answer, /not one of this app's checkpoints/)
+  const empty = await mkdtemp(join(tmpdir(), 'ckpt3-'))
+  const noRecord = await restoreCheckpoint(empty, join(empty, 'orphan-copy.md'))
+  assert.equal(noRecord.ok, false)
+  assert.match(noRecord.answer, /no record of where it came from/)
+  await rm(dir, { recursive: true, force: true })
+  await rm(empty, { recursive: true, force: true })
+})
+
+test('the engine takes the checkpoint the instant an Allow would change a file', async () => {
+  // The real adapter, a scripted child: the permission line names the file,
+  // the Allow answers, and the old self must already be in the folder.
+  const { startClaudeCodeSession } = await import('../src/main/engine/claudeCode')
+  const { EventEmitter } = await import('node:events')
+  const dir = await mkdtemp(join(tmpdir(), 'ckpt-live-'))
+  const workspace = await mkdtemp(join(tmpdir(), 'ckpt-ws-'))
+  const target = join(workspace, 'draft.md')
+  await writeFile(target, 'before the engine')
+  const child = new EventEmitter() as EventEmitter & {
+    stdout: EventEmitter
+    stderr: EventEmitter
+    stdin: { writes: string[]; write(data: string): boolean }
+    pid: number
+    killed: boolean
+    exitCode: number | null
+    signalCode: null
+    kill(): void
+  }
+  child.stdout = new EventEmitter()
+  child.stderr = new EventEmitter()
+  child.stdin = { writes: [], write(data: string) { child.stdin.writes.push(data); return true } }
+  child.pid = 4242
+  child.killed = false
+  child.exitCode = null
+  child.signalCode = null
+  child.kill = () => { child.killed = true }
+  const session = startClaudeCodeSession({
+    cwd: workspace,
+    settings: { id: 'claude-code', model: 'm', baseUrl: '', workspace, approval: 'ask' },
+    checkpointDir: dir,
+    spawnProcess: (() => child) as never,
+    onEvent: () => undefined,
+  })
+  child.stdout.emit('data', Buffer.from(JSON.stringify({
+    type: 'control_request',
+    request_id: 'w-1',
+    request: { subtype: 'can_use_tool', tool_name: 'Write', input: { file_path: target, content: 'x' } },
+  }) + '\n'))
+  await new Promise((r) => setTimeout(r, 10))
+  session.answer('w-1', true)
+  await new Promise((r) => setTimeout(r, 20))
+  const reply = JSON.parse(child.stdin.writes.find(line => line.includes('control_response')) ?? '{}')
+  assert.equal(reply.response.response.behavior, 'allow', 'the engine still got its answer')
+  const kept = await listCheckpoints(dir)
+  assert.equal(kept.length, 1, 'the old self was kept BEFORE the answer went out')
+  assert.equal(kept[0].original, target)
+  const before = await readFile(kept[0].copy, 'utf8')
+  assert.equal(before, 'before the engine')
+  child.kill()
+  await rm(dir, { recursive: true, force: true })
+  await rm(workspace, { recursive: true, force: true })
+})
+
+test('plan mode rides the engine\u2019s own flag, and the throttle lists it', async () => {
+  const { engineArguments } = await import('../src/main/engine/claudeCode')
+  assert.deepEqual(
+    engineArguments('m', 'plan').join(' ').includes('--permission-mode plan'),
+    true,
+    'plan first is the CLI\\u2019s own plan mode, not a prompt',
+  )
+  const bay = read('../src/renderer/src/components/EngineBay.tsx')
+  assert.match(bay, /id: 'plan'/, 'the throttle offers plan first')
+  assert.match(bay, /grid-cols-4/, 'the throttle fits four')
+  const shared = read('../src/shared/lib/engine.ts')
+  assert.match(shared, /plan: 'plan'/, 'the shared map names the engine\\u2019s own value')
+})
+
+test('the repetition inspector speaks once, at the third identical step', async () => {
+  const { engineStore, resetEngineForTests } = await import('../src/renderer/src/state/engine')
+  type FakeApi = { listener: ((event: import('../src/shared/lib/engine').EngineEvent) => void) | null }
+  const fake: FakeApi = { listener: null }
+  ;(window as unknown as Record<string, unknown>).api = {}
+  ;(window as unknown as Record<string, unknown>).engineApi = {
+    read: async () => ({
+      engine: { id: 'claude-code', model: 'm', baseUrl: '', workspace: '', approval: 'ask' },
+      running: true,
+      history: [],
+    }),
+    send: async () => ({ ok: true, answer: 'started' }),
+    onEvent: (listener: FakeApi['listener']) => { fake.listener = listener; return () => undefined },
+    onPullEvent: () => () => undefined,
+  }
+  resetEngineForTests()
+  const store = engineStore()
+  await store.send('loop the same step')
+  const same = { kind: 'tool' as const, name: 'Bash', summary: 'npm test' }
+  fake.listener?.(same)
+  fake.listener?.({ ...same })
+  const turn = store.turn
+  assert.ok(turn)
+  assert.equal(turn.items.filter(item => item.kind === 'status').length, 0, 'two repeats stay quiet')
+  fake.listener?.({ ...same })
+  const cries = turn.items.filter(item => item.kind === 'status' && item.text.includes('three times'))
+  assert.equal(cries.length, 1, 'one honest cry at the third')
+  fake.listener?.({ ...same })
+  assert.equal(turn.items.filter(item => item.kind === 'status' && item.text.includes('three times')).length, 1, 'never spammed')
+  fake.listener?.({ kind: 'tool', name: 'Bash', summary: 'npm build' })
+  fake.listener?.({ ...same })
+  fake.listener?.({ ...same })
+  fake.listener?.({ ...same })
+  const criesAfter = turn.items.filter(item => item.kind === 'status' && item.text.includes('three times'))
+  assert.equal(criesAfter.length, 2, 'a NEW loop, after a different step, may say it again')
+  fake.listener?.({ kind: 'done', text: 'ok' })
+})

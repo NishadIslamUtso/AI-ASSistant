@@ -66,8 +66,15 @@ const engineApi = {
   pickWorkspace: (): Promise<{ ok: boolean; answer: string }> =>
     ipcRenderer.invoke('engine:pick-workspace'),
   /** Hand the engine a task. Events arrive through `onEvent` from then on. */
-  send: (prompt: string, cwd: string): Promise<{ ok: boolean; answer: string }> =>
-    ipcRenderer.invoke('engine:send', prompt, cwd),
+  send: (prompt: string, cwd: string, pictures?: Array<{ mime: string; data: string }>): Promise<{ ok: boolean; answer: string }> =>
+    ipcRenderer.invoke('engine:send', prompt, cwd, pictures),
+  /** What the app kept before allowed writes, and the way back. */
+  checkpoints: {
+    list: (): Promise<{ ok: boolean; checkpoints: Array<{ copy: string; original: string; at: string }> }> =>
+      ipcRenderer.invoke('engine:checkpoints:list'),
+    restore: (copy: string): Promise<{ ok: boolean; answer: string }> =>
+      ipcRenderer.invoke('engine:checkpoint:restore', copy),
+  },
   /** Answer one of the engine's permission cards. */
   answer: (requestId: string, allow: boolean): Promise<{ ok: boolean }> =>
     ipcRenderer.invoke('engine:answer', requestId, allow),
@@ -112,6 +119,12 @@ const api = {
     pickFiles: (): Promise<string[]> => ipcRenderer.invoke('sessions:pick-files'),
     forgetSession: (workspace: string): Promise<{ ok: boolean }> => ipcRenderer.invoke('engine:sessions-forget', workspace),
     openFolder: (folder: string): Promise<{ ok: boolean }> => ipcRenderer.invoke('app:open-folder', folder),
+    checkpoints: {
+      list: (): Promise<{ ok: boolean; checkpoints: Array<{ copy: string; original: string; at: string }> }> =>
+        ipcRenderer.invoke('engine:checkpoints:list'),
+      restore: (copy: string): Promise<{ ok: boolean; answer: string }> =>
+        ipcRenderer.invoke('engine:checkpoint:restore', copy),
+    },
   },
   houseRules: {
     read: (): Promise<{ rules: HouseRules; defaults: HouseRules }> => ipcRenderer.invoke('houserules:read'),

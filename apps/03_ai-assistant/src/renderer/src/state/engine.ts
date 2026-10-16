@@ -64,6 +64,8 @@ export type EngineTurn = {
   sessionId: string | null
   /** What the turn cost, as the engine itself reported. */
   usage: EngineUsage | null
+  /** How many pictures rode with the words (drawn beside the prompt). */
+  pictures?: number
 }
 
 export type EngineState = {
@@ -82,7 +84,7 @@ type EngineStore = EngineState & {
   /** Wire the bridge up once: read the settings, listen for events. */
   init(): Promise<void>
   setOn(value: boolean): void
-  send(prompt: string): Promise<{ ok: boolean; answer: string }>
+  send(prompt: string, pictures?: Array<{ mime: string; data: string }>): Promise<{ ok: boolean; answer: string }>
   answer(allow: boolean): Promise<void>
   stop(): Promise<void>
   /** Fold one wire event into the turn. Public so tests can drive it directly. */
@@ -132,11 +134,18 @@ const setState = (patch: Partial<EngineState>): void => {
   emit()
 }
 
+/** Runaway-loop guard: the same tool on the same target, back to back. */
+const repeats = { key: '', count: 0 }
+
 /** Fold one wire event into the current turn, whatever order they arrive in. */
 const ingest = (event: EngineEvent): void => {
   // The engine's existence is not a per-turn fact: even with no task under
   // way, a closed engine must dim its light.
   if (event.kind === 'closed') state.alive = false
+  if (event.kind === 'done' || event.kind === 'error') {
+    repeats.key = ''
+    repeats.count = 0
+  }
   const turn = state.turn
   if (!turn) return
   if (event.kind === 'session') {
@@ -159,7 +168,19 @@ const ingest = (event: EngineEvent): void => {
     if (last?.kind === 'thinking') last.text += event.text
     else turn.items.push({ kind: 'thinking', text: event.text })
   } else if (event.kind === 'tool') {
+    // The repetition inspector: an engine stuck in a loop does the same step
+    // over and over. Say it once, at the third identical step, so a person
+    // can press Stop before the burn; any different step resets the count.
+    const key = `${event.name}\u0000${event.summary}`
+    repeats.count = repeats.key === key ? repeats.count + 1 : 1
+    repeats.key = key
     turn.items.push({ kind: 'tool', name: event.name, summary: event.summary })
+    if (repeats.count === 3) {
+      turn.items.push({
+        kind: 'status',
+        text: 'The engine has done the same step three times in a row. Stop is in the header if it is stuck.',
+      })
+    }
   } else if (event.kind === 'permission') {
     turn.permissions.push({
       requestId: event.requestId,
@@ -281,14 +302,16 @@ const store: EngineStore = {
     if (state.on) void store.init()
   },
 
-  async send(prompt: string): Promise<{ ok: boolean; answer: string }> {
+  async send(prompt: string, pictures: Array<{ mime: string; data: string }> = []): Promise<{ ok: boolean; answer: string }> {
     if (state.turn?.state === 'running') {
       return { ok: false, answer: 'The engine is already working on the last task.' }
     }
     void store.init()
-    const turn: EngineTurn = { prompt, items: [], permissions: [], state: 'running', sessionId: null, usage: null }
+    repeats.key = ''
+    repeats.count = 0
+    const turn: EngineTurn = { prompt, items: [], permissions: [], state: 'running', sessionId: null, usage: null, pictures: pictures.length }
     setState({ turn })
-    const answer = await getEngineApi().send(prompt, '')
+    const answer = await getEngineApi().send(prompt, '', pictures)
     if (answer.ok) state.alive = true
     if (!answer.ok) {
       // The refusal is the result, shown where the work would have appeared —

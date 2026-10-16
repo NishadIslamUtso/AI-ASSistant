@@ -17,7 +17,7 @@ export type EngineAnswer = { ok: boolean; answer: string }
 
 export type EngineSocket = {
   /** Hand the engine a task — starts it on the first one, reuses it after. */
-  send(prompt: string, input: EngineStartInput): EngineAnswer
+  send(prompt: string, input: EngineStartInput & { images?: Array<{ mime: string; data: string }> }): EngineAnswer
   current(): EngineSession | null
   /** True only while a TASK is in flight, not merely while the process lives. */
   turnBusy(): boolean
@@ -66,7 +66,7 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
   }
 
   return {
-    send(prompt: string, input: EngineStartInput): EngineAnswer {
+    send(prompt: string, input: EngineStartInput & { images?: Array<{ mime: string; data: string }> }): EngineAnswer {
       // Engine #2 arrives after its Windows check (architecture doc, 6.3).
       // Until then it refuses honestly instead of pretending to start.
       if (input.settings.id === 'agy') {
@@ -82,7 +82,7 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
           return { ok: false, answer: 'An engine is already working. Stop it first, or wait for it to finish.' }
         }
         // Same engine, new task — no relaunch, no refusal.
-        const sent = session.send(prompt)
+        const sent = session.send(prompt, input.images)
         if (!sent) return { ok: false, answer: 'The engine just closed, try again.' }
         busy = true
         return { ok: true, answer: 'started' }
@@ -94,7 +94,7 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
       if (!session.isRunning()) {
         return { ok: false, answer: 'The engine could not be started on this machine.' }
       }
-      const sent = session.send(prompt)
+      const sent = session.send(prompt, input.images)
       if (!sent) return { ok: true, answer: 'starting' }
       busy = true
       return { ok: true, answer: 'started' }

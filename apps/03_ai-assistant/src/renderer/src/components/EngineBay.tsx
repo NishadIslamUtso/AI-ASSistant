@@ -35,6 +35,11 @@ const THROTTLE: Array<{ id: ApprovalMode; label: string; note: string }> = [
     note: 'Every step beyond reading asks you first, as a card in the chat.',
   },
   {
+    id: 'plan',
+    label: 'Plan first',
+    note: 'It investigates and proposes a plan; nothing changes until you approve the plan itself.',
+  },
+  {
     id: 'edits',
     label: 'Auto-edits',
     note: 'Files in the workspace change without asking; other commands still ask.',
@@ -246,7 +251,7 @@ export default function EngineBay() {
       <div
         role="radiogroup"
         aria-label="How much the engine may do before asking"
-        className="mt-1 grid grid-cols-3 gap-1 rounded-lg border border-line p-1"
+        className="mt-1 grid grid-cols-4 gap-1 rounded-lg border border-line p-1"
       >
         {THROTTLE.map((step) => {
           const active = (engine.settings.approval ?? 'ask') === step.id

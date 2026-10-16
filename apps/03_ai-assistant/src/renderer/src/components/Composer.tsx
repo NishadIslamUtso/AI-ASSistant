@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUp, ChevronDown, CookingPot, Cpu, FolderOpen, Layers, Square } from 'lucide-react'
+import { ArrowUp, ChevronDown, CookingPot, Cpu, FolderOpen, Layers, Mic, MicOff, Paperclip, Square, X } from 'lucide-react'
 import type { Project } from '@shared/lib/projects'
+import type { Attachment } from '@shared/types'
 import { vaultGet, type VaultReply } from '@shared/lib/vault'
 import { useEngine, type EngineTurn } from '@/state/engine'
 import useDismiss from '@/hooks/useDismiss'
@@ -30,6 +31,10 @@ export default function Composer({
   projects = [],
   project = null,
   onProject,
+  /** Pictures and files waiting to ride with the next send. */
+  attachments = [],
+  onFiles,
+  onDetach,
 }: {
   value: string
   onChange: (value: string) => void
@@ -43,12 +48,65 @@ export default function Composer({
   projects?: Project[]
   project?: string | null
   onProject?: (id: string | null) => void
+  attachments?: Attachment[]
+  /** Hand the app the files a person picked or pasted; it reads and refuses honestly. */
+  onFiles?: (files: File[]) => void
+  onDetach?: (id: string) => void
 }) {
   const box = useRef<HTMLTextAreaElement | null>(null)
   const [boxOpen, setBoxOpen] = useState<'engine' | 'models' | null>(null)
   const [cook, setCook] = useState(false)
+  const [listening, setListening] = useState(false)
+  const fileInput = useRef<HTMLInputElement | null>(null)
+  const recognition = useRef<{ stop: () => void } | null>(null)
   const pickerRef = useRef<HTMLDivElement | null>(null)
   useDismiss(pickerRef, () => setBoxOpen(null), boxOpen !== null)
+
+  /**
+   * Dictation: the window's own speech recognition (Chromium's), words into
+   * the draft. Where the machine has no microphone or no listener, the button
+   * says so instead of pretending. The notice rides the app's own channel.
+   */
+  const toggleDictation = (): void => {
+    if (listening) {
+      recognition.current?.stop()
+      return
+    }
+    type SpeechCtor = new () => {
+      lang: string
+      interimResults: boolean
+      continuous: boolean
+      start: () => void
+      stop: () => void
+      onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null
+      onerror: (() => void) | null
+      onend: (() => void) | null
+    }
+    const Ctor = (globalThis as unknown as { webkitSpeechRecognition?: SpeechCtor }).webkitSpeechRecognition
+    if (typeof Ctor !== 'function') {
+      window.dispatchEvent(new CustomEvent('app:notice', { detail: 'This window has no speech listener: dictation needs a microphone.' }))
+      return
+    }
+    try {
+      const ear = new Ctor()
+      ear.lang = navigator.language || 'en-US'
+      ear.interimResults = false
+      ear.continuous = true
+      ear.onresult = (event) => {
+        let said = ''
+        for (let i = 0; i < event.results.length; i += 1) said += `${event.results[i][0].transcript} `
+        if (said.trim()) onChange(`${value ? `${value.trimEnd()} ` : ''}${said.trim()}`)
+      }
+      ear.onerror = () => setListening(false)
+      ear.onend = () => setListening(false)
+      ear.start()
+      recognition.current = ear
+      setListening(true)
+    } catch {
+      setListening(false)
+      window.dispatchEvent(new CustomEvent('app:notice', { detail: 'Could not open the microphone. Nothing was recorded.' }))
+    }
+  }
 
   // Grow with the text, up to a point, then scroll. A composer that stays one
   // line high while you write a paragraph hides what you are writing.
@@ -59,7 +117,16 @@ export default function Composer({
     element.style.height = `${Math.min(element.scrollHeight, 200)}px`
   }, [value])
 
-  const canSend = value.trim().length > 0 && !busy
+  const canSend = (value.trim().length > 0 || attachments.length > 0) && !busy
+
+  /** Files pasted straight onto the box ride like picked files. */
+  const paste = (event: React.ClipboardEvent<HTMLTextAreaElement>): void => {
+    const files = Array.from(event.clipboardData?.files ?? [])
+    if (files.length && onFiles) {
+      event.preventDefault()
+      onFiles(files)
+    }
+  }
 
   const keydown = (event: React.KeyboardEvent<HTMLTextAreaElement>): void => {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -81,13 +148,61 @@ export default function Composer({
           value={value}
           onChange={event => onChange(event.target.value)}
           onKeyDown={keydown}
+          onPaste={paste}
           rows={1}
           placeholder="How can I help you today?"
           aria-label="Message"
           className="block max-h-[200px] w-full resize-none bg-transparent px-4 pt-3.5 text-[14px] leading-relaxed text-ink outline-none placeholder:text-muted"
         />
+        {attachments.length > 0 && onDetach ? (
+          <ul className="flex flex-wrap gap-1.5 px-4 pt-2" aria-label="Attached">
+            {attachments.map(entry => (
+              <li key={entry.id} className="flex items-center gap-1 rounded-lg border border-line bg-bg px-1.5 py-1 text-[11px] text-muted">
+                {entry.kind === 'image' && entry.data ? (
+                  <img src={`data:${entry.mime};base64,${entry.data}`} alt="" className="h-6 w-6 rounded object-cover" />
+                ) : (
+                  <span className="max-w-[140px] truncate">{entry.name}</span>
+                )}
+                <button type="button" onClick={() => onDetach(entry.id)} aria-label={`Remove ${entry.name}`} className="text-muted hover:text-ink">
+                  <X size={11} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
         <div className="flex items-center gap-1.5 px-2.5 pb-2 pt-1" ref={pickerRef}>
           <ProjectDropdown projects={projects} project={project} onProject={onProject} />
+          <input
+            ref={fileInput}
+            type="file"
+            multiple
+            accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,.txt,.md,.csv,.json,.ts,.tsx,.js,.jsx,.py"
+            className="hidden"
+            onChange={event => {
+              const files = Array.from(event.target.files ?? [])
+              if (files.length && onFiles) onFiles(files)
+              event.target.value = ''
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => fileInput.current?.click()}
+            aria-label="Attach"
+            title="Attach a picture, a video (its frames), or a text file"
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-muted hover:text-ink"
+          >
+            <Paperclip size={13} />
+          </button>
+          <button
+            type="button"
+            onClick={toggleDictation}
+            aria-label={listening ? 'Stop dictation' : 'Dictate'}
+            aria-pressed={listening}
+            title={listening ? 'Listening. Press again to stop.' : 'Speak into the box: the window\u2019s own listener types what you say'}
+            className={`flex h-7 w-7 items-center justify-center rounded-lg ${listening ? 'text-warn' : 'text-muted hover:text-ink'}`}
+          >
+            {listening ? <MicOff size={13} /> : <Mic size={13} />}
+          </button>
           <span className="ml-auto" />
           <EngineChip open={boxOpen === 'engine'} onToggle={() => setBoxOpen(boxOpen === 'engine' ? null : 'engine')} />
           <ModelChip open={boxOpen === 'models'} onToggle={() => setBoxOpen(boxOpen === 'models' ? null : 'models')} />
@@ -303,11 +418,12 @@ function CookDialog({ draft, onDone }: { draft: string; onDone: (next: string | 
   )
 }
 
-/** The engine chip: which engine, and its own three modes. Nothing from the app. */
+/** The engine chip: which engine, and its own modes (plan included). Nothing from the app. */
 function EngineChip({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   const engine = useEngine()
-  const modes: Array<{ id: 'ask' | 'edits' | 'full'; label: string; note: string }> = [
+  const modes: Array<{ id: 'ask' | 'plan' | 'edits' | 'full'; label: string; note: string }> = [
     { id: 'ask', label: 'Ask me', note: 'Every step beyond reading asks you first.' },
+    { id: 'plan', label: 'Plan first', note: 'It investigates and proposes; nothing changes until you approve the plan.' },
     { id: 'edits', label: 'Auto-edits', note: 'Files change unasked; other commands still ask.' },
     { id: 'full', label: 'Full speed', note: 'Everything runs unasked. The engine\u2019s own deny rules still hold.' },
   ]

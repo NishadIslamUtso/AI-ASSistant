@@ -144,6 +144,8 @@ export function createEngineParser(): EngineParser {
       if (request.subtype !== 'can_use_tool' || typeof request.tool_name !== 'string') return []
       const requestId = typeof message.request_id === 'string' ? message.request_id : ''
       if (!requestId) return []
+      const inputRecord = asRecord(request.input)
+      const file = typeof inputRecord.file_path === 'string' ? inputRecord.file_path : ''
       return [
         {
           kind: 'permission',
@@ -151,6 +153,7 @@ export function createEngineParser(): EngineParser {
           tool: request.tool_name,
           summary: toolSummary(request.tool_name, request.input),
           detail: toolDetail(request.tool_name, request.input),
+          ...(file ? { file } : {}),
         },
       ]
     }

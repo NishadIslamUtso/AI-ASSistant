@@ -73,6 +73,10 @@ export type DesktopBridge = {
     pickFiles: () => Promise<string[]>
     forgetSession: (workspace: string) => Promise<{ ok: boolean }>
     openFolder: (folder: string) => Promise<{ ok: boolean }>
+    checkpoints: {
+      list: () => Promise<{ ok: boolean; checkpoints: Array<{ copy: string; original: string; at: string }> }>
+      restore: (copy: string) => Promise<{ ok: boolean; answer: string }>
+    }
   }
   settings: {
     /** What the app has been told to do. */
@@ -342,6 +346,10 @@ const demoBridge: DesktopBridge = {
     pickFiles: async () => [],
     forgetSession: async () => ({ ok: false }),
     openFolder: async () => ({ ok: false }),
+    checkpoints: {
+      list: async () => ({ ok: true, checkpoints: [] }),
+      restore: async () => ({ ok: false, answer: 'Checkpoints live in the desktop app.' }),
+    },
   },
 }
 
@@ -366,7 +374,11 @@ export type EngineBridge = {
   setModel: (model: string, provider?: 'anthropic') => Promise<{ ok: boolean; answer: string }>
   setApproval: (mode: ApprovalMode) => Promise<{ ok: boolean; answer: string }>
   pickWorkspace: () => Promise<{ ok: boolean; answer: string }>
-  send: (prompt: string, cwd: string) => Promise<{ ok: boolean; answer: string }>
+  send: (prompt: string, cwd: string, pictures?: Array<{ mime: string; data: string }>) => Promise<{ ok: boolean; answer: string }>
+  checkpoints: {
+    list: () => Promise<{ ok: boolean; checkpoints: Array<{ copy: string; original: string; at: string }> }>
+    restore: (copy: string) => Promise<{ ok: boolean; answer: string }>
+  }
   answer: (requestId: string, allow: boolean) => Promise<{ ok: boolean }>
   stop: () => Promise<{ ok: boolean }>
   onEvent: (listener: (event: EngineEvent) => void) => () => void
@@ -400,6 +412,10 @@ const demoEngineBridge: EngineBridge = {
     answer: 'The engine works in the desktop app: this window is the interface only.',
   }),
   answer: async () => ({ ok: false }),
+  checkpoints: {
+    list: async () => ({ ok: true, checkpoints: [] }),
+    restore: async () => ({ ok: false, answer: 'Checkpoints live in the desktop app.' }),
+  },
   stop: async () => ({ ok: false }),
   onEvent: () => () => undefined,
 }

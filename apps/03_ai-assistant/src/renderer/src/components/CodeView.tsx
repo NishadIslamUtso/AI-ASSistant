@@ -20,8 +20,9 @@ import { linkFiles, markDone, normalizeBoard, scopeBoard, unlinkFile, type Sessi
 
 const leaf = (folder: string): string => folder.split(/[\\/]/).filter(Boolean).at(-1) ?? folder
 
-const THROTTLE: Array<{ id: 'ask' | 'edits' | 'full'; label: string; note: string }> = [
+const THROTTLE: Array<{ id: 'ask' | 'plan' | 'edits' | 'full'; label: string; note: string }> = [
   { id: 'ask', label: 'Ask me', note: 'Every step beyond reading asks you first.' },
+  { id: 'plan', label: 'Plan first', note: 'It investigates and proposes; nothing changes until you approve the plan.' },
   { id: 'edits', label: 'Auto-edits', note: 'Files change unasked; other commands still ask.' },
   {
     id: 'full',

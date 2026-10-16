@@ -25,6 +25,9 @@ import type { ArtifactSummary } from '../../main/artifacts/store'
 import useChat from './hooks/useChat'
 import useArtifactRewrite from './hooks/useArtifactRewrite'
 import useModels from './hooks/useModels'
+import type { Attachment } from '@shared/types'
+import { readAttachment } from '@shared/lib/attachments'
+import { extractFrames } from './lib/videoFrames'
 import usePersistentState from './hooks/usePersistentState'
 import useVault from './hooks/useVault'
 import SettingsView, { type SectionId } from './components/SettingsView'
@@ -56,6 +59,13 @@ export default function App() {
   const [notice, setNotice] = useState('')
 
   const chats = useChats(setNotice)
+  // The app's own notice channel: pieces of the window (dictation, media) speak
+  // here when a machine cannot do something, instead of a button lying.
+  useEffect(() => {
+    const hear = (event: Event): void => setNotice((event as CustomEvent<string>).detail || '')
+    window.addEventListener('app:notice', hear)
+    return () => window.removeEventListener('app:notice', hear)
+  }, [])
   const [profile, setProfile] = usePersistentState('ai-assistant.profile', DEFAULT_PROFILE, normalizeProfile, setNotice)
   const [welcomed, setWelcomed] = usePersistentState('ai-assistant.welcomed', false, (value) => value === true, setNotice)
   const { projects } = useProjects(true)
@@ -74,6 +84,10 @@ export default function App() {
   const [permissionsRevision, setPermissionsRevision] = useState(0)
   const models = useModels(model, setModel, permissions)
   const [draft, setDraft] = useState('')
+  // Media for the next engine task: pictures, video frames, text files. Read
+  // the moment they arrive (the reader refuses honestly), sent with the words,
+  // cleared on success. The engine reads them itself, whatever engine it is.
+  const [attachments, setAttachments] = useState<Attachment[]>([])
   // Set for a moment when the rail jumps to an artifact, so a click on something
   // already on screen still shows that it did something.
   const [highlight, setHighlight] = useState('')
@@ -345,14 +359,48 @@ export default function App() {
     }
   }
 
+  /** Read picked/pasted files into attachments; a video becomes its frames. */
+  const addFiles = async (files: File[]): Promise<void> => {
+    const room = Math.max(0, 4 - attachments.length)
+    if (room === 0) {
+      setNotice('Four attachments ride with one task. Remove one first.')
+      return
+    }
+    const taken: Attachment[] = []
+    for (const file of files.slice(0, room)) {
+      try {
+        if (/^video\/(?:mp4|webm)$/.test(file.type)) {
+          // A video rides as evenly spaced still frames: the engine reads
+          // pictures natively, and frames carry the story a clip would.
+          const frames = await extractFrames(file, room - taken.length)
+          for (const frame of frames) {
+            taken.push(await readAttachment(frame, { verified: true, vision: true, thinking: false }))
+          }
+        } else {
+          // The engine sees pictures itself; the chat vision bridge's gate is
+          // about the chat brain, not the engine's own eyes.
+          taken.push(await readAttachment(file, { verified: true, vision: true, thinking: false }))
+        }
+      } catch (failure) {
+        setNotice((failure as Error).message)
+        break
+      }
+    }
+    if (taken.length) setAttachments(current => [...current, ...taken].slice(0, 4))
+  }
+
   const send = async (): Promise<void> => {
     const text = draft
-    if (!text.trim()) return
+    if (!text.trim() && attachments.length === 0) return
     // The only path: the engine. The text is a work order. The same
     // keep-the-draft-on-refusal rule applies, so nothing is ever typed twice.
-    const answer = await engineStore().send(text)
+    const answer = await engineStore().send(
+      text.trim() || (attachments.length ? 'Read what I attached and tell me what you see.' : ''),
+      attachments.filter(entry => entry.kind === 'image' && entry.data).map(entry => ({ mime: entry.mime || 'image/png', data: entry.data || '' })),
+    )
     if (answer.ok) {
       setDraft('')
+      setAttachments([])
       setNotice('')
       if (pendingProject) {
         setPendingProject(null)
@@ -489,6 +537,9 @@ export default function App() {
           projects={projects}
           project={pendingProject}
           onProject={setPendingProject}
+          attachments={attachments}
+          onFiles={(files) => void addFiles(files)}
+          onDetach={(id) => setAttachments(current => current.filter(entry => entry.id !== id))}
           onRewrite={runRewrite}
           onRestore={(artifact, index) => restoreVersion(artifact.id, index)}
           busyArtifactId={rewrite.busyId || ''}

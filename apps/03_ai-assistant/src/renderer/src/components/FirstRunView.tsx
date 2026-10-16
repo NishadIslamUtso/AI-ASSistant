@@ -17,8 +17,9 @@ import { isDemo } from '@/platform/bridge'
  * screen.
  */
 
-const THROTTLE: Array<{ id: 'ask' | 'edits' | 'full'; label: string }> = [
+const THROTTLE: Array<{ id: 'ask' | 'plan' | 'edits' | 'full'; label: string }> = [
   { id: 'ask', label: 'Ask me' },
+  { id: 'plan', label: 'Plan first' },
   { id: 'edits', label: 'Auto-edits' },
   { id: 'full', label: 'Full speed' },
 ]

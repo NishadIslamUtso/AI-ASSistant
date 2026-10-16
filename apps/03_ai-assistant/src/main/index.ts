@@ -20,6 +20,8 @@ import { registerArtifactIpc } from './artifacts/ipc'
 import { createEngineSocket, type EngineSocket } from './engine/socket'
 import { normalizeEngine } from '../shared/lib/engine'
 import { APPROVAL_MODES, type ApprovalMode, type EngineEvent, type EngineId, type EngineModelEntry } from '../shared/lib/engine'
+import { ENGINE_IMAGE_MIMES, MAX_ENGINE_IMAGE_CHARS as ENGINE_IMAGE_CHARS, MAX_ENGINE_ATTACHMENTS as ENGINE_IMAGE_LIMIT } from '../shared/lib/media'
+import { listCheckpoints, restoreCheckpoint } from './engine/checkpoints'
 import { agyModelSource, detectEngine } from './engine/availability'
 import { parsePullLine, validateModelName } from './engine/pull'
 import { deployMcp, deploySkill, scanClaudeSkills, type McpServer, type VaultSkill } from './engine/deploy'
@@ -486,9 +488,25 @@ function registerBridges(): void {
 
   ipcMain.handle(
     'engine:send',
-    (_event, prompt: string, cwd: string): { ok: boolean; answer: string } => {
+    (_event, prompt: string, cwd: string, pictures: unknown = []): { ok: boolean; answer: string } => {
       const text = typeof prompt === 'string' ? prompt.trim().slice(0, 20000) : ''
       if (!text) return { ok: false, answer: 'Write what the engine should do first.' }
+      // Pictures: only what the wire can carry, only a few, only small. A bad
+      // list is refused with the reason, never silently dropped.
+      const images: Array<{ mime: string; data: string }> = []
+      if (Array.isArray(pictures)) {
+        for (const entry of pictures.slice(0, ENGINE_IMAGE_LIMIT)) {
+          const mime = (entry as Record<string, unknown>)?.mime
+          const data = (entry as Record<string, unknown>)?.data
+          if (typeof mime !== 'string' || typeof data !== 'string' || !ENGINE_IMAGE_MIMES.includes(mime as never)) {
+            return { ok: false, answer: 'One of the pictures is not a PNG, JPEG or WebP. Nothing was sent.' }
+          }
+          if (data.length > ENGINE_IMAGE_CHARS || !data) {
+            return { ok: false, answer: 'One of the pictures is larger than 2 MB. Nothing was sent.' }
+          }
+          images.push({ mime, data })
+        }
+      }
       if (!engine) return { ok: false, answer: 'The engine is still waking up, try again in a moment.' }
       // The working folder is the app's decision, never the window's: the
       // folder the owner picked in the engine bay, or the vault when none.
@@ -510,11 +528,24 @@ function registerBridges(): void {
       return engine.send(text, {
         cwd: settings.engine.workspace || vaultRoot(),
         settings: settings.engine,
-        auth,
+        auth, images,
+        checkpointDir: join(app.getPath('userData'), 'checkpoints'),
         onEvent: pushEngineEvent,
       })
     },
   )
+
+  // Checkpoints: what the app kept the moment before an allowed write, and
+  // the way back. Read from the folder the engine was handed at send time.
+  ipcMain.handle('engine:checkpoints:list', async () => {
+    try {
+      return { ok: true, checkpoints: await listCheckpoints(join(app.getPath('userData'), 'checkpoints')) }
+    } catch {
+      return { ok: true, checkpoints: [] }
+    }
+  })
+  ipcMain.handle('engine:checkpoint:restore', (_event, copy: string): Promise<{ ok: boolean; answer: string }> =>
+    restoreCheckpoint(join(app.getPath('userData'), 'checkpoints'), typeof copy === 'string' ? copy : ''))
 
   ipcMain.handle('engine:answer', (_event, requestId: string, allow: boolean): { ok: boolean } => {
     const session = engine?.current()

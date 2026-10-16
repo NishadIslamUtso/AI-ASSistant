@@ -13,10 +13,22 @@ import { useEngine, type EngineItem } from '@/state/engine'
  * the same visual language as the rest of the app (the same tokens, the same
  * rounded cards, nothing new invented).
  */
+type Kept = { copy: string; original: string; at: string }
+
 export default function EnginePanel() {
   const engine = useEngine()
   const turn = engine.turn
   const [handed, setHanded] = useState('')
+  // What the app kept before allowed writes this session, and what a restore said.
+  const [kept, setKept] = useState<Kept[]>([])
+  const [restored, setRestored] = useState('')
+  const finished = turn?.state === 'done' || turn?.state === 'error'
+  useEffect(() => {
+    if (!finished) return
+    void bridge.engine.checkpoints.list().then((answer) => {
+      if (answer.ok) setKept(answer.checkpoints.slice(0, 3))
+    })
+  }, [finished])
   // The working word: one per turn, turning over while the engine works, so
   // a wait reads as a worker at work rather than a frozen card.
   const running = turn?.state === 'running'
@@ -87,7 +99,10 @@ export default function EnginePanel() {
         )}
       </header>
 
-      <p className="mt-1.5 line-clamp-3 text-[12.5px] text-muted">▸ {turn.prompt}</p>
+      <p className="mt-1.5 line-clamp-3 text-[12.5px] text-muted">
+        ▸ {turn.prompt}
+        {turn.pictures ? <span className="text-muted"> + {turn.pictures} picture{turn.pictures === 1 ? '' : 's'}</span> : null}
+      </p>
 
       <ul className="mt-2 flex flex-col gap-1.5">
         {turn.state === 'running' && turn.items.length === 0 ? (
@@ -102,6 +117,34 @@ export default function EnginePanel() {
       </ul>
 
       {handed ? <p className="mt-1 text-[11px] text-muted">{handed}</p> : null}
+      {finished && kept.length > 0 ? (
+        <div className="mt-2 rounded-lg border border-line bg-bg p-2">
+          <p className="text-[11px] text-muted">Kept before the engine changed a file, newest first:</p>
+          <ul className="mt-1 flex flex-col gap-1">
+            {kept.map(entry => (
+              <li key={entry.copy} className="flex items-center gap-2 text-[11.5px]">
+                <span className="min-w-0 flex-1 truncate text-muted" title={entry.original}>
+                  {entry.original.split(/[\\/]/).filter(Boolean).at(-1)} · {new Date(entry.at).toLocaleTimeString()}
+                </span>
+                <button
+                  type="button"
+                  title={`Put the older self of ${entry.original} back`}
+                  onClick={() => {
+                    void bridge.engine.checkpoints.restore(entry.copy).then((answer) => {
+                      setRestored(answer.answer)
+                      if (answer.ok) setKept(current => current.filter(row => row.copy !== entry.copy))
+                    })
+                  }}
+                  className="rounded-lg border border-line px-2 py-0.5 text-[11px] text-muted hover:text-ink"
+                >
+                  Restore
+                </button>
+              </li>
+            ))}
+          </ul>
+          {restored ? <p className="mt-1 text-[11px] text-muted">{restored}</p> : null}
+        </div>
+      ) : null}
       {turn.usage && turn.state !== 'running' ? (
         <p className="mt-2 text-[11px] text-muted" title="What the engine itself reported for this turn">
           {turn.usage.inTokens.toLocaleString()} in · {turn.usage.outTokens.toLocaleString()} out
