@@ -117,6 +117,12 @@ export type DesktopBridge = {
     read: () => Promise<{ servers: Array<{ name: string; command?: string; args?: string[]; url?: string }> }>
     write: (servers: Array<{ name: string; command?: string; args?: string[]; url?: string }>) => Promise<{ ok: boolean; written: string[] }>
   }
+  structure: {
+    /** What a folder is, and exactly what a structure apply would add. */
+    inspect: (root: string) => Promise<{ ok: boolean; kind?: string; present?: string[]; missing?: string[]; error?: string }>
+    /** Add every missing structure file; existing files are never rewritten. */
+    apply: (root: string) => Promise<{ ok: boolean; kind?: string; written?: string[]; skipped?: string[]; error?: string }>
+  }
   vault: {
     /** The operating system's folder picker. null when the person closed it. */
     chooseFolder: () => Promise<string | null>
@@ -196,6 +202,10 @@ const demoBridge: DesktopBridge = {
   mcp: {
     read: async () => ({ servers: [] }),
     write: async () => ({ ok: false, written: [] }),
+  },
+  structure: {
+    inspect: async () => ({ ok: false, error: 'Inspecting a structure needs the desktop app.' }),
+    apply: async () => ({ ok: false, error: 'Writing a structure needs the desktop app.' }),
   },
   vault: { chooseFolder: async () => null, saveHandoff: async () => ({ ok: false, answer: 'Writing a handoff needs the desktop app.' }), exportCopy: async () => ({ ok: false, answer: 'Exporting needs the desktop app.' }), captureChat: async () => ({ ok: false, answer: 'Capturing needs the desktop app.' }) },
   // No socket is open here, and none can be: this is a page, not the app.

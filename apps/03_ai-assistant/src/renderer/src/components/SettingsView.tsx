@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { bridge, isDemo } from '../platform/bridge'
 import HouseRulesSection from './HouseRulesSection'
+import BrainStructureSection from './BrainStructureSection'
 import SkillsCatalogSection from './SkillsCatalogSection'
 import BrowserControlSection from './BrowserControlSection'
 import ModsSection from './ModsSection'
@@ -1101,6 +1102,11 @@ export default function SettingsView({
             )}
           </div>
         ),
+      },
+      {
+        label: 'Second-brain structure',
+        terms: 'structure wiki index claude.md agents.md second brain generate adopt existing folder llm wiki method',
+        body: <BrainStructureSection path={vault.path} isDemo={isDemo} />,
       },
     ],
   }

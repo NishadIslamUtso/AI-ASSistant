@@ -175,6 +175,14 @@ const api = {
       servers: Array<{ name: string; command?: string; args?: string[]; url?: string }>,
     ): Promise<{ ok: boolean; written: string[] }> => ipcRenderer.invoke('mcp:write', { servers }),
   },
+  structure: {
+    /** What a folder is, and exactly what a structure apply would add. */
+    inspect: (root: string): Promise<{ ok: boolean; kind?: string; present?: string[]; missing?: string[]; error?: string }> =>
+      ipcRenderer.invoke('structure:inspect', root),
+    /** Add every missing structure file; existing files are never rewritten. */
+    apply: (root: string): Promise<{ ok: boolean; kind?: string; written?: string[]; skipped?: string[]; error?: string }> =>
+      ipcRenderer.invoke('structure:apply', root),
+  },
   vault: {
     /** The operating system's folder picker. null when the person closed it. */
     chooseFolder: (): Promise<string | null> => ipcRenderer.invoke('vault:choose-folder'),

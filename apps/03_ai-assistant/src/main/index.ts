@@ -1,6 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, safeStorage, shell } from 'electron'
-import { join } from 'node:path'
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { dirname, join, resolve } from 'node:path'
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { startLocalApi, type LocalApi } from './api/server'
 import { DEFAULT_EXTENSION_PORT, startExtensionApi, type ExtensionApi } from './extension/server'
 import { createVaultService, resolveVaultRoot } from './vault/service'
@@ -26,6 +26,7 @@ import { deployMcp, deploySkill, scanClaudeSkills, type McpServer, type VaultSki
 import { installCatalogSkill } from './engine/skillCatalogInstall'
 import { installPackFromFolder, listPacks, removePack } from './engine/packs'
 import { deployBuiltInSkills } from './engine/vaultSkills'
+import { classifyBrainRoot, planBrainApply } from '../shared/lib/brainStructure'
 import { normalizeBoard } from '../shared/lib/sessionsBoard'
 import { exportVaultCopy } from './vault/exportCopy'
 import { deployHouseRules } from './engine/houseRulesDeploy'
@@ -237,6 +238,62 @@ function registerBridges(): void {
       properties: ['openDirectory', 'createDirectory'],
     })
     return chosen.canceled || !chosen.filePaths.length ? null : chosen.filePaths[0]
+  })
+
+  // The second-brain structure (his 2026-10-16 order): generate a new one or
+  // adopt an existing folder — either way, only ever ADD what is missing.
+  // The plan is made here, from the real folder, never from the renderer's
+  // word; an existing file is never rewritten.
+  const structurePlan = (root: string) => {
+    if (typeof root !== 'string' || !root.trim() || root.length > 4096 || /[\n\r]/.test(root)) {
+      throw new Error('Give a real folder path.')
+    }
+    let names: string[] = []
+    try {
+      names = readdirSync(root)
+    } catch {
+      return { error: 'That folder cannot be read.' as const }
+    }
+    const { kind } = classifyBrainRoot(names)
+    const plan = planBrainApply(kind, relative => existsSync(join(root, relative)))
+    return { kind: plan.kind, present: plan.present, missing: plan.missing, writes: plan.writes }
+  }
+
+  ipcMain.handle('structure:inspect', (_event, root: string) => {
+    try {
+      const plan = structurePlan(root)
+      return 'error' in plan ? { ok: false, error: plan.error } : { ok: true, kind: plan.kind, present: plan.present, missing: plan.missing }
+    } catch (error) {
+      return { ok: false, error: (error as Error).message }
+    }
+  })
+
+  ipcMain.handle('structure:apply', (_event, root: string) => {
+    try {
+      const plan = structurePlan(root)
+      if ('error' in plan) return { ok: false, error: plan.error }
+      const written: string[] = []
+      for (const file of plan.writes) {
+        const full = join(root, file.relative)
+        mkdirSync(dirname(full), { recursive: true })
+        writeFileSync(full, file.content, { encoding: 'utf8', flag: 'wx' })
+        written.push(file.relative)
+      }
+      // Inside an app vault, the own audit log records the additions.
+      if (plan.kind === 'app-structure' && written.length && resolve(root) === resolve(vaultRoot())) {
+        try {
+          // One journal line for the whole apply — the journal is write-once
+          // per day, so the apply is logged as the one event it was.
+          const service = createVaultService({ vaultPath: vaultRoot() })
+          service.capture({ type: 'journal', content: `Second-brain structure: added ${written.join(', ')}.` })
+        } catch {
+          // The files are on disk either way; a log failure is reported, not hidden.
+        }
+      }
+      return { ok: true, kind: plan.kind, written, skipped: plan.present }
+    } catch (error) {
+      return { ok: false, error: (error as Error).message }
+    }
   })
 
   // The artifact library, in this user's own app-data folder. Not the vault:
