@@ -88,7 +88,7 @@ export type PackTargets = {
   agySkillsDir: string
 }
 
-export function installPackFromFolder(folder: string, targets: PackTargets, via?: 'index' | 'starter'): InstallAnswer {
+export function installPackFromFolder(folder: string, targets: PackTargets): InstallAnswer {
   const manifestPath = join(folder, 'manifest.json')
   if (!existsSync(manifestPath)) return { ok: false, answer: 'That folder has no manifest.json — a pack is a folder with one.' }
   const manifestFile = readCapped(manifestPath)
@@ -151,10 +151,7 @@ export function installPackFromFolder(folder: string, targets: PackTargets, via?
     return { ok: false, answer: 'Deploying the skills failed. The pack was not kept.' }
   }
   try {
-    // How this arrived: an index means a checksum was verified against a
-    // store's pin; 'starter' means the app shipped it. Absent = installed
-    // straight from a folder the person picked — the badge says so.
-    writeFileSync(join(destination, '.installed.json'), JSON.stringify({ written, installedAt: new Date().toISOString(), ...(via ? { via } : {}) }, null, 2), 'utf8')
+    writeFileSync(join(destination, '.installed.json'), JSON.stringify({ written, installedAt: new Date().toISOString() }, null, 2), 'utf8')
   } catch {
     // The record is a convenience; the install itself stands.
   }
@@ -162,9 +159,9 @@ export function installPackFromFolder(folder: string, targets: PackTargets, via?
 }
 
 /** What the Extensions list shows: every installed pack, as its manifest says it is. */
-export function listPacks(storeRoot: string): Array<{ pack: Pack; folder: string; installedAt: string; via?: string }> {
+export function listPacks(storeRoot: string): Array<{ pack: Pack; folder: string; installedAt: string }> {
   if (!existsSync(storeRoot)) return []
-  const out: Array<{ pack: Pack; folder: string; installedAt: string; via?: string }> = []
+  const out: Array<{ pack: Pack; folder: string; installedAt: string }> = []
   for (const entry of readdirSync(storeRoot, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue
     const folder = join(storeRoot, entry.name)
@@ -173,16 +170,13 @@ export function listPacks(storeRoot: string): Array<{ pack: Pack; folder: string
     try {
       const { pack } = normalizePack(JSON.parse(readFileSync(manifest, 'utf8')))
       let installedAt = ''
-      let via: string | undefined
       const record = join(folder, '.installed.json')
       if (existsSync(record)) {
         try {
-          const parsed = JSON.parse(readFileSync(record, 'utf8')) as { installedAt?: string; via?: string }
-          installedAt = String(parsed['installedAt'] ?? '')
-          via = typeof parsed['via'] === 'string' ? parsed['via'] : undefined
+          installedAt = String((JSON.parse(readFileSync(record, 'utf8')) as { installedAt?: string })['installedAt'] ?? '')
         } catch {}
       }
-      if (pack.id) out.push({ pack, folder, installedAt, via })
+      if (pack.id) out.push({ pack, folder, installedAt })
     } catch {
       // A damaged pack shows as nothing rather than breaking the list; the
       // folder remains for the person to delete by hand if they wish.

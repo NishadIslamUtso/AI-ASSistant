@@ -125,7 +125,6 @@ export type DesktopBridge = {
     indexInstall: (kind: string, locator: string, id: string) => Promise<{ ok: boolean; answer: string; written?: string[]; folder?: string }>
     exportPack: (payload: { name: string; description: string; author: string; skills: string[]; theme: Record<string, string> | null }) => Promise<{ ok: boolean; answer: string; folder?: string; index?: string }>
     installStarter: () => Promise<{ ok: boolean; answer: string; folder?: string; written?: string[] }>
-    communityIndex?: () => Promise<{ ok: boolean; path?: string }>
   }
   /** The engine's tool servers (MCP). Browser control is one entry in this list. */
   mcp: {
@@ -241,7 +240,6 @@ const demoBridge: DesktopBridge = {
     indexInstall: async () => ({ ok: false, answer: 'Installing from an index needs the desktop app.' }),
     exportPack: async () => ({ ok: false, answer: 'Exporting a pack needs the desktop app.' }),
     installStarter: async () => ({ ok: false, answer: 'Installing the starter pack needs the desktop app.' }),
-    communityIndex: async () => ({ ok: false }),
   },
   mcp: {
     read: async () => ({ servers: [] }),
@@ -363,7 +361,7 @@ export type EngineBridge = {
   onPullEvent: (listener: (tick: unknown) => void) => () => void
   readHouseRules: () => Promise<{ rules: HouseRules; defaults: HouseRules }>
   writeHouseRules: (rules: HouseRules) => Promise<{ ok: boolean; written: string[] }>
-  setModel: (model: string, provider?: 'anthropic') => Promise<{ ok: boolean; answer: string }>
+  setModel: (model: string) => Promise<{ ok: boolean; answer: string }>
   setApproval: (mode: ApprovalMode) => Promise<{ ok: boolean; answer: string }>
   pickWorkspace: () => Promise<{ ok: boolean; answer: string }>
   send: (prompt: string, cwd: string) => Promise<{ ok: boolean; answer: string }>

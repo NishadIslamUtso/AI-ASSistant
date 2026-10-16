@@ -1,14 +1,16 @@
-import { Brain, Database, FolderOpen, MessageSquare, Shapes, Sun } from 'lucide-react'
+import { Database, FolderOpen, MessageSquare, Shapes, SquareTerminal, Sun } from 'lucide-react'
 
 /**
  * The app's own sections, at the top of the sidebar.
  *
- * Every entry is a screen that exists — a nav that looks complete and is
- * not is worse than a short one that is. Code lives inside Projects (its
- * working folder is the project's); see the note below the items.
+ * Two entries, because two screens exist. Code, Projects, Vault and Today are
+ * in the design and are not built yet; they are named in one muted line rather
+ * than drawn as entries that do nothing. A nav that looks complete and is not
+ * is worse than a short one that is — that is the rule this file exists to
+ * keep.
  */
 
-export type View = 'chat' | 'artifacts' | 'today' | 'projects' | 'vault' | 'brain' | 'code'
+export type View = 'chat' | 'artifacts' | 'today' | 'projects' | 'vault' | 'code'
 
 const ITEMS: Array<{ id: View; label: string; Icon: typeof MessageSquare }> = [
   { id: 'chat', label: 'Chat', Icon: MessageSquare },
@@ -16,15 +18,8 @@ const ITEMS: Array<{ id: View; label: string; Icon: typeof MessageSquare }> = [
   { id: 'today', label: 'Today', Icon: Sun },
   { id: 'projects', label: 'Projects', Icon: FolderOpen },
   { id: 'vault', label: 'Vault', Icon: Database },
-  { id: 'brain', label: 'Brain', Icon: Brain },
+  { id: 'code', label: 'Code', Icon: SquareTerminal },
 ]
-
-/**
- * Code is deliberately NOT in this nav: it is not a place you wander into,
- * it is a project's working folder — so it opens from the project itself
- * (its Code button), or from the menu's View > Code when no project fits.
- * A nav that lists every feature stops being a map of the work.
- */
 
 export default function AppNav({
   view,

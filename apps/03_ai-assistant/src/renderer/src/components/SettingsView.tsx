@@ -85,7 +85,7 @@ const SECTIONS: readonly {
   { id: 'agents', title: 'Agent access', group: 'This app', resettable: true },
   { id: 'house', title: 'House rules', group: 'This app' },
   { id: 'skills', title: 'Skills', group: 'This app' },
-  { id: 'extensions', title: 'Plugins', group: 'This app' },
+  { id: 'extensions', title: 'Extensions', group: 'This app' },
   { id: 'engine', title: 'Engine', group: 'This computer' },
   { id: 'appearance', title: 'Appearance', group: 'This app', resettable: true },
   { id: 'models', title: 'Models', group: 'This app' },
@@ -217,7 +217,6 @@ export default function SettingsView({
   onChanged,
   appearance,
   onAppearanceChange,
-  onOpenBrain,
   inference,
   onInferenceChange,
   permissions,
@@ -233,8 +232,6 @@ export default function SettingsView({
   onChanged: () => void
   appearance: Appearance
   onAppearanceChange: (next: Appearance) => void
-  /** Jump to the first-class Brain view (Settings closes; the graph fills the app). */
-  onOpenBrain?: () => void
   inference: InferenceSettings
   onInferenceChange: (next: InferenceSettings) => void
 }) {
@@ -394,7 +391,7 @@ export default function SettingsView({
     : {
         dot: 'bg-ok',
         label: 'Keys are saved in this app',
-        detail: 'A saved key\'s brains join the engine\'s model picker; sending routes the engine to that provider with the key — the app itself never calls it.',
+        detail: 'The engine reads them through its own doors when it needs a cloud brain.',
       }
 
   const keeping = isDemo
@@ -429,20 +426,11 @@ export default function SettingsView({
     connectors: [
       {
         label: 'Engine',
-        terms: 'claude-code agy engine connector local cli install npm',
+        terms: 'claude-code agy engine connector local cli',
         body: (
-          <div className="min-w-0">
-            <div className="text-[12.5px]">
-              {isDemo ? 'Not in this window' : `${engineState.settings.id} · ${engineState.settings.model}`}
-            </div>
-            {/* The install line the marketplace used to keep — the connector's
-                own door must say how to open it. */}
-            {!isDemo && engineState.settings.id === 'claude-code' && (
-              <div className="mt-0.5 text-[11.5px] text-muted">
-                Missing the CLI? Install it with <span className="font-mono">npm install -g @anthropic-ai/claude-code</span>, then restart this app.
-              </div>
-            )}
-          </div>
+          <span className="text-[12.5px]">
+            {isDemo ? 'Not in this window' : `${engineState.settings.id} · ${engineState.settings.model}`}
+          </span>
         ),
       },
       {
@@ -467,7 +455,7 @@ export default function SettingsView({
                 {isDemo
                   ? 'The extension connects to this app over the local loopback port.'
                   : extension.listening
-                    ? 'Pages and conversations the extension captures arrive here. One-time setup: chrome://extensions → Developer mode → Load unpacked → choose the extension folder that ships with this app.'
+                    ? 'Pages and conversations the extension captures arrive here. Install it from the account menu, "Get apps and extensions".'
                     : extension.error || 'The extension cannot reach this app at the moment.'}
               </div>
             </div>
@@ -1104,15 +1092,15 @@ export default function SettingsView({
     ],
     extensions: [
       {
-        label: 'Plugins',
-        terms: 'plugins mods packs install community store manifest permissions themes prompts skills',
+        label: 'Mods',
+        terms: 'extensions mods packs install community store manifest permissions themes prompts skills',
         body: <ModsSection onAppearanceChange={onAppearanceChange} appearance={appearance} />,
       },
     ],
     vault: [      {
         label: 'Folder',
         terms: 'vault path choose folder default documents assistant second brain structure conflict links',
-        body: <BrainStructureSection vault={vault} isDemo={isDemo} onChanged={onChanged} onOpenBrain={onOpenBrain} />,
+        body: <BrainStructureSection vault={vault} isDemo={isDemo} onChanged={onChanged} />,
       },
     ],
   }

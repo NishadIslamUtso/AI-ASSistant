@@ -54,15 +54,11 @@ test('the code screen reads the real threads and clears them for real', async ()
   assert.equal(store.settings.approval, 'ask')
 })
 
-test('the code screen opens from its project, wired to the real doors', () => {
+test('the code screen is the sixth section, wired to the real doors', () => {
   const read = (relative: string): string => readFileSync(`${process.cwd()}/${relative}`, 'utf8')
-  // His pick (2026-10-16): Code lives inside Projects — not a global nav item.
   const nav = read('src/renderer/src/components/AppNav.tsx')
-  assert.doesNotMatch(nav, /id: 'code'/)
+  assert.match(nav, /id: 'code'/)
   assert.doesNotMatch(nav, /being built/, 'every designed section now exists')
-  const projects = read('src/renderer/src/components/ProjectsView.tsx')
-  assert.match(projects, /onViewBoard/)
-  assert.match(read('src/renderer/src/components/AppNav.tsx'), /Code is deliberately NOT in this nav/)
   const view = read('src/renderer/src/components/CodeView.tsx')
   assert.match(view, /engine\s*\.\s*sessions\(\)/)
   assert.match(view, /forgetSession/)

@@ -139,7 +139,7 @@ export default function EngineBay() {
                   role="menuitemradio"
                   aria-checked={entry.name === engine.settings.model}
                   onClick={() => {
-                    void engine.setModel(entry.name, entry.provider)
+                    void engine.setModel(entry.name)
                     setMenuOpen(false)
                   }}
                   className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[12.5px] ${
