@@ -69,14 +69,7 @@ const settle = async (capMs = 300_000): Promise<'done' | 'error' | 'timeout'> =>
   }
 }
 
-const turnText = (): string => {
-  const turn = engineStore().turn
-  if (!turn) return ''
-  return turn.items
-    .filter((item): item is Extract<EngineItem, { text: string }> => 'text' in item && typeof item.text === 'string')
-    .map(item => item.text)
-    .join('')
-}
+
 
 /** Step one: the engine pours the conversation into a brief. Nothing ends yet. */
 export async function writeBrief(): Promise<boolean> {
@@ -101,7 +94,13 @@ export async function writeBrief(): Promise<boolean> {
     patch({ phase: 'idle', error: ended === 'timeout' ? 'The engine took too long to write the brief; nothing was changed.' : 'The engine could not write the brief; nothing was changed.' })
     return false
   }
-  const brief = turnText()
+  // The FINISHED block is the brief; the stitched stream is only its
+  // preview. Prefer the block, fall back to the join, never keep both.
+  const texts = (store.turn?.items ?? [])
+    .filter((item): item is Extract<EngineItem, { text: string }> => item.kind === 'text')
+    .map(item => item.text)
+  const last = texts.at(-1) ?? ''
+  const brief = briefWorthKeeping(last) ? last : texts.join('\n')
   if (!briefWorthKeeping(brief)) {
     patch({ phase: 'idle', error: 'The engine said too little to carry the work. Nothing was changed; try again after more has happened.' })
     return false

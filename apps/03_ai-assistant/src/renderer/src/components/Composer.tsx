@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUp, ChevronDown, CookingPot, Cpu, FolderOpen, Layers, Map, Mic, MicOff, Paperclip, Play, ScrollText, Square, Swords, X } from 'lucide-react'
+import { ArrowUp, ChevronDown, CookingPot, Cpu, FolderOpen, Layers, ListOrdered, Map, Mic, MicOff, Paperclip, Play, ScrollText, Square, Swords, X } from 'lucide-react'
 import type { Project } from '@shared/lib/projects'
 import type { Attachment } from '@shared/types'
 import type { Recipe } from '@shared/lib/recipes'
@@ -262,6 +262,15 @@ export default function Composer({
           >
             <Swords size={11} aria-hidden />
             Battle
+          </button>
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent('app:split', { detail: value }))}
+            title="Split: the engine breaks this work order into steps, then the app runs them one by one"
+            className="ml-1.5 flex h-7 items-center gap-1.5 rounded-lg border border-line bg-card px-2.5 text-[11.5px] text-muted hover:text-ink"
+          >
+            <ListOrdered size={11} aria-hidden />
+            Split
           </button>
         </div>
       ) : null}
