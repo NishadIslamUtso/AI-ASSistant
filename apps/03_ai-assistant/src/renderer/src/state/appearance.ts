@@ -16,7 +16,7 @@ import { readStored } from '@shared/lib/storage'
 export type AccentName = 'violet' | 'blue' | 'teal' | 'amber' | 'rose'
 export type WidthName = 'focused' | 'comfortable' | 'wide'
 export type TextSizeName = 'small' | 'medium' | 'large'
-export type FontName = 'sans' | 'serif'
+export type FontName = 'sans' | 'serif' | 'anthropic-serif'
 export type ThemeName = 'system' | 'light' | 'dark'
 
 export type Appearance = {
@@ -45,8 +45,8 @@ export const ACCENTS: readonly { name: AccentName; label: string; hex: string }[
 
 /** Comfortable is the width the conversation already used. */
 export const WIDTHS: readonly { name: WidthName; label: string; px: number }[] = Object.freeze([
-  { name: 'focused', label: 'Focused', px: 640 },
-  { name: 'comfortable', label: 'Comfortable', px: 760 },
+  { name: 'focused', label: 'Narrow', px: 640 },
+  { name: 'comfortable', label: 'Medium', px: 760 },
   { name: 'wide', label: 'Wide', px: 1040 },
 ])
 
@@ -59,6 +59,9 @@ export const TEXT_SIZES: readonly { name: TextSizeName; label: string; px: numbe
 export const FONTS: readonly { name: FontName; label: string; stack: string }[] = Object.freeze([
   { name: 'sans', label: 'App sans', stack: "system-ui, 'Segoe UI', sans-serif" },
   { name: 'serif', label: 'Reading serif', stack: "Georgia, 'Times New Roman', serif" },
+  /** Anthropic Serif when the machine has it; otherwise the same reading
+   *  serif renders - an honest fallback, never a missing-font box. */
+  { name: 'anthropic-serif', label: 'Anthropic Serif', stack: "'Anthropic Serif', Georgia, 'Times New Roman', serif" },
 ])
 
 /** The dark palette is the app's own; System follows the OS either way. */

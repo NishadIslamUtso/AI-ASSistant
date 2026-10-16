@@ -63,7 +63,7 @@ import {
  * browser preview there is no folder to choose and no model to run.
  */
 
-type SectionId = 'agents' | 'house' | 'skills' | 'extensions' | 'engine' | 'system' | 'appearance' | 'models' | 'performance' | 'vault'
+export type SectionId = 'agents' | 'house' | 'skills' | 'extensions' | 'engine' | 'system' | 'connectors' | 'appearance' | 'models' | 'performance' | 'vault'
 
 type Row = {
   /** What the row is called, and what the rail's search matches on. */
@@ -81,6 +81,7 @@ const SECTIONS: readonly {
   resettable?: boolean
 }[] = Object.freeze([
   { id: 'system', title: 'System', group: 'This computer' },
+  { id: 'connectors', title: 'Connectors', group: 'This computer' },
   { id: 'agents', title: 'Agent access', group: 'This app', resettable: true },
   { id: 'house', title: 'House rules', group: 'This app' },
   { id: 'skills', title: 'Skills', group: 'This app' },
@@ -107,6 +108,11 @@ function SectionIcon({ id }: { id: SectionId }) {
         <rect x="4" y="7" width="12" height="9" rx="1.5" />
         <path d="M7 10.5h.01M10 10.5h.01M13 10.5h.01M7 13.5h6" />
       </>
+    ),
+    connectors: (
+      <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M7 3v3M13 3v3M7 14v3M13 14v3M3 7h3M3 13h3M14 7h3M14 13h3M6 6h8v8H6z" />
+      </svg>
     ),
     system: (
       <>
@@ -203,6 +209,9 @@ function Switch({
 
 export default function SettingsView({
   open,
+  /** The pane to land on when opened; the account menu can aim straight at
+   *  Models ("Get API keys"). Later opens without a target keep the last pane. */
+  initialSection,
   onClose,
   vault,
   onChanged,
@@ -214,6 +223,7 @@ export default function SettingsView({
   onPermissionsChange,
 }: {
   open: boolean
+  initialSection?: SectionId
   onClose: () => void
   permissions: Permissions
   onPermissionsChange: (next: Permissions) => void
@@ -225,7 +235,11 @@ export default function SettingsView({
   inference: InferenceSettings
   onInferenceChange: (next: InferenceSettings) => void
 }) {
-  const [section, setSection] = useState<SectionId>('system')
+  const [section, setSection] = useState<SectionId>(initialSection ?? 'system')
+  /** A caller that names a pane while the sheet is closed gets it on open. */
+  useEffect(() => {
+    if (open && initialSection) setSection(initialSection)
+  }, [open, initialSection])
   const [providers, setProviders] = useState<CloudProviderView[]>([])
   const [providersError, setProvidersError] = useState('')
   const [keyEncryption, setKeyEncryption] = useState<'os' | 'none'>('none')
@@ -409,6 +423,64 @@ export default function SettingsView({
   const keyedProviders = providers.filter(provider => provider.hasKey)
 
   const rowsById: Record<SectionId, Row[]> = {
+    connectors: [
+      {
+        label: 'Engine',
+        terms: 'claude-code agy engine connector local cli',
+        body: (
+          <span className="text-[12.5px]">
+            {isDemo ? 'Not in this window' : `${engineState.settings.id} · ${engineState.settings.model}`}
+          </span>
+        ),
+      },
+      {
+        label: 'Browser extension',
+        terms: 'browser extension chrome capture connector port 8765',
+        body: (
+          <div className="flex items-start gap-2">
+            <span
+              className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${
+                isDemo ? 'bg-muted' : extension.listening ? 'bg-ok' : 'bg-warn'
+              }`}
+            />
+            <div className="min-w-0">
+              <div className="text-[12.5px]">
+                {isDemo
+                  ? 'Not in this window'
+                  : extension.listening
+                    ? `Connected - listening at ${extension.url.replace(/^https?:\/\//, '')}`
+                    : 'Not connected'}
+              </div>
+              <div className="mt-0.5 break-all text-[11.5px] text-muted">
+                {isDemo
+                  ? 'The extension connects to this app over the local loopback port.'
+                  : extension.listening
+                    ? 'Pages and conversations the extension captures arrive here. Install it from the account menu, "Get apps and extensions".'
+                    : extension.error || 'The extension cannot reach this app at the moment.'}
+              </div>
+            </div>
+          </div>
+        ),
+      },
+      {
+        label: 'Cloud providers',
+        terms: 'api keys providers claude openai gemini online',
+        body: (
+          <div className="min-w-0">
+            <div className="text-[12.5px]">
+              {keyedProviders.length
+                ? `${keyedProviders.length} connected: ${keyedProviders.map(provider => provider.label).join(', ')}`
+                : 'None connected'}
+            </div>
+            <div className="mt-0.5 text-[11.5px] text-muted">
+              {keyedProviders.length
+                ? 'Keys live in the Models pane; remove one there to disconnect.'
+                : 'Paste a key in the Models pane - or stay fully local, which the engine already covers.'}
+            </div>
+          </div>
+        ),
+      },
+    ],
     system: [
       {
         label: 'App',

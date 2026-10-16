@@ -48,7 +48,7 @@ export default function Sidebar({
   onOpenMemory,
   onOpenMarketplace,
   profileName,
-  /** The chat-row menu's "Add to project" needs the real list. */
+  /** The chat-row menu's "Move to group" needs the real list. */
   onSetChatProject,
   /** Pin and rename go through the one chat state the app holds — a second
    *  instance here would write its own stale copy over the app's. */
@@ -66,7 +66,7 @@ export default function Sidebar({
   onNew: () => void
   onDelete: (chatId: string) => void
   /** The profile row at the bottom is the way in to Settings, as in the mockup. */
-  onOpenSettings: () => void
+  onOpenSettings: (section?: 'models') => void
   /** Browsing Maps: what was read and when, drawn from the vault. */
   onOpenMemory: () => void
   /** The marketplace: apps, extensions, skills — what the app can reach. */
@@ -144,7 +144,7 @@ export default function Sidebar({
         <span className="flex-1" />
         <button
           type="button"
-          onClick={onOpenSettings}
+          onClick={() => onOpenSettings()}
           aria-label="Settings"
           title="Settings"
           className="flex h-9 w-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-white/[0.06] hover:text-ink"
@@ -407,7 +407,7 @@ function ChatRow({
           className="absolute left-2 right-2 z-30 rounded-lg border border-line bg-card p-1 shadow-xl"
         >
           {projectMenu ? (
-            <div role="menu" aria-label="Add to project">
+            <div role="menu" aria-label="Move to group">
               <button
                 type="button"
                 role="menuitem"
@@ -459,7 +459,7 @@ function ChatRow({
                 }}
               />
               <MenuItem
-                label="Add to project"
+                label="Move to group"
                 arrow
                 onClick={() => setProjectMenu(true)}
               />
@@ -581,7 +581,7 @@ function UserMenu({
   onOpenMemory,
 }: {
   profileName: string
-  onOpenSettings: () => void
+  onOpenSettings: (section?: 'models') => void
   onOpenMarketplace: () => void
   onOpenMemory: () => void
 }) {
@@ -610,6 +610,7 @@ function UserMenu({
         <div role="menu" aria-label="Account" className="absolute bottom-[52px] left-2 right-2 z-30 rounded-lg border border-line bg-card p-1 shadow-xl">
           <p className="truncate px-2 pb-1 pt-1.5 text-[11px] text-muted">This machine · everything local</p>
           <UserMenuItem label="Settings" hint="Ctrl+," onClick={() => { setOpen(false); onOpenSettings() }} />
+          <UserMenuItem label="Get API keys" onClick={() => { setOpen(false); onOpenSettings('models') }} />
           <UserMenuItem label="Get apps and extensions" onClick={() => { setOpen(false); onOpenMarketplace() }} />
           <UserMenuItem label="Browsing Maps" onClick={() => { setOpen(false); onOpenMemory() }} />
           <div className="my-0.5 border-t border-line" />

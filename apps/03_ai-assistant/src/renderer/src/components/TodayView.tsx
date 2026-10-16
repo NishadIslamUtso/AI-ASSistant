@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { ArrowRight, Clock, FileText, MessageSquare, Shapes, Sun } from 'lucide-react'
 import { vaultGet } from '@shared/lib/vault'
 import { isToday, todaysArtifacts, todaysChats, worthDoing, type Suggestion, type TodayArtifact, type TodayChat } from '@shared/lib/today'
-import { isDemo } from '@/platform/bridge'
+import { isDemo, bridge } from '@/platform/bridge'
 
 /**
  * Today (07) — the landing screen.
@@ -85,6 +85,8 @@ export default function TodayView({
 }) {
   const [entries, setEntries] = useState<MapEntry[]>([])
   const [mapsState, setMapsState] = useState<'loading' | 'ready' | 'empty' | 'missing'>('loading')
+  const [snapshot, setSnapshot] = useState<string | null>(null)
+  const [snapshotState, setSnapshotState] = useState<'loading' | 'ready' | 'empty' | 'missing'>('loading')
 
   // The reading list is the vault's own record of what was browsed and asked
   // today — the same source Browsing Maps shows, asked for one day of it.
@@ -115,6 +117,36 @@ export default function TodayView({
     }
   }, [])
 
+  // Current Snapshot is 04 Working Memory/Current Snapshot.md in the vault -
+  // the engine's own short-term memory, read here through the /today door.
+  useEffect(() => {
+    if (isDemo) {
+      setSnapshotState('missing')
+      return
+    }
+    let cancelled = false
+    const controller = new AbortController()
+    vaultGet('/today', controller.signal)
+      .then((reply: { snapshot?: string; available?: boolean }) => {
+        if (cancelled) return
+        if (reply?.available === false || typeof reply?.snapshot !== 'string') {
+          setSnapshotState('missing')
+          return
+        }
+        // The card is already titled, so the document's own H1 is elided.
+        const body = reply.snapshot.trim().replace(/^#\s+.*\n+/, '')
+        setSnapshot(body)
+        setSnapshotState(body ? 'ready' : 'empty')
+      })
+      .catch(() => {
+        if (!cancelled) setSnapshotState('missing')
+      })
+    return () => {
+      cancelled = true
+      controller.abort()
+    }
+  }, [])
+
   const now = new Date()
   const conversations = todaysChats(chats, now)
   const made = todaysArtifacts(artifacts, now)
@@ -138,6 +170,31 @@ export default function TodayView({
           </button>
         </header>
 
+        {/* Quick actions: only doors the app really has, wired to real handlers. */}
+        <div className="mt-5 flex flex-wrap items-center gap-2" aria-label="Quick actions">
+          <button
+            type="button"
+            onClick={onNew}
+            className="rounded-lg bg-accent px-3 py-1.5 text-[12.5px] font-medium text-white transition-colors hover:bg-accent/90"
+          >
+            New chat
+          </button>
+          <button
+            type="button"
+            onClick={() => onView('artifacts')}
+            className="rounded-lg border border-line px-3 py-1.5 text-[12.5px] text-ink transition-colors hover:bg-white/[0.04]"
+          >
+            Artifacts
+          </button>
+          <button
+            type="button"
+            onClick={() => { void bridge.app?.openVaultFolder?.() }}
+            className="rounded-lg border border-line px-3 py-1.5 text-[12.5px] text-ink transition-colors hover:bg-white/[0.04]"
+          >
+            Open vault folder
+          </button>
+        </div>
+
         {/* The day, counted from real records only. */}
         <div className="mt-5 grid grid-cols-3 gap-2">
           <Stat value={conversations.length} label="conversations" Icon={MessageSquare} />
@@ -152,6 +209,23 @@ export default function TodayView({
               <SuggestionRow key={suggestion.label} suggestion={suggestion} onOpenChat={onOpenChat} onView={onView} />
             ))}
           </div>
+        </section>
+
+        <section className="mt-6" aria-label="Current snapshot">
+          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted">Current snapshot</h2>
+          {snapshotState === 'ready' ? (
+            <div className="mt-2 rounded-xl border border-line bg-card px-3.5 py-3">
+              <p className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-ink">{snapshot}</p>
+            </div>
+          ) : snapshotState === 'empty' ? (
+            <p className="mt-2 text-[12.5px] text-muted">
+              The snapshot is empty - the engine writes it in 04 Working Memory as it works.
+            </p>
+          ) : snapshotState === 'loading' ? (
+            <p className="mt-2 text-[12.5px] text-muted">Reading the vault…</p>
+          ) : (
+            <p className="mt-2 text-[12.5px] text-muted">No vault connected - pick a folder in Settings.</p>
+          )}
         </section>
 
         <section className="mt-6" aria-label="Today's conversations">

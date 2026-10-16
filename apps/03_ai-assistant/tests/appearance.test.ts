@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs'
 import {
   ACCENTS,
   DEFAULT_APPEARANCE,
+  FONTS,
   WIDTHS,
   accentHex,
   appearanceVariables,
@@ -175,4 +176,21 @@ test('the boot path applies what is stored before the first paint', () => {
     '--motion': '0',
   })
   assert.equal(fakeRoot.attributes['data-theme'], 'light')
+})
+
+test('width pills say Narrow / Medium / Wide, as the mockup shows them', () => {
+  assert.deepEqual(
+    WIDTHS.map(width => width.label),
+    ['Narrow', 'Medium', 'Wide'],
+  )
+})
+
+test('the serif choice offers Anthropic Serif with an honest Georgia fallback', () => {
+  assert.equal(FONTS.length, 3)
+  const anthropic = FONTS.find(font => font.name === 'anthropic-serif')
+  assert.ok(anthropic, 'Anthropic Serif pill exists')
+  assert.equal(anthropic!.label, 'Anthropic Serif')
+  // Without the font installed the stack lands on the same Georgia the
+  // reading serif uses - the pill still changes nothing into something true.
+  assert.match(anthropic!.stack, /^'Anthropic Serif', Georgia/)
 })

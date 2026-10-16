@@ -27,7 +27,7 @@ import useArtifactRewrite from './hooks/useArtifactRewrite'
 import useModels from './hooks/useModels'
 import usePersistentState from './hooks/usePersistentState'
 import useVault from './hooks/useVault'
-import SettingsView from './components/SettingsView'
+import SettingsView, { type SectionId } from './components/SettingsView'
 import MemoryMap from './components/MemoryMap'
 import {
   APPEARANCE_KEY,
@@ -84,6 +84,9 @@ export default function App() {
     [chats.chats, chats.currentChat]
   )
   const [settingsOpen, setSettingsOpen] = useState(false)
+  /** Which pane Settings opens onto; 'models' when the account menu's
+   *  "Get API keys" led here, otherwise the pane the reader left it on. */
+  const [settingsSection, setSettingsSection] = useState<SectionId>('system')
   const [memoryOpen, setMemoryOpen] = useState(false)
   /** The project a brand-new chat will belong to, chosen before its first word. */
   const [pendingProject, setPendingProject] = useState<string | null>(null)
@@ -390,8 +393,9 @@ export default function App() {
             setNotice('')
           }}
           onDelete={chats.remove}
-          onOpenSettings={() => {
+          onOpenSettings={(section) => {
             setMemoryOpen(false)
+            if (section) setSettingsSection(section)
             setSettingsOpen(true)
           }}
           onOpenMemory={() => setMemoryOpen(true)}
@@ -518,6 +522,7 @@ export default function App() {
 
         <SettingsView
           open={settingsOpen}
+          initialSection={settingsSection}
           onClose={() => setSettingsOpen(false)}
           permissions={permissions}
           onPermissionsChange={(next: Permissions) => {
