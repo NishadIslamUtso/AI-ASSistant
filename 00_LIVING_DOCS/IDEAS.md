@@ -75,3 +75,36 @@
 ---
 
 *Sources: docs.replit.com + axonbuild + uxmagic (checkpoints); anthropic.com + ampliflow + dev.to (plan mode, hooks, subagents, checkpoints, auto memory); andrew.ooo + effloow + guard0 + Block CTO interview (recipes, lead/worker, adversary reviewer, repetition inspector, Operation Palefire); toolbrain + pristren + 1devtool + morphllm (watch mode, git-native commits, architect split, maintenance-mode note); nxcode + kingy.ai + sanj.dev (OpenCode compaction, plan/build); vpsmac + codemyspec + tembo (agy quota). Full notes: RESEARCH-LANDSCAPE.md.*
+
+
+---
+
+## 2026-10-17 · the claudereverse harvest (7 external judges; verified at tip 4c77abb; NOTHING built — awaiting his yes)
+
+Source: his public repo `claudereverse` (recovered Claude Desktop v2.42304.0, compiled MSIX — its own inventory admits the main chat UI loads from claude.ai; six local windows only). Judges reviewed stale trees (v0.7.0 / 8ab95ef / 3fb6945); their "fix trust first" lists are ALREADY DONE at 4c77abb (agy g67, watch g68, checkpoints g66, landing sentence, ollama start/stop, honest test policy). Verified myself: globalShortcut / findInPage / printToPDF / node-pty / xterm / mermaid / protocol / login-item = 0 hits at tip; one BrowserWindow; no fuses in electron-builder.yml. `@anthropic-ai/claude-agent-sdk` 0.3.301 and `@anthropic-ai/mcpb` 2.1.2 ARE public on npm — ARCHITECTURE-ENGINE.md's reason (1) ("SDK can't be installed in my sandbox") is now stale, but reasons 2–4 (drives the verified CLI, the wire is test-pinned 604 strong, mods door) still stand; re-evaluate AFTER the acceptance run, not before.
+
+**Queue candidates (his GO needed, in my proposed order):**
+1. Real PATH resolution (their shell-path-worker pattern): at startup ask the user's own shell for %PATH%/env, cache, fall back to today's hardcoded prepend. Directly de-risks the TUF A15 acceptance ("'claude' is not recognized" = boring failure). S.
+2. Find in the transcript, Ctrl+F: in-app overlay (NOT webContents.findInPage — React-rendered text), next/prev, count, Esc. S.
+3. Artifact pop-out window + Save as PDF (printToPDF), same CSP, read-only first. S.
+4. Quick-ask window on a global hotkey (their quickWindow): must ride the ONE send path — same cards, same line, same Stop; busy → parked-order message there too. M.
+5. Electron fuses (runAsNode/nodeOptions/nodeCliInspect off) in electron-builder.yml — cheap hardening. XS.
+6. aiassistant:// protocol + start-at-login toggle, default OFF (respects "opening the app IS the schedule"). S.
+7. First-run workspace consent card (their localExecConsent pattern): one plain-words card naming the folder + what the engine may do there, per-folder remember. Design first — our default gear already cards every write (g66 proved it); this is the fresh-install trust moment. Needs his ruling.
+8. Mermaid in artifacts (MIT, from npm upstream, lazy-loaded in the preview sandbox). S/M.
+9. Real terminal tab (node-pty + xterm.js, own from npm): closes the "logins go to PowerShell" loop; framed "this is you, not the engine"; native-module packaging cost — budget a session. M/L.
+10. DESIGN ONLY, his explicit yes gates: MCP host (local stdio servers only, every tool call rides the cards); watch time-trigger while app is open + scoped revocable repeat-approval on watch cards (touches his "opening the app IS the schedule" rule — CANDIDATE ONLY); record-once→Recipe (the honest teach pattern, composes with watch).
+
+**Skip (judges' consensus + mine):** Buddy (one judge: bridge shows device-pairing/PIN/folder-pick — a device workflow, not a companion; no need behind it), computer-use teach/watch-record as built (no local renderer recovered; unbounded reach), UI parity (their chat UI is remote — nothing to copy), account/team/enterprise, any compiled asset/font/skill/strings.
+
+**⚠ Repo hygiene (2 judges, real, HIS account HIS call):** claudereverse publicly hosts Anthropic's proprietary compiled payload, AnthropicSans/Serif fonts, and © Anthropic bundled skills (docx/pdf/pptx/xlsx, no-derivative licences) on the same account as AI-ASSistant — DMCA-shaped risk + contradicts the app's no-Claude-branding rule + muddies the clean-room story. Options: make it private, or strip to windows-public-release-kit/ (the downloader/verifier is the legitimate part). Nothing for me to touch — his repo.
+
+**Installer principles checklist (for HIS installer work, never their code):** publish sha256 + signature status (already done), verify downloads (downloader already stages from official endpoints), fail CLOSED on signature checks (their reconstruction permits a dev fallback — do NOT copy that), proxy-aware failure messages, de-elevated launch.
+
+**Open advisories the judges re-found:** artifact-rewrite bypass (useArtifactRewrite.ts:89–104 — the Ollama route outside the engine send path; still open, his call); Review as enforced read-only (ours is prompt-level "report only"; enforcing = send review turns in a no-tools gear — worth a look).
+
+
+---
+
+## 2026-10-17 (later) · the OddBrain Motion Kit — BUILT (his "apply all of them")
+His handoff brief + the 3.0.1 kit gallery: 77 SVGs byte-exact via scripts/extract-motion-kit.py; 8 roles mapped to real states (test-pinned: all 76 scenes reachable, all 304 words paired, loader = the permission card's waiting state, one-shots saved for done); Calm 1.6× / Playful / Still + OS-reduced; six-instance budget, off-screen pause; per-instance namespacing, shipped files never modified. g69–g71. The concept's structures/palettes/sizes deliberately NOT applied — his UI/UX redo is his. 11 new tests (615).

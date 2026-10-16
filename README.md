@@ -13,7 +13,7 @@ grants it, from Settings.
 
 | Path | What it is | State |
 |---|---|---|
-| `apps/03_ai-assistant/` | **THE APP.** Electron + React + TypeScript + Tailwind 4. Chat driven by real agent engines (Claude Code CLI, Google Antigravity, headless Ollama) through one honest UI: permission cards, artifacts, vault writes, Battles, Split, Recipes, Compaction, watch mode, checkpoints, adversary review, extended thinking, the work line, the turn journal, auto memory, store/mods, engine downloads, Browsing Maps, full-window Settings. | Active. 74 test files / 604 tests, typecheck and build green in the sandbox; every feature live-driven with screenshot receipts shipped in-repo at `00_LIVING_DOCS/receipts/` (g27–g68). Engines wired today: claude-code (its stream-json wire) and agy (its own wire, verified against the real v1.4.0 binary; models and sign-in stay Google's, in the owner's terminal). Windows installer `AI-ASSistant-Setup-0.9.0.exe` (unsigned → SmartScreen warning; recipe + hashes in `00_LIVING_DOCS/RELEASE-WINDOWS.md`). **The owner's acceptance run on his TUF A15 is the one open item.** |
+| `apps/03_ai-assistant/` | **THE APP.** Electron + React + TypeScript + Tailwind 4. Chat driven by real agent engines (Claude Code CLI, Google Antigravity, headless Ollama) through one honest UI: permission cards, artifacts, vault writes, Battles, Split, Recipes, Compaction, watch mode, checkpoints, adversary review, extended thinking, the work line, the turn journal, auto memory, store/mods, engine downloads, Browsing Maps, full-window Settings. | Active. 76 test files / 615 tests, typecheck and build green in the sandbox; every feature live-driven with screenshot receipts shipped in-repo at `00_LIVING_DOCS/receipts/` (g27–g68). Engines wired today: claude-code (its stream-json wire) and agy (its own wire, verified against the real v1.4.0 binary; models and sign-in stay Google's, in the owner's terminal). Windows installer `AI-ASSistant-Setup-0.9.0.exe` (unsigned → SmartScreen warning; recipe + hashes in `00_LIVING_DOCS/RELEASE-WINDOWS.md`). **The owner's acceptance run on his TUF A15 is the one open item.** |
 | `apps/01_claude-exact-pixel-clone/` | The first clone, built to match six Claude screenshots. | Historical. Kept as the port source for libs/hooks/server logic. Not the app. |
 | `apps/02_electron-claude-clone-v6/` | An older Electron fork with more features. | Historical reference. |
 | `extension/` | MV3 browser extension: collector + context suggester. | Starter + spec. **The app now has the port it needs** (127.0.0.1:8765, capture side only), but the extension itself has not been loaded or run against it yet. |
@@ -55,7 +55,7 @@ docs/originals/               <- The original requirement files (historical)
 
 **Tests** (no machine required, this is what CI would run):
 ```bash
-cd apps/03_ai-assistant && npm ci && npx vitest run      # 604 tests, 74 files
+cd apps/03_ai-assistant && npm ci && npx vitest run      # 615 tests, 76 files
 ```
 
 **Desktop app** (needs Ollama running with a model pulled):

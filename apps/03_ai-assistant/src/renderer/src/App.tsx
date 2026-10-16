@@ -44,6 +44,8 @@ import { useChats } from './state/useChats'
 import { bridge, isDemo } from './platform/bridge'
 import { DEFAULT_PERMISSIONS, normalizePermissions, type Permissions } from '@shared/lib/permissions'
 import { vaultPost } from '@shared/lib/vault'
+import { setMotionMode } from './motion/motionMode'
+import { setOsReducedMotion } from './motion/motionMode'
 import { conversationCapture } from '@shared/lib/capture'
 
 /**
@@ -165,7 +167,19 @@ export default function App() {
 
   useEffect(() => {
     applyAppearance(appearance)
+    // The kit's mascots read the mode from the motion store, not props —
+    // they sit deep inside cards that never see the appearance object.
+    setMotionMode(appearance.motion)
   }, [appearance])
+
+  // The OS reduced-motion preference stops every kit scene, in every mode.
+  useEffect(() => {
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const apply = () => setOsReducedMotion(query.matches)
+    apply()
+    query.addEventListener('change', apply)
+    return () => query.removeEventListener('change', apply)
+  }, [])
 
   useEffect(() => {
     let cancelled = false

@@ -9,7 +9,7 @@ import EnginePanel from './EnginePanel'
 import BattleSection from './BattleSection'
 import SplitSection from './SplitSection'
 import MessageRow from './MessageRow'
-import BrainMark from './BrainMark'
+import { Mascot } from '../motion/Mascot'
 import type { Project } from '@shared/lib/projects'
 import { bridge } from '@/platform/bridge'
 
@@ -159,13 +159,14 @@ export default function ChatView({
 
 function EmptyState({ onPick, name = '' }: { onPick: (value: string) => void; name?: string }) {
   return (
-    <div className="flex flex-col items-center pt-24 text-center">
-      <div className="flex items-center gap-2.5">
-        <BrainMark size={30} />
-        <h1 className="text-[30px] font-semibold tracking-tight [font-family:var(--transcript-font)]">
-          {greetingFor(name)}
-        </h1>
-      </div>
+    <div className="flex flex-col items-center pt-20 text-center">
+      {/* The kit's resting scene carries the hero's personality; the honest
+          state (idle, nothing running) is this screen itself. The brand mark
+          stays in the title bar — the logo never moves. */}
+      <Mascot role="resting" size={104} withWord seed={1} />
+      <h1 className="mt-3 text-[30px] font-semibold tracking-tight [font-family:var(--transcript-font)]">
+        {greetingFor(name)}
+      </h1>
       <h2 className="mt-5 text-[15px] font-medium">How can I help you today?</h2>
       <p className="mt-2 max-w-[420px] text-[13px] leading-relaxed text-muted">
         The engines run on this machine. A brain without the <b>cloud</b> badge never

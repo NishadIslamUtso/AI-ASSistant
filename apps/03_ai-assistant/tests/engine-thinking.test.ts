@@ -169,8 +169,9 @@ test('the working words are a real list, picked from it, one per call', () => {
 
 test('the panel shows the working word and folds the thinking away from the answer', () => {
   const panel = read('../src/renderer/src/components/EnginePanel.tsx')
-  assert.match(panel, /pickGerund/, 'the working word comes from the shared list')
-  assert.doesNotMatch(panel, /· working/, 'the frozen label is gone')
+  assert.match(panel, /pairingAt\(phase/, 'the working word comes from the kit, phase-driven')
+  assert.match(panel, /PHASE_LABEL\[phase\]/, 'the header carries the HONEST phase name; the word is flavour beside it')
+  assert.doesNotMatch(panel, /pickGerund/, 'the old random gerund is gone from the panel')
   assert.match(panel, /Thinking\{live \? ', still going' : ''\}/, 'a live thinking block says so')
   assert.match(panel, /aria-live/, 'the waiting word is announced')
   // The handoff keeps the scratchwork out of the vault document.

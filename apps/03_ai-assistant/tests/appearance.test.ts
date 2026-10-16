@@ -45,7 +45,7 @@ test('the conversation column reads the token rather than a fixed number', () =>
 })
 
 test('an appearance rewrites its tokens, and nothing else', () => {
-  const variables = appearanceVariables({ accent: 'teal', width: 'wide', textSize: 'large', font: 'serif', motion: 'reduced' })
+  const variables = appearanceVariables({ accent: 'teal', width: 'wide', textSize: 'large', font: 'serif', motion: 'still' })
   assert.deepEqual(Object.keys(variables).sort(), [
     '--chat-width',
     '--color-accent',
@@ -57,11 +57,17 @@ test('an appearance rewrites its tokens, and nothing else', () => {
   assert.equal(variables['--chat-width'], '1040px')
   assert.equal(variables['--transcript-size'], '16.5px')
   assert.match(variables['--transcript-font'], /serif/)
-  assert.equal(variables['--motion'], '0')
+  assert.equal(variables['--motion'], '0', 'Still stops the motion var')
   // The defaults keep the app exactly as it was.
   const plain = appearanceVariables({ accent: 'violet', width: 'comfortable', textSize: 'medium', font: 'sans', motion: 'system' })
   assert.equal(plain['--transcript-size'], '14.5px')
   assert.equal(plain['--motion'], '1')
+  // A stored 'reduced' (the old two-value control) reads as Still — the same
+  // promise, everything stopped.
+  const migrated = normalizeAppearance({ motion: 'reduced' })
+  assert.equal(migrated.motion, 'still')
+  const kit = normalizeAppearance({ motion: 'calm' })
+  assert.equal(kit.motion, 'calm')
 })
 
 test('every accent is a plain six-digit colour, and every width is distinct', () => {

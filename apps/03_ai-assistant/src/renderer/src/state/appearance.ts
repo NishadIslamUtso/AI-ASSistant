@@ -19,6 +19,10 @@ export type TextSizeName = 'small' | 'medium' | 'large'
 export type FontName = 'sans' | 'serif' | 'anthropic-serif'
 export type ThemeName = 'system' | 'light' | 'dark'
 
+/** How the kit's scenes move: System follows the OS, Calm slows them,
+ *  Balanced is the kit's own speed, Playful hurries them, Still stops them. */
+export type MotionName = 'system' | 'calm' | 'balanced' | 'playful' | 'still'
+
 export type Appearance = {
   /** Which palette the neutrals come from: the OS's choice, or one of ours. */
   theme: ThemeName
@@ -28,8 +32,8 @@ export type Appearance = {
   textSize: TextSizeName
   /** The reading font for the transcript: the app's sans, or a reading serif. */
   font: FontName
-  /** Reduced motion stills the streaming pulse and transitions. */
-  motion: 'system' | 'reduced'
+  /** The motion modes of the OddBrain kit; a stored 'reduced' reads as 'still'. */
+  motion: MotionName
 }
 
 export const APPEARANCE_KEY = 'ai-assistant.appearance'
@@ -71,6 +75,14 @@ export const THEMES: readonly { name: ThemeName; label: string }[] = Object.free
   { name: 'dark', label: 'Dark' },
 ])
 
+export const MOTIONS: readonly { name: MotionName; label: string }[] = Object.freeze([
+  { name: 'system', label: 'System' },
+  { name: 'calm', label: 'Calm' },
+  { name: 'balanced', label: 'Balanced' },
+  { name: 'playful', label: 'Playful' },
+  { name: 'still', label: 'Still' },
+])
+
 export const DEFAULT_APPEARANCE: Appearance = Object.freeze({
   theme: 'system',
   accent: 'violet',
@@ -105,7 +117,13 @@ export function normalizeAppearance(value: unknown): Appearance {
       ? (input.textSize as TextSizeName)
       : DEFAULT_APPEARANCE.textSize,
     font: FONTS.some(font => font.name === input.font) ? (input.font as FontName) : DEFAULT_APPEARANCE.font,
-    motion: input.motion === 'reduced' ? 'reduced' : 'system',
+    // A stored 'reduced' (the old two-value control) reads as Still — the same
+    // promise, everything stopped.
+    motion: MOTIONS.some(mode => mode.name === input.motion)
+      ? (input.motion as MotionName)
+      : (input as { motion?: unknown }).motion === 'reduced'
+        ? 'still'
+        : DEFAULT_APPEARANCE.motion,
   }
 }
 
@@ -129,7 +147,7 @@ export function appearanceVariables(appearance: Appearance): Record<string, stri
     '--chat-width': `${chatWidthPx(appearance.width)}px`,
     '--transcript-size': `${textSizePx(appearance.textSize)}px`,
     '--transcript-font': fontStack(appearance.font),
-    '--motion': appearance.motion === 'reduced' ? '0' : '1',
+    '--motion': appearance.motion === 'still' ? '0' : '1',
   }
 }
 

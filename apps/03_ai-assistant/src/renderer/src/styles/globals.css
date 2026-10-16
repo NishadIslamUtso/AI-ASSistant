@@ -96,6 +96,30 @@ body {
 }
 
 /*
+ * The OddBrain kit's scenes. One rule does the pausing for every reason —
+ * Still mode, the OS reduced-motion preference, an off-screen instance, the
+ * six-instance budget, or a one-shot scene that finished its single run:
+ * a paused mascot carries the `ob-still` class, and this stops every
+ * animation inside it. The shipped scene files are never modified.
+ */
+.ob-mascot svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.ob-still svg,
+.ob-still svg * {
+  animation-play-state: paused !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ob-scene svg,
+  .ob-scene svg * {
+    animation-play-state: paused !important;
+  }
+}
+
+/*
   Scrollbars, so a long conversation does not get a bright grey stripe down the
   side of a dark window. Deliberately quiet: visible when you look for it, gone
   when you are reading.

@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Copy, Eye, Handshake, ListOrdered, Minimize2, Pencil, Wrench, FilePen, Terminal, Search, CircleCheck, TriangleAlert, Square, X } from 'lucide-react'
 import { buildHandoff, handoffFileName } from '@shared/lib/handoff'
-import { pickGerund } from '@shared/lib/gerunds'
+import { PHASE_LABEL, pairingAt, pairingMotion, phaseFromTurn, WAITING_LOADER, type MotionRole } from '@shared/lib/motionKit'
+import { Mascot } from '../motion/Mascot'
 import { BRIEF_ORDER } from '@shared/lib/compact'
 import { bridge } from '@/platform/bridge'
 import { useEngine, type EngineItem } from '@/state/engine'
@@ -33,15 +34,34 @@ export default function EnginePanel() {
       if (answer.ok) setKept(answer.checkpoints.slice(0, 3))
     })
   }, [finished])
-  // The working word: one per turn, turning over while the engine works, so
-  // a wait reads as a worker at work rather than a frozen card.
+  // The kit's status words, driven by the turn's REAL phase: the word turns
+  // over while the engine works and always carries the animation it was
+  // measured for. Flavour, never a substitute for the honest phase name in
+  // the header beside it.
   const running = turn?.state === 'running'
-  const [word, setWord] = useState(() => pickGerund())
+  const phase: MotionRole = turn ? phaseFromTurn(turn) : 'resting'
+  const [tick, setTick] = useState(0)
   useEffect(() => {
     if (!running) return
-    setWord(pickGerund())
-    const timer = setInterval(() => setWord(pickGerund()), 3_500)
+    const timer = setInterval(() => setTick((n) => n + 1), 5_500)
     return () => clearInterval(timer)
+  }, [running])
+  const [seed] = useState(() => Math.floor(Math.random() * 97))
+  const pairing = pairingAt(phase, tick, seed)
+  // When a turn closes, its done scene plays once — a short, quiet end.
+  const [doneTick, setDoneTick] = useState<number | null>(null)
+  const wasRunning = useRef(false)
+  useEffect(() => {
+    if (running) {
+      wasRunning.current = true
+      return
+    }
+    if (wasRunning.current) {
+      wasRunning.current = false
+      setDoneTick(Date.now() % 100000)
+      const timer = setTimeout(() => setDoneTick(null), 6_500)
+      return () => clearTimeout(timer)
+    }
   }, [running])
   const [compacting, setCompacting] = useState(false)
   const compact = useCompact()
@@ -112,7 +132,7 @@ export default function EnginePanel() {
         <h2 className="text-[12px] font-medium text-muted">
           Engine · {engine.settings.id} · {engine.settings.model}
           {' · ' + (engine.settings.workspace ? engine.settings.workspace.split(/[\\/]/).filter(Boolean).at(-1) : 'vault')}
-          {turn.state === 'running' ? ` · ${word}…` : turn.state === 'error' ? ' · stopped' : ' · done'}
+          {turn.state === 'running' ? ` · ${PHASE_LABEL[phase]}…` : turn.state === 'error' ? ' · stopped' : ' · done'}
           {` · ${formatTotals(engine.totals)}`}
         </h2>
         {turn.state === 'running' ? (
@@ -223,8 +243,11 @@ export default function EnginePanel() {
       </p>
 
       <ul className="mt-2 flex flex-col gap-1.5">
-        {turn.state === 'running' && turn.items.length === 0 ? (
-          <li className="text-[12.5px] text-muted" aria-live="polite">{word}…</li>
+  {turn.state === 'running' ? (
+          <li className="flex items-center gap-2" aria-live="polite">
+            <Mascot motion={pairingMotion(pairing)} size={44} seed={seed} active />
+            <span className="text-[12.5px] text-muted">{pairing.word}…</span>
+          </li>
         ) : null}
         {turn.items.map((item, index) => {
           // The thinking block that is still being written stays unfolded;
@@ -234,6 +257,12 @@ export default function EnginePanel() {
         })}
       </ul>
 
+      {doneTick !== null && turn.state !== 'running' ? (
+        <div className="flex items-center gap-2" role="status">
+          <Mascot motion={pairingMotion(pairingAt('done', doneTick, seed))} size={36} seed={seed} active={false} />
+          <span className="text-[12px] text-muted">{pairingAt('done', doneTick, seed).word}</span>
+        </div>
+      ) : null}
       {handed ? <p className="mt-1 text-[11px] text-muted">{handed}</p> : null}
       {finished && kept.length > 0 ? (
         <div className="mt-2 rounded-lg border border-line bg-bg p-2">
@@ -277,14 +306,17 @@ export default function EnginePanel() {
 
       {turn.permissions.length > 0 ? (
         <div className="mt-2.5 rounded-lg border border-line bg-bg p-2.5">
-          <p className="text-[12.5px] text-ink">
-            The engine wants to use{' '}
-            <span className="font-medium">{turn.permissions[0].tool}</span>
-            {turn.permissions.length > 1 ? (
-              <span className="ml-2 rounded-md border border-line px-1.5 py-0.5 text-[10.5px] text-muted">
-                +{turn.permissions.length - 1} more waiting
-              </span>
-            ) : null}
+          <p className="flex items-center gap-2 text-[12.5px] text-ink">
+            <Mascot motion={WAITING_LOADER} size={20} />
+            <span>
+              The engine wants to use{' '}
+              <span className="font-medium">{turn.permissions[0].tool}</span>
+              {turn.permissions.length > 1 ? (
+                <span className="ml-2 rounded-md border border-line px-1.5 py-0.5 text-[10.5px] text-muted">
+                  +{turn.permissions.length - 1} more waiting
+                </span>
+              ) : null}
+            </span>
           </p>
           {turn.permissions[0].summary ? (
             <p className="mt-0.5 break-words font-mono text-[11.5px] text-muted">{turn.permissions[0].summary}</p>

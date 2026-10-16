@@ -21,7 +21,7 @@ import {
 } from '@shared/lib/inference'
 import { CLOUD_PROVIDERS, type CloudProviderView } from '@shared/lib/providers'
 import { DEFAULT_PERMISSIONS, type Permissions } from '@shared/lib/permissions'
-import { ACCENTS, DEFAULT_APPEARANCE, WIDTHS, TEXT_SIZES, FONTS, THEMES, type Appearance } from '../state/appearance'
+import { ACCENTS, DEFAULT_APPEARANCE, WIDTHS, TEXT_SIZES, FONTS, THEMES, MOTIONS, type Appearance } from '../state/appearance'
 import {
   CUSTOM_FIELDS,
   DEFAULT_INFERENCE,
@@ -812,23 +812,23 @@ export default function SettingsView({
       },
       {
         label: 'Motion',
-        terms: 'animation motion reduced still pulse streaming',
+        terms: 'animation motion calm balanced playful still reduced pulse streaming',
         body: (
           <div className="flex gap-1.5">
-            {(['system', 'reduced'] as const).map(mode => (
+            {MOTIONS.map(mode => (
               <button
-                key={mode}
+                key={mode.name}
                 type="button"
                 className={`rounded-full border px-3 py-1 text-[12px] ${
-                  appearance.motion === mode
+                  appearance.motion === mode.name
                     ? 'border-accent bg-accent/15 text-ink'
                     : 'border-line text-muted hover:bg-white/[0.06]'
                 }`}
-                onClick={() => onAppearanceChange({ ...appearance, motion: mode })}
-                aria-label={`Motion: ${mode}`}
-                aria-pressed={appearance.motion === mode}
+                onClick={() => onAppearanceChange({ ...appearance, motion: mode.name })}
+                aria-label={`Motion: ${mode.label}`}
+                aria-pressed={appearance.motion === mode.name}
               >
-                {mode === 'system' ? 'System' : 'Reduced'}
+                {mode.label}
               </button>
             ))}
           </div>
