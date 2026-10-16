@@ -3,6 +3,7 @@ import { ChevronDown, Download, FolderOpen, RefreshCw, Trash2, Cpu, Cloud } from
 import { useEngine, type EngineModels } from '@/state/engine'
 import useDismiss from '@/hooks/useDismiss'
 import type { ApprovalMode, EngineId } from '@shared/lib/engine'
+import EngineDownloadsSection from './EngineDownloadsSection'
 
 /**
  * The engine bay — the app's own engine selection system.
@@ -73,6 +74,7 @@ export default function EngineBay() {
 
   return (
     <section aria-label="Engine" className="rounded-xl border border-line bg-card p-2">
+        <EngineDownloadsSection />
       <header className="flex items-center gap-1.5 px-1 pb-1.5">
         <Cpu size={12} className="text-muted" aria-hidden />
         <h2 className="text-[10.5px] font-semibold uppercase tracking-wide text-muted">Engine</h2>

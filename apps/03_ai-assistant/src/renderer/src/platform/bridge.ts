@@ -379,6 +379,13 @@ export type EngineBridge = {
     list: () => Promise<{ ok: boolean; checkpoints: Array<{ copy: string; original: string; at: string }> }>
     restore: (copy: string) => Promise<{ ok: boolean; answer: string }>
   }
+  downloads: {
+    start: (engine: string) => Promise<{ ok: boolean; answer: string }>
+    status: () => Promise<Record<string, { engine: string; endpoint: string; sha256: string; at: string } | undefined>>
+    run: (engine: string) => Promise<{ ok: boolean; answer: string; command?: string[] }>
+    remove: (engine: string) => Promise<{ ok: boolean; answer: string }>
+    onEvent: (listener: (tick: { engine: string; got: number; total: number | null; phase: string; answer?: string }) => void) => () => void
+  }
   answer: (requestId: string, allow: boolean) => Promise<{ ok: boolean }>
   stop: () => Promise<{ ok: boolean }>
   onEvent: (listener: (event: EngineEvent) => void) => () => void
@@ -415,6 +422,13 @@ const demoEngineBridge: EngineBridge = {
   checkpoints: {
     list: async () => ({ ok: true, checkpoints: [] }),
     restore: async () => ({ ok: false, answer: 'Checkpoints live in the desktop app.' }),
+  },
+  downloads: {
+    start: async () => ({ ok: false, answer: 'Downloads live in the desktop app.' }),
+    status: async () => ({}),
+    run: async () => ({ ok: false, answer: 'Installers live in the desktop app.' }),
+    remove: async () => ({ ok: false, answer: 'Downloads live in the desktop app.' }),
+    onEvent: () => () => undefined,
   },
   stop: async () => ({ ok: false }),
   onEvent: () => () => undefined,

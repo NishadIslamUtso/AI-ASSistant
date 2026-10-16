@@ -75,6 +75,21 @@ const engineApi = {
     restore: (copy: string): Promise<{ ok: boolean; answer: string }> =>
       ipcRenderer.invoke('engine:checkpoint:restore', copy),
   },
+  downloads: {
+    start: (engine: string): Promise<{ ok: boolean; answer: string }> =>
+      ipcRenderer.invoke('engine:download:start', engine),
+    status: (): Promise<Record<string, { engine: string; endpoint: string; sha256: string; at: string } | undefined>> =>
+      ipcRenderer.invoke('engine:download:status'),
+    run: (engine: string): Promise<{ ok: boolean; answer: string; command?: string[] }> =>
+      ipcRenderer.invoke('engine:download:run', engine),
+    remove: (engine: string): Promise<{ ok: boolean; answer: string }> =>
+      ipcRenderer.invoke('engine:download:remove', engine),
+    onEvent: (listener: (tick: { engine: string; got: number; total: number | null; phase: string; answer?: string }) => void): (() => void) => {
+      const channel = (_outer: unknown, tick: { engine: string; got: number; total: number | null; phase: string; answer?: string }): void => listener(tick)
+      ipcRenderer.on('engine:download-event', channel)
+      return () => ipcRenderer.removeListener('engine:download-event', channel)
+    },
+  },
   /** Answer one of the engine's permission cards. */
   answer: (requestId: string, allow: boolean): Promise<{ ok: boolean }> =>
     ipcRenderer.invoke('engine:answer', requestId, allow),

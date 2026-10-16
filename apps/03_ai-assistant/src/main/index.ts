@@ -22,6 +22,7 @@ import { normalizeEngine } from '../shared/lib/engine'
 import { APPROVAL_MODES, type ApprovalMode, type EngineEvent, type EngineId, type EngineModelEntry } from '../shared/lib/engine'
 import { ENGINE_IMAGE_MIMES, MAX_ENGINE_IMAGE_CHARS as ENGINE_IMAGE_CHARS, MAX_ENGINE_ATTACHMENTS as ENGINE_IMAGE_LIMIT } from '../shared/lib/media'
 import { listCheckpoints, restoreCheckpoint } from './engine/checkpoints'
+import { createDownloadManager, type DownloadTick } from './engine/downloads'
 import { agyModelSource, detectEngine } from './engine/availability'
 import { parsePullLine, validateModelName } from './engine/pull'
 import { deployMcp, deploySkill, scanClaudeSkills, type McpServer, type VaultSkill } from './engine/deploy'
@@ -534,6 +535,19 @@ function registerBridges(): void {
       })
     },
   )
+
+  // Bringing a brain home: official-endpoint downloads into the app's own
+  // engines folder, a run permission for staged installers, honest removal.
+  const downloads = createDownloadManager({
+    root: join(app.getPath('userData'), 'engines'),
+    onTick: (tick: DownloadTick) => {
+      for (const window of BrowserWindow.getAllWindows()) window.webContents.send('engine:download-event', tick)
+    },
+  })
+  ipcMain.handle('engine:download:start', (_event, engine: string) => downloads.start(typeof engine === 'string' ? engine : ''))
+  ipcMain.handle('engine:download:status', () => downloads.status())
+  ipcMain.handle('engine:download:run', (_event, engine: string) => downloads.runInstaller(typeof engine === 'string' ? engine : ''))
+  ipcMain.handle('engine:download:remove', (_event, engine: string) => downloads.remove(typeof engine === 'string' ? engine : ''))
 
   // Checkpoints: what the app kept the moment before an allowed write, and
   // the way back. Read from the folder the engine was handed at send time.
