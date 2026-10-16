@@ -6,7 +6,6 @@ import { fileURLToPath } from 'node:url'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { packDigest, parseIndex, readIndex, installFromIndex, type FileLoader } from '../src/main/engine/storeIndex'
-import { COMMUNITY_INDEX_URL } from '../src/shared/lib/packs'
 
 /**
  * The community store — the app ships with a REAL one: this repo's own
@@ -17,6 +16,21 @@ import { COMMUNITY_INDEX_URL } from '../src/shared/lib/packs'
  */
 
 const STORE = fileURLToPath(new URL('../store', import.meta.url))
+
+test('the store folder holds a manifest-bearing pack for every listed entry — no ghosts', () => {
+  const raw = readFileSync(join(STORE, 'index.json'), 'utf8')
+  const parsed = parseIndex(raw)
+  if ('problem' in parsed) throw new Error(parsed.problem)
+  // The folder index read: every entry must come back verified straight from disk.
+  return readIndex({ kind: 'folder', path: STORE }).then(answer => {
+    assert.ok(answer.ok, answer.ok ? '' : answer.problem)
+    if (answer.ok) {
+      for (const entry of answer.packs) {
+        assert.equal(entry.verified, true, `${entry.id} verifies from the shipped folder`)
+      }
+    }
+  })
+})
 
 test('the shipped store index is real: it parses, lists its files, and the checksums hold', () => {
   const raw = readFileSync(join(STORE, 'index.json'), 'utf8')
@@ -32,10 +46,6 @@ test('the shipped store index is real: it parses, lists its files, and the check
     assert.equal(problem, undefined)
     assert.equal(digest, entry.checksum, `${entry.id}: pinned checksum matches the committed files`)
   }
-})
-
-test('the shipped URL is https and ends in index.json', () => {
-  assert.match(COMMUNITY_INDEX_URL, /^https:\/\/.+\/index\.json$/)
 })
 
 test('a URL entry with files downloads, digest-checks, and installs through the normal path', async () => {

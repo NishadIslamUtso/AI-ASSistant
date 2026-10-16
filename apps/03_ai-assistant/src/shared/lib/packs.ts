@@ -15,12 +15,13 @@
  */
 
 /**
- * The community store this app ships with: the project's own repo, on the v3
- * branch, answering an index.json the same way any other store must. It is a
- * suggestion with a working link, not a service — removable like any index,
- * and never fetched until it is added.
+ * The community store rides WITH the app: a folder index shipped beside the
+ * extension's resources (dev: the repo's own store/), real files the index
+ * client can checksum straight from disk — no network, no account. A public
+ * https mirror of the same index can be added like any other store the day
+ * the repo goes public; until then no invented URL is offered.
  */
-export const COMMUNITY_INDEX_URL = 'https://raw.githubusercontent.com/NishadIslamUtso/AI-ASSistant/v3/store/index.json'
+export const COMMUNITY_INDEX_SHIPPED = true
 
 export type PackContributions = {
   skills: string[]

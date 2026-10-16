@@ -182,6 +182,8 @@ const api = {
       ipcRenderer.invoke('mods:export', payload),
     installStarter: (): Promise<{ ok: boolean; answer: string; folder?: string; written?: string[] }> =>
       ipcRenderer.invoke('mods:install-starter'),
+    communityIndex: (): Promise<{ ok: boolean; path?: string }> =>
+      ipcRenderer.invoke('mods:community-index'),
   },
   mcp: {
     /** The one MCP server list, and which engine configs it was deployed to. */

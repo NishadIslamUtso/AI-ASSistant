@@ -859,6 +859,19 @@ function registerBridges(): void {
     return { ok: true, answer: `Exported to ${result.folder} — its checksum is pinned in the index beside it.`, folder: result.folder, index: result.index }
   })
 
+  // The community store the app ships with: a REAL folder of packs beside the
+  // extension's resources — offline from the first run. In dev it is the
+  // repo's own store/; packaged, the copy electron-builder ships.
+  ipcMain.handle('mods:community-index', (): { ok: boolean; path?: string } => {
+    const candidates = app.isPackaged
+      ? [join(process.resourcesPath || '', 'store')]
+      : [join(app.getAppPath(), 'store')]
+    for (const candidate of candidates) {
+      if (candidate && existsSync(join(candidate, 'index.json'))) return { ok: true, path: candidate }
+    }
+    return { ok: false }
+  })
+
   // The starter pack: the app's own real files, written to a temp folder and
   // installed through the very same path a friend's folder would take.
   ipcMain.handle('mods:install-starter', (): { ok: boolean; answer: string; folder?: string; written?: string[] } => {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { FolderOpen, Package, PackagePlus, RefreshCw, Sparkles, Trash2, Check, Palette, MessageSquare, BookOpen } from 'lucide-react'
 import { bridge, isDemo } from '@/platform/bridge'
-import { COMMUNITY_INDEX_URL, describePermissions, type Pack } from '@shared/lib/packs'
+import { describePermissions, type Pack } from '@shared/lib/packs'
 import { readStored, writeStored } from '@shared/lib/storage'
 import { savePrompt } from '@shared/lib/prompts'
 import type { Appearance } from '../state/appearance'
@@ -431,6 +431,7 @@ function CommunityPacks({ installed, onInstalled }: {
   const [answer, setAnswer] = useState('')
   const [browse, setBrowse] = useState<Record<string, { ok?: boolean; name?: string; packs?: IndexEntryView[]; problem?: string }>>({})
   const [busy, setBusy] = useState(false)
+  const [community, setCommunity] = useState<{ ok: boolean; path?: string } | null>(null)
 
   const browseAll = (): void => {
     void bridge.mods.indexList().then(list => {
@@ -445,6 +446,7 @@ function CommunityPacks({ installed, onInstalled }: {
 
   useEffect(() => {
     browseAll()
+    void bridge.mods.communityIndex?.().then(setCommunity)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -488,22 +490,22 @@ function CommunityPacks({ installed, onInstalled }: {
         it may do and whether its files still match the checksum the index pinned — a mismatch is refused, never installed.
       </p>
 
-      {!indexes.some(item => item.kind === 'url' && item.locator === COMMUNITY_INDEX_URL) ? (
+      {community?.ok && community.path && !indexes.some(item => item.kind === 'folder' && item.locator === community.path) ? (
         <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-line bg-bg px-3 py-2">
           <div className="min-w-0 flex-1">
-            <p className="text-[12px] text-ink">The community store</p>
-            <p className="truncate text-[10.5px] text-muted" title={COMMUNITY_INDEX_URL}>
-              {COMMUNITY_INDEX_URL}
+            <p className="text-[12px] text-ink">The community store — shipped with this app</p>
+            <p className="truncate text-[10.5px] text-muted" title={community.path}>
+              {community.path}
             </p>
           </div>
           <button
             type="button"
             onClick={() => {
-              if (busy) return
+              if (busy || !community.path) return
               setBusy(true)
               setAnswer('')
               void bridge.mods
-                .indexAdd('url', COMMUNITY_INDEX_URL)
+                .indexAdd('folder', community.path)
                 .then(reply => {
                   setAnswer(reply.answer)
                   if (reply.ok) browseAll()
