@@ -9,6 +9,7 @@
     "integration_branch": "main (FROZEN \u2014 moves only when the owner orders a merge)",
     "rule": "One landing = one commit on v3, only after the owner's explicit go. Chain before push: full vitest suite + tsc clean + build green + porcelain-empty status; push once; ls-remote confirms the exact sha. Docs in sync at every landing.",
     "last_landed": [
+      "0be88a1 fix: package-lock repaired after the 0.9.0 bump (a judge npm ci would have failed)",
       "a76f507 audit build 0.9.0: auto-keep in the rulebook + memory-home fix; acceptance exe rebuilt",
       "20b3e72 auto memory: the vault remembers, visibly (his three answers)",
       "5ab8ac8 the finale five: copy/edit, extended thinking, context totals, the work line, the turn journal",
