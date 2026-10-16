@@ -29,7 +29,7 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
 3. **Marketplace dissolved (his order):** modal + sidebar button + account-menu entry deleted; Connectors (engines + extension) and Plugins (packs) are the homes.
 4. **3D first-class (his order, the Claude-OS view):** Brain in the nav + Ctrl+7 + "Open the 3D brain" in Settings › Vault; same graph engine, full height, live counts.
 
-5. **The community store, for real (his question):** the repo grows `store/` (index + starter pack, checksum pinned by test), shipped as `resources/store`; Plugins offers "Add the community store" one-press; URL indexes that list files now download-and-verify-install; provenance badges are truthful (store · checksum verified / shipped / unverified). Receipts g34–g36.
+5. **The community store, for real (his question):** the repo grows `store/`, shipped as `resources/store`; Plugins offers "Add the community store" one-press; URL indexes that list files now download-and-verify-install; provenance badges are truthful (store · checksum verified / shipped / unverified). **The store is furnished (his follow-up): FOUR real packs — Prompt starters (the app's own 8 prompts), Looks (the 5 real accents), starter pack, Anthropic skills curated four (Apache-2.0 only, license text rides along; docx/pdf/pptx/xlsx excluded — source-available, no repack). `store/rebuild.mjs` recomputes digests; the shipped-store test pins index↔folder agreement. Agents/connectors stay refused in plain words until their runtimes. Receipts g37–g38 (Prompt starters installed live, verified).
 
 Receipts g27–g36. Version 0.8.0 (installer rebuilt to ship the store). Next: TUF A15 acceptance.
 

@@ -27,7 +27,7 @@ vanish on every sandbox restart; this is the whole ritual, start to finish.
 | --- | --- | --- | --- | --- |
 | 0.4.0 | AI-ASSistant-Setup-0.4.0.exe | 88,049,746 | 0c19f17a… | 2026-10-15 |
 | 0.6.0 | AI-ASSistant-Setup-0.6.0.exe | 88,062,356 | c0c9c0861873b7b2db69c0d5d924563aa04b9cd53b015c44a8c4a640835ea38c | 2026-10-16 (rebuild; 1st build's copy was lost to the workspace size cap — two 88 MB exes at once exceed it. The 0.4.0 exe was deleted to make room; NSIS timestamps make each build's hash differ) |
-| 0.8.0 | AI-ASSistant-Setup-0.8.0.exe | 88,133,265 | e0679f381e0d1c065c4d493afa2b7f0723a45e1556e596de3a8f9c264c4a74c5 | 2026-10-16 (rebuild 2, the shipped build: adds the community store as resources/store. Ships: keys ride the engine, monthly audits, marketplace dissolved, Brain first-class, the store. Copy at /home/user/AI-ASSistant-Setup-0.8.0.exe) |
+| 0.8.0 | AI-ASSistant-Setup-0.8.0.exe | 88,171,854 | 12b7c78af27c7d7f58b4ba0cd3d348911abf86c2c8f9503aadc82953d1958b31 | 2026-10-16 (rebuild 3, the shipped build: the store with FOUR packs in resources/store. Ships: keys ride the engine, monthly audits, marketplace dissolved, Brain first-class, the furnished store. Copy at /home/user/AI-ASSistant-Setup-0.8.0.exe) |
 
 ## What the person installing will see
 
