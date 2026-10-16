@@ -47,6 +47,11 @@ export default function FirstRunView({
     }
   }
 
+  const useDefaultFolder = async (): Promise<void> => {
+    const result = await bridge.vault.useDefault()
+    if (result.ok) setFolder(result.path || 'default')
+  }
+
   const steps = ['You', 'Engine', 'Folder']
   const finish = (): void => {
     if (name.trim()) onName(name.trim())
@@ -154,13 +159,23 @@ export default function FirstRunView({
               The vault keeps conversations, notes and captures. The default folder is fine and can be changed in
               Settings later.
             </p>
-            <button
-              type="button"
-              onClick={() => void chooseFolder()}
-              className="mt-2.5 w-full rounded-lg border border-line px-3 py-2.5 text-left text-[12.5px] text-muted hover:text-ink"
-            >
-              {folder || 'Choose a folder… (the default is fine)'}
-            </button>
+            <div className="mt-2.5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => void useDefaultFolder()}
+                className="flex-1 rounded-lg border border-line px-3 py-2.5 text-left text-[12.5px] text-ink hover:bg-white/[0.06]"
+              >
+                Use default (Documents\ASSistant\AI-Brain)
+              </button>
+              <button
+                type="button"
+                onClick={() => void chooseFolder()}
+                className="flex-1 rounded-lg border border-line px-3 py-2.5 text-left text-[12.5px] text-muted hover:text-ink"
+              >
+                Choose another folder…
+              </button>
+            </div>
+            {folder ? <p className="mt-1.5 text-[11px] text-muted">Using {folder}</p> : null}
             <button
               type="button"
               onClick={finish}

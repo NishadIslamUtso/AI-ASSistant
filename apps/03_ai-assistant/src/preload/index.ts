@@ -187,6 +187,9 @@ const api = {
       options?: { refresh?: boolean }
     ): Promise<{ ok: boolean; kind?: string; written?: string[]; refreshed?: string[]; skipped?: string[]; differing?: string[]; error?: string }> =>
       ipcRenderer.invoke('structure:apply', root, options),
+    /** Settle a conflict: keep mine, use the new one, keep both, or combine. */
+    resolve: (root: string, original: string, added: string, action: 'mine' | 'new' | 'both' | 'combine'): Promise<{ ok: boolean; error?: string }> =>
+      ipcRenderer.invoke('structure:resolve', root, original, added, action),
     /** Every [[link]] in the vault, resolved and counted: dead and ambiguous reported. */
     linkCheck: (): Promise<{ files: number; checked: number; dead: Array<{ from: string; target: string }>; ambiguous: Array<{ from: string; target: string; matches: string[] }>; error?: string }> =>
       ipcRenderer.invoke('vault:link-check'),
@@ -194,6 +197,9 @@ const api = {
   vault: {
     /** The operating system's folder picker. null when the person closed it. */
     chooseFolder: (): Promise<string | null> => ipcRenderer.invoke('vault:choose-folder'),
+    /** His default: Documents\\ASSistant\\AI-Brain, created on this press. */
+    useDefault: (): Promise<{ ok: boolean; path?: string; written?: string[]; conflicts?: Array<{ original: string; added: string }>; error?: string }> =>
+      ipcRenderer.invoke('vault:use-default'),
     /** A finished turn, written into the vault as a handoff document. */
     saveHandoff: (name: string, markdown: string): Promise<{ ok: boolean; answer: string }> =>
       ipcRenderer.invoke('vault:save-handoff', { name, markdown }),

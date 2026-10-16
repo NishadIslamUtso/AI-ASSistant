@@ -17,6 +17,8 @@
  * rulebooks (CLAUDE.md, AGENTS.md) at the root where the engines read them.
  */
 
+import { join } from 'node:path'
+
 /** Folders this structure adds, with the one-line purpose each README carries. */
 export const BRAIN_FOLDERS: ReadonlyArray<{ relative: string; purpose: string }> = [
   {
@@ -39,6 +41,13 @@ export function brainFilePaths(): string[] {
   for (const folder of BRAIN_FOLDERS) paths.push(`${folder.relative}/README.md`)
   paths.push(...BRAIN_ROOT_FILES)
   return paths
+}
+
+/** The vault's default home: his example is Windows — Documents\ASSistant\AI-Brain. */
+export function defaultVaultPath(home: string): string {
+  const base = String(home || '').trim()
+  if (!base) throw new Error('The home folder is unknown, so no default can be offered.')
+  return join(base, 'Documents', 'ASSistant', 'AI-Brain')
 }
 
 /** The vault kinds an inspect can honestly report. */
@@ -254,6 +263,15 @@ export function brainFileContents(kind: BrainKind): Map<string, string> {
   if (kind === 'app-structure' || kind === 'empty') {
     contents.set('00 System/Templates/Person.md', PERSON_TEMPLATE)
     contents.set('00 System/Templates/Knowledge Note.md', KNOWLEDGE_TEMPLATE)
+    // The two system documents a working vault cannot be without — the
+    // CANONICAL texts, byte-for-byte as the starter vault carries them, so a
+    // fresh vault and the starter never disagree about their own words.
+    // Self-healing: present files are skipped, so a vault that has its own
+    // keeps its own.
+    contents.set('00 System/Privacy & Access.md', `# Privacy & Access\n\n## Default policy\n- default: check everything by default (all sites + all AIs)\n- on failure: log "wasn't accessible - reason" in 09 Activity & Undo + 01 Inbox/Processing Errors, no popup\n- explicit collect: right-click "Collect this page now" or paste URL to force\n- local-first: no remote inference by default, no external transfer without exact-content/destination preview + one-send approval\n\n## Never-check blacklist (explicit deny)\nUser can add URL/domain/pattern to never collect from. Stored here + in Source Scope.\n\n\`\`\`yaml\nexcluded_patterns:\n  - "bank.com/*"\n  - "https://private.example.com/*"\n  # add more\n\`\`\`\n\nEditable, revocable. Default allow, explicit deny.\n\n## Never collect (even with broad access)\n- passwords, cookies, auth tokens, payment fields\n- unsent form/composer contents, hidden keystrokes\n- continuous screenshot / keylogger\n- incognito/private window unless separately enabled with clear permission\n\n## Sensitive\nMark health, mental health, relationships, trauma, sexuality, finances, identifying details as sensitive or local-only. Sensitive may be retained locally, never sent externally without one-send approval. Receipt in 07 Sharing Receipts/\n\n## Scopes\nSee 00 System/Connectors/ and Templates/Source Scope.md for enabled/paused scopes.\n\n## Git\nLocal commit OK. Remote push = external upload, needs approval of destination + content. Never auto-push private vault.\n`)
+    contents.set('00 System/START HERE.md', `# START HERE\n\n**What this vault is:** Long-term + working memory for every AI you use. App drives it, extension feeds it, vault organizes it.\n\n**How to open:** Obsidian -> Open folder as vault -> select AI-Brain folder.\n\n**Folder map:**\n- 00 System/ - rules, schema, templates, connectors, privacy\n- 01 Inbox/ - new imports, processing errors\n- 02 Sources/ - originals, never rewrite: Conversations, Browser Activity, Web Pages, Laptop Files\n- 03 Memory/ - Entities, Events, Connections (derived, source-linked)\n- 04 Working Memory/ - Current Snapshot, Open Loops, Active (short-lived view of NOW)\n- 05 Knowledge/ - reusable synthesis, linked to sources\n- 06 Review/ - Questions, Conflicts, Keep-or-Forget, Cleanup, Monthly Audits\n- 07 Sharing Receipts/ - exact context sent externally, with approval\n- 08 Journal/ - daily notes Asia/Dhaka, event time vs capture time\n- 09 Activity & Undo/ - what was captured/created/failed/sent\n- 90 Archive/ - inactive derived notes, not source deletion\n\n**Default capture:** Extension checks everything by default. If inaccessible -> logs "wasn't accessible" in 09 Activity & Undo + 01 Inbox/Processing Errors, no popup. See [[Privacy & Access]] for blacklist.\n\n**Extension UX:** Capsule Hub style: capture as Capsule, library, drag-drop inject, version/branch, attachments. Quillbot style: inline suggestions in any text field, highlight for context.\n\n**Key docs:** [[Priority & Retention]],  [[Memory Schema]], [[Privacy & Access]], [[Source Capture Map]], [[User Setup Defaults]], [[Model Registry]], [[Claude Feature Audit]]\n\n**One-line check:** Is app driver, vault organizer, extension collector+suggester, default check everything with blacklist, Capsule + inline suggestions, auto-capture via templates, asks only when uncertain, local by default? If yes, doing it right.\n`)
+    // The Knowledge readme keeps the canonical two-line wording.
+    contents.set('05 Knowledge/README.md', `# Knowledge\nReusable synthesis, always linked to sources. Derived from 03 Memory, not source of truth.\n`)
   }
   return contents
 }
@@ -282,27 +300,83 @@ export function planBrainRefresh(
 /**
  * The plan an apply follows: every structure path that is already there is
  * left exactly as it is (adoption never overwrites), everything missing is
- * written with its full content. `exists` answers for one relative path; the
- * main process backs it with the same path rules as everything else.
+ * written with its full content. When `readExisting` is given, an existing
+ * file whose content DIFFERS from the app's default is not silently skipped:
+ * the default lands beside it (suffix " (new)") and a conflict is recorded
+ * for the owner to settle later — keep one, keep both, or combine. Identical
+ * content is simply one file: nothing asked, nothing duplicated. `exists`
+ * answers for one relative path; the main process backs it with the same
+ * path rules as everything else.
  */
 export type BrainPlan = {
   kind: BrainKind
   present: string[]
   missing: string[]
   writes: Array<{ relative: string; content: string }>
+  conflicts: Array<{ original: string; added: string }>
 }
 
-export function planBrainApply(kind: BrainKind, exists: (relative: string) => boolean): BrainPlan {
+/** Where the app's default copy of an already-owned file lands: beside it. */
+export function besidePath(relative: string): string {
+  const at = relative.lastIndexOf('/')
+  const dir = at === -1 ? '' : `${relative.slice(0, at + 1)}`
+  const name = at === -1 ? relative : relative.slice(at + 1)
+  const dot = name.lastIndexOf('.')
+  const stem = dot <= 0 ? name : name.slice(0, dot)
+  const ext = dot <= 0 ? '' : name.slice(dot)
+  return `${dir}${stem} (new)${ext}`
+}
+
+export function planBrainApply(
+  kind: BrainKind,
+  exists: (relative: string) => boolean,
+  readExisting?: (relative: string) => string | null,
+  isSettled?: (relative: string) => boolean
+): BrainPlan {
   const contents = brainFileContents(kind)
   const present: string[] = []
   const missing: string[] = []
   const writes: Array<{ relative: string; content: string }> = []
+  const conflicts: Array<{ original: string; added: string }> = []
   for (const [relative, content] of contents) {
-    if (exists(relative)) present.push(relative)
-    else {
+    if (exists(relative)) {
+      // A path the owner has already settled is theirs, however it reads.
+      if (isSettled?.(relative)) {
+        present.push(relative)
+        continue
+      }
+      const theirs = readExisting ? readExisting(relative) : null
+      if (theirs !== null && theirs !== content) {
+        // Same name, different text: the owner's file stays exactly as it is,
+        // the app's default lands beside it, and the choice is theirs later.
+        const added = besidePath(relative)
+        // An beside-copy already on disk stays as it is — re-planning must not
+        // resurrect what a resolution just removed.
+        if (!exists(added)) writes.push({ relative: added, content })
+        conflicts.push({ original: relative, added })
+      } else {
+        present.push(relative)
+      }
+    } else {
       missing.push(relative)
       writes.push({ relative, content })
     }
   }
-  return { kind, present, missing, writes }
+  return { kind, present, missing, writes, conflicts }
+}
+
+/**
+ * The four answers to a conflict, computed purely so they can be tested: what
+ * the original file becomes (null = leave it as it is) and whether the
+ * beside-copy goes away.
+ */
+export function applyConflictAction(
+  action: 'mine' | 'new' | 'both' | 'combine',
+  mine: string,
+  theirs: string
+): { original: string | null; deleteAdded: boolean } {
+  if (action === 'mine') return { original: null, deleteAdded: true }
+  if (action === 'new') return { original: theirs, deleteAdded: true }
+  if (action === 'both') return { original: null, deleteAdded: false }
+  return { original: `${mine}\n\n---\n\n${theirs}`, deleteAdded: true }
 }

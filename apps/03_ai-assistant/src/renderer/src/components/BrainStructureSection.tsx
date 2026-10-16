@@ -1,58 +1,54 @@
 import { useEffect, useState } from 'react'
 import { bridge } from '../platform/bridge'
+import type { VaultState } from '../hooks/useVault'
 
 /**
- * Second-brain structure (his 2026-10-16 order): the LLM-wiki architecture as
- * the default, offered through the choice he described — generate a new
- * structure, or use a folder that already has its own. Either way the rule is
- * the same and shown before it runs: only what is missing is added, and what
- * is already there is never rewritten.
+ * The Vault pane, pared down to what the owner actually does (his note: it
+ * was too verbose): choose the folder, or press the default —
+ * Documents\ASSistant\AI-Brain. Either way the structure integrates itself:
+ * the default files are generated, folders with the same names are never
+ * replaced, and a file that exists in two wordings is kept BOTH — the app's
+ * copy beside the owner's — with the choice offered here, now or later:
+ * keep mine, use the new one, keep both, or combine.
  */
 
 type Inspection = { ok: boolean; kind?: string; present?: string[]; missing?: string[]; differing?: string[]; error?: string }
+type Conflict = { original: string; added: string }
+type Links = { files: number; checked: number; dead: Array<{ from: string; target: string }>; ambiguous: Array<{ from: string; target: string; matches: string[] }>; error?: string }
 
-const KIND_LABEL: Record<string, string> = {
-  'app-structure': 'This vault already speaks the app\'s structure.',
-  obsidian: 'An Obsidian vault — its own layout stays untouched.',
-  'llm-wiki': 'A raw/wiki layout — the intake wall is already in place.',
-  empty: 'An empty folder, ready for a full structure.',
-  other: 'The folder\'s own layout — it stays as it is; only additions are made.',
-}
-
-/** A count, not a vibe: "3 of 5 structure files present." */
-function countLine(inspection: Inspection): string {
-  const present = inspection.present?.length ?? 0
-  const missing = inspection.missing?.length ?? 0
-  return `${present} of ${present + missing} structure files present.`
-}
-
-export default function BrainStructureSection({ path, isDemo }: { path: string; isDemo: boolean }) {
+export default function BrainStructureSection({
+  vault,
+  isDemo,
+  onChanged,
+}: {
+  vault: VaultState
+  isDemo: boolean
+  onChanged: () => void
+}) {
+  const path = vault.path
   const [inspection, setInspection] = useState<Inspection | null>(null)
-  const [asked, setAsked] = useState(false)
-  const [adopted, setAdopted] = useState<{ root: string; inspection: Inspection } | null>(null)
+  const [conflicts, setConflicts] = useState<Conflict[]>([])
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
-  const [links, setLinks] = useState<{ files: number; checked: number; dead: Array<{ from: string; target: string }>; ambiguous: Array<{ from: string; target: string; matches: string[] }>; error?: string } | null>(null)
+  const [links, setLinks] = useState<Links | null>(null)
+
+  const inspect = (root: string): void => {
+    bridge.structure
+      .inspect(root)
+      .then(result => {
+        setInspection(result)
+        setConflicts(result.conflicts ?? [])
+      })
+      .catch(() => setInspection({ ok: false, error: 'The folder could not be inspected.' }))
+  }
 
   useEffect(() => {
     if (isDemo || !path) return
-    let live = true
-    bridge.structure
-      .inspect(path)
-      .then(result => {
-        if (live) setInspection(result)
-      })
-      .catch(() => {
-        if (live) setInspection({ ok: false, error: 'The folder could not be inspected.' })
-      })
-    return () => {
-      live = false
-    }
+    inspect(path)
   }, [path, isDemo])
 
-  async function apply(root: string): Promise<void> {
-    setBusy(true)
-    setNotice('')
+  /** The structure integrates itself into whatever folder was just chosen. */
+  async function integrate(root: string): Promise<void> {
     try {
       const result = await bridge.structure.apply(root)
       if (!result.ok) {
@@ -60,16 +56,31 @@ export default function BrainStructureSection({ path, isDemo }: { path: string; 
         return
       }
       const written = result.written ?? []
-      setNotice(
-        written.length
-          ? `Added ${written.length} file${written.length === 1 ? '' : 's'}: ${written.join(', ')}. Nothing existing was touched.`
-          : 'Nothing to add — every structure file is already in place.'
-      )
-      setAdopted(null)
-      setAsked(false)
-      const fresh = await bridge.structure.inspect(root)
-      if (root === path) setInspection(fresh)
-      else if (fresh.ok) setNotice(`Added ${written.length} file${written.length === 1 ? '' : 's'} to ${root}. To make it the app's vault, use Folder > Choose folder above.`)
+      const fresh = (result.conflicts ?? []).length
+      const parts: string[] = []
+      if (written.length) parts.push(`Structure added: ${written.length} file${written.length === 1 ? '' : 's'}.`)
+      if (fresh) parts.push(`${fresh} file${fresh === 1 ? ' exists' : 's exist'} in two wordings — yours was kept, the default sits beside it.`)
+      setNotice(parts.join(' ') || 'Structure already in place — nothing to add.')
+      setConflicts(result.conflicts ?? [])
+      inspect(root)
+    } catch (error) {
+      setNotice((error as Error).message)
+    }
+  }
+
+  async function choose(): Promise<void> {
+    const folder = await bridge.vault.chooseFolder()
+    if (!folder) return
+    setBusy(true)
+    setNotice('')
+    try {
+      const result = await bridge.settings.update({ vaultPath: folder })
+      if (!result.ok) {
+        setNotice(result.error || 'That folder could not be used.')
+        return
+      }
+      onChanged()
+      await integrate(folder)
     } catch (error) {
       setNotice((error as Error).message)
     } finally {
@@ -77,40 +88,62 @@ export default function BrainStructureSection({ path, isDemo }: { path: string; 
     }
   }
 
-  async function pickExisting(): Promise<void> {
-    const folder = await bridge.vault.chooseFolder()
-    if (!folder) return
+  async function useDefault(): Promise<void> {
     setBusy(true)
     setNotice('')
     try {
-      const result = await bridge.structure.inspect(folder)
+      const result = await bridge.vault.useDefault()
       if (!result.ok) {
-        setNotice(result.error || 'That folder cannot be read.')
+        setNotice(result.error || 'The default folder could not be used.')
         return
       }
-      setAdopted({ root: folder, inspection: result })
+      onChanged()
+      setConflicts(result.conflicts ?? [])
+      const written = result.written ?? []
+      setNotice(
+        written.length
+          ? `Default vault set up at ${result.path} — ${written.length} structure file${written.length === 1 ? '' : 's'} written.`
+          : `Default vault at ${result.path} — already complete.`
+      )
+      inspect(result.path || '')
+    } catch (error) {
+      setNotice((error as Error).message)
     } finally {
       setBusy(false)
     }
   }
 
-  async function refresh(root: string): Promise<void> {
+  async function settle(conflict: Conflict, action: 'mine' | 'new' | 'both' | 'combine'): Promise<void> {
     setBusy(true)
     setNotice('')
     try {
-      const result = await bridge.structure.apply(root, { refresh: true })
+      const result = await bridge.structure.resolve(path, conflict.original, conflict.added, action)
+      if (!result.ok) {
+        setNotice(result.error || 'The choice could not be applied.')
+        return
+      }
+      setConflicts(current => current.filter(entry => entry.added !== conflict.added))
+      setNotice(`${conflict.original}: settled — ${action === 'mine' ? 'yours kept' : action === 'new' ? 'default kept' : action === 'both' ? 'both kept' : 'combined'}.`)
+      inspect(path)
+    } catch (error) {
+      setNotice((error as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function refreshRules(): Promise<void> {
+    setBusy(true)
+    setNotice('')
+    try {
+      const result = await bridge.structure.apply(path, { refresh: true })
       if (!result.ok) {
         setNotice(result.error || 'Nothing was written.')
         return
       }
       const refreshed = result.refreshed ?? []
-      const written = result.written ?? []
-      const parts: string[] = []
-      if (refreshed.length) parts.push(`Replaced with the current wording: ${refreshed.join(', ')}. Notes were never touched.`)
-      if (written.length) parts.push(`Added ${written.length} missing file${written.length === 1 ? '' : 's'}: ${written.join(', ')}.`)
-      setNotice(parts.length ? parts.join(' ') : 'Already up to date — nothing replaced.')
-      const fresh = await bridge.structure.inspect(root)
-      if (root === path) setInspection(fresh)
+      setNotice(refreshed.length ? `Replaced with the current wording: ${refreshed.join(', ')}. Notes were never touched.` : 'Already up to date.')
+      inspect(path)
     } catch (error) {
       setNotice((error as Error).message)
     } finally {
@@ -129,155 +162,103 @@ export default function BrainStructureSection({ path, isDemo }: { path: string; 
     }
   }
 
-  function linksLine(): string {
-    if (!links) return ''
-    if (links.error) return links.error
-    const dead = links.dead.length
-    const ambiguous = links.ambiguous.length
-    if (!dead && !ambiguous) return `${links.checked} links across ${links.files} notes — every one resolves.`
-    const deadNames = dead ? `${dead} dead (${links.dead.slice(0, 3).map(h => h.target).join(', ')}${dead > 3 ? '…' : ''})` : ''
-    const ambNames = ambiguous ? `${ambiguous} ambiguous bare names (${links.ambiguous.slice(0, 3).map(h => h.target).join(', ')}${ambiguous > 3 ? '…' : ''})` : ''
-    return `${links.checked} links across ${links.files} notes — ${[deadNames, ambNames].filter(Boolean).join(', ')}.`
+  if (isDemo) {
+    return <p className="text-[12px] text-muted">Choosing the vault folder happens in the desktop app, where the real folder is.</p>
   }
 
-  if (isDemo) {
-    return (
-      <p className="text-[12px] text-muted">
-        The structure — wiki, people, index and the engine rulebooks — is set up from the desktop app, where the real
-        folder is.
-      </p>
-    )
-  }
+  const counts = inspection?.ok ? `${inspection.present?.length ?? 0} of ${(inspection.present?.length ?? 0) + (inspection.missing?.length ?? 0)} structure files` : ''
+  const linksLine = links
+    ? links.error
+      ? links.error
+      : `${links.checked} links across ${links.files} notes${links.dead.length || links.ambiguous.length ? ` — ${links.dead.length} dead, ${links.ambiguous.length} ambiguous` : ' — every one resolves'}`
+    : ''
 
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-[12.5px]">
-        The second-brain structure: <span className="font-semibold">05 Knowledge</span> (the engine's own synthesized
-        notes), <span className="font-semibold">10 People</span>, <span className="font-semibold">index.md</span>, and
-        the rulebooks (<span className="font-semibold">CLAUDE.md</span>, <span className="font-semibold">AGENTS.md</span>)
-        the engines read at the vault root. The capture record stays write-once; the structure only ever adds what is
-        missing.
-      </p>
-      {!path ? (
-        <p className="text-[12px] text-muted">Choose the vault folder first — the structure is built inside it.</p>
-      ) : inspection?.ok ? (
-        <p className="text-[12px] text-muted" role="status">
-          {KIND_LABEL[inspection.kind || 'other'] || KIND_LABEL.other} {countLine(inspection)}
+      <div className="flex flex-wrap gap-2">
+        <button
+          className="rounded-lg border border-line px-3 py-2 text-[12.5px] hover:bg-white/[0.06] disabled:opacity-50"
+          onClick={() => void choose()}
+          disabled={busy}
+          aria-label="Choose folder"
+        >
+          Choose folder…
+        </button>
+        <button
+          className="rounded-lg border border-line px-3 py-2 text-[12.5px] hover:bg-white/[0.06] disabled:opacity-50"
+          onClick={() => void useDefault()}
+          disabled={busy}
+          aria-label="Use the default folder"
+        >
+          Use default
+        </button>
+      </div>
+      {path ? (
+        <p className="break-all text-[11.5px] text-muted">
+          {path}
+          {counts ? ` · ${counts}` : ''}
         </p>
       ) : (
-        <p className="text-[12px] text-muted">{inspection?.error || 'Checking the folder…'}</p>
+        <p className="text-[11.5px] text-muted">No folder chosen yet — the default is Documents\ASSistant\AI-Brain.</p>
       )}
-      {path && !asked ? (
-        <div className="flex flex-wrap gap-2">
+      {notice ? (
+        <p className="break-words text-[12px]" role="status">
+          {notice}
+        </p>
+      ) : null}
+      {conflicts.length ? (
+        <div className="flex flex-col gap-1.5 rounded-lg border border-line bg-card p-2.5">
+          <p className="text-[12px] text-muted">In two wordings — yours and the app's default. Pick now, or leave them; both files stay.</p>
+          {conflicts.map(conflict => (
+            <div key={conflict.original} className="flex flex-wrap items-center gap-1.5">
+              <span className="min-w-0 flex-1 break-all text-[12px]">{conflict.original}</span>
+              {(['mine', 'new', 'both', 'combine'] as const).map(action => (
+                <button
+                  key={action}
+                  className="rounded border border-line px-2 py-1 text-[11px] text-muted hover:bg-white/[0.06] hover:text-ink disabled:opacity-50"
+                  disabled={busy}
+                  onClick={() => void settle(conflict, action)}
+                  aria-label={`${action}: ${conflict.original}`}
+                >
+                  {action === 'mine' ? 'Keep mine' : action === 'new' ? 'Use new' : action === 'both' ? 'Both' : 'Combine'}
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {inspection?.ok && inspection.differing?.length ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="min-w-0 flex-1 text-[11.5px] text-muted">
+            Newer wording available for {inspection.differing.join(', ')} — notes never touched.
+          </span>
           <button
-            className="rounded-lg border border-line px-3 py-2 text-[12.5px] hover:bg-white/[0.06] disabled:opacity-50"
+            className="rounded border border-line px-2 py-1 text-[11px] text-muted hover:bg-white/[0.06] hover:text-ink disabled:opacity-50"
             disabled={busy}
-            onClick={() => setAsked(true)}
-            aria-label="Set up structure"
+            onClick={() => void refreshRules()}
+            aria-label="Replace with current wording"
           >
-            Set up structure…
+            Replace
           </button>
+        </div>
+      ) : null}
+      <div className="flex flex-wrap items-center gap-2">
+        {linksLine ? (
+          <span className="min-w-0 flex-1 break-words text-[11.5px] text-muted" role="status">
+            {linksLine}
+          </span>
+        ) : null}
+        {path ? (
           <button
-            className="rounded-lg border border-line px-3 py-2 text-[12.5px] hover:bg-white/[0.06] disabled:opacity-50"
+            className="rounded border border-line px-2 py-1 text-[11px] text-muted hover:bg-white/[0.06] hover:text-ink disabled:opacity-50"
             disabled={busy}
             onClick={() => void checkLinks()}
             aria-label="Check links"
           >
             Check links
           </button>
-        </div>
-      ) : null}
-      {links ? (
-        <p className="break-words text-[12px] text-muted" role="status">
-          {linksLine()}
-        </p>
-      ) : null}
-      {inspection?.ok && inspection.differing?.length ? (
-        <div className="flex flex-col gap-2 rounded-lg border border-line bg-card p-2.5">
-          <p className="text-[12px] text-muted">
-            The app's wording of {inspection.differing.join(', ')} is newer than what the vault holds. Your notes are
-            never touched — only that file's rules text.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <button
-              className="rounded-lg border border-line px-3 py-2 text-[12.5px] hover:bg-white/[0.06] disabled:opacity-50"
-              disabled={busy}
-              onClick={() => void refresh(path)}
-              aria-label="Replace rulebooks with current wording"
-            >
-              Replace with current wording
-            </button>
-          </div>
-        </div>
-      ) : null}
-      {asked ? (
-        <div className="flex flex-col gap-2 rounded-lg border border-line bg-card p-2.5">
-          <p className="text-[12.5px]">Generate a new structure here, or use a folder that already has its own?</p>
-          <div className="flex flex-wrap gap-2">
-            <button
-              className="rounded-lg border border-line px-3 py-2 text-[12.5px] hover:bg-white/[0.06] disabled:opacity-50"
-              disabled={busy}
-              onClick={() => void apply(path)}
-              aria-label="Generate a new structure"
-            >
-              Generate a new structure
-            </button>
-            <button
-              className="rounded-lg border border-line px-3 py-2 text-[12.5px] hover:bg-white/[0.06] disabled:opacity-50"
-              disabled={busy}
-              onClick={() => void pickExisting()}
-              aria-label="Use an existing folder"
-            >
-              Use an existing folder…
-            </button>
-            <button
-              className="rounded-lg border border-line px-3 py-2 text-[12.5px] text-muted hover:bg-white/[0.06] disabled:opacity-50"
-              disabled={busy}
-              onClick={() => setAsked(false)}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      ) : null}
-      {adopted ? (
-        <div className="flex flex-col gap-2 rounded-lg border border-line bg-card p-2.5">
-          <p className="text-[12.5px]">
-            {KIND_LABEL[adopted.inspection.kind || 'other'] || KIND_LABEL.other} {countLine(adopted.inspection)}
-          </p>
-          {adopted.inspection.missing?.length ? (
-            <>
-              <p className="text-[12px] text-muted">
-                Would be added, nothing else touched: {adopted.inspection.missing.join(', ')}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  className="rounded-lg border border-line px-3 py-2 text-[12.5px] hover:bg-white/[0.06] disabled:opacity-50"
-                  disabled={busy}
-                  onClick={() => void apply(adopted.root)}
-                  aria-label="Add missing structure files"
-                >
-                  Add {adopted.inspection.missing.length} missing file{adopted.inspection.missing.length === 1 ? '' : 's'}
-                </button>
-                <button
-                  className="rounded-lg border border-line px-3 py-2 text-[12.5px] text-muted hover:bg-white/[0.06] disabled:opacity-50"
-                  disabled={busy}
-                  onClick={() => setAdopted(null)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </>
-          ) : (
-            <p className="text-[12px] text-muted">Nothing to add there — it is already complete.</p>
-          )}
-        </div>
-      ) : null}
-      {notice ? (
-        <p className="break-words text-[12px]" role="status">
-          {notice}
-        </p>
-      ) : null}
+        ) : null}
+      </div>
     </div>
   )
 }

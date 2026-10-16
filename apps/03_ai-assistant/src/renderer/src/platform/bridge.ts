@@ -119,15 +119,31 @@ export type DesktopBridge = {
   }
   structure: {
     /** What a folder is, and exactly what a structure apply would add. */
-    inspect: (root: string) => Promise<{ ok: boolean; kind?: string; present?: string[]; missing?: string[]; differing?: string[]; error?: string }>
+    inspect: (root: string) => Promise<{ ok: boolean; kind?: string; present?: string[]; missing?: string[]; differing?: string[]; conflicts?: Array<{ original: string; added: string }>; error?: string }>
     /** Add every missing structure file; existing files are never rewritten. */
-    apply: (root: string, options?: { refresh?: boolean }) => Promise<{ ok: boolean; kind?: string; written?: string[]; refreshed?: string[]; skipped?: string[]; differing?: string[]; error?: string }>
+    apply: (
+      root: string,
+      options?: { refresh?: boolean }
+    ) => Promise<{
+      ok: boolean
+      kind?: string
+      written?: string[]
+      refreshed?: string[]
+      skipped?: string[]
+      conflicts?: Array<{ original: string; added: string }>
+      differing?: string[]
+      error?: string
+    }>
+    /** Settle a conflict: keep mine, use the new one, keep both, or combine. */
+    resolve: (root: string, original: string, added: string, action: 'mine' | 'new' | 'both' | 'combine') => Promise<{ ok: boolean; error?: string }>
     /** Every [[link]] in the vault, resolved and counted: dead and ambiguous reported. */
     linkCheck: () => Promise<{ files: number; checked: number; dead: Array<{ from: string; target: string }>; ambiguous: Array<{ from: string; target: string; matches: string[] }>; error?: string }>
   }
   vault: {
     /** The operating system's folder picker. null when the person closed it. */
     chooseFolder: () => Promise<string | null>
+    /** His default: Documents\\ASSistant\\AI-Brain, created on this press. */
+    useDefault: () => Promise<{ ok: boolean; path?: string; written?: string[]; conflicts?: Array<{ original: string; added: string }>; error?: string }>
     /** A finished turn, written into the vault as a handoff document. */
     saveHandoff: (name: string, markdown: string) => Promise<{ ok: boolean; answer: string }>
     /** A timestamped portable copy of the vault, written to the exports folder. */
@@ -208,9 +224,10 @@ const demoBridge: DesktopBridge = {
   structure: {
     inspect: async () => ({ ok: false, error: 'Inspecting a structure needs the desktop app.' }),
     apply: async () => ({ ok: false, error: 'Writing a structure needs the desktop app.' }),
+    resolve: async () => ({ ok: false, error: 'Settling a conflict needs the desktop app.' }),
     linkCheck: async () => ({ files: 0, checked: 0, dead: [], ambiguous: [], error: 'The link check needs the desktop app.' }),
   },
-  vault: { chooseFolder: async () => null, saveHandoff: async () => ({ ok: false, answer: 'Writing a handoff needs the desktop app.' }), exportCopy: async () => ({ ok: false, answer: 'Exporting needs the desktop app.' }), captureChat: async () => ({ ok: false, answer: 'Capturing needs the desktop app.' }) },
+  vault: { chooseFolder: async () => null, useDefault: async () => ({ ok: false, error: 'Choosing the default vault needs the desktop app.' }), saveHandoff: async () => ({ ok: false, answer: 'Writing a handoff needs the desktop app.' }), exportCopy: async () => ({ ok: false, answer: 'Exporting needs the desktop app.' }), captureChat: async () => ({ ok: false, answer: 'Capturing needs the desktop app.' }) },
   // No socket is open here, and none can be: this is a page, not the app.
   extension: {
     status: async () => ({

@@ -239,18 +239,12 @@ export default function SettingsView({
   const [extension, setExtension] = useState({ listening: false, port: 8765, url: '', error: '' })
   const [permissionProblem, setPermissionProblem] = useState('')
   const [query, setQuery] = useState('')
-  const [typed, setTyped] = useState('')
-  const [problem, setProblem] = useState('')
-  const [busy, setBusy] = useState(false)
 
   useEffect(() => {
     if (!open) return
-    setProblem('')
-    // The field starts at the folder that is actually in use rather than blank.
     bridge.settings
       .read()
       .then(settings => {
-        setTyped(settings.vaultPath || '')
         setCustomBase(settings.cloud?.baseUrl || '')
         setCustomModel(settings.cloud?.model || '')
       })
@@ -295,32 +289,6 @@ export default function SettingsView({
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [open, onClose])
-
-  async function apply(folder: string): Promise<void> {
-    if (busy) return
-    setBusy(true)
-    setProblem('')
-    try {
-      const result = await bridge.settings.update({ vaultPath: folder })
-      if (!result.ok) {
-        setProblem(result.error || 'That folder could not be used.')
-        return
-      }
-      setTyped(result.settings?.vaultPath || folder)
-      onChanged()
-    } catch (error) {
-      setProblem((error as Error).message)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function choose(): Promise<void> {
-    const folder = await bridge.vault.chooseFolder()
-    if (!folder) return
-    setTyped(folder)
-    await apply(folder)
-  }
 
   /**
    * Saving a key hands it over and keeps nothing: what comes back is the provider
@@ -1059,54 +1027,8 @@ export default function SettingsView({
     ],
     vault: [      {
         label: 'Folder',
-        terms: 'vault path choose change folder markdown',
-        body: isDemo ? (
-          <p className="text-[12px] text-muted">The desktop app keeps conversations in the folder you choose.</p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-wrap gap-2">
-              <button
-                className="rounded-lg border border-line px-3 py-2 text-[12.5px] hover:bg-white/[0.06]"
-                onClick={() => void choose()}
-                disabled={busy}
-                aria-label="Choose folder"
-              >
-                Choose folder…
-              </button>
-              <div className="flex min-w-[220px] flex-1 gap-2">
-                <input
-                  className="min-w-0 flex-1 rounded-lg border border-line bg-card px-3 py-2 text-[12.5px] outline-none focus:border-accent"
-                  value={typed}
-                  onChange={event => setTyped(event.target.value)}
-                  placeholder="Paste a folder path"
-                  aria-label="Vault folder path"
-                  spellCheck={false}
-                />
-                <button
-                  className="rounded-lg border border-line px-3 py-2 text-[12.5px] hover:bg-white/[0.06] disabled:opacity-50"
-                  onClick={() => void apply(typed)}
-                  disabled={busy || !typed.trim()}
-                  aria-label="Use this folder"
-                >
-                  Use
-                </button>
-              </div>
-            </div>
-            <p className="text-[11.5px] text-muted">
-              The folder must already exist; nothing is created in its place if the path is wrong.
-            </p>
-            {problem && (
-              <p className="text-[12px] text-warn" role="status">
-                {problem}
-              </p>
-            )}
-          </div>
-        ),
-      },
-      {
-        label: 'Second-brain structure',
-        terms: 'structure wiki index claude.md agents.md second brain generate adopt existing folder llm wiki method',
-        body: <BrainStructureSection path={vault.path} isDemo={isDemo} />,
+        terms: 'vault path choose folder default documents assistant second brain structure conflict links',
+        body: <BrainStructureSection vault={vault} isDemo={isDemo} onChanged={onChanged} />,
       },
     ],
   }

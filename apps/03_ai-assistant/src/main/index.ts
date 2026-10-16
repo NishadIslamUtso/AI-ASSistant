@@ -1,6 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, safeStorage, shell } from 'electron'
 import { dirname, join, resolve } from 'node:path'
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { startLocalApi, type LocalApi } from './api/server'
 import { DEFAULT_EXTENSION_PORT, startExtensionApi, type ExtensionApi } from './extension/server'
 import { createVaultService, resolveVaultRoot } from './vault/service'
@@ -26,7 +26,7 @@ import { deployMcp, deploySkill, scanClaudeSkills, type McpServer, type VaultSki
 import { installCatalogSkill } from './engine/skillCatalogInstall'
 import { installPackFromFolder, listPacks, removePack } from './engine/packs'
 import { deployBuiltInSkills } from './engine/vaultSkills'
-import { brainFileContents, classifyBrainRoot, planBrainApply, planBrainRefresh } from '../shared/lib/brainStructure'
+import { applyConflictAction, brainFileContents, classifyBrainRoot, defaultVaultPath, planBrainApply, planBrainRefresh } from '../shared/lib/brainStructure'
 import { normalizeBoard } from '../shared/lib/sessionsBoard'
 import { exportVaultCopy } from './vault/exportCopy'
 import { deployHouseRules } from './engine/houseRulesDeploy'
@@ -126,6 +126,78 @@ function pushEngineEvent(event: EngineEvent): void {
 
 /** Everything the renderer is allowed to ask about settings and the folder. */
 /** Settings, the folder picker and the providers — everything the renderer asks the machine. */
+  // The second-brain structure (his 2026-10-16 order): generate a new one or
+  // adopt an existing folder — either way, only ever ADD what is missing.
+  // The plan is made here, from the real folder, never from the renderer's
+  // word; an existing file is never rewritten.
+  const settledFile = (): string => join(app.getPath('userData'), 'structure-settled.json')
+  const readSettled = (): string[] => {
+    try {
+      const parsed: unknown = JSON.parse(readFileSync(settledFile(), 'utf8'))
+      return Array.isArray(parsed) ? parsed.filter((entry): entry is string => typeof entry === 'string') : []
+    } catch {
+      return []
+    }
+  }
+  const rememberSettled = (relative: string): void => {
+    const list = readSettled()
+    if (!list.includes(relative)) {
+      list.push(relative)
+      writeFileSync(settledFile(), JSON.stringify(list, null, 2), 'utf8')
+    }
+  }
+
+  const structurePlan = (root: string) => {
+    if (typeof root !== 'string' || !root.trim() || root.length > 4096 || /[\n\r]/.test(root)) {
+      throw new Error('Give a real folder path.')
+    }
+    let names: string[] = []
+    try {
+      names = readdirSync(root)
+    } catch {
+      return { error: 'That folder cannot be read.' as const }
+    }
+    const { kind } = classifyBrainRoot(names)
+    const readExisting = (relative: string): string | null => {
+      try {
+        const full = join(root, relative)
+        return existsSync(full) ? readFileSync(full, 'utf8') : null
+      } catch {
+        return null
+      }
+    }
+    const settled = readSettled()
+    const plan = planBrainApply(kind, relative => existsSync(join(root, relative)), readExisting, relative => settled.includes(relative))
+    const differing = planBrainRefresh(kind, readExisting)
+    return { kind: plan.kind, present: plan.present, missing: plan.missing, differing, conflicts: plan.conflicts, writes: plan.writes }
+  }
+
+  const integrateVaultStructure = (root: string): { ok: boolean; kind: string; written: string[]; conflicts: Array<{ original: string; added: string }>; differing: string[]; error?: string } => {
+    try {
+      const plan = structurePlan(root)
+      if ('error' in plan) return { ok: false, kind: '', written: [], conflicts: [], differing: [], error: plan.error }
+      const written: string[] = []
+      for (const file of plan.writes) {
+        const full = join(root, file.relative)
+        mkdirSync(dirname(full), { recursive: true })
+        writeFileSync(full, file.content, { encoding: 'utf8', flag: 'wx' })
+        written.push(file.relative)
+      }
+      if (written.length && resolve(root) === resolve(vaultRoot())) {
+        try {
+          const service = createVaultService({ vaultPath: vaultRoot() })
+          service.capture({ type: 'journal', content: `Second-brain structure: added ${written.join(', ')}.` })
+        } catch {
+          // The files are on disk either way; a log failure is not hidden, but not fatal.
+        }
+      }
+      return { ok: true, kind: plan.kind, written, conflicts: plan.conflicts, differing: plan.differing }
+    } catch (error) {
+      return { ok: false, kind: '', written: [], conflicts: [], differing: [], error: (error as Error).message }
+    }
+  }
+
+
 function registerBridges(): void {
   ipcMain.handle('settings:read', () => settings)
 
@@ -171,6 +243,9 @@ function registerBridges(): void {
     // is told the result instead of assuming it worked.
       const next = createVaultService({ vaultPath: vaultRoot() })
       api?.setVault(next)
+      // A newly chosen folder gets the structure immediately (his rule:
+      // generate the default structure anyways; conflicts land beside).
+      integrateVaultStructure(vaultRoot())
       return { ok: true, settings, status: next.status() }
     }
   )
@@ -240,39 +315,12 @@ function registerBridges(): void {
     return chosen.canceled || !chosen.filePaths.length ? null : chosen.filePaths[0]
   })
 
-  // The second-brain structure (his 2026-10-16 order): generate a new one or
-  // adopt an existing folder — either way, only ever ADD what is missing.
-  // The plan is made here, from the real folder, never from the renderer's
-  // word; an existing file is never rewritten.
-  const structurePlan = (root: string) => {
-    if (typeof root !== 'string' || !root.trim() || root.length > 4096 || /[\n\r]/.test(root)) {
-      throw new Error('Give a real folder path.')
-    }
-    let names: string[] = []
-    try {
-      names = readdirSync(root)
-    } catch {
-      return { error: 'That folder cannot be read.' as const }
-    }
-    const { kind } = classifyBrainRoot(names)
-    const plan = planBrainApply(kind, relative => existsSync(join(root, relative)))
-    const differing = planBrainRefresh(kind, relative => {
-      try {
-        const full = join(root, relative)
-        return existsSync(full) ? readFileSync(full, 'utf8') : null
-      } catch {
-        return null
-      }
-    })
-    return { kind: plan.kind, present: plan.present, missing: plan.missing, differing, writes: plan.writes }
-  }
-
   ipcMain.handle('structure:inspect', (_event, root: string) => {
     try {
       const plan = structurePlan(root)
       return 'error' in plan
         ? { ok: false, error: plan.error }
-        : { ok: true, kind: plan.kind, present: plan.present, missing: plan.missing, differing: plan.differing }
+        : { ok: true, kind: plan.kind, present: plan.present, missing: plan.missing, differing: plan.differing, conflicts: plan.conflicts }
     } catch (error) {
       return { ok: false, error: (error as Error).message }
     }
@@ -280,15 +328,11 @@ function registerBridges(): void {
 
   ipcMain.handle('structure:apply', (_event, root: string, options: { refresh?: boolean } | undefined) => {
     try {
+      const done = integrateVaultStructure(root)
+      if (!done.ok) return { ok: false, error: done.error }
+      const written = done.written
       const plan = structurePlan(root)
       if ('error' in plan) return { ok: false, error: plan.error }
-      const written: string[] = []
-      for (const file of plan.writes) {
-        const full = join(root, file.relative)
-        mkdirSync(dirname(full), { recursive: true })
-        writeFileSync(full, file.content, { encoding: 'utf8', flag: 'wx' })
-        written.push(file.relative)
-      }
       // Refresh is the owner's explicit press: only the app's own rulebooks
       // (index map + CLAUDE.md/AGENTS.md wording) are brought up to date —
       // never a README, never a note, never anything that was missing anyway.
@@ -315,10 +359,80 @@ function registerBridges(): void {
           // The files are on disk either way; a log failure is reported, not hidden.
         }
       }
-      return { ok: true, kind: plan.kind, written, refreshed, skipped: plan.present, differing: plan.differing }
+      return { ok: true, kind: plan.kind, written, refreshed, skipped: plan.present, conflicts: plan.conflicts, differing: plan.differing }
     } catch (error) {
       return { ok: false, error: (error as Error).message }
     }
+  })
+
+  // Settling a conflict the owner was told about: the beside-copy was added by
+  // the structure apply, and only that recorded shape may be resolved. The
+  // owner's own file is written only when they said so; 'both' touches nothing.
+  ipcMain.handle(
+    'structure:resolve',
+    (_event, root: string, original: string, added: string, action: 'mine' | 'new' | 'both' | 'combine') => {
+      try {
+        if (typeof root !== 'string' || !root.trim()) return { ok: false, error: 'Give a real folder path.' }
+        if (action !== 'mine' && action !== 'new' && action !== 'both' && action !== 'combine') {
+          return { ok: false, error: 'Unknown choice.' }
+        }
+        const clean = (relative: string): string => {
+          if (typeof relative !== 'string' || /['\n\r]/.test(relative) || relative.includes('..')) {
+            throw new Error('Not a vault-relative path.')
+          }
+          return relative
+        }
+        const mine = clean(original)
+        const theirs = clean(added)
+        if (!theirs.includes(' (new)')) return { ok: false, error: 'That beside-copy was not added by the structure.' }
+        const mineFull = join(root, mine)
+        const theirsFull = join(root, theirs)
+        if (!existsSync(mineFull) || !existsSync(theirsFull)) return { ok: false, error: 'One of the two files is gone.' }
+        // The never-check list is functional, not prose: the default seed must
+        // never overwrite the patterns the owner actually keeps.
+        if (action === 'new' && mine.replace(/\\/g, '/').endsWith('00 System/Privacy & Access.md')) {
+          return { ok: false, error: 'The privacy list is never replaced by the default seed. Keep yours, or combine.' }
+        }
+        const verdict = applyConflictAction(action, readFileSync(mineFull, 'utf8'), readFileSync(theirsFull, 'utf8'))
+        if (verdict.original !== null) writeFileSync(mineFull, verdict.original, { encoding: 'utf8' })
+        if (verdict.deleteAdded) rmSync(theirsFull)
+        // Settled is settled: the plan stops offering this file.
+        rememberSettled(mine)
+        if (resolve(root) === resolve(vaultRoot())) {
+          try {
+            const service = createVaultService({ vaultPath: vaultRoot() })
+            service.capture({ type: 'journal', content: `Structure conflict settled (${action}): ${mine}.` })
+          } catch {
+            // The files are settled either way; a log failure is not hidden, but it is not fatal.
+          }
+        }
+        return { ok: true }
+      } catch (error) {
+        return { ok: false, error: (error as Error).message }
+      }
+    }
+  )
+
+  // The default vault: his Documents\\ASSistant\\AI-Brain. Created on his press —
+  // this one press is the decision — then integrated like any other folder.
+  ipcMain.handle('vault:use-default', async () => {
+    const home = process.env['USERPROFILE'] || process.env['HOME'] || ''
+    let target = ''
+    try {
+      target = defaultVaultPath(home)
+    } catch (error) {
+      return { ok: false, error: (error as Error).message }
+    }
+    try {
+      mkdirSync(target, { recursive: true })
+    } catch {
+      return { ok: false, error: `${target} could not be created.` }
+    }
+    settings = writeSettings(settingsFile, { ...settings, vaultPath: target })
+    const next = createVaultService({ vaultPath: vaultRoot() })
+    api?.setVault(next)
+    const done = integrateVaultStructure(target)
+    return { ok: true, path: target, kind: done.kind, written: done.written, conflicts: done.conflicts, differing: done.differing }
   })
 
   // The link check: every [[link]] in the vault, resolved by exact path and
@@ -1104,6 +1218,13 @@ if (!gotLock) {
       },
     })
     registerBridges()
+    // The vault, whenever it exists, is brought up to the current structure at
+    // boot: missing files are written, same-name files are never replaced, and
+    // two-wording files keep both copies for the owner to settle in Settings.
+    const integrated = integrateVaultStructure(vaultRoot())
+    if (integrated.ok && integrated.written.length) {
+      console.log(`[structure] added ${integrated.written.length} structure file(s), ${integrated.conflicts.length} conflict(s) to settle`)
+    }
 
     // Keys are sealed by the operating system — safeStorage is the keychain on
     // macOS and Windows and the desktop's own secret store on Linux. When a

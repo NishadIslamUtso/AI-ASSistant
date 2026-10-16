@@ -9,6 +9,9 @@ import {
   classifyBrainRoot,
   planBrainApply,
   planBrainRefresh,
+  applyConflictAction,
+  besidePath,
+  defaultVaultPath,
 } from '../src/shared/lib/brainStructure'
 
 /**
@@ -36,6 +39,8 @@ test('brainFilePaths names the five base files; templates ride along for app-sha
   ])
   const app = [...brainFileContents('app-structure').keys()].sort()
   assert.deepEqual(app, [
+    '00 System/Privacy & Access.md',
+    '00 System/START HERE.md',
     '00 System/Templates/Knowledge Note.md',
     '00 System/Templates/Person.md',
     '05 Knowledge/README.md',
@@ -75,7 +80,7 @@ test('planBrainRefresh names only rulebooks whose wording differs; identical tex
 
 test('on a fresh folder the plan writes everything, and the rules carry the wall and the link honesty', () => {
   const plan = planBrainApply('app-structure', () => false)
-  assert.equal(plan.writes.length, 7)
+  assert.equal(plan.writes.length, 9)
   const claude = plan.writes.find(file => file.relative === 'CLAUDE.md')
   assert.ok(claude)
   assert.match(claude.content, /Never edit or delete anything in `02 Sources\/`/)
@@ -117,7 +122,7 @@ test('apply on a real folder lands byte for byte, and a second apply adds nothin
     return plan.writes.map(file => file.relative)
   }
   const first = applyOnce()
-  assert.equal(first.length, 7)
+  assert.equal(first.length, 9)
   assert.ok(existsSync(join(root, '05 Knowledge/README.md')))
   assert.ok(existsSync(join(root, '10 People/README.md')))
   assert.match(readFileSync(join(root, 'index.md'), 'utf8'), /## Changes/)
@@ -130,4 +135,52 @@ test('the structure content is a fixed, honest set — same bytes for the same k
   const b = brainFileContents('app-structure')
   assert.equal(a.get('CLAUDE.md'), b.get('CLAUDE.md'))
   assert.notEqual(a.get('CLAUDE.md'), a.get('AGENTS.md'))
+})
+
+test('the default path is Documents/ASSistant/AI-Brain under any home', () => {
+  // Separators are the platform's business; the shape is not.
+  assert.match(defaultVaultPath('C:\\Users\\utso'), /Documents[/\\]ASSistant[/\\]AI-Brain$/)
+  assert.ok(defaultVaultPath('C:\\Users\\utso').startsWith('C:\\Users\\utso'))
+  assert.equal(defaultVaultPath('/home/user'), '/home/user/Documents/ASSistant/AI-Brain')
+  assert.throws(() => defaultVaultPath(''))
+})
+
+test('an existing file with different content is kept AND the default lands beside it as a conflict', () => {
+  const current = brainFileContents('app-structure')
+  const exists = (relative: string): boolean => relative === 'CLAUDE.md' || relative === 'index.md'
+  const read = (relative: string): string | null =>
+    relative === 'CLAUDE.md' ? '# my own rules\n' : (current.get(relative) ?? null)
+  const plan = planBrainApply('app-structure', exists, read)
+  // identical-content files still count as present, not conflicts
+  assert.ok(plan.present.includes('index.md'))
+  assert.deepEqual(plan.conflicts, [{ original: 'CLAUDE.md', added: 'CLAUDE (new).md' }])
+  const beside = plan.writes.find(file => file.relative === 'CLAUDE (new).md')
+  assert.ok(beside, 'the beside copy is planned')
+  assert.equal(beside.content, current.get('CLAUDE.md'))
+  // the owner's own file is never in the writes plan
+  assert.ok(!plan.writes.some(file => file.relative === 'CLAUDE.md'))
+})
+
+test('identical content means one file and no conflict asked', () => {
+  const current = brainFileContents('app-structure')
+  const plan = planBrainApply('app-structure', relative => relative === 'index.md', relative => current.get(relative) ?? null)
+  assert.deepEqual(plan.conflicts, [])
+  assert.ok(plan.present.includes('index.md'))
+})
+
+test('besidePath keeps folders and extensions intact', () => {
+  assert.equal(besidePath('CLAUDE.md'), 'CLAUDE (new).md')
+  assert.equal(besidePath('00 System/Templates/Person.md'), '00 System/Templates/Person (new).md')
+})
+
+test('the four conflict answers do exactly what they say', () => {
+  const mine = '# my rules\n'
+  const theirs = '# app rules\n'
+  assert.deepEqual(applyConflictAction('mine', mine, theirs), { original: null, deleteAdded: true })
+  assert.deepEqual(applyConflictAction('new', mine, theirs), { original: theirs, deleteAdded: true })
+  assert.deepEqual(applyConflictAction('both', mine, theirs), { original: null, deleteAdded: false })
+  const combined = applyConflictAction('combine', mine, theirs)
+  assert.equal(combined.deleteAdded, true)
+  assert.ok(combined.original?.startsWith(mine))
+  assert.ok(combined.original?.endsWith(theirs))
 })
