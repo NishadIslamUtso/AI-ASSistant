@@ -31,6 +31,25 @@ export type SessionsBoard = {
   done: DoneCard[]
 }
 
+/**
+ * Scope the board to one workspace — what a project's Code button asks for.
+ * An empty folder means no scope: everything, exactly as before. The filter
+ * is honest both ways: a scoped board says so, and nothing is hidden that a
+ * "show all" press cannot bring back.
+ */
+export function scopeBoard<T extends { workspace: string }, TDone extends { workspace: string }>(
+  sessions: T[],
+  done: TDone[],
+  focusFolder: string
+): { sessions: T[]; done: TDone[]; scoped: boolean } {
+  if (!focusFolder) return { sessions, done, scoped: false }
+  return {
+    sessions: sessions.filter(entry => entry.workspace === focusFolder),
+    done: done.filter(entry => entry.workspace === focusFolder),
+    scoped: true,
+  }
+}
+
 export const MAX_LINKED_FILES = 24
 export const MAX_DONE_CARDS = 40
 

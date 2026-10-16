@@ -22,9 +22,23 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
   `gemini-antigravity-cli` repos = scams, warned).
 - 315/315 tests, tsc clean, pushed (main = v3).
 
+## NOW — his four messages answered and made real (2026-10-16, after Mods P3)
+
+1. **Models ↔ engines, verified:** sends are engine-only; a Models key now rides the ENGINE (provider brains join the engine's picker; the engine is launched at the provider with the key in its env; the app never calls the provider itself).
+2. **Monthly self-organization, now real:** the first boot or vault choice of a month writes `06 Review/Monthly Audits/<YYYY-MM>.md` from the vault's own numbers; write-once; no scheduler.
+3. **Marketplace dissolved (his order):** modal + sidebar button + account-menu entry deleted; Connectors (engines + extension) and Plugins (packs) are the homes.
+4. **3D first-class (his order, the Claude-OS view):** Brain in the nav + Ctrl+7 + "Open the 3D brain" in Settings › Vault; same graph engine, full height, live counts.
+
+5. **The community store, for real (his question):** the repo grows `store/`, shipped as `resources/store`; Plugins offers "Add the community store" one-press; URL indexes that list files now download-and-verify-install; provenance badges are truthful (store · checksum verified / shipped / unverified). **The store is furnished (his follow-up): FOUR real packs — Prompt starters (the app's own 8 prompts), Looks (the 5 real accents), starter pack, Anthropic skills curated four (Apache-2.0 only, license text rides along; docx/pdf/pptx/xlsx excluded — source-available, no repack). `store/rebuild.mjs` recomputes digests; the shipped-store test pins index↔folder agreement. Agents/connectors stay refused in plain words until their runtimes. Receipts g37–g38 (Prompt starters installed live, verified).
+
+6. **Code inside Projects (his "you choose", option 1 taken):** Code off the global nav, a Code button on every project card that opens Code scoped to the project's folder (Show-all returns everything; the menu keeps View > Code). Receipts g39–g41.
+7. **DONE (his ask, 2026-10-16): the engine shows its thinking + the working word** — thinking events from the real wire, folded like the chat brain's, open while live; 24 gerunds turn over while the engine works. Receipts g42–g44 (scripted-brain wire run: spawn/parser/store/panel all shipped code).
+
+Receipts g27–g41. Version 0.8.0. Next: TUF A15 acceptance.
+
 ## NOW — the acceptance round-trip (everything hangs on this)
 
-- [ ] **His run on the TUF A15** with the v0.6.0 installer (BUILT 2026-10-16 — AI-ASSistant-Setup-0.6.0.exe, 88,062,356 B, sha256 c0c9c086…5ea38c):
+- [ ] **His run on the TUF A15** with the v0.8.0 installer (BUILT 2026-10-16 — AI-ASSistant-Setup-0.8.0.exe, 88,129,252 B, sha256 aa10fb3d…75a8c):
 - [ ] **His run on the TUF A15:** install → Engine on → pick a brain in the
   bay (cloud badge = leaves machine; local = offline) → pick a folder →
   set the throttle → give real work → approve via the card → see artifacts

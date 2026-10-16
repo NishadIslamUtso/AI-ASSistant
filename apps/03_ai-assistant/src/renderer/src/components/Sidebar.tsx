@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import useProjects from '@/state/projects'
-import { PanelLeftClose, PanelLeftOpen, Plus, Search, Store, X } from 'lucide-react'
+import { PanelLeftClose, PanelLeftOpen, Plus, Search, X } from 'lucide-react'
 import type { Chat } from '@shared/types'
 import { searchChats } from '@shared/lib/search'
 import { initials } from '@shared/lib/profile'
@@ -46,7 +46,6 @@ export default function Sidebar({
   onDelete,
   onOpenSettings,
   onOpenMemory,
-  onOpenMarketplace,
   profileName,
   /** The chat-row menu's "Move to group" needs the real list. */
   onSetChatProject,
@@ -66,11 +65,10 @@ export default function Sidebar({
   onNew: () => void
   onDelete: (chatId: string) => void
   /** The profile row at the bottom is the way in to Settings, as in the mockup. */
-  onOpenSettings: (section?: 'models') => void
+  onOpenSettings: (section?: 'models' | 'connectors') => void
   /** Browsing Maps: what was read and when, drawn from the vault. */
   onOpenMemory: () => void
   /** The marketplace: apps, extensions, skills — what the app can reach. */
-  onOpenMarketplace: () => void
   profileName: string
   onSetChatProject: (chatId: string, projectId: string | null) => void
   onPin: (chatId: string, pinned: boolean) => void
@@ -251,17 +249,6 @@ export default function Sidebar({
 
       <button
         type="button"
-        onClick={onOpenMarketplace}
-        aria-label="Marketplace"
-        title="Marketplace — apps, extensions, skills"
-        className="flex w-full items-center gap-2.5 border-t border-line px-3 py-2 text-left text-muted hover:bg-white/[0.06] hover:text-ink"
-      >
-        <Store size={14} aria-hidden className="shrink-0" />
-        <span className="text-[12px]">Marketplace</span>
-      </button>
-
-      <button
-        type="button"
         onClick={onOpenMemory}
         aria-label="Browsing Maps"
         title="What was read and when"
@@ -277,7 +264,6 @@ export default function Sidebar({
       <UserMenu
         profileName={profileName}
         onOpenSettings={onOpenSettings}
-        onOpenMarketplace={onOpenMarketplace}
         onOpenMemory={onOpenMemory}
       />
 
@@ -577,12 +563,10 @@ function SearchResults({
 function UserMenu({
   profileName,
   onOpenSettings,
-  onOpenMarketplace,
   onOpenMemory,
 }: {
   profileName: string
-  onOpenSettings: (section?: 'models') => void
-  onOpenMarketplace: () => void
+  onOpenSettings: (section?: 'models' | 'connectors') => void
   onOpenMemory: () => void
 }) {
   const [open, setOpen] = useState(false)
@@ -611,7 +595,7 @@ function UserMenu({
           <p className="truncate px-2 pb-1 pt-1.5 text-[11px] text-muted">This machine · everything local</p>
           <UserMenuItem label="Settings" hint="Ctrl+," onClick={() => { setOpen(false); onOpenSettings() }} />
           <UserMenuItem label="Get API keys" onClick={() => { setOpen(false); onOpenSettings('models') }} />
-          <UserMenuItem label="Get apps and extensions" onClick={() => { setOpen(false); onOpenMarketplace() }} />
+          <UserMenuItem label="Install apps and extensions" onClick={() => { setOpen(false); onOpenSettings('connectors') }} />
           <UserMenuItem label="Browsing Maps" onClick={() => { setOpen(false); onOpenMemory() }} />
           <div className="my-0.5 border-t border-line" />
           <UserMenuItem

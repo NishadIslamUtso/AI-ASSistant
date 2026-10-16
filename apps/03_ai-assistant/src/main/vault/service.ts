@@ -99,6 +99,90 @@ export function createVaultService({
     }
   }
 
+  /**
+   * The month's own audit, in 06 Review/Monthly Audits. Written once — the
+   * first time the app opens in a new month — from the vault's own numbers,
+   * never invented. No scheduler sits behind it: opening the app IS the
+   * schedule, and a boot or a vault choice is all it waits for. Last month's
+   * page is never edited; the new month writes beside it.
+   */
+  const AUDIT_DIR = '06 Review/Monthly Audits'
+  function lastAuditMonth(): string {
+    try {
+      if (!existsSync(root)) return ''
+      const parsed = JSON.parse(vault().read(`${AUDIT_DIR}/.last-audit.json`) || '') as { month?: string }
+      return typeof parsed.month === 'string' ? parsed.month : ''
+    } catch {
+      return ''
+    }
+  }
+  function monthlyAudit(): { written: boolean; relative: string; month: string } {
+    const store = vault()
+    const { year, month } = dhakaParts(clock())
+    const label = `${year}-${month}`
+    const record = `${AUDIT_DIR}/.last-audit.json`
+    if (lastAuditMonth() === label) {
+      return { written: false, relative: `${AUDIT_DIR}/${label}.md`, month: label }
+    }
+    // The facts are read, not remembered: counts and link health as the vault
+    // holds them at the moment of writing.
+    const sources = store.walkFiles('02 Sources', '.md', 8000)
+    const journals = store.walkFiles(`08 Journal/${year}`, '.md', 4000)
+    const loopsBody = splitDocument(store.read('04 Working Memory/Open Loops.md')).body
+    const openLoops = (loopsBody.match(/^\s*[-*] \[ \]/gm) ?? []).length
+    let health: ReturnType<typeof links> | null = null
+    try {
+      health = links()
+    } catch {
+      // A link walk that cannot finish costs the audit one section, not the page.
+    }
+    const shorten = (rows: Array<{ from: string; target: string }>): string =>
+      rows.slice(0, 8).map(row => `- \`${row.from}\` → ${row.target}`).join('\n')
+    const dead = health ? shorten(health.dead) : ''
+    const ambiguous = health
+      ? health.ambiguous
+          .slice(0, 8)
+          .map(row => `- \`${row.from}\` → ${row.target} (${row.matches.length} candidates)`)
+          .join('\n')
+      : ''
+    const lines = [
+      `# Monthly Audit — ${label}`,
+      '',
+      'Written by the app, once, the first time it opened in this month. No',
+      'scheduler wrote this — opening the app is the schedule. The numbers are',
+      "the vault's own, read the moment this page was made.",
+      '',
+      '## The month in numbers',
+      '',
+      `- Files in the vault: ${store.countFiles()}`,
+      `- Notes in 02 Sources: ${sources.files.length}${sources.capped ? ' (count stopped at the walk limit)' : ''}`,
+      `- Journal entries in 08 Journal/${year}: ${journals.files.length}${journals.capped ? ' (count stopped at the walk limit)' : ''}`,
+      `- Open loops still open: ${openLoops}`,
+      health
+        ? `- Links checked: ${health.checked} (dead: ${health.dead.length}, ambiguous: ${health.ambiguous.length})`
+        : '- Links: not measured this month (the walk did not finish).',
+      '',
+      '## Worth a look',
+      '',
+      dead ? `Dead links — targets that resolve to nothing:\n\n${dead}\n` : 'No dead links found.',
+      '',
+      ambiguous
+        ? `Ambiguous links — a basename several files share:\n\n${ambiguous}\n`
+        : 'No ambiguous links found.',
+      '',
+      '## Settle, then move on',
+      '',
+      'Fix or archive what this page names, then leave it — next month writes a',
+      'fresh page beside this one and never edits it.',
+      '',
+    ]
+    // writeOnce answers true when the file was already there; the audit's
+    // caller wants to know whether THIS call put a page on disk.
+    const existed = store.writeOnce(`${AUDIT_DIR}/${label}.md`, lines.join('\n'))
+    store.write(record, `${JSON.stringify({ month: label, at: clock().toISOString() }, null, 2)}\n`)
+    return { written: !existed, relative: `${AUDIT_DIR}/${label}.md`, month: label }
+  }
+
   /** Snapshot, open loops, parsed follow-ups and today's journal path. */
   function today() {
     const store = vault()
@@ -114,6 +198,7 @@ export function createVaultService({
       journal: bodyOf(journalPath),
       journalPath,
       vault: root,
+      audit: lastAuditMonth(),
     }
   }
 
@@ -711,6 +796,7 @@ export function createVaultService({
     missingMessage: () => noVaultMessage(root),
     status,
     today,
+    monthlyAudit,
     blacklist,
     updateBlacklist,
     capture,

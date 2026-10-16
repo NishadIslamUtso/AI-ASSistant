@@ -50,6 +50,11 @@ extraResources:
       - lib/**
       - popup/**
       - icons/**
+  # The community store ships with the app too: a real folder index at
+  # resources/store, so the Plugins pane offers packs that exist on the
+  # person's disk from the first run — offline, no account, no network.
+  - from: store
+    to: store
 
 # The app is written in English, so the other 54 Chromium locale files (46 MB
 # unpacked) are not shipped. A person who needs another language is better served

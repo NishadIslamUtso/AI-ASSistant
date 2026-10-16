@@ -299,9 +299,11 @@ test('the composer speaks the engine\u2019s own controls: engine chip, models ch
   // The app adds nothing: no toggle, no second brain, no invented modes.
   assert.doesNotMatch(composer, /onEngineToggle/)
   assert.doesNotMatch(composer, /ModelState/)
-  // And the sidebar offers the marketplace.
+  // And the sidebar no longer offers a marketplace: apps and extensions live
+  // in Settings (Connectors, Plugins) — one home, not two.
   const sidebar = read('../src/renderer/src/components/Sidebar.tsx')
-  assert.match(sidebar, /Marketplace/)
+  assert.doesNotMatch(sidebar, /Marketplace/)
+  assert.match(sidebar, /Install apps and extensions/)
 })
 
 test('the face is wired: the panel is in the chat, and the engine is the only way to talk', () => {

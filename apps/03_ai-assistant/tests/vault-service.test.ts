@@ -460,3 +460,42 @@ function handleVault(
   })
   return { status: reply.status, body: reply.body as any }
 }
+
+/* ------------------------------------------------------------ the monthly audit */
+
+test('the monthly audit writes itself once, from the vault\u2019s own numbers', (t) => {
+  const f = fixture(t, {
+    '02 Sources/a.md': '# A\nSee [[b]] and [[no such note]].\n',
+    '02 Sources/b.md': '# B\n',
+    '08 Journal/2026/2026-10-10.md': '# Day\n',
+    '04 Working Memory/Open Loops.md': '# Open Loops\n\n- [ ] one open\n- [x] one done\n',
+  })
+  const first = f.service.monthlyAudit()
+  assert.equal(first.written, true)
+  assert.equal(first.relative, '06 Review/Monthly Audits/2026-10.md')
+  const body = f.read('06 Review/Monthly Audits/2026-10.md')
+  assert.match(body, /# Monthly Audit — 2026-10/)
+  assert.match(body, /Notes in 02 Sources: 2/)
+  assert.match(body, /Journal entries in 08 Journal\/2026: 1/)
+  assert.match(body, /Open loops still open: 1/)
+  assert.match(body, /dead: 1/)
+  // The write-once rule: the same month never writes twice.
+  const again = f.service.monthlyAudit()
+  assert.equal(again.written, false)
+  assert.equal(again.relative, '06 Review/Monthly Audits/2026-10.md')
+})
+
+test('a new month writes a fresh page beside the last and never edits it', (t) => {
+  const f = fixture(t, { '02 Sources/a.md': '# A\n' })
+  f.service.monthlyAudit()
+  const october = f.read('06 Review/Monthly Audits/2026-10.md')
+  const roll = createVaultService({
+    vaultPath: f.root,
+    clock: () => new Date('2026-11-15T10:00:00Z'),
+  }).monthlyAudit()
+  assert.equal(roll.written, true)
+  assert.equal(roll.relative, '06 Review/Monthly Audits/2026-11.md')
+  assert.equal(f.read('06 Review/Monthly Audits/2026-10.md'), october, 'October is untouched')
+  // The Today door can say which month the audit last covered.
+  assert.equal(f.service.today().audit, '2026-11')
+})

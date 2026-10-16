@@ -25,6 +25,7 @@ import { getEngineApi } from '@/platform/bridge'
 export type EngineItem =
   | { kind: 'status'; text: string }
   | { kind: 'text'; text: string }
+  | { kind: 'thinking'; text: string }
   | { kind: 'tool'; name: string; summary: string }
   | { kind: 'error'; text: string }
 
@@ -93,7 +94,7 @@ type EngineStore = EngineState & {
   /** Ask the brain door what the engine can use. */
   loadModels(): Promise<void>
   /** Pick the engine's brain; persists. */
-  setModel(name: string): Promise<void>
+  setModel(name: string, provider?: 'anthropic'): Promise<void>
   /** Set the throttle: how much the engine may do before asking; persists. */
   setApproval(mode: ApprovalMode): Promise<void>
   /** "Open a folder": pick where the engine works; persists. */
@@ -150,6 +151,13 @@ const ingest = (event: EngineEvent): void => {
     const last = turn.items.at(-1)
     if (last?.kind === 'text') last.text += event.text
     else turn.items.push({ kind: 'text', text: event.text })
+  } else if (event.kind === 'thinking') {
+    // The model's scratchwork, folded away from the answer. It grows like a
+    // delta while the thinking block streams, and stays one item, not a
+    // hundred fragments.
+    const last = turn.items.at(-1)
+    if (last?.kind === 'thinking') last.text += event.text
+    else turn.items.push({ kind: 'thinking', text: event.text })
   } else if (event.kind === 'tool') {
     turn.items.push({ kind: 'tool', name: event.name, summary: event.summary })
   } else if (event.kind === 'permission') {
@@ -227,7 +235,7 @@ const store: EngineStore = {
         (event): event is EngineEvent => Boolean(event && typeof event === 'object' && 'kind' in event)
       )
       const worthShowing = remembered.some((event) =>
-        ['status', 'text', 'tool', 'permission', 'done', 'error'].includes(event.kind)
+        ['status', 'text', 'thinking', 'tool', 'permission', 'done', 'error'].includes(event.kind)
       )
       if (worthShowing && !state.turn) {
         state.turn = {
@@ -319,8 +327,8 @@ const store: EngineStore = {
     })
   },
 
-  async setModel(name: string): Promise<void> {
-    const answer = await getEngineApi().setModel(name)
+  async setModel(name: string, provider?: 'anthropic'): Promise<void> {
+    const answer = await getEngineApi().setModel(name, provider)
     if (answer.ok) setState({ settings: { ...state.settings, model: name } })
   },
 
