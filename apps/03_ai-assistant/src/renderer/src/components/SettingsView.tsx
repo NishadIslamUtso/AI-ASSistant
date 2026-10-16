@@ -7,6 +7,7 @@ import SkillsCatalogSection from './SkillsCatalogSection'
 import BrowserControlSection from './BrowserControlSection'
 import ModsSection from './ModsSection'
 import EngineBay from './EngineBay'
+import RecipesSection from './RecipesSection'
 import { useEngine } from '@/state/engine'
 import type { VaultState } from '../hooks/useVault'
 import {
@@ -63,7 +64,7 @@ import {
  * browser preview there is no folder to choose and no model to run.
  */
 
-export type SectionId = 'agents' | 'house' | 'skills' | 'extensions' | 'engine' | 'system' | 'connectors' | 'appearance' | 'models' | 'performance' | 'vault'
+export type SectionId = 'agents' | 'house' | 'skills' | 'recipes' | 'extensions' | 'engine' | 'system' | 'connectors' | 'appearance' | 'models' | 'performance' | 'vault'
 
 type Row = {
   /** What the row is called, and what the rail's search matches on. */
@@ -85,6 +86,7 @@ const SECTIONS: readonly {
   { id: 'agents', title: 'Agent access', group: 'This app', resettable: true },
   { id: 'house', title: 'House rules', group: 'This app' },
   { id: 'skills', title: 'Skills', group: 'This app' },
+  { id: 'recipes', title: 'Recipes', group: 'This app' },
   { id: 'extensions', title: 'Plugins', group: 'This app' },
   { id: 'engine', title: 'Engine', group: 'This computer' },
   { id: 'appearance', title: 'Appearance', group: 'This app', resettable: true },
@@ -129,6 +131,12 @@ function SectionIcon({ id }: { id: SectionId }) {
     skills: (
       <>
         <path d="M10 3.5 11.8 7.6 16 8.2 13 11.2 13.7 15.5 10 13.4 6.3 15.5 7 11.2 4 8.2 8.2 7.6z" />
+      </>
+    ),
+    recipes: (
+      <>
+        <path d="M6 3.5h8a1.5 1.5 0 0 1 1.5 1.5v10.5A1.5 1.5 0 0 0 17 17H7.5A1.5 1.5 0 0 1 6 15.5z" transform="translate(-1 -0.5)" />
+        <path d="M8 7h6M8 10h6M8 13h3.5" />
       </>
     ),
     appearance: (
@@ -1088,6 +1096,13 @@ export default function SettingsView({
         label: 'The engine bay',
         terms: 'engine agent claude-code agy brain model pull download detect install throttle folder',
         body: <EngineBay />,
+      },
+    ],
+    recipes: [
+      {
+        label: 'Saved work orders',
+        terms: 'recipes work orders starters parameters templates saved prompts commands goose',
+        body: <RecipesSection />,
       },
     ],
     skills: [

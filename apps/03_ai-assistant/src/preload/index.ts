@@ -81,6 +81,12 @@ const engineApi = {
     ledger: (): Promise<{ ok: boolean; entries: Array<{ prompt: string; winner: string; loser: string; tie: boolean; at: string }> }> =>
       ipcRenderer.invoke('battle:ledger'),
   },
+  recipes: {
+    list: (): Promise<{ ok: boolean; recipes: Array<{ name: string; description?: string; parameters: Array<{ name: string; description?: string; default?: string }>; body: string }>; broken: Array<{ file: string; answer: string }> }> =>
+      ipcRenderer.invoke('recipes:list'),
+    save: (recipe: unknown): Promise<{ ok: boolean; answer: string }> => ipcRenderer.invoke('recipes:save', recipe),
+    remove: (name: string): Promise<{ ok: boolean; answer: string }> => ipcRenderer.invoke('recipes:remove', name),
+  },
   downloads: {
     start: (engine: string): Promise<{ ok: boolean; answer: string }> =>
       ipcRenderer.invoke('engine:download:start', engine),

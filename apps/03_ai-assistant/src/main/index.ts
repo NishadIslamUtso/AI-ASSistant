@@ -22,6 +22,7 @@ import { normalizeEngine } from '../shared/lib/engine'
 import { APPROVAL_MODES, type ApprovalMode, type EngineEvent, type EngineId, type EngineModelEntry } from '../shared/lib/engine'
 import { ENGINE_IMAGE_MIMES, MAX_ENGINE_IMAGE_CHARS as ENGINE_IMAGE_CHARS, MAX_ENGINE_ATTACHMENTS as ENGINE_IMAGE_LIMIT } from '../shared/lib/media'
 import { listCheckpoints, restoreCheckpoint } from './engine/checkpoints'
+import { createRecipeManager } from './recipes'
 import { createDownloadManager, type DownloadTick } from './engine/downloads'
 import { agyModelSource, detectEngine } from './engine/availability'
 import { parsePullLine, validateModelName } from './engine/pull'
@@ -577,6 +578,14 @@ function registerBridges(): void {
     }
   })
   ipcMain.handle('battle:ledger', (): { ok: boolean; entries: BattleEntry[] } => ({ ok: true, entries: readLedger().slice(-50).reverse() }))
+
+  // Recipes: saved work orders as plain markdown the owner can read and
+  // share. Shown in full before a run; the engine's own cards still gate
+  // everything a run tries to do — a recipe approves nothing by itself.
+  const recipes = createRecipeManager(join(app.getPath('userData'), 'recipes'))
+  ipcMain.handle('recipes:list', () => recipes.list())
+  ipcMain.handle('recipes:save', (_event, recipe: unknown) => recipes.save(recipe as never))
+  ipcMain.handle('recipes:remove', (_event, name: string) => recipes.remove(typeof name === 'string' ? name : ''))
 
   // Checkpoints: what the app kept the moment before an allowed write, and
   // the way back. Read from the folder the engine was handed at send time.

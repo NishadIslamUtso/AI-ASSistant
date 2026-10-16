@@ -29,6 +29,7 @@ import {
   type EngineSettings,
 } from '@shared/lib/engine'
 import { DEFAULT_HOUSE_RULES, type HouseRules } from '@shared/lib/houseRules'
+import type { Recipe } from '@shared/lib/recipes'
 import { newProject, type Project } from '@shared/lib/projects'
 import { DEFAULT_PERMISSIONS, type Permissions } from '@shared/lib/permissions'
 import type {
@@ -383,6 +384,11 @@ export type EngineBridge = {
     record: (entry: { prompt: string; winner: string; loser: string; tie: boolean; blind: boolean }) => Promise<{ ok: boolean; answer: string }>
     ledger: () => Promise<{ ok: boolean; entries: Array<{ prompt: string; winner: string; loser: string; tie: boolean; at: string }> }>
   }
+  recipes: {
+    list: () => Promise<{ ok: boolean; recipes: Recipe[]; broken: Array<{ file: string; answer: string }> }>
+    save: (recipe: unknown) => Promise<{ ok: boolean; answer: string }>
+    remove: (name: string) => Promise<{ ok: boolean; answer: string }>
+  }
   downloads: {
     start: (engine: string) => Promise<{ ok: boolean; answer: string }>
     status: () => Promise<Record<string, { engine: string; endpoint: string; sha256: string; at: string } | undefined>>
@@ -430,6 +436,11 @@ const demoEngineBridge: EngineBridge = {
   battle: {
     record: async () => ({ ok: false, answer: 'The tally lives in the desktop app.' }),
     ledger: async () => ({ ok: true, entries: [] }),
+  },
+  recipes: {
+    list: async () => ({ ok: true, recipes: [], broken: [] }),
+    save: async () => ({ ok: false, answer: 'Recipes live in the desktop app.' }),
+    remove: async () => ({ ok: false, answer: 'Recipes live in the desktop app.' }),
   },
   downloads: {
     start: async () => ({ ok: false, answer: 'Downloads live in the desktop app.' }),

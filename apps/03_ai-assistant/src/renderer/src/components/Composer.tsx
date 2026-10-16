@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUp, ChevronDown, CookingPot, Cpu, FolderOpen, Layers, Mic, MicOff, Paperclip, Square, Swords, X } from 'lucide-react'
+import { ArrowUp, ChevronDown, CookingPot, Cpu, FolderOpen, Layers, Mic, MicOff, Paperclip, Play, ScrollText, Square, Swords, X } from 'lucide-react'
 import type { Project } from '@shared/lib/projects'
 import type { Attachment } from '@shared/types'
+import type { Recipe } from '@shared/lib/recipes'
+import { renderRecipe } from '@shared/lib/recipes'
+import { loadRecipes, runRecipe, useRecipes } from '@/state/recipes'
 import { vaultGet, type VaultReply } from '@shared/lib/vault'
 import { useEngine, type EngineTurn } from '@/state/engine'
 import useDismiss from '@/hooks/useDismiss'
@@ -203,6 +206,7 @@ export default function Composer({
           >
             {listening ? <MicOff size={13} /> : <Mic size={13} />}
           </button>
+          <RecipeButton />
           <span className="ml-auto" />
           <EngineChip open={boxOpen === 'engine'} onToggle={() => setBoxOpen(boxOpen === 'engine' ? null : 'engine')} />
           <ModelChip open={boxOpen === 'models'} onToggle={() => setBoxOpen(boxOpen === 'models' ? null : 'models')} />
@@ -591,3 +595,142 @@ function ModelChip({ open, onToggle }: { open: boolean; onToggle: () => void }) 
 }
 
 export type { EngineTurn }
+
+/**
+ * Recipes, right where commands belong: press, pick, fill in, run. The menu
+ * lists what is on this machine; the dialog shows the whole rendered prompt
+ * BEFORE it is sent — a recipe is read in full, never trusted blind (the
+ * poisoned-recipe lesson), and it runs as a plain work order with the
+ * engine's own permission cards still wide awake.
+ */
+function RecipeButton() {
+  const recipes = useRecipes()
+  const [open, setOpen] = useState(false)
+  const [chosen, setChosen] = useState<Recipe | null>(null)
+  const area = useRef<HTMLDivElement | null>(null)
+  useDismiss(area, () => setOpen(false), open && !chosen)
+
+  useEffect(() => {
+    if (open) void loadRecipes()
+  }, [open])
+
+  return (
+    <div className="relative" ref={area}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        title="Recipes: saved work orders — pick one, fill it in, see it in full, run it"
+        className="flex h-7 items-center gap-1.5 rounded-lg px-1.5 text-muted hover:text-ink"
+      >
+        <ScrollText size={13} aria-hidden />
+      </button>
+      {open && !chosen ? (
+        <div role="menu" aria-label="Recipes" className="absolute bottom-9 left-0 z-20 max-h-[300px] w-[280px] overflow-y-auto rounded-xl border border-line bg-card p-1.5 shadow-xl">
+          {recipes.recipes.map(recipe => (
+            <button
+              key={recipe.name}
+              type="button"
+              role="menuitem"
+              onClick={() => { setChosen(recipe); setOpen(false) }}
+              className="flex w-full flex-col rounded-lg px-2.5 py-1.5 text-left hover:bg-white/[0.06]"
+            >
+              <span className="text-[12.5px] text-ink">{recipe.name}</span>
+              {recipe.description ? (
+                <span className="text-[11px] leading-snug text-muted">{recipe.description}</span>
+              ) : null}
+            </button>
+          ))}
+          {recipes.recipes.length === 0 ? (
+            <p className="px-2.5 py-2 text-[11.5px] leading-relaxed text-muted">
+              No recipes yet. Settings has a Recipes pane with three starters, one press away.
+            </p>
+          ) : null}
+          {recipes.broken.length ? (
+            <p className="px-2.5 py-2 text-[11px] leading-relaxed text-warn">
+              {recipes.broken.length} file{recipes.broken.length === 1 ? '' : 's'} in the recipe folder could not be read. Settings names them.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+      {chosen ? <RecipeRunDialog recipe={chosen} onClose={() => setChosen(null)} /> : null}
+    </div>
+  )
+}
+
+function RecipeRunDialog({ recipe, onClose }: { recipe: Recipe; onClose: () => void }) {
+  const [values, setValues] = useState<Record<string, string>>(() =>
+    Object.fromEntries(recipe.parameters.map(parameter => [parameter.name, ''])),
+  )
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState('')
+  const rendered = renderRecipe(recipe, values)
+  const preview = rendered.ok ? rendered.prompt : rendered.answer
+
+  const run = async (): Promise<void> => {
+    if (!rendered.ok || sending) {
+      if (!rendered.ok) setError(rendered.answer)
+      return
+    }
+    setSending(true)
+    setError('')
+    const answer = await runRecipe(recipe, values)
+    setSending(false)
+    if (answer.ok) onClose()
+    else setError(answer.answer)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6" role="dialog" aria-label={`Run ${recipe.name}`} onClick={onClose}>
+      <div className="max-h-[80vh] w-full max-w-[560px] overflow-y-auto rounded-2xl border border-line bg-card p-5" onClick={event => event.stopPropagation()}>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-[15px] font-semibold text-ink">{recipe.name}</h2>
+            {recipe.description ? <p className="mt-0.5 text-[12px] text-muted">{recipe.description}</p> : null}
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close" className="text-muted hover:text-ink">
+            <X size={15} />
+          </button>
+        </div>
+        {recipe.parameters.length ? (
+          <div className="mt-4 space-y-3">
+            {recipe.parameters.map(parameter => (
+              <label key={parameter.name} className="block">
+                <span className="text-[12px] font-medium text-ink">{parameter.name}</span>
+                {parameter.description ? <span className="ml-1.5 text-[11px] text-muted">{parameter.description}</span> : null}
+                <input
+                  type="text"
+                  value={values[parameter.name] ?? ''}
+                  onChange={event => setValues(current => ({ ...current, [parameter.name]: event.target.value }))}
+                  placeholder={parameter.default ? `default: ${parameter.default}` : 'type it here'}
+                  aria-label={parameter.name}
+                  className="mt-1 w-full rounded-lg border border-line bg-bg px-2.5 py-1.5 text-[12.5px] text-ink outline-none placeholder:text-muted"
+                />
+              </label>
+            ))}
+          </div>
+        ) : null}
+        <div className="mt-4">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted">What will be sent</p>
+          <pre className="mt-1.5 max-h-[220px] overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-line bg-bg p-2.5 text-[12px] leading-relaxed text-ink">
+            {preview}
+          </pre>
+        </div>
+        {error ? <p className="mt-2 text-[11.5px] text-warn">{error}</p> : null}
+        <div className="mt-4 flex items-center justify-between gap-2">
+          <p className="text-[11px] leading-snug text-muted">It runs like any work order: the engine still asks before it acts.</p>
+          <button
+            type="button"
+            onClick={() => void run()}
+            disabled={!rendered.ok || sending}
+            className={`flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-medium ${rendered.ok && !sending ? 'bg-accent text-white hover:bg-accent/90' : 'bg-white/[0.06] text-muted'}`}
+          >
+            <Play size={11} aria-hidden />
+            {sending ? 'Sending…' : 'Run'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
