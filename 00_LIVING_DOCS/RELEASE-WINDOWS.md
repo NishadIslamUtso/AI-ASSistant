@@ -1,5 +1,4 @@
-# RELEASE-WINDOWS.md — the installer recipe (verified 2026-10-16, v0.6.0)
-0.8.0)
+# RELEASE-WINDOWS.md — the installer recipe (verified 2026-10-16, v0.8.0)
 
 Everything needed to rebuild the installer on the build sandbox. Wine/NSIS
 vanish on every sandbox restart; this is the whole ritual, start to finish.
