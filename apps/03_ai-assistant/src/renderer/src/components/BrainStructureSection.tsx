@@ -1,20 +1,20 @@
 import { useEffect, useState } from 'react'
 import { bridge } from '../platform/bridge'
+import ConnectionGraph from './ConnectionGraph'
 import type { VaultState } from '../hooks/useVault'
 
 /**
- * The Vault pane, pared down to what the owner actually does (his note: it
- * was too verbose): choose the folder, or press the default —
- * Documents\ASSistant\AI-Brain. Either way the structure integrates itself:
- * the default files are generated, folders with the same names are never
- * replaced, and a file that exists in two wordings is kept BOTH — the app's
- * copy beside the owner's — with the choice offered here, now or later:
- * keep mine, use the new one, keep both, or combine.
+ * The Vault pane (his note: keep it compressed): the two decisions on top —
+ * Choose folder… / Use default (Documents\ASSistant\AI-Brain) — then the 3D
+ * connections graph, then ONE collapsed box holding everything else: the
+ * integration status, conflicts with their settle buttons, rulebook refresh,
+ * and the link count. Nothing that is fine asks for attention; open the box
+ * only when something says it needs you.
  */
 
-type Inspection = { ok: boolean; kind?: string; present?: string[]; missing?: string[]; differing?: string[]; error?: string }
+type Inspection = { ok: boolean; kind?: string; present?: string[]; missing?: string[]; differing?: string[]; conflicts?: Array<{ original: string; added: string }>; error?: string }
 type Conflict = { original: string; added: string }
-type Links = { files: number; checked: number; dead: Array<{ from: string; target: string }>; ambiguous: Array<{ from: string; target: string; matches: string[] }>; error?: string }
+type Links = { files: number; checked: number; dead: Array<{ from: string; target: string }>; ambiguous: Array<{ from: string; target: string; matches: string[] }>; edges: Array<{ from: string; to: string }>; error?: string }
 
 export default function BrainStructureSection({
   vault,
@@ -31,6 +31,7 @@ export default function BrainStructureSection({
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
   const [links, setLinks] = useState<Links | null>(null)
+  const [open, setOpen] = useState(false)
 
   const inspect = (root: string): void => {
     bridge.structure
@@ -47,7 +48,6 @@ export default function BrainStructureSection({
     inspect(path)
   }, [path, isDemo])
 
-  /** The structure integrates itself into whatever folder was just chosen. */
   async function integrate(root: string): Promise<void> {
     try {
       const result = await bridge.structure.apply(root)
@@ -61,6 +61,7 @@ export default function BrainStructureSection({
       if (written.length) parts.push(`Structure added: ${written.length} file${written.length === 1 ? '' : 's'}.`)
       if (fresh) parts.push(`${fresh} file${fresh === 1 ? ' exists' : 's exist'} in two wordings — yours was kept, the default sits beside it.`)
       setNotice(parts.join(' ') || 'Structure already in place — nothing to add.')
+      if (fresh) setOpen(true)
       setConflicts(result.conflicts ?? [])
       inspect(root)
     } catch (error) {
@@ -156,7 +157,7 @@ export default function BrainStructureSection({
     try {
       setLinks(await bridge.structure.linkCheck())
     } catch (error) {
-      setLinks({ files: 0, checked: 0, dead: [], ambiguous: [], error: (error as Error).message })
+      setLinks({ files: 0, checked: 0, dead: [], ambiguous: [], edges: [], error: (error as Error).message })
     } finally {
       setBusy(false)
     }
@@ -170,7 +171,7 @@ export default function BrainStructureSection({
   const linksLine = links
     ? links.error
       ? links.error
-      : `${links.checked} links across ${links.files} notes${links.dead.length || links.ambiguous.length ? ` — ${links.dead.length} dead, ${links.ambiguous.length} ambiguous` : ' — every one resolves'}`
+      : `${links.checked} links across ${links.files} notes — ${links.dead.length} dead, ${links.ambiguous.length} ambiguous, ${links.edges.length} connected.`
     : ''
 
   return (
@@ -206,59 +207,83 @@ export default function BrainStructureSection({
           {notice}
         </p>
       ) : null}
-      {conflicts.length ? (
-        <div className="flex flex-col gap-1.5 rounded-lg border border-line bg-card p-2.5">
-          <p className="text-[12px] text-muted">In two wordings — yours and the app's default. Pick now, or leave them; both files stay.</p>
-          {conflicts.map(conflict => (
-            <div key={conflict.original} className="flex flex-wrap items-center gap-1.5">
-              <span className="min-w-0 flex-1 break-all text-[12px]">{conflict.original}</span>
-              {(['mine', 'new', 'both', 'combine'] as const).map(action => (
-                <button
-                  key={action}
-                  className="rounded border border-line px-2 py-1 text-[11px] text-muted hover:bg-white/[0.06] hover:text-ink disabled:opacity-50"
-                  disabled={busy}
-                  onClick={() => void settle(conflict, action)}
-                  aria-label={`${action}: ${conflict.original}`}
-                >
-                  {action === 'mine' ? 'Keep mine' : action === 'new' ? 'Use new' : action === 'both' ? 'Both' : 'Combine'}
-                </button>
+
+      <ConnectionGraph path={path} isDemo={isDemo} />
+
+      <details
+        className="rounded-lg border border-line bg-card px-2.5 py-2"
+        open={open}
+        onToggle={event => setOpen((event.target as HTMLDetailsElement).open)}
+      >
+        <summary className="cursor-pointer select-none text-[12px] text-muted hover:text-ink">
+          Structure details
+          {conflicts.length ? (
+            <span className="ml-1.5 rounded-full border border-line px-1.5 py-0.5 text-[10px] text-ink">
+              {conflicts.length} to settle
+            </span>
+          ) : null}
+        </summary>
+        <div className="mt-2 flex flex-col gap-2">
+          {conflicts.length ? (
+            <div className="flex flex-col gap-1.5">
+              <p className="text-[11.5px] text-muted">
+                In two wordings — yours and the app's default. Pick now, or leave them; both files stay.
+              </p>
+              {conflicts.map(conflict => (
+                <div key={conflict.original} className="flex flex-wrap items-center gap-1.5">
+                  <span className="min-w-0 flex-1 break-all text-[12px]">{conflict.original}</span>
+                  {(['mine', 'new', 'both', 'combine'] as const).map(action => (
+                    <button
+                      key={action}
+                      className="rounded border border-line px-2 py-1 text-[11px] text-muted hover:bg-white/[0.06] hover:text-ink disabled:opacity-50"
+                      disabled={busy}
+                      onClick={() => void settle(conflict, action)}
+                      aria-label={`${action}: ${conflict.original}`}
+                    >
+                      {action === 'mine' ? 'Keep mine' : action === 'new' ? 'Use new' : action === 'both' ? 'Both' : 'Combine'}
+                    </button>
+                  ))}
+                </div>
               ))}
             </div>
-          ))}
+          ) : null}
+          {inspection?.ok && inspection.differing?.length ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="min-w-0 flex-1 text-[11.5px] text-muted">
+                Newer wording available for {inspection.differing.join(', ')} — notes never touched.
+              </span>
+              <button
+                className="rounded border border-line px-2 py-1 text-[11px] text-muted hover:bg-white/[0.06] hover:text-ink disabled:opacity-50"
+                disabled={busy}
+                onClick={() => void refreshRules()}
+                aria-label="Replace with current wording"
+              >
+                Replace
+              </button>
+            </div>
+          ) : null}
+          <div className="flex flex-wrap items-center gap-2">
+            {linksLine ? (
+              <span className="min-w-0 flex-1 break-words text-[11.5px] text-muted" role="status">
+                {linksLine}
+              </span>
+            ) : null}
+            {path ? (
+              <button
+                className="rounded border border-line px-2 py-1 text-[11px] text-muted hover:bg-white/[0.06] hover:text-ink disabled:opacity-50"
+                disabled={busy}
+                onClick={() => void checkLinks()}
+                aria-label="Count links"
+              >
+                Count links
+              </button>
+            ) : null}
+          </div>
+          {!conflicts.length && !(inspection?.ok && inspection.differing?.length) && !links ? (
+            <p className="text-[11.5px] text-muted">Nothing needs you here. The structure integrates itself on every choice and at boot.</p>
+          ) : null}
         </div>
-      ) : null}
-      {inspection?.ok && inspection.differing?.length ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="min-w-0 flex-1 text-[11.5px] text-muted">
-            Newer wording available for {inspection.differing.join(', ')} — notes never touched.
-          </span>
-          <button
-            className="rounded border border-line px-2 py-1 text-[11px] text-muted hover:bg-white/[0.06] hover:text-ink disabled:opacity-50"
-            disabled={busy}
-            onClick={() => void refreshRules()}
-            aria-label="Replace with current wording"
-          >
-            Replace
-          </button>
-        </div>
-      ) : null}
-      <div className="flex flex-wrap items-center gap-2">
-        {linksLine ? (
-          <span className="min-w-0 flex-1 break-words text-[11.5px] text-muted" role="status">
-            {linksLine}
-          </span>
-        ) : null}
-        {path ? (
-          <button
-            className="rounded border border-line px-2 py-1 text-[11px] text-muted hover:bg-white/[0.06] hover:text-ink disabled:opacity-50"
-            disabled={busy}
-            onClick={() => void checkLinks()}
-            aria-label="Check links"
-          >
-            Check links
-          </button>
-        ) : null}
-      </div>
+      </details>
     </div>
   )
 }

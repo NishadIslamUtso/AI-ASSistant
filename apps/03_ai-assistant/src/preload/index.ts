@@ -191,7 +191,7 @@ const api = {
     resolve: (root: string, original: string, added: string, action: 'mine' | 'new' | 'both' | 'combine'): Promise<{ ok: boolean; error?: string }> =>
       ipcRenderer.invoke('structure:resolve', root, original, added, action),
     /** Every [[link]] in the vault, resolved and counted: dead and ambiguous reported. */
-    linkCheck: (): Promise<{ files: number; checked: number; dead: Array<{ from: string; target: string }>; ambiguous: Array<{ from: string; target: string; matches: string[] }>; error?: string }> =>
+    linkCheck: (): Promise<{ files: number; checked: number; dead: Array<{ from: string; target: string }>; ambiguous: Array<{ from: string; target: string; matches: string[] }>; edges: Array<{ from: string; to: string }>; error?: string }> =>
       ipcRenderer.invoke('vault:link-check'),
   },
   vault: {

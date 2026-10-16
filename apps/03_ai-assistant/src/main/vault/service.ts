@@ -590,6 +590,8 @@ export function createVaultService({
     checked: number
     dead: Array<{ from: string; target: string }>
     ambiguous: Array<{ from: string; target: string; matches: string[] }>
+    /** Resolved links, as the graph draws them: one target, no guessing. */
+    edges: Array<{ from: string; to: string }>
   } {
     const store = vault()
     const notes: Array<{ relative: string; body: string }> = []
@@ -631,6 +633,7 @@ export function createVaultService({
     }
     const dead: Array<{ from: string; target: string }> = []
     const ambiguous: Array<{ from: string; target: string; matches: string[] }> = []
+    const edges: Array<{ from: string; to: string }> = []
     let checked = 0
     const pattern = /\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]/g
     for (const note of notes) {
@@ -640,9 +643,10 @@ export function createVaultService({
         const hits = resolveOne(target)
         if (hits.length === 0) dead.push({ from: note.relative, target })
         else if (hits.length > 1) ambiguous.push({ from: note.relative, target, matches: hits })
+        else edges.push({ from: note.relative, to: hits[0] })
       }
     }
-    return { files: notes.length, checked, dead, ambiguous }
+    return { files: notes.length, checked, dead, ambiguous, edges }
   }
 
 

@@ -137,7 +137,7 @@ export type DesktopBridge = {
     /** Settle a conflict: keep mine, use the new one, keep both, or combine. */
     resolve: (root: string, original: string, added: string, action: 'mine' | 'new' | 'both' | 'combine') => Promise<{ ok: boolean; error?: string }>
     /** Every [[link]] in the vault, resolved and counted: dead and ambiguous reported. */
-    linkCheck: () => Promise<{ files: number; checked: number; dead: Array<{ from: string; target: string }>; ambiguous: Array<{ from: string; target: string; matches: string[] }>; error?: string }>
+    linkCheck: () => Promise<{ files: number; checked: number; dead: Array<{ from: string; target: string }>; ambiguous: Array<{ from: string; target: string; matches: string[] }>; edges: Array<{ from: string; to: string }>; error?: string }>
   }
   vault: {
     /** The operating system's folder picker. null when the person closed it. */
@@ -225,7 +225,7 @@ const demoBridge: DesktopBridge = {
     inspect: async () => ({ ok: false, error: 'Inspecting a structure needs the desktop app.' }),
     apply: async () => ({ ok: false, error: 'Writing a structure needs the desktop app.' }),
     resolve: async () => ({ ok: false, error: 'Settling a conflict needs the desktop app.' }),
-    linkCheck: async () => ({ files: 0, checked: 0, dead: [], ambiguous: [], error: 'The link check needs the desktop app.' }),
+    linkCheck: async () => ({ files: 0, checked: 0, dead: [], ambiguous: [], edges: [], error: 'The link check needs the desktop app.' }),
   },
   vault: { chooseFolder: async () => null, useDefault: async () => ({ ok: false, error: 'Choosing the default vault needs the desktop app.' }), saveHandoff: async () => ({ ok: false, answer: 'Writing a handoff needs the desktop app.' }), exportCopy: async () => ({ ok: false, answer: 'Exporting needs the desktop app.' }), captureChat: async () => ({ ok: false, answer: 'Capturing needs the desktop app.' }) },
   // No socket is open here, and none can be: this is a page, not the app.

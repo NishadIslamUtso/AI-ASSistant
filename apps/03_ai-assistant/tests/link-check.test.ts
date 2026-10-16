@@ -38,6 +38,9 @@ test('the link check separates dead, ambiguous and resolving links, by exact pat
   assert.equal(report.ambiguous[0].matches.length, 2)
   // checked counts every link instance, resolving ones included
   assert.ok(report.checked >= 5)
+  // edges carry only the unambiguously resolved links
+  assert.ok(report.edges.some(edge => edge.from === '05 Knowledge/Tea.md' && edge.to === '05 Knowledge/Leaves.md'))
+  assert.ok(!report.edges.some(edge => edge.from === '06 Review/Names.md'))
 })
 
 test('templates hold placeholder links by design, so they are not scanned', t => {
@@ -77,7 +80,7 @@ test('the route table serves the link check read-only, on the doors the engine s
   const service = createVaultService({ vaultPath: root })
   const reply = handleVaultRequest(service, { route: '/links', method: 'GET', query: new URLSearchParams() })
   assert.equal(reply.status, 200)
-  assert.deepEqual(reply.body, { files: 1, checked: 0, dead: [], ambiguous: [] })
+  assert.deepEqual(reply.body, { files: 1, checked: 0, dead: [], ambiguous: [], edges: [] })
   const refused = handleVaultRequest(service, { route: '/links', method: 'POST', query: new URLSearchParams() })
   assert.equal(refused.status, 405)
 })
