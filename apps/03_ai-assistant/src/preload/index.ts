@@ -158,6 +158,12 @@ const api = {
     installCatalog: (name: string): Promise<{ ok: boolean; answer: string; written?: string[] }> =>
       ipcRenderer.invoke('skills:install-catalog', name),
   },
+  mods: {
+    installFromFile: (): Promise<{ ok: boolean; answer: string; pack?: unknown; prompts?: Array<{ name: string; body: string }>; themes?: Array<{ name: string; appearance: Record<string, string> }>; folder?: string }> =>
+      ipcRenderer.invoke('mods:install-from-file'),
+    list: (): Promise<Array<{ pack: unknown; folder: string; installedAt: string }>> => ipcRenderer.invoke('mods:list'),
+    remove: (id: string): Promise<{ ok: boolean; answer: string }> => ipcRenderer.invoke('mods:remove', id),
+  },
   mcp: {
     /** The one MCP server list, and which engine configs it was deployed to. */
     read: (): Promise<{ servers: Array<{ name: string; command?: string; args?: string[]; url?: string }> }> =>

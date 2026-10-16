@@ -4,6 +4,7 @@ import { bridge, isDemo } from '../platform/bridge'
 import HouseRulesSection from './HouseRulesSection'
 import SkillsCatalogSection from './SkillsCatalogSection'
 import BrowserControlSection from './BrowserControlSection'
+import ModsSection from './ModsSection'
 import EngineBay from './EngineBay'
 import { useEngine } from '@/state/engine'
 import type { VaultState } from '../hooks/useVault'
@@ -61,7 +62,7 @@ import {
  * browser preview there is no folder to choose and no model to run.
  */
 
-type SectionId = 'agents' | 'house' | 'skills' | 'engine' | 'system' | 'appearance' | 'models' | 'performance' | 'vault'
+type SectionId = 'agents' | 'house' | 'skills' | 'extensions' | 'engine' | 'system' | 'appearance' | 'models' | 'performance' | 'vault'
 
 type Row = {
   /** What the row is called, and what the rail's search matches on. */
@@ -82,6 +83,7 @@ const SECTIONS: readonly {
   { id: 'agents', title: 'Agent access', group: 'This app', resettable: true },
   { id: 'house', title: 'House rules', group: 'This app' },
   { id: 'skills', title: 'Skills', group: 'This app' },
+  { id: 'extensions', title: 'Extensions', group: 'This app' },
   { id: 'engine', title: 'Engine', group: 'This computer' },
   { id: 'appearance', title: 'Appearance', group: 'This app', resettable: true },
   { id: 'models', title: 'Models', group: 'This app' },
@@ -138,6 +140,11 @@ function SectionIcon({ id }: { id: SectionId }) {
     vault: (
       <>
         <path d="M3 5.5A1.5 1.5 0 0 1 4.5 4h3l1.5 2h6A1.5 1.5 0 0 1 16.5 7.5v7A1.5 1.5 0 0 1 15 16H4.5A1.5 1.5 0 0 1 3 14.5z" />
+      </>
+    ),
+    extensions: (
+      <>
+        <path d="M8 3.5h4v3a1.5 1.5 0 1 0 3 0h1.5v4H13a2.5 2.5 0 0 0 0 5h3.5v3.5H12v-3a1.5 1.5 0 1 0-3 0v3H5.5V12H3V8h2.5V3.5H8Z" />
       </>
     ),
   }
@@ -1040,6 +1047,13 @@ export default function SettingsView({
         label: 'Browser control',
         terms: 'browser control chrome playwright mcp engine drive click automation devtools',
         body: <BrowserControlSection />,
+      },
+    ],
+    extensions: [
+      {
+        label: 'Mods',
+        terms: 'extensions mods packs install community store manifest permissions themes prompts skills',
+        body: <ModsSection onAppearanceChange={onAppearanceChange} appearance={appearance} />,
       },
     ],
     vault: [      {

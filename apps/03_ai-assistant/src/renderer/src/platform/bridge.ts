@@ -96,6 +96,19 @@ export type DesktopBridge = {
     /** Install one skill from the app's own catalog, into every engine. */
     installCatalog: (name: string) => Promise<{ ok: boolean; answer: string; written?: string[] }>
   }
+  /** Mods, Phase 1: a pack is a folder with a manifest; install, list, remove. */
+  mods: {
+    installFromFile: () => Promise<{
+      ok: boolean
+      answer: string
+      pack?: { id: string; name: string; version: string; author: string; description: string; license: string; contributes: { skills: string[]; prompts: string[]; themes: string[] } }
+      prompts?: Array<{ name: string; body: string }>
+      themes?: Array<{ name: string; appearance: Record<string, string> }>
+      folder?: string
+    }>
+    list: () => Promise<Array<{ pack: { id: string; name: string; version: string; author: string; description: string }; folder: string; installedAt: string }>>
+    remove: (id: string) => Promise<{ ok: boolean; answer: string }>
+  }
   /** The engine's tool servers (MCP). Browser control is one entry in this list. */
   mcp: {
     read: () => Promise<{ servers: Array<{ name: string; command?: string; args?: string[]; url?: string }> }>
@@ -172,6 +185,11 @@ const demoBridge: DesktopBridge = {
     }),
   },
   skills: { installCatalog: async () => ({ ok: false, answer: 'Installing skills needs the desktop app.' }) },
+  mods: {
+    installFromFile: async () => ({ ok: false, answer: 'Installing packs needs the desktop app — it is the one that talks to the engines.' }),
+    list: async () => [],
+    remove: async () => ({ ok: false, answer: 'Removing packs needs the desktop app.' }),
+  },
   mcp: {
     read: async () => ({ servers: [] }),
     write: async () => ({ ok: false, written: [] }),

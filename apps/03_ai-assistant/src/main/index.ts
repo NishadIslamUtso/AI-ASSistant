@@ -24,6 +24,7 @@ import { agyModelSource, detectEngine } from './engine/availability'
 import { parsePullLine, validateModelName } from './engine/pull'
 import { deployMcp, deploySkill, scanClaudeSkills, type McpServer, type VaultSkill } from './engine/deploy'
 import { installCatalogSkill } from './engine/skillCatalogInstall'
+import { installPackFromFolder, listPacks, removePack } from './engine/packs'
 import { exportVaultCopy } from './vault/exportCopy'
 import { deployHouseRules } from './engine/houseRulesDeploy'
 import { DEFAULT_HOUSE_RULES, type HouseRules } from '../shared/lib/houseRules'
@@ -497,6 +498,35 @@ function registerBridges(): void {
     writeFileSync(mcpFile, JSON.stringify({ servers }), 'utf8')
     return { ok: true, written: deployMcp(servers, settings.engine.workspace || vaultRoot()) }
   })
+
+  // Mods (Phase 1): a pack is a folder with a manifest. Install = the person
+  // picks the folder; the pack is validated, copied to a readable place, and
+  // its skills deploy to the engines. Remove = undo exactly what the install
+  // record says was written. No index, no server, no account in Phase 1.
+  ipcMain.handle('mods:install-from-file', async (): Promise<{ ok: boolean; answer: string; pack?: unknown; prompts?: unknown; themes?: unknown; folder?: string; written?: string[] }> => {
+    const picked = await dialog.showOpenDialog({
+      title: 'Which pack folder?',
+      properties: ['openDirectory'],
+    })
+    if (picked.canceled || !picked.filePaths[0]) return { ok: false, answer: 'No folder chosen.' }
+    const result = installPackFromFolder(picked.filePaths[0], { storeRoot: join(app.getPath('userData'), 'extensions'), ...skillTargets() })
+    if (!result.ok) return { ok: false, answer: result.answer }
+    return {
+      ok: true,
+      answer: `${result.pack.name} installed.`,
+      pack: result.pack,
+      prompts: result.prompts,
+      themes: result.themes,
+      folder: result.folder,
+      written: result.written,
+    }
+  })
+
+  ipcMain.handle('mods:list', () => listPacks(join(app.getPath('userData'), 'extensions')))
+
+  ipcMain.handle('mods:remove', (_event, id: string): { ok: boolean; answer: string } =>
+    removePack(String(id ?? ''), join(app.getPath('userData'), 'extensions'), skillTargets()),
+  )
 
   // Projects: the owner's named homes for related work. Stored once,
   // validated on the way in and the way out; a damaged file means "no

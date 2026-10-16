@@ -1,4 +1,10 @@
 # CHANGELOG.md — What Changed Each Session (Living)
+
+## Unreleased (v3)
+
+- **Mods, Phase 1 shipped** (his locked queue A.9): Settings > Extensions — a mod is a folder with a `manifest.json`; Install-from-folder validates the manifest (unknown fields/permissions refused outright, never installed with a warning), reads every contribution from inside the folder, copies the pack to a readable place (`<userData>/extensions/<id>/`), deploys skills to both engines' own folders, hands prompts to the prompt library, and applies a theme through the Appearance door. Every pack shows `unverified` + its real path + "What it may do" in plain words; Remove undoes exactly the files the install record names (records pointing outside the skill folders are ignored). 8 new tests; 396 total. Landed with live-drive evidence (real GTK folder pick, install shot, disk checks).
+- **Batch B — browser control:** Settings > Skills > "Browser control" switch writes the chosen MCP server (chrome-devtools / playwright) into both engines' configs through the existing `mcp:read`/`mcp:write` doors; foreign servers preserved; verified live on/off. Permission-card details that are diffs now render red/green (diff-AWARE cards; the engine's door allows/denies a whole edit).
+- **Batch A — needs-you pulse + extension 0.1.3:** title-bar amber "Needs you · N" chip pulses only while a permission card waits, click opens the engine; extension capsule-inject tracks the last focused field (capture-phase focusin), honest "No active text field found" instead of a wrong guess, and the 0.1.2 literal-`\n` syntax error that killed the content script is repaired (node --check clean on all four files).
 - **Installer 0.6.0 built** (2026-10-16, his go): `AI-ASSistant-Setup-0.6.0.exe`, 88,062,356 B, SHA-256 `c0c9c0861873b7b2db69c0d5d924563aa04b9cd53b015c44a8c4a640835ea38c` (rebuilt after the first copy was lost to the workspace size cap) — one-click, runs after finish, per-user. The full recipe now lives in RELEASE-WINDOWS.md so it can never be lost again.
 
 
