@@ -6,6 +6,7 @@ import { useDesignTokens } from '@/hooks/useDesignTokens'
 import { viewsForMessage, type LiveArtifacts } from '@/state/artifactView'
 import Composer from './Composer'
 import EnginePanel from './EnginePanel'
+import BattleSection from './BattleSection'
 import MessageRow from './MessageRow'
 import BrainMark from './BrainMark'
 import type { Project } from '@shared/lib/projects'
@@ -134,6 +135,7 @@ export default function ChatView({
 
       {chat && chat.messages.length > 0 ? <CaptureCapsule chat={chat} /> : null}
       <EnginePanel />
+      <BattleSection />
       <Composer
         value={draft}
         onChange={setDraft}

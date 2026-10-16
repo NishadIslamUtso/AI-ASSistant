@@ -549,6 +549,35 @@ function registerBridges(): void {
   ipcMain.handle('engine:download:run', (_event, engine: string) => downloads.runInstaller(typeof engine === 'string' ? engine : ''))
   ipcMain.handle('engine:download:remove', (_event, engine: string) => downloads.remove(typeof engine === 'string' ? engine : ''))
 
+  // The battle tally: a PRIVATE local ledger of what won for this person.
+  // Real counts only, capped, never sent anywhere. No public scoreboard.
+  const battleLedgerPath = (): string => join(app.getPath('userData'), 'battle-ledger.json')
+  type BattleEntry = { prompt: string; winner: string; loser: string; tie: boolean; blind: boolean; at: string }
+  const readLedger = (): BattleEntry[] => {
+    try {
+      const parsed = JSON.parse(readFileSync(battleLedgerPath(), 'utf8')) as BattleEntry[]
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }
+  ipcMain.handle('battle:record', (_event, entry: Partial<BattleEntry>): { ok: boolean; answer: string } => {
+    const prompt = typeof entry?.prompt === 'string' ? entry.prompt.slice(0, 500) : ''
+    const winner = typeof entry?.winner === 'string' ? entry.winner.slice(0, 120) : ''
+    const loser = typeof entry?.loser === 'string' ? entry.loser.slice(0, 120) : ''
+    const tie = entry?.tie === true
+    if (!prompt || (!tie && (!winner || !loser))) return { ok: false, answer: 'A tally line needs the prompt and the outcome.' }
+    const ledger = readLedger()
+    ledger.push({ prompt, winner, loser, tie, blind: entry?.blind === true, at: new Date().toISOString() })
+    try {
+      writeFileSync(battleLedgerPath(), JSON.stringify(ledger.slice(-500), null, 2))
+      return { ok: true, answer: `Recorded. ${winner || 'A tie'} leads this prompt now.` }
+    } catch (failure) {
+      return { ok: false, answer: `Could not write the tally: ${(failure as Error).message}` }
+    }
+  })
+  ipcMain.handle('battle:ledger', (): { ok: boolean; entries: BattleEntry[] } => ({ ok: true, entries: readLedger().slice(-50).reverse() }))
+
   // Checkpoints: what the app kept the moment before an allowed write, and
   // the way back. Read from the folder the engine was handed at send time.
   ipcMain.handle('engine:checkpoints:list', async () => {

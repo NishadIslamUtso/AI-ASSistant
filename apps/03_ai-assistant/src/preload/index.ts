@@ -75,6 +75,12 @@ const engineApi = {
     restore: (copy: string): Promise<{ ok: boolean; answer: string }> =>
       ipcRenderer.invoke('engine:checkpoint:restore', copy),
   },
+  battle: {
+    record: (entry: { prompt: string; winner: string; loser: string; tie: boolean; blind: boolean }): Promise<{ ok: boolean; answer: string }> =>
+      ipcRenderer.invoke('battle:record', entry),
+    ledger: (): Promise<{ ok: boolean; entries: Array<{ prompt: string; winner: string; loser: string; tie: boolean; at: string }> }> =>
+      ipcRenderer.invoke('battle:ledger'),
+  },
   downloads: {
     start: (engine: string): Promise<{ ok: boolean; answer: string }> =>
       ipcRenderer.invoke('engine:download:start', engine),

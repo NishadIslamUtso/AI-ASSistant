@@ -379,6 +379,10 @@ export type EngineBridge = {
     list: () => Promise<{ ok: boolean; checkpoints: Array<{ copy: string; original: string; at: string }> }>
     restore: (copy: string) => Promise<{ ok: boolean; answer: string }>
   }
+  battle: {
+    record: (entry: { prompt: string; winner: string; loser: string; tie: boolean; blind: boolean }) => Promise<{ ok: boolean; answer: string }>
+    ledger: () => Promise<{ ok: boolean; entries: Array<{ prompt: string; winner: string; loser: string; tie: boolean; at: string }> }>
+  }
   downloads: {
     start: (engine: string) => Promise<{ ok: boolean; answer: string }>
     status: () => Promise<Record<string, { engine: string; endpoint: string; sha256: string; at: string } | undefined>>
@@ -422,6 +426,10 @@ const demoEngineBridge: EngineBridge = {
   checkpoints: {
     list: async () => ({ ok: true, checkpoints: [] }),
     restore: async () => ({ ok: false, answer: 'Checkpoints live in the desktop app.' }),
+  },
+  battle: {
+    record: async () => ({ ok: false, answer: 'The tally lives in the desktop app.' }),
+    ledger: async () => ({ ok: true, entries: [] }),
   },
   downloads: {
     start: async () => ({ ok: false, answer: 'Downloads live in the desktop app.' }),

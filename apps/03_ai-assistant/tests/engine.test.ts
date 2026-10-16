@@ -123,6 +123,26 @@ test('the wire: init, words, a tool, and a result become readable events', () =>
   ])
 })
 
+test('the wire: a second turn that says the same words is not shown twice', () => {
+  // Two battle sides often answer alike. The dedup buffer must start fresh
+  // for each finished message, or the second turn's stream piles onto the
+  // stale buffer and the finished text escapes the "already shown" check.
+  const parser = createEngineParser()
+  const turn = () =>
+    [
+      JSON.stringify({ type: 'stream_event', event: { type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: 'Same words.' } } }),
+      JSON.stringify({ type: 'assistant', message: { content: [{ type: 'text', text: 'Same words.' }] } }),
+      JSON.stringify({ type: 'result', subtype: 'success', is_error: false, result: 'Same words.' }),
+    ].join('\n') + '\n'
+  const events = parser.feed(turn() + turn())
+  assert.deepEqual(events, [
+    { kind: 'delta', text: 'Same words.' },
+    { kind: 'done', text: 'Same words.' },
+    { kind: 'delta', text: 'Same words.' },
+    { kind: 'done', text: 'Same words.' },
+  ])
+})
+
 test('the wire: a permission request becomes a card, thinking is folded, not lost', () => {
   const parser = createEngineParser()
   const events = parser.feed(

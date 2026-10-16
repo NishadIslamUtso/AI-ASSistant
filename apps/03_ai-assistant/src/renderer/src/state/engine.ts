@@ -66,6 +66,8 @@ export type EngineTurn = {
   usage: EngineUsage | null
   /** How many pictures rode with the words (drawn beside the prompt). */
   pictures?: number
+  /** Tool errors and retries the engine hit and came back from. */
+  bumps?: number
 }
 
 export type EngineState = {
@@ -151,6 +153,10 @@ const ingest = (event: EngineEvent): void => {
   if (event.kind === 'session') {
     turn.sessionId = event.id
   } else if (event.kind === 'status') {
+    // The honest bump counter: the engine's own words about a failed tool
+    // call or a retry, counted so the finished card can say "recovered"
+    // with the engine's numbers, never invented ones.
+    if (/tool call failed|retry/i.test(event.text)) turn.bumps = (turn.bumps ?? 0) + 1
     turn.items.push({ kind: 'status', text: event.text })
   } else if (event.kind === 'text') {
     turn.items.push({ kind: 'text', text: event.text })

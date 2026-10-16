@@ -130,11 +130,16 @@ export function createEngineParser(): EngineParser {
         }
       }
       // What the stream already showed, word for word, is not shown again.
-      if (messageText && messageText === streamed) {
-        return events.filter((event) => event.kind !== 'text')
-      }
+      // The buffer resets either way: once the finished message is seen, the
+      // next message's stream must start fresh — a second turn that happens
+      // to say the same words (two battle sides, a repeated question) would
+      // otherwise pile onto the stale buffer and defeat the equality check.
+      const repeated = messageText && messageText === streamed
       streamed = ''
       streamedThinking = ''
+      if (repeated) {
+        return events.filter((event) => event.kind !== 'text')
+      }
       return events
     }
 

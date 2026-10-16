@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises'
+import { mkdtemp, readFile, writeFile, rm, stat } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { readFileSync } from 'node:fs'
@@ -92,12 +92,22 @@ test('a checkpoint keeps the old self; restore puts it back', async () => {
   await rm(dir, { recursive: true, force: true })
 })
 
-test('a file that does not exist yet is honestly not kept; a foreign copy is refused', async () => {
+test('a file that does not exist yet is kept as a ghost; restoring removes it; a foreign copy is refused', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'ckpt2-'))
   const ghost = join(dir, 'was-never-here.md')
-  assert.equal(await snapshotFile(dir, ghost), null, 'nothing to keep, nothing claimed')
+  // A file the engine never had is kept as an honest ghost: no copy, existed:false.
+  // Restoring it later removes the file instead of pretending an old self exists.
+  const snap = await takeCheckpoint(dir, ghost, Date.now())
+  assert.ok(snap, 'ghost recorded, not claimed as a kept copy')
+  assert.equal(snap.existed, false)
+  assert.equal(snap.copy, '')
+  await writeFile(ghost, 'born later', 'utf8')
+  const unmade = await restoreCheckpoint(dir, '')
+  assert.equal(unmade.ok, true, unmade.answer)
+  assert.match(unmade.answer, /did not exist before the engine/)
+  await assert.rejects(() => stat(ghost), 'ghost restore removes the file')
   const kept = await takeCheckpoint(dir, join(dir, 'real.md'), Date.now())
-  assert.equal(kept, null)
+  assert.equal(kept?.existed, false, 'a second never-existed path is a ghost too, not a kept copy')
   const foreign = await restoreCheckpoint(dir, join(tmpdir(), 'elsewhere-copy.md'))
   assert.equal(foreign.ok, false)
   assert.match(foreign.answer, /not one of this app's checkpoints/)

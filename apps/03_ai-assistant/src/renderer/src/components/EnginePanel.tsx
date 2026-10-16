@@ -150,6 +150,7 @@ export default function EnginePanel() {
           {turn.usage.inTokens.toLocaleString()} in · {turn.usage.outTokens.toLocaleString()} out
           {turn.usage.durationMs !== null ? ` · ${(turn.usage.durationMs / 1000).toFixed(1)}s` : ''}
           {turn.usage.costUsd !== null ? ` · $${turn.usage.costUsd.toFixed(4)}` : ''}
+          {turn.bumps ? ` · ${turn.bumps} bump${turn.bumps === 1 ? '' : 's'}, recovered` : ''}
         </p>
       ) : null}
 

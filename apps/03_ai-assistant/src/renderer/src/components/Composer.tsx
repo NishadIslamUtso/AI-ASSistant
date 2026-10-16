@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUp, ChevronDown, CookingPot, Cpu, FolderOpen, Layers, Mic, MicOff, Paperclip, Square, X } from 'lucide-react'
+import { ArrowUp, ChevronDown, CookingPot, Cpu, FolderOpen, Layers, Mic, MicOff, Paperclip, Square, Swords, X } from 'lucide-react'
 import type { Project } from '@shared/lib/projects'
 import type { Attachment } from '@shared/types'
 import { vaultGet, type VaultReply } from '@shared/lib/vault'
@@ -247,6 +247,15 @@ export default function Composer({
             Cook This Prompt
           </button>
           {cook ? <CookDialog draft={value} onDone={(next) => { if (next !== null) onChange(next); setCook(false) }} /> : null}
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent('app:battle', { detail: value }))}
+            title="Battle: run this prompt on two brains and pick the better answer (blind, private tally)"
+            className="ml-1.5 flex h-7 items-center gap-1.5 rounded-lg border border-line bg-card px-2.5 text-[11.5px] text-muted hover:text-ink"
+          >
+            <Swords size={11} aria-hidden />
+            Battle
+          </button>
         </div>
       ) : null}
       {preview ? <p className="px-1 pt-2 text-[12px] text-muted">{preview}</p> : null}
