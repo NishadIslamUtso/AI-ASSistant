@@ -1,4 +1,5 @@
 # RELEASE-WINDOWS.md — the installer recipe (verified 2026-10-16, v0.6.0)
+0.8.0)
 
 Everything needed to rebuild the installer on the build sandbox. Wine/NSIS
 vanish on every sandbox restart; this is the whole ritual, start to finish.
@@ -27,6 +28,7 @@ vanish on every sandbox restart; this is the whole ritual, start to finish.
 | --- | --- | --- | --- | --- |
 | 0.4.0 | AI-ASSistant-Setup-0.4.0.exe | 88,049,746 | 0c19f17a… | 2026-10-15 |
 | 0.6.0 | AI-ASSistant-Setup-0.6.0.exe | 88,062,356 | c0c9c0861873b7b2db69c0d5d924563aa04b9cd53b015c44a8c4a640835ea38c | 2026-10-16 (rebuild; 1st build's copy was lost to the workspace size cap — two 88 MB exes at once exceed it. The 0.4.0 exe was deleted to make room; NSIS timestamps make each build's hash differ) |
+| 0.8.0 | AI-ASSistant-Setup-0.8.0.exe | 88,129,252 | aa10fb3d3bd9e2a5f50452743e7196134f483ec9d7b3db5550fee08518275a8c | 2026-10-16 (ships: keys ride the engine, monthly audits, marketplace dissolved, Brain first-class; copy kept at /home/user/AI-ASSistant-Setup-0.8.0.exe) |
 
 ## What the person installing will see
 
