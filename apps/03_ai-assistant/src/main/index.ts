@@ -25,6 +25,7 @@ import { parsePullLine, validateModelName } from './engine/pull'
 import { deployMcp, deploySkill, scanClaudeSkills, type McpServer, type VaultSkill } from './engine/deploy'
 import { installCatalogSkill } from './engine/skillCatalogInstall'
 import { installPackFromFolder, listPacks, removePack } from './engine/packs'
+import { installFromIndex, readIndex } from './engine/storeIndex'
 import { deployBuiltInSkills } from './engine/vaultSkills'
 import { applyConflictAction, brainFileContents, classifyBrainRoot, defaultVaultPath, planBrainApply, planBrainRefresh } from '../shared/lib/brainStructure'
 import { normalizeBoard } from '../shared/lib/sessionsBoard'
@@ -736,6 +737,74 @@ function registerBridges(): void {
   ipcMain.handle('mods:remove', (_event, id: string): { ok: boolean; answer: string } =>
     removePack(String(id ?? ''), join(app.getPath('userData'), 'extensions'), skillTargets()),
   )
+
+  // Mods (Phase 2): the index client. A store is an index file — a folder
+  // with index.json or an https URL answering the same JSON. Added indexes
+  // are remembered; browse reads the index; install re-checks the pinned
+  // checksum against the real files and refuses a mismatch outright.
+  const indexesFile = (): string => join(app.getPath('userData'), 'extensions', 'indexes.json')
+  const readIndexes = (): Array<{ kind: 'folder' | 'url'; locator: string; addedAt: string }> => {
+    try {
+      const parsed = JSON.parse(readFileSync(indexesFile(), 'utf8'))
+      return Array.isArray(parsed?.indexes) ? parsed.indexes.slice(0, 20) : []
+    } catch {
+      return []
+    }
+  }
+  const toSource = (kind: string, locator: string): { kind: 'folder'; path: string } | { kind: 'url'; url: string } | null => {
+    const clean = String(locator ?? '').trim()
+    if (!clean) return null
+    if (kind === 'url' || /^https?:\/\//.test(clean)) {
+      try {
+        const parsed = new URL(clean)
+        if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return null
+        return { kind: 'url', url: parsed.toString() }
+      } catch {
+        return null
+      }
+    }
+    return { kind: 'folder', path: clean }
+  }
+  ipcMain.handle('mods:index-add', (_event, payload: { kind?: string; locator?: string }): { ok: boolean; answer: string } => {
+    const source = toSource(String(payload?.kind ?? ''), String(payload?.locator ?? ''))
+    if (!source) return { ok: false, answer: 'Give a folder that holds index.json, or an https URL that answers it.' }
+    if (source.kind === 'folder' && !existsSync(join(source.path, 'index.json'))) {
+      return { ok: false, answer: 'That folder holds no index.json, so it is not a pack index.' }
+    }
+    const list = readIndexes()
+    const key = source.kind === 'url' ? source.url : resolve(source.path)
+    if (list.some(item => (item.kind === 'url' ? item.locator : resolve(item.locator)) === key)) {
+      return { ok: true, answer: 'That index is already added.' }
+    }
+    list.push({ kind: source.kind, locator: source.kind === 'url' ? source.url : source.path, addedAt: new Date().toISOString() })
+    try {
+      mkdirSync(dirname(indexesFile()), { recursive: true })
+      writeFileSync(indexesFile(), JSON.stringify({ indexes: list }, null, 2), 'utf8')
+      return { ok: true, answer: 'Index added.' }
+    } catch {
+      return { ok: false, answer: 'The index list could not be written.' }
+    }
+  })
+  ipcMain.handle('mods:index-list', () => readIndexes())
+  ipcMain.handle('mods:index-remove', (_event, locator: string): { ok: boolean } => {
+    const list = readIndexes().filter(item => item.locator !== String(locator ?? ''))
+    try {
+      writeFileSync(indexesFile(), JSON.stringify({ indexes: list }, null, 2), 'utf8')
+      return { ok: true }
+    } catch {
+      return { ok: false }
+    }
+  })
+  ipcMain.handle('mods:index-browse', async (_event, payload: { kind?: string; locator?: string }) => {
+    const source = toSource(String(payload?.kind ?? ''), String(payload?.locator ?? ''))
+    if (!source) return { ok: false as const, problem: 'That is not a folder path or an https URL.' }
+    return readIndex(source)
+  })
+  ipcMain.handle('mods:index-install', async (_event, payload: { kind?: string; locator?: string; id?: string }) => {
+    const source = toSource(String(payload?.kind ?? ''), String(payload?.locator ?? ''))
+    if (!source) return { ok: false as const, answer: 'That is not a folder path or an https URL.' }
+    return installFromIndex(source, String(payload?.id ?? ''), { storeRoot: join(app.getPath('userData'), 'extensions'), ...skillTargets() })
+  })
 
   // The session board (A.5): the owner's own organisation of the engine's
   // resumable threads — which files each thread touches, and which are done.

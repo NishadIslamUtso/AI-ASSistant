@@ -166,6 +166,15 @@ const api = {
       ipcRenderer.invoke('mods:install-from-file'),
     list: (): Promise<Array<{ pack: unknown; folder: string; installedAt: string }>> => ipcRenderer.invoke('mods:list'),
     remove: (id: string): Promise<{ ok: boolean; answer: string }> => ipcRenderer.invoke('mods:remove', id),
+    indexAdd: (kind: string, locator: string): Promise<{ ok: boolean; answer: string }> =>
+      ipcRenderer.invoke('mods:index-add', { kind, locator }),
+    indexList: (): Promise<Array<{ kind: 'folder' | 'url'; locator: string; addedAt: string }>> =>
+      ipcRenderer.invoke('mods:index-list'),
+    indexRemove: (locator: string): Promise<{ ok: boolean }> => ipcRenderer.invoke('mods:index-remove', locator),
+    indexBrowse: (kind: string, locator: string): Promise<unknown> =>
+      ipcRenderer.invoke('mods:index-browse', { kind, locator }),
+    indexInstall: (kind: string, locator: string, id: string): Promise<{ ok: boolean; answer: string; written?: string[]; folder?: string }> =>
+      ipcRenderer.invoke('mods:index-install', { kind, locator, id }),
   },
   mcp: {
     /** The one MCP server list, and which engine configs it was deployed to. */

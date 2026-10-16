@@ -44,7 +44,7 @@ const THEME_VALUES: Record<string, Set<string>> = {
   accent: new Set(['violet', 'blue', 'teal', 'amber', 'rose']),
   width: new Set(['focused', 'comfortable', 'wide']),
   textSize: new Set(['small', 'medium', 'large']),
-  font: new Set(['sans', 'serif']),
+  font: new Set(['sans', 'serif', 'anthropic-serif']),
   motion: new Set(['system', 'reduced']),
 }
 

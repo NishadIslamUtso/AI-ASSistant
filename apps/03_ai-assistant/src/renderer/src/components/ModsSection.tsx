@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FolderOpen, Package, Trash2, Check, Palette, MessageSquare, BookOpen } from 'lucide-react'
+import { FolderOpen, Package, PackagePlus, RefreshCw, Trash2, Check, Palette, MessageSquare, BookOpen } from 'lucide-react'
 import { bridge, isDemo } from '@/platform/bridge'
 import { describePermissions, type Pack } from '@shared/lib/packs'
 import { readStored, writeStored } from '@shared/lib/storage'
@@ -245,6 +245,225 @@ themes/paper.json`}
           })}
         </ul>
       )}
+
+      <CommunityPacks installed={packs.map(item => ({ id: item.pack.id, version: item.pack.version }))} onInstalled={refresh} />
     </div>
+  )
+}
+
+type IndexEntryView = {
+  id: string
+  name: string
+  version: string
+  author: string
+  description: string
+  permissions: Record<string, unknown>
+  verified: boolean
+  problem: string
+}
+
+/**
+ * Phase 2 — the index client. A store is an index file, not a service: a
+ * folder with index.json (a repo, a USB stick) or an https URL answering the
+ * same JSON. Each entry shows what it may do in plain words and whether the
+ * files on disk still match the checksum the index pinned; the install
+ * re-checks and refuses a mismatch outright. Entries pointing at a download
+ * are listed but not installable, and say so.
+ */
+function CommunityPacks({ installed, onInstalled }: {
+  installed: Array<{ id: string; version: string }>
+  onInstalled: () => void
+}) {
+  const [indexes, setIndexes] = useState<Array<{ kind: 'folder' | 'url'; locator: string; addedAt: string }>>([])
+  const [input, setInput] = useState('')
+  const [answer, setAnswer] = useState('')
+  const [browse, setBrowse] = useState<Record<string, { ok?: boolean; name?: string; packs?: IndexEntryView[]; problem?: string }>>({})
+  const [busy, setBusy] = useState(false)
+
+  const browseAll = (): void => {
+    void bridge.mods.indexList().then(list => {
+      setIndexes(list ?? [])
+      for (const item of list ?? []) {
+        void bridge.mods.indexBrowse(item.kind, item.locator).then(reply => {
+          setBrowse(current => ({ ...current, [item.locator]: reply as { ok?: boolean; name?: string; packs?: IndexEntryView[]; problem?: string } }))
+        })
+      }
+    })
+  }
+
+  useEffect(() => {
+    browseAll()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const add = (): void => {
+    const text = input.trim()
+    if (!text || busy) return
+    setBusy(true)
+    setAnswer('')
+    const kind = /^https?:\/\//.test(text) ? 'url' : 'folder'
+    void bridge.mods
+      .indexAdd(kind, text)
+      .then(reply => {
+        setAnswer(reply.answer)
+        if (reply.ok) {
+          setInput('')
+          browseAll()
+        }
+      })
+      .finally(() => setBusy(false))
+  }
+
+  const install = (kind: string, locator: string, id: string): void => {
+    if (busy) return
+    setBusy(true)
+    setAnswer('')
+    void bridge.mods
+      .indexInstall(kind, locator, id)
+      .then(reply => {
+        setAnswer(reply.answer)
+        if (reply.ok) onInstalled()
+      })
+      .finally(() => setBusy(false))
+  }
+
+  return (
+    <section className="mt-2 border-t border-line pt-3" aria-label="Community packs">
+      <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted">Community packs</h3>
+      <p className="mt-1 text-[11.5px] leading-relaxed text-muted">
+        A store is an index file, not a service: add a folder holding <span className="font-mono">index.json</span> (a repo, a
+        USB stick) or an https URL that answers it. Every entry says what it may do and whether its files still match the
+        checksum the index pinned — a mismatch is refused, never installed.
+      </p>
+
+      <div className="mt-2 flex items-center gap-1.5">
+        <input
+          type="text"
+          value={input}
+          onChange={event => setInput(event.target.value)}
+          onKeyDown={event => {
+            if (event.key === 'Enter') add()
+          }}
+          placeholder="/path/to/packs  or  https://example.org/index.json"
+          aria-label="Pack index folder or URL"
+          className="min-w-0 flex-1 rounded-lg border border-line bg-card px-2.5 py-1.5 text-[12px] text-ink placeholder:text-muted"
+        />
+        <button
+          type="button"
+          onClick={add}
+          disabled={busy || !input.trim()}
+          className="flex items-center gap-1 rounded-lg border border-line px-2.5 py-1.5 text-[12px] text-ink hover:border-accent disabled:opacity-60"
+        >
+          <PackagePlus size={12} aria-hidden /> Add index
+        </button>
+        <button
+          type="button"
+          onClick={browseAll}
+          title="Re-read every added index"
+          aria-label="Refresh indexes"
+          className="rounded-lg border border-line p-1.5 text-muted hover:text-ink"
+        >
+          <RefreshCw size={12} aria-hidden />
+        </button>
+      </div>
+
+      {answer ? <p className="mt-1 text-[11.5px] text-muted">{answer}</p> : null}
+
+      {!indexes.length ? (
+        <p className="mt-2 text-[11.5px] text-muted">No pack indexes added yet.</p>
+      ) : (
+        indexes.map(index => {
+          const result = browse[index.locator]
+          return (
+            <div key={index.locator} className="mt-3 rounded-xl border border-line bg-card p-3">
+              <div className="flex items-start gap-2">
+                <p className="min-w-0 flex-1 text-[12.5px] text-ink">
+                  {result?.ok ? result.name : result ? 'This index cannot be read.' : 'Reading…'}{' '}
+                  <span className="block truncate font-mono text-[10.5px] text-muted" title={index.locator}>
+                    {index.locator}
+                  </span>
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void bridge.mods.indexRemove(index.locator).then(() => browseAll())
+                  }}
+                  aria-label={`Remove the index at ${index.locator}`}
+                  className="rounded-lg border border-line p-1.5 text-muted hover:text-warn"
+                >
+                  <Trash2 size={12} aria-hidden />
+                </button>
+              </div>
+
+              {result && result.ok === false ? (
+                <p className="mt-1.5 text-[11.5px] text-warn">{result.problem}</p>
+              ) : !result ? (
+                <p className="mt-1.5 text-[11.5px] text-muted">Reading the index…</p>
+              ) : !result.packs?.length ? (
+                <p className="mt-1.5 text-[11.5px] text-muted">This index lists no packs.</p>
+              ) : (
+                <ul className="mt-2 flex flex-col gap-2">
+                  {result.packs.map(entry => {
+                    const have = installed.find(item => item.id === entry.id)
+                    const perms = describePermissions({
+                      id: entry.id,
+                      name: entry.name,
+                      version: entry.version,
+                      author: entry.author,
+                      description: entry.description,
+                      license: 'unspecified',
+                      permissions: entry.permissions as Pack['permissions'],
+                      contributes: { skills: [], prompts: [], themes: [] },
+                    })
+                    return (
+                      <li key={entry.id} className="rounded-lg border border-line p-2.5">
+                        <p className="text-[12.5px] text-ink">
+                          {entry.name}{' '}
+                          <span className="text-[11px] text-muted">
+                            v{entry.version} · {entry.author}
+                          </span>
+                          {have ? (
+                            <span className="ml-2 rounded-md border border-ok/50 px-1.5 py-0.5 text-[10px] text-ok">
+                              {have.version === entry.version ? 'installed' : `installed v${have.version}`}
+                            </span>
+                          ) : entry.verified ? (
+                            <span className="ml-2 rounded-md border border-line px-1.5 py-0.5 text-[10px] text-muted">checksum verified</span>
+                          ) : (
+                            <span className="ml-2 rounded-md border border-warn/50 px-1.5 py-0.5 text-[10px] text-warn">not installable</span>
+                          )}
+                        </p>
+                        {entry.description ? <p className="mt-0.5 text-[11.5px] text-muted">{entry.description}</p> : null}
+                        {!entry.verified && entry.problem ? <p className="mt-0.5 text-[11px] text-warn">{entry.problem}</p> : null}
+                        <details className="mt-1">
+                          <summary className="cursor-pointer text-[11px] text-muted hover:text-ink">What it may do</summary>
+                          <ul className="mt-1 flex flex-col gap-0.5">
+                            {perms.map(line => (
+                              <li key={line} className="text-[11px] leading-relaxed text-muted">
+                                · {line}
+                              </li>
+                            ))}
+                          </ul>
+                        </details>
+                        {!have ? (
+                          <button
+                            type="button"
+                            onClick={() => install(index.kind, index.locator, entry.id)}
+                            disabled={busy || !entry.verified}
+                            title={entry.verified ? 'Verify the checksum again and install' : entry.problem || 'Cannot be verified against the index'}
+                            className="mt-1.5 rounded-lg border border-line px-2.5 py-1 text-[11.5px] text-ink hover:border-accent disabled:opacity-50"
+                          >
+                            Install
+                          </button>
+                        ) : null}
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+            </div>
+          )
+        })
+      )}
+    </section>
   )
 }

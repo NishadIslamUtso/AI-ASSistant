@@ -111,6 +111,17 @@ export type DesktopBridge = {
     }>
     list: () => Promise<Array<{ pack: { id: string; name: string; version: string; author: string; description: string }; folder: string; installedAt: string }>>
     remove: (id: string) => Promise<{ ok: boolean; answer: string }>
+    /** Phase 2: the index client — a store is an index file, not a service. */
+    indexAdd: (kind: string, locator: string) => Promise<{ ok: boolean; answer: string }>
+    indexList: () => Promise<Array<{ kind: 'folder' | 'url'; locator: string; addedAt: string }>>
+    indexRemove: (locator: string) => Promise<{ ok: boolean }>
+    indexBrowse: (kind: string, locator: string) => Promise<{
+      ok: boolean
+      problem?: string
+      name?: string
+      packs?: Array<{ id: string; name: string; version: string; author: string; description: string; permissions: Record<string, unknown>; checksum: string; source: string; verified: boolean; problem: string }>
+    }>
+    indexInstall: (kind: string, locator: string, id: string) => Promise<{ ok: boolean; answer: string; written?: string[]; folder?: string }>
   }
   /** The engine's tool servers (MCP). Browser control is one entry in this list. */
   mcp: {
@@ -216,6 +227,11 @@ const demoBridge: DesktopBridge = {
     installFromFile: async () => ({ ok: false, answer: 'Installing packs needs the desktop app — it is the one that talks to the engines.' }),
     list: async () => [],
     remove: async () => ({ ok: false, answer: 'Removing packs needs the desktop app.' }),
+    indexAdd: async () => ({ ok: false, answer: 'Pack indexes need the desktop app.' }),
+    indexList: async () => [],
+    indexRemove: async () => ({ ok: false }),
+    indexBrowse: async () => ({ ok: false, problem: 'Browsing a pack index needs the desktop app.' }),
+    indexInstall: async () => ({ ok: false, answer: 'Installing from an index needs the desktop app.' }),
   },
   mcp: {
     read: async () => ({ servers: [] }),
