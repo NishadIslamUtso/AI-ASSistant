@@ -52,6 +52,22 @@ export const DEFAULT_HOUSE_RULES: HouseRules = {
     'mocked data, and if something blocked you, say honestly what and why.',
 }
 
+/**
+ * Auto-keep, HIS design ("auto-keep, but show me everything"): every engine
+ * learns where its memory file lives, so it may note what matters during
+ * NORMAL work — not only when a memory pass is sent. The writes are still
+ * the engine's own, through its own tools, so the permission cards show
+ * every line before it lands. Appended by the compiler, not editable as a
+ * personal rule: it is the contract between the app and the engine, the
+ * same way the file NAME is.
+ */
+export const REMEMBERING_SECTION =
+  'You keep a memory file at 06 Review/Memory/engine-notes.md in your working folder. ' +
+  'When you learn something worth keeping for future sessions — a decision made, a preference shown, a fact learned, work left open — ' +
+  'append it under a heading like \'## 2026-10-16\' for today, one short line per item. ' +
+  'Never delete or rewrite lines that are already there; if nothing is worth keeping, write nothing. ' +
+  'Your writes go through the usual approval channel, so the owner sees every change before it lands.'
+
 /** Where each engine expects its house rules file, by name. */
 export const HOUSE_RULES_FILENAME: Record<EngineId, string> = {
   'claude-code': 'CLAUDE.md',
@@ -77,6 +93,7 @@ export function compileFor(engine: EngineId, rules: HouseRules = DEFAULT_HOUSE_R
     ['Artifacts', rules.artifacts],
     ['Approvals', rules.permissions],
     ['Memory and searching', rules.memory],
+    ['What you keep', REMEMBERING_SECTION],
     ['How you write', rules.style],
   ]
   const body = sections

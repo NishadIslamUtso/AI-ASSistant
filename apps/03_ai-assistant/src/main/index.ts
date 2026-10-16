@@ -1259,7 +1259,10 @@ function registerBridges(): void {
   // Auto memory: what the engine remembered, listed for the owner. Reads
   // and removes stay inside the vault's memory folder; the WRITES are the
   // engine's own, through its normal tools and this app's cards.
-  const memoryFiles = createMemoryManager(() => vaultRoot())
+  // The memory home is the ENGINE's own working folder — the same root it
+  // spawns in — so what the pane lists is always what the engine wrote,
+  // even when the workspace is not the vault.
+  const memoryFiles = createMemoryManager(() => settings.engine.workspace || vaultRoot())
   ipcMain.handle('memory:list', () => memoryFiles.list())
   ipcMain.handle('memory:remove', (_event, name: string) => memoryFiles.remove(typeof name === 'string' ? name : ''))
 

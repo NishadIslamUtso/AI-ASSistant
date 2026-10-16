@@ -28,6 +28,7 @@ vanish on every sandbox restart; this is the whole ritual, start to finish.
 | 0.4.0 | AI-ASSistant-Setup-0.4.0.exe | 88,049,746 | 0c19f17a… | 2026-10-15 |
 | 0.6.0 | AI-ASSistant-Setup-0.6.0.exe | 88,062,356 | c0c9c0861873b7b2db69c0d5d924563aa04b9cd53b015c44a8c4a640835ea38c | 2026-10-16 (rebuild; 1st build's copy was lost to the workspace size cap — two 88 MB exes at once exceed it. The 0.4.0 exe was deleted to make room; NSIS timestamps make each build's hash differ) |
 | 0.8.0 | AI-ASSistant-Setup-0.8.0.exe | 88,171,076 | 2ca94dd2f3350f4c0794bbb25745b107700a66fe94742623ea17a2fdb93fea7b | 2026-10-16 (rebuild 4, THE shipped build: the furnished store in resources/store + Code inside Projects. Ships everything to date. Copy at /home/user/AI-ASSistant-Setup-0.8.0.exe) |
+| 0.9.0 | AI-ASSistant-Setup-0.9.0.exe | 88,204,306 | 267a753011b0431d749b9b6c7bc26971664efc7bdaa9c8f802b61cbb54c58c07 | 2026-10-16 (rebuild 5, THE acceptance build: everything to date — the finale five, auto memory with the auto-keep rulebook line, the memory-home fix. 0.8.0 exe deleted first, per the one-exe rule. Copy at /home/user/AI-ASSistant-Setup-0.9.0.exe) |
 
 ## What the person installing will see
 

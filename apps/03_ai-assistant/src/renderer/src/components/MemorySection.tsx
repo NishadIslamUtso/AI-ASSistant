@@ -25,8 +25,9 @@ export default function MemorySection() {
           Memory
         </h2>
         <p className="mt-1 text-[12.5px] leading-relaxed text-muted">
-          What the engine remembers between sessions, kept as plain markdown in your vault at{' '}
-          <code className="text-ink">{memory.folder ? memory.folder.split(/[\\/]/).slice(-3).join('/') : '06 Review/Memory'}</code>. A pass asks the
+          What the engine remembers between sessions, kept as plain markdown at{' '}
+          <code className="text-ink">{memory.folder ? memory.folder.split(/[\\/]/).slice(-3).join('/') : '06 Review/Memory'}</code> — the folder the
+          engine itself works in. A pass asks the
           engine to note decisions, preferences, facts and open work — and its writes ride the same permission cards as every edit: you see the
           diff before it lands. Everything here is yours to read, edit, or delete.
         </p>
