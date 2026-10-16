@@ -158,6 +158,14 @@ const api = {
     installCatalog: (name: string): Promise<{ ok: boolean; answer: string; written?: string[] }> =>
       ipcRenderer.invoke('skills:install-catalog', name),
   },
+  mcp: {
+    /** The one MCP server list, and which engine configs it was deployed to. */
+    read: (): Promise<{ servers: Array<{ name: string; command?: string; args?: string[]; url?: string }> }> =>
+      ipcRenderer.invoke('mcp:read'),
+    write: (
+      servers: Array<{ name: string; command?: string; args?: string[]; url?: string }>,
+    ): Promise<{ ok: boolean; written: string[] }> => ipcRenderer.invoke('mcp:write', { servers }),
+  },
   vault: {
     /** The operating system's folder picker. null when the person closed it. */
     chooseFolder: (): Promise<string | null> => ipcRenderer.invoke('vault:choose-folder'),

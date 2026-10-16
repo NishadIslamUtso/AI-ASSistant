@@ -107,11 +107,7 @@ export default function EnginePanel() {
           {turn.permissions[0].summary ? (
             <p className="mt-0.5 break-words font-mono text-[11.5px] text-muted">{turn.permissions[0].summary}</p>
           ) : null}
-          {turn.permissions[0].detail ? (
-            <pre className="mt-1.5 max-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-line bg-panel p-2 font-mono text-[11px] leading-relaxed text-muted">
-              {turn.permissions[0].detail}
-            </pre>
-          ) : null}
+          {turn.permissions[0].detail ? <DiffBlock detail={turn.permissions[0].detail} /> : null}
           <div className="mt-2 flex gap-2">
             <button
               type="button"
@@ -172,4 +168,52 @@ function ToolIcon({ name }: { name: string }) {
     return <FilePen size={13} className={className} />
   if (name === 'Grep' || name === 'Glob') return <Search size={13} className={className} />
   return <Wrench size={13} className={className} />
+}
+
+
+/**
+ * A permission card's detail, read for shape: when it carries a diff (the
+ * engine's edit requests do), the changed lines are shown red and green so a
+ * person can SEE the edit before allowing it — Nimbalyst's red/green review,
+ * sized to our cards.
+ *
+ * The honesty line: the engine's own permission door allows or denies a whole
+ * edit. A "hunk" cannot be half-applied through it, so there are no per-hunk
+ * buttons here — only the full change, coloured, and one Allow / Deny pair
+ * that means the whole change.
+ */
+export function DiffBlock({ detail }: { detail: string }) {
+  const lines = detail.split('\n')
+  const looksLikeDiff =
+    lines.filter(line => /^(---|\+\+\+|@@|[+-])\s?/.test(line)).length >= 2 && lines.length >= 3
+  if (!looksLikeDiff) {
+    return (
+      <pre className="mt-1.5 max-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-line bg-panel p-2 font-mono text-[11px] leading-relaxed text-muted">
+        {detail}
+      </pre>
+    )
+  }
+  return (
+    <pre className="mt-1.5 max-h-56 overflow-auto whitespace-pre rounded-md border border-line bg-panel p-2 font-mono text-[11px] leading-relaxed">
+      {lines.map((line, index) => {
+        const kind = line.startsWith('+') && !line.startsWith('+++') ? 'add' : line.startsWith('-') && !line.startsWith('---') ? 'del' : line.startsWith('@@') ? 'hunk' : 'ctx'
+        return (
+          <div
+            key={index}
+            className={
+              kind === 'add'
+                ? 'bg-ok/10 text-ok'
+                : kind === 'del'
+                  ? 'bg-warn/10 text-warn'
+                  : kind === 'hunk'
+                    ? 'text-accent'
+                    : 'text-muted'
+            }
+          >
+            {line || ' '}
+          </div>
+        )
+      })}
+    </pre>
+  )
 }

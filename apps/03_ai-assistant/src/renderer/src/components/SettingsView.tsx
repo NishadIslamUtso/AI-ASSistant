@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { bridge, isDemo } from '../platform/bridge'
 import HouseRulesSection from './HouseRulesSection'
 import SkillsCatalogSection from './SkillsCatalogSection'
+import BrowserControlSection from './BrowserControlSection'
 import EngineBay from './EngineBay'
 import { useEngine } from '@/state/engine'
 import type { VaultState } from '../hooks/useVault'
@@ -1034,6 +1035,11 @@ export default function SettingsView({
         label: 'Skill catalog',
         terms: 'skills install catalog engines deploy anthropic docx pptx xlsx pdf mcp webapp',
         body: <SkillsCatalogSection />,
+      },
+      {
+        label: 'Browser control',
+        terms: 'browser control chrome playwright mcp engine drive click automation devtools',
+        body: <BrowserControlSection />,
       },
     ],
     vault: [      {

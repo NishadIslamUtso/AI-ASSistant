@@ -96,6 +96,11 @@ export type DesktopBridge = {
     /** Install one skill from the app's own catalog, into every engine. */
     installCatalog: (name: string) => Promise<{ ok: boolean; answer: string; written?: string[] }>
   }
+  /** The engine's tool servers (MCP). Browser control is one entry in this list. */
+  mcp: {
+    read: () => Promise<{ servers: Array<{ name: string; command?: string; args?: string[]; url?: string }> }>
+    write: (servers: Array<{ name: string; command?: string; args?: string[]; url?: string }>) => Promise<{ ok: boolean; written: string[] }>
+  }
   vault: {
     /** The operating system's folder picker. null when the person closed it. */
     chooseFolder: () => Promise<string | null>
@@ -167,6 +172,10 @@ const demoBridge: DesktopBridge = {
     }),
   },
   skills: { installCatalog: async () => ({ ok: false, answer: 'Installing skills needs the desktop app.' }) },
+  mcp: {
+    read: async () => ({ servers: [] }),
+    write: async () => ({ ok: false, written: [] }),
+  },
   vault: { chooseFolder: async () => null, saveHandoff: async () => ({ ok: false, answer: 'Writing a handoff needs the desktop app.' }), exportCopy: async () => ({ ok: false, answer: 'Exporting needs the desktop app.' }), captureChat: async () => ({ ok: false, answer: 'Capturing needs the desktop app.' }) },
   // No socket is open here, and none can be: this is a page, not the app.
   extension: {
