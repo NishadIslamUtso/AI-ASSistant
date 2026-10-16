@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Handshake, Minimize2, Wrench, FilePen, Terminal, Search, CircleCheck, TriangleAlert, Square, X } from 'lucide-react'
+import { Eye, Handshake, Minimize2, Wrench, FilePen, Terminal, Search, CircleCheck, TriangleAlert, Square, X } from 'lucide-react'
 import { buildHandoff, handoffFileName } from '@shared/lib/handoff'
 import { pickGerund } from '@shared/lib/gerunds'
 import { BRIEF_ORDER } from '@shared/lib/compact'
 import { bridge } from '@/platform/bridge'
 import { useEngine, type EngineItem } from '@/state/engine'
 import { cancelBrief, clearCompactNotice, finishCompact, useCompact, writeBrief } from '@/state/compact'
+import { clearReviewError, runReview, useReview } from '@/state/review'
 
 /**
  * The engine's work order, drawn where the conversation can see it.
@@ -43,6 +44,7 @@ export default function EnginePanel() {
   }, [running])
   const [compacting, setCompacting] = useState(false)
   const compact = useCompact()
+  const review = useReview()
   if (!turn) return null
 
   // The handoff: the finished turn written into the vault as one document a
@@ -112,7 +114,32 @@ export default function EnginePanel() {
             <Minimize2 size={10} /> Compact
           </button>
         ) : null}
+        {turn.state !== 'running' ? (
+          <button
+            type="button"
+            onClick={() => void runReview()}
+            title="Review: the engine checks its own work — report only, nothing is changed by the review"
+            className="flex items-center gap-1 rounded-lg border border-line px-2 py-0.5 text-[11px] text-muted hover:text-ink"
+          >
+            <Eye size={10} /> Review
+          </button>
+        ) : null}
       </header>
+
+      {review.error ? (
+        <p className="mt-1.5 text-[11.5px] text-warn">
+          {review.error}
+          <button type="button" onClick={clearReviewError} aria-label="Dismiss" className="ml-2 text-muted hover:text-ink">×</button>
+        </p>
+      ) : null}
+      {review.line && !review.running ? (
+        <p role="status" className="mt-1.5 rounded-lg border border-line bg-bg px-2 py-1 text-[11.5px] leading-relaxed text-ink">
+          {review.line}
+          {review.verdict?.kind === 'issues' ? (
+            <span className="mt-1 block whitespace-pre-wrap text-muted">{review.verdict.lines.join('\n')}</span>
+          ) : null}
+        </p>
+      ) : null}
 
       {compact.notice ? (
         <p role="status" className="mt-1.5 rounded-lg border border-line bg-bg px-2 py-1 text-[11.5px] leading-relaxed text-ink">
