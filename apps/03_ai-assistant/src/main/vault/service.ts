@@ -219,7 +219,7 @@ export function createVaultService({
 
   function capture(data: Payload) {
     const store = vault()
-    const types = ['conversation', 'web_page', 'browser_visit', 'capsule', 'artifact', 'journal', 'wasnt_accessible', 'blacklist_update']
+    const types = ['conversation', 'web_page', 'browser_visit', 'a11y_tree', 'capsule', 'artifact', 'journal', 'wasnt_accessible', 'blacklist_update']
     if (!data || !types.includes(data.type)) throw new InputError('Unsupported capture type.')
     if (data.url) {
       let url: URL
@@ -326,6 +326,52 @@ export function createVaultService({
             visited_at: data.visited_at || null,
             capture_status: 'content-captured',
             source_id: relative,
+          })}\n`
+        )
+      }
+    } else if (data.type === 'a11y_tree') {
+      // Prophet (A.7): structure over screenshots. The tree is roles and
+      // names — what the page IS, never its full text — and the counts say
+      // what was held back.
+      if (!data.url || typeof data.tree !== 'string' || !data.tree.trim()) {
+        throw new InputError('A11y tree URL and tree are required.')
+      }
+      if (typeof data.nodes !== 'number' || data.nodes < 1 || data.nodes > 400) {
+        throw new InputError('A11y tree nodes must be between 1 and 400.')
+      }
+      if (typeof data.depth !== 'number' || data.depth < 1 || data.depth > 12) {
+        throw new InputError('A11y tree depth must be between 1 and 12.')
+      }
+      const id = `a11y-${digest(`${data.url}\n${data.tree}`)}`
+      relative = `02 Sources/A11y Trees/${year}/${id}.md`
+      duplicate = store.writeOnce(
+        relative,
+        yamlDocument(
+          {
+            id,
+            url: data.url,
+            title: data.title || '',
+            captured_at: captured,
+            nodes: data.nodes,
+            depth: data.depth,
+            completeness: data.completeness || 'full',
+            provider: 'web',
+          },
+          `# ${data.title || data.url}\n\nSource: ${data.url}\n\n## Accessibility tree\n\n\`\`\`\n${data.tree}\n\`\`\``
+        )
+      )
+      if (!duplicate) {
+        store.append(
+          `02 Sources/Browser Activity/${year}/${month}.jsonl`,
+          `${JSON.stringify({
+            url: data.url,
+            title: data.title,
+            captured_at: captured,
+            visited_at: data.visited_at || null,
+            capture_status: 'structure-captured',
+            source_id: relative,
+            nodes: data.nodes,
+            depth: data.depth,
           })}\n`
         )
       }
@@ -563,12 +609,20 @@ export function createVaultService({
     if (typeof event.visited_at === 'string' && event.visited_at) page.visited_at = event.visited_at
     if (typeof event.source_id === 'string' && event.source_id) {
       const document = store.read(event.source_id)
-      const marker = '\n## Content\n'
-      const at = document.indexOf(marker)
+      const textMarker = '\n## Content\n'
+      const treeMarker = '\n## Accessibility tree\n'
+      const treeAt = document.indexOf(treeMarker)
+      const marker = treeAt !== -1 ? treeMarker : textMarker
+      const at = treeAt !== -1 ? treeAt : document.indexOf(textMarker)
       if (at !== -1) {
-        const raw = document.slice(at + marker.length).trim()
+        let raw = document.slice(at + marker.length).trim()
+        // A tree rides inside a fenced block; the fence is presentation, not data.
+        if (marker === treeMarker && raw.startsWith('```')) {
+          raw = raw.replace(/^```\n/, '').replace(/\n```$/, '')
+        }
         const capped = raw.slice(0, 12_000)
         page.content = capped
+        if (marker === treeMarker) page.format = 'a11y-tree'
         if (capped.length < raw.length) page.content_truncated = true
       }
     }

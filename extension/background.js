@@ -2,6 +2,7 @@
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({id: "collect-now", title: "Collect this page now", contexts: ["page"]});
+  chrome.contextMenus.create({id: "capture-structure", title: "Capture page structure (a11y tree)", contexts: ["page"]});
   chrome.contextMenus.create({id: "never-check", title: "Never check this site again", contexts: ["page"]});
 });
 
@@ -9,6 +10,13 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === "collect-now") {
     try {
       await chrome.scripting.executeScript({target: {tabId: tab.id}, files: ["content-scripts/generic-capture.js"]});
+    } catch(e) {
+      console.error(e);
+    }
+  }
+  if (info.menuItemId === "capture-structure") {
+    try {
+      await chrome.scripting.executeScript({target: {tabId: tab.id}, files: ["content-scripts/a11y-capture.js"]});
     } catch(e) {
       console.error(e);
     }
