@@ -28,6 +28,7 @@ import { buildRepoMap } from './repoMap'
 import { createHookRunner } from './hooks'
 import { createFolderWatcher, type WatchTick } from './watcher'
 import { createJournalManager } from './journal'
+import { createMemoryManager } from './memoryFiles'
 import { createDownloadManager, type DownloadTick } from './engine/downloads'
 import { agyModelSource, detectEngine } from './engine/availability'
 import { parsePullLine, validateModelName } from './engine/pull'
@@ -1254,6 +1255,13 @@ function registerBridges(): void {
   ipcMain.handle('journal:list', () => journal.list())
   ipcMain.handle('journal:append', (_event, entry: unknown) => journal.append(entry as never))
   ipcMain.handle('journal:clear', () => journal.clear())
+
+  // Auto memory: what the engine remembered, listed for the owner. Reads
+  // and removes stay inside the vault's memory folder; the WRITES are the
+  // engine's own, through its normal tools and this app's cards.
+  const memoryFiles = createMemoryManager(() => vaultRoot())
+  ipcMain.handle('memory:list', () => memoryFiles.list())
+  ipcMain.handle('memory:remove', (_event, name: string) => memoryFiles.remove(typeof name === 'string' ? name : ''))
 
   ipcMain.handle('engine:thinking', (_event, thinking: string): { ok: boolean; answer: string } => {
     const mode = thinking === 'extended' ? 'extended' : 'default'

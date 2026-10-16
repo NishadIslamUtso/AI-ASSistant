@@ -375,6 +375,10 @@ export type EngineBridge = {
   setModel: (model: string, provider?: 'anthropic') => Promise<{ ok: boolean; answer: string }>
   setApproval: (mode: ApprovalMode) => Promise<{ ok: boolean; answer: string }>
   setThinking: (mode: 'default' | 'extended') => Promise<{ ok: boolean; answer: string }>
+  memory: {
+    list: () => Promise<{ ok: boolean; folder?: string; files?: Array<{ name: string; path: string; updated: string; content: string; clipped: boolean }> }>
+    remove: (name: string) => Promise<{ ok: boolean; answer: string }>
+  }
   journal: {
     list: () => Promise<{ ok: boolean; entries: Array<{ at: string; prompt: string; answer: string; sessionId: string | null; usage: string; workspace: string }> }>
     append: (entry: { at: string; prompt: string; answer: string; sessionId: string | null; usage: string; workspace: string }) => Promise<{ ok: boolean; answer: string }>
@@ -453,6 +457,10 @@ const demoEngineBridge: EngineBridge = {
   }),
   answer: async () => ({ ok: false }),
   setThinking: async () => ({ ok: false, answer: 'Thinking lives in the desktop app.' }),
+  memory: {
+    list: async () => ({ ok: true, files: [] }),
+    remove: async () => ({ ok: false, answer: 'Memories live in the desktop app.' }),
+  },
   journal: {
     list: async () => ({ ok: true, entries: [] }),
     append: async () => ({ ok: false, answer: 'The record lives in the desktop app.' }),

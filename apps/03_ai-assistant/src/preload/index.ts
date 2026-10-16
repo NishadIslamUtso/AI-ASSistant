@@ -64,6 +64,11 @@ const engineApi = {
     ipcRenderer.invoke('engine:approval', mode),
   setThinking: (mode: 'default' | 'extended'): Promise<{ ok: boolean; answer: string }> =>
     ipcRenderer.invoke('engine:thinking', mode),
+  memory: {
+    list: (): Promise<{ ok: boolean; folder?: string; files?: Array<{ name: string; path: string; updated: string; content: string; clipped: boolean }> }> =>
+      ipcRenderer.invoke('memory:list'),
+    remove: (name: string): Promise<{ ok: boolean; answer: string }> => ipcRenderer.invoke('memory:remove', name),
+  },
   journal: {
     list: (): Promise<{ ok: boolean; entries: Array<{ at: string; prompt: string; answer: string; sessionId: string | null; usage: string; workspace: string }> }> =>
       ipcRenderer.invoke('journal:list'),

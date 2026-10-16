@@ -9,6 +9,7 @@ import ModsSection from './ModsSection'
 import EngineBay from './EngineBay'
 import RecipesSection from './RecipesSection'
 import HooksSection from './HooksSection'
+import MemorySection from './MemorySection'
 import { useEngine } from '@/state/engine'
 import type { VaultState } from '../hooks/useVault'
 import {
@@ -65,7 +66,7 @@ import {
  * browser preview there is no folder to choose and no model to run.
  */
 
-export type SectionId = 'agents' | 'hooks' | 'house' | 'skills' | 'recipes' | 'extensions' | 'engine' | 'system' | 'connectors' | 'appearance' | 'models' | 'performance' | 'vault'
+export type SectionId = 'agents' | 'hooks' | 'memory' | 'house' | 'skills' | 'recipes' | 'extensions' | 'engine' | 'system' | 'connectors' | 'appearance' | 'models' | 'performance' | 'vault'
 
 type Row = {
   /** What the row is called, and what the rail's search matches on. */
@@ -86,6 +87,7 @@ const SECTIONS: readonly {
   { id: 'connectors', title: 'Connectors', group: 'This computer' },
   { id: 'agents', title: 'Agent access', group: 'This app', resettable: true },
   { id: 'hooks', title: 'Hooks', group: 'This app' },
+  { id: 'memory', title: 'Memory', group: 'This app' },
   { id: 'house', title: 'House rules', group: 'This app' },
   { id: 'skills', title: 'Skills', group: 'This app' },
   { id: 'recipes', title: 'Recipes', group: 'This app' },
@@ -139,6 +141,13 @@ function SectionIcon({ id }: { id: SectionId }) {
       <>
         <rect x="2.5" y="4.5" width="15" height="11" rx="1.5" />
         <path d="M6 8.5l2.5 2L6 12.5M10.5 12.5H14" />
+      </>
+    ),
+    memory: (
+      <>
+        <path d="M9.5 3.5a4 4 0 0 0-4 4c-1.5.5-2.5 1.9-2.5 3.5a3.5 3.5 0 0 0 2 3.2V17h5" />
+        <path d="M10.5 3.5a4 4 0 0 1 4 4c1.5.5 2.5 1.9 2.5 3.5a3.5 3.5 0 0 1-2 3.2V17h-5" />
+        <path d="M10 7v13.5" />
       </>
     ),
     recipes: (
@@ -1104,6 +1113,13 @@ export default function SettingsView({
         label: 'The engine bay',
         terms: 'engine agent claude-code agy brain model pull download detect install throttle folder',
         body: <EngineBay />,
+      },
+    ],
+    memory: [
+      {
+        label: 'What the engine remembers',
+        terms: 'memory remember facts decisions preferences vault notes auto keep forget engine notes',
+        body: <MemorySection />,
       },
     ],
     hooks: [
