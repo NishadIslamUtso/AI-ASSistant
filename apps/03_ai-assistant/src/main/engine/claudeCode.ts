@@ -39,6 +39,12 @@ export type StartSessionInput = {
   cwd: string
   settings: EngineSettings
   /**
+   * A provider key from Models, resolved by the door that received the send.
+   * Present only when the chosen brain is a provider brain; the engine is
+   * then launched pointed at that provider with the key in its own env.
+   */
+  auth?: { provider: 'anthropic'; apiKey: string }
+  /**
    * A previous session id to continue — the engine's own `--resume`. Empty
    * means a fresh conversation; the socket only fills this when the engine
    * is not already alive.
@@ -134,7 +140,16 @@ export function stopArguments(pid: number): string[] {
  * With the local Ollama door there is no key and no account — the token is
  * the literal word `ollama`, which that door accepts.
  */
-export function brainEnvironment(baseUrl: string): Record<string, string> {
+export function brainEnvironment(baseUrl: string, apiKey?: string): Record<string, string> {
+  // A key saved in Models routes the ENGINE to that provider directly: the
+  // key rides the engine's own environment, and the app itself still calls
+  // no provider. Without a key the local door serves the brain, as always.
+  if (apiKey) {
+    return {
+      ANTHROPIC_BASE_URL: 'https://api.anthropic.com/v1',
+      ANTHROPIC_API_KEY: apiKey,
+    }
+  }
   if (!baseUrl) return {}
   return {
     ANTHROPIC_BASE_URL: baseUrl,
@@ -153,7 +168,9 @@ export function startClaudeCodeSession(input: StartSessionInput): EngineSession 
       cwd: input.cwd,
       env: {
         ...sanitizeEnvironment(process.env),
-        ...brainEnvironment(input.settings.baseUrl),
+        ...(input.auth?.apiKey
+          ? brainEnvironment('https://api.anthropic.com/v1', input.auth.apiKey)
+          : brainEnvironment(input.settings.baseUrl)),
         ...(enginePathPrepend() ? { PATH: `${enginePathPrepend()};${process.env['PATH'] ?? ''}` } : {}),
       },
       // On Windows the command lives behind an npm `.cmd` shim, which only

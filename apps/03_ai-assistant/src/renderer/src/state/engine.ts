@@ -93,7 +93,7 @@ type EngineStore = EngineState & {
   /** Ask the brain door what the engine can use. */
   loadModels(): Promise<void>
   /** Pick the engine's brain; persists. */
-  setModel(name: string): Promise<void>
+  setModel(name: string, provider?: 'anthropic'): Promise<void>
   /** Set the throttle: how much the engine may do before asking; persists. */
   setApproval(mode: ApprovalMode): Promise<void>
   /** "Open a folder": pick where the engine works; persists. */
@@ -319,8 +319,8 @@ const store: EngineStore = {
     })
   },
 
-  async setModel(name: string): Promise<void> {
-    const answer = await getEngineApi().setModel(name)
+  async setModel(name: string, provider?: 'anthropic'): Promise<void> {
+    const answer = await getEngineApi().setModel(name, provider)
     if (answer.ok) setState({ settings: { ...state.settings, model: name } })
   },
 

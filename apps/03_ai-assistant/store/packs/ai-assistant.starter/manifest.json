@@ -1,0 +1,20 @@
+{
+  "id": "ai-assistant.starter",
+  "name": "AI ASSistant starter pack",
+  "version": "1.0.0",
+  "author": "AI ASSistant",
+  "description": "The app's browser-page skill: see the page the user has open, through the local door. One look to start from.",
+  "license": "unspecified",
+  "permissions": {
+    "shell": false
+  },
+  "contributes": {
+    "skills": [
+      "skills/browser-page/SKILL.md"
+    ],
+    "prompts": [],
+    "themes": [
+      "themes/dawn.json"
+    ]
+  }
+}

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { ExternalLink, FolderOpen, Link2, RefreshCw, Terminal, Trash2, X } from 'lucide-react'
 import { useEngine } from '@/state/engine'
 import { bridge } from '@/platform/bridge'
-import { linkFiles, markDone, normalizeBoard, unlinkFile, type SessionsBoard } from '@shared/lib/sessionsBoard'
+import { linkFiles, markDone, normalizeBoard, scopeBoard, unlinkFile, type SessionsBoard } from '@shared/lib/sessionsBoard'
 
 /**
  * Code (06) — the engine's workspace, on screen.
@@ -30,7 +30,17 @@ const THROTTLE: Array<{ id: 'ask' | 'edits' | 'full'; label: string; note: strin
   },
 ]
 
-export default function CodeView() {
+export default function CodeView({
+  /**
+   * Set when a project opened Code: the board then shows that folder's
+   * threads, with an honest one-press way back to everything.
+   */
+  focusFolder = '',
+  onClearFocus,
+}: {
+  focusFolder?: string
+  onClearFocus?: () => void
+}) {
   const engine = useEngine()
   const [sessions, setSessions] = useState<Array<{ workspace: string; sessionId: string }>>([])
   const [board, setBoard] = useState<SessionsBoard>({ continuing: {}, done: [] })
@@ -81,6 +91,10 @@ export default function CodeView() {
   const workspace = engine.settings.workspace
   const current = workspace || 'the vault (default)'
 
+  // The scope a project asked for: that folder's threads, never more, until
+  // the owner presses "Show all folders".
+  const view = scopeBoard(sessions, board.done, focusFolder)
+
   return (
     <div className="flex-1 overflow-y-auto" aria-label="Code">
       <div className="mx-auto w-full max-w-[var(--chat-width)] px-4 py-8">
@@ -98,6 +112,22 @@ export default function CodeView() {
             </span>
           </span>
         </header>
+        {view.scoped ? (
+          <p className="mt-2 flex flex-wrap items-center gap-2 text-[12px] text-muted" role="status">
+            <span className="min-w-0 truncate" title={focusFolder}>
+              Showing this project's folder — {leaf(focusFolder)}
+            </span>
+            {onClearFocus ? (
+              <button
+                type="button"
+                onClick={onClearFocus}
+                className="rounded border border-line px-1.5 py-0.5 text-[11px] text-muted hover:text-ink"
+              >
+                Show all folders
+              </button>
+            ) : null}
+          </p>
+        ) : null}
         {notice ? <p className="mt-2 text-[12px] text-muted">{notice}</p> : null}
 
         {/* The workspace: where engine work actually happens. */}
@@ -181,7 +211,7 @@ export default function CodeView() {
           </div>
           {loading ? (
             <p className="mt-2 text-[12.5px] text-muted">Reading the board…</p>
-          ) : sessions.length === 0 && board.done.length === 0 ? (
+          ) : view.sessions.length === 0 && view.done.length === 0 ? (
             <p className="mt-2 text-[12.5px] text-muted">
               No threads yet. Give the engine work in a folder and its thread appears here — close the app, come back,
               and the conversation continues.
@@ -191,15 +221,15 @@ export default function CodeView() {
               {/* Continuing — the engine resumes these. */}
               <div className="rounded-xl border border-line bg-panel p-2.5">
                 <p className="px-0.5 text-[11px] font-medium text-muted">
-                  Continuing · {sessions.length}
+                  Continuing · {view.sessions.length}
                 </p>
-                {sessions.length === 0 ? (
+                {view.sessions.length === 0 ? (
                   <p className="mt-2 px-0.5 text-[11.5px] text-muted">
                     Nothing to resume. A thread appears when the engine works in a folder.
                   </p>
                 ) : (
                   <ul className="mt-2 flex flex-col gap-2">
-                    {sessions.map(({ workspace: ws, sessionId }) => {
+                    {view.sessions.map(({ workspace: ws, sessionId }) => {
                       const files = board.continuing[ws]?.files ?? []
                       return (
                         <li key={ws} className="rounded-lg border border-line bg-card px-3 py-2.5">
@@ -279,14 +309,14 @@ export default function CodeView() {
 
               {/* Done — history; the resume id is gone. */}
               <div className="rounded-xl border border-line bg-panel p-2.5">
-                <p className="px-0.5 text-[11px] font-medium text-muted">Done · {board.done.length}</p>
-                {board.done.length === 0 ? (
+                <p className="px-0.5 text-[11px] font-medium text-muted">Done · {view.done.length}</p>
+                {view.done.length === 0 ? (
                   <p className="mt-2 px-0.5 text-[11.5px] text-muted">
                     Nothing finished yet. “Done” really ends a thread: the engine will not resume it.
                   </p>
                 ) : (
                   <ul className="mt-2 flex flex-col gap-2">
-                    {board.done.map(card => (
+                    {view.done.map(card => (
                       <li key={card.workspace} className="rounded-lg border border-line bg-card px-3 py-2.5 opacity-75">
                         <div className="flex items-center gap-2">
                           <span className="min-w-0 flex-1 truncate text-[12.5px] text-muted" title={card.workspace}>

@@ -52,6 +52,12 @@ export type EngineSettings = {
    * already has", which lets an Anthropic key work later without app changes.
    */
   baseUrl: string
+  /**
+   * When the chosen brain comes from a provider (a key saved in Models),
+   * the engine is launched pointed there WITH that key — riding the engine,
+   * never around it. Empty means the engine's own local door.
+   */
+  cloudProvider: '' | 'anthropic'
 }
 
 export const DEFAULT_ENGINE: EngineSettings = {
@@ -60,6 +66,7 @@ export const DEFAULT_ENGINE: EngineSettings = {
   baseUrl: 'http://localhost:11434',
   workspace: '',
   approval: 'ask',
+  cloudProvider: '',
 }
 
 /** What a turn cost, as the engine itself reports it. */
@@ -78,6 +85,13 @@ export type EngineModelEntry = {
   cloud: boolean
   /** Gigabytes on disk, for local brains. Cloud brains carry no size. */
   sizeGB: number | null
+  /**
+   * Which provider door this brain was read from. Empty = the engine's own
+   * local door. 'anthropic' = read from the Anthropic API with a key from
+   * Models; sending routes the ENGINE there with that key — the app itself
+   * never calls the provider.
+   */
+  provider?: 'anthropic'
 }
 
 /** What a whole engine looks like from the machine it runs on. */
@@ -121,6 +135,7 @@ export function normalizeEngine(raw: unknown): EngineSettings {
     approval: APPROVAL_MODES.includes(value.approval as ApprovalMode)
       ? (value.approval as ApprovalMode)
       : 'ask',
+    cloudProvider: value.cloudProvider === 'anthropic' ? 'anthropic' : '',
   }
 }
 

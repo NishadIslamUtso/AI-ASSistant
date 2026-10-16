@@ -14,6 +14,15 @@
  * recognise, is refused at install — never "installed with warnings".
  */
 
+/**
+ * The community store rides WITH the app: a folder index shipped beside the
+ * extension's resources (dev: the repo's own store/), real files the index
+ * client can checksum straight from disk — no network, no account. A public
+ * https mirror of the same index can be added like any other store the day
+ * the repo goes public; until then no invented URL is offered.
+ */
+export const COMMUNITY_INDEX_SHIPPED = true
+
 export type PackContributions = {
   skills: string[]
   prompts: string[]

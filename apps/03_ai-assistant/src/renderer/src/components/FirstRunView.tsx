@@ -112,7 +112,7 @@ export default function FirstRunView({
                   <button
                     key={entry.name}
                     type="button"
-                    onClick={() => void engine.setModel(entry.name)}
+                    onClick={() => void engine.setModel(entry.name, entry.provider)}
                     className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left text-[12.5px] ${
                       engine.settings.model === entry.name
                         ? 'border-accent text-ink'

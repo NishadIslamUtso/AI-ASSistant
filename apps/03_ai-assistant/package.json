@@ -1,8 +1,8 @@
 {
   "name": "ai-assistant",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
-  "description": "AI ASSistant — a local-first desktop assistant. Your files, your models, your machine.",
+  "description": "AI ASSistant \u2014 a local-first desktop assistant. Your files, your models, your machine.",
   "author": "",
   "license": "Apache-2.0",
   "main": "./out/main/index.js",
