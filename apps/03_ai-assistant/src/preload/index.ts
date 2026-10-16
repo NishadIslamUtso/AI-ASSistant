@@ -56,9 +56,9 @@ const engineApi = {
     ipcRenderer.on(channel, wrapped)
     return () => ipcRenderer.removeListener(channel, wrapped)
   },
-  /** Pick which brain the engine thinks with (provider brains say which door). */
-  setModel: (model: string, provider?: 'anthropic'): Promise<{ ok: boolean; answer: string }> =>
-    ipcRenderer.invoke('engine:model', model, provider),
+  /** Pick which brain the engine thinks with. */
+  setModel: (model: string): Promise<{ ok: boolean; answer: string }> =>
+    ipcRenderer.invoke('engine:model', model),
   /** Set the throttle: how much the engine may do before asking. */
   setApproval: (mode: ApprovalMode): Promise<{ ok: boolean; answer: string }> =>
     ipcRenderer.invoke('engine:approval', mode),
@@ -182,8 +182,6 @@ const api = {
       ipcRenderer.invoke('mods:export', payload),
     installStarter: (): Promise<{ ok: boolean; answer: string; folder?: string; written?: string[] }> =>
       ipcRenderer.invoke('mods:install-starter'),
-    communityIndex: (): Promise<{ ok: boolean; path?: string }> =>
-      ipcRenderer.invoke('mods:community-index'),
   },
   mcp: {
     /** The one MCP server list, and which engine configs it was deployed to. */

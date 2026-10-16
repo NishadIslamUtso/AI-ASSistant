@@ -23,17 +23,7 @@ type Links = {
 
 const MAX_NODES = 400
 
-export default function ConnectionGraph({
-  path,
-  isDemo,
-  /** 'card' = the compact embed in Settings › Vault; 'full' = the Brain view's
-   *  whole pane — same engine, borderless, the parent draws the frame. */
-  variant = 'card',
-}: {
-  path: string
-  isDemo: boolean
-  variant?: 'card' | 'full'
-}) {
+export default function ConnectionGraph({ path, isDemo }: { path: string; isDemo: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const stateRef = useRef<{ yaw: number; pitch: number; zoom: number; dragging: boolean }>({ yaw: 0.6, pitch: 0.35, zoom: 1, dragging: false })
 
@@ -61,16 +51,6 @@ export default function ConnectionGraph({
       <div className="rounded-lg border border-line bg-card p-3 text-[12px] text-muted">
         The connections graph draws from the real vault, in the desktop app.
       </div>
-    )
-  }
-
-  if (variant === 'full') {
-    return (
-      <canvas
-        ref={canvasRef}
-        className="block h-full w-full cursor-grab active:cursor-grabbing"
-        aria-label="3D graph of vault connections"
-      />
     )
   }
 

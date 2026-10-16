@@ -15,7 +15,7 @@ import {
   writeSettings,
   type AppSettings,
 } from './settings'
-import { cloudEnabled, normalizePermissions } from '../shared/lib/permissions'
+import { normalizePermissions } from '../shared/lib/permissions'
 import { registerArtifactIpc } from './artifacts/ipc'
 import { createEngineSocket, type EngineSocket } from './engine/socket'
 import { normalizeEngine } from '../shared/lib/engine'
@@ -72,20 +72,6 @@ const API_PORT = Number(process.env.AI_ASSISTANT_API_PORT || 41979)
  * reported by the interface, because replacing the vault somebody meant to point
  * at would be the worst outcome available.
  */
-/**
- * The month's audit writes itself: the first boot or vault choice of a new
- * month records the vault's own numbers in 06 Review/Monthly Audits. There
- * is no scheduler — opening the app IS the schedule.
- */
-function runMonthlyAudit(): void {
-  try {
-    const audit = createVaultService({ vaultPath: vaultRoot() }).monthlyAudit()
-    if (audit.written) console.log(`[vault] monthly audit written: ${audit.relative}`)
-  } catch {
-    // No vault (yet or anymore): the audit waits for a boot that has one.
-  }
-}
-
 function vaultRoot(): string {
   const checkout = app.isPackaged ? '' : join(app.getAppPath(), '..', '..', 'vault', 'AI-Brain')
   return resolveVaultRoot(
@@ -263,7 +249,6 @@ function registerBridges(): void {
       // A newly chosen folder gets the structure immediately (his rule:
       // generate the default structure anyways; conflicts land beside).
       integrateVaultStructure(vaultRoot())
-      runMonthlyAudit()
       return { ok: true, settings, status: next.status() }
     }
   )
@@ -495,22 +480,9 @@ function registerBridges(): void {
       // The renderer's value is deliberately not consulted (review finding).
       void cwd
       deployRulesNow()
-      // A provider brain rides the ENGINE: the key from Models goes into the
-      // engine's own environment for this launch. The app itself never calls
-      // the provider — and a missing key refuses honestly instead of falling
-      // back to a different brain than the one that was chosen.
-      let auth: { provider: 'anthropic'; apiKey: string } | undefined
-      if (settings.engine.cloudProvider === 'anthropic') {
-        const key = keyStore?.get('anthropic') || ''
-        if (!key) {
-          return { ok: false, answer: 'The Anthropic brain needs its key: add it in Settings > Models (it is held for this run). Nothing was sent.' }
-        }
-        auth = { provider: 'anthropic', apiKey: key }
-      }
       return engine.send(text, {
         cwd: settings.engine.workspace || vaultRoot(),
         settings: settings.engine,
-        auth,
         onEvent: pushEngineEvent,
       })
     },
@@ -859,21 +831,6 @@ function registerBridges(): void {
     return { ok: true, answer: `Exported to ${result.folder} — its checksum is pinned in the index beside it.`, folder: result.folder, index: result.index }
   })
 
-  // The community store the app ships with: a REAL folder of packs beside the
-  // extension's resources — offline from the first run. In dev it is the
-  // repo's own store/; packaged, the copy electron-builder ships.
-  ipcMain.handle('mods:community-index', (): { ok: boolean; path?: string } => {
-    // Launched from source, getAppPath can be the built main/ folder; the
-    // checkout root (two up) is what actually holds store/.
-    const candidates = app.isPackaged
-      ? [join(process.resourcesPath || '', 'store')]
-      : [join(app.getAppPath(), 'store'), join(app.getAppPath(), '..', '..', 'store')]
-    for (const candidate of candidates) {
-      if (candidate && existsSync(join(candidate, 'index.json'))) return { ok: true, path: candidate }
-    }
-    return { ok: false }
-  })
-
   // The starter pack: the app's own real files, written to a temp folder and
   // installed through the very same path a friend's folder would take.
   ipcMain.handle('mods:install-starter', (): { ok: boolean; answer: string; folder?: string; written?: string[] } => {
@@ -886,7 +843,7 @@ function registerBridges(): void {
         mkdirSync(dirname(full), { recursive: true })
         writeFileSync(full, text, 'utf8')
       }
-      const result = installPackFromFolder(staging, { storeRoot: join(app.getPath('userData'), 'extensions'), ...skillTargets() }, 'starter')
+      const result = installPackFromFolder(staging, { storeRoot: join(app.getPath('userData'), 'extensions'), ...skillTargets() })
       if (!result.ok) return { ok: false, answer: result.answer }
       return { ok: true, answer: `${result.pack.name} installed.`, folder: result.folder, written: result.written }
     } catch {
@@ -1058,7 +1015,7 @@ function registerBridges(): void {
       const answer = await fetch(`${door}/api/tags`, { signal: AbortSignal.timeout(4000) })
       if (!answer.ok) return { ok: false, models: [], error: `the brain door answered ${answer.status}` }
       const data = (await answer.json()) as { models?: Array<{ name?: string; size?: number; remote_model?: string }> }
-      const models: EngineModelEntry[] = (data.models ?? [])
+      const models = (data.models ?? [])
         .filter((m): m is { name: string; size?: number; remote_model?: string } => typeof m.name === 'string')
         .map((m) => {
           const cloud = Boolean(m.remote_model) || m.name.endsWith(':cloud')
@@ -1068,23 +1025,6 @@ function registerBridges(): void {
             sizeGB: cloud || typeof m.size !== 'number' ? null : Math.round((m.size / 1e9) * 10) / 10,
           }
         })
-      // A key saved in Models adds that provider's real brains to this list —
-      // read from the provider's own door, never invented. The app itself
-      // still calls no provider: picking one of these routes the ENGINE there
-      // with the key on the next send.
-      if (cloud && keyStore?.has('anthropic') && cloudEnabled(settings.permissions, 'anthropic', true)) {
-        try {
-          const providerBrains = await cloud.listModels('anthropic')
-          for (const brain of providerBrains.slice(0, 50)) {
-            if (brain && typeof brain.name === 'string' && !models.some((m) => m.name === brain.name)) {
-              models.push({ name: brain.name, cloud: true, sizeGB: null, provider: 'anthropic' })
-            }
-          }
-        } catch {
-          // The provider door not answering costs nothing: the local list
-          // stands, and the Test button in Models says what went wrong.
-        }
-      }
       return { ok: true, models }
     } catch {
       return { ok: false, models: [], error: 'the brain door (Ollama) is not answering — start Ollama, then refresh' }
@@ -1101,10 +1041,10 @@ function registerBridges(): void {
     return { ok: true, answer: mode }
   })
 
-  ipcMain.handle('engine:model', (_event, model: string, provider?: string): { ok: boolean; answer: string } => {
-    const clean = normalizeEngine({ ...settings.engine, model, cloudProvider: provider === 'anthropic' ? 'anthropic' : '' })
-    settings = writeSettings(settingsFile, { ...settings, engine: clean })
-    return { ok: true, answer: clean.cloudProvider ? `brain set to ${clean.model} via ${clean.cloudProvider}` : `brain set to ${clean.model}` }
+  ipcMain.handle('engine:model', (_event, model: string): { ok: boolean; answer: string } => {
+    const clean = normalizeEngine({ ...settings.engine, model }).model
+    settings = writeSettings(settingsFile, { ...settings, engine: { ...settings.engine, model: clean } })
+    return { ok: true, answer: `brain set to ${clean}` }
   })
 
   // "Open a folder" — the engine's workplace, chosen once and remembered.
@@ -1327,7 +1267,6 @@ if (!gotLock) {
         { label: 'Projects', accelerator: 'CmdOrCtrl+4', click: () => sendToWindow('menu:view:projects') },
         { label: 'Vault', accelerator: 'CmdOrCtrl+5', click: () => sendToWindow('menu:view:vault') },
         { label: 'Code', accelerator: 'CmdOrCtrl+6', click: () => sendToWindow('menu:view:code') },
-        { label: 'Brain', accelerator: 'CmdOrCtrl+7', click: () => sendToWindow('menu:view:brain') },
       ],
     },
     {
@@ -1402,7 +1341,6 @@ if (!gotLock) {
     if (integrated.ok && integrated.written.length) {
       console.log(`[structure] added ${integrated.written.length} structure file(s), ${integrated.conflicts.length} conflict(s) to settle`)
     }
-    runMonthlyAudit()
 
     // Keys are sealed by the operating system — safeStorage is the keychain on
     // macOS and Windows and the desktop's own secret store on Linux. When a

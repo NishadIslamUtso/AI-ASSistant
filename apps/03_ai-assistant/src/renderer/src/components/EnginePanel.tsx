@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Handshake, Wrench, FilePen, Terminal, Search, CircleCheck, TriangleAlert, Square } from 'lucide-react'
 import { buildHandoff, handoffFileName } from '@shared/lib/handoff'
-import { pickGerund } from '@shared/lib/gerunds'
 import { bridge } from '@/platform/bridge'
 import { useEngine, type EngineItem } from '@/state/engine'
 
@@ -17,16 +16,6 @@ export default function EnginePanel() {
   const engine = useEngine()
   const turn = engine.turn
   const [handed, setHanded] = useState('')
-  // The working word: one per turn, turning over while the engine works, so
-  // a wait reads as a worker at work rather than a frozen card.
-  const running = turn?.state === 'running'
-  const [word, setWord] = useState(() => pickGerund())
-  useEffect(() => {
-    if (!running) return
-    setWord(pickGerund())
-    const timer = setInterval(() => setWord(pickGerund()), 3_500)
-    return () => clearInterval(timer)
-  }, [running])
   if (!turn) return null
 
   // The handoff: the finished turn written into the vault as one document a
@@ -65,7 +54,7 @@ export default function EnginePanel() {
         <h2 className="text-[12px] font-medium text-muted">
           Engine · {engine.settings.id} · {engine.settings.model}
           {' · ' + (engine.settings.workspace ? engine.settings.workspace.split(/[\\/]/).filter(Boolean).at(-1) : 'vault')}
-          {turn.state === 'running' ? ` · ${word}…` : turn.state === 'error' ? ' · stopped' : ' · done'}
+          {turn.state === 'running' ? ' · working' : turn.state === 'error' ? ' · stopped' : ' · done'}
         </h2>
         {turn.state === 'running' ? (
           <button
@@ -90,15 +79,9 @@ export default function EnginePanel() {
       <p className="mt-1.5 line-clamp-3 text-[12.5px] text-muted">▸ {turn.prompt}</p>
 
       <ul className="mt-2 flex flex-col gap-1.5">
-        {turn.state === 'running' && turn.items.length === 0 ? (
-          <li className="text-[12.5px] italic text-muted" aria-live="polite">{word}…</li>
-        ) : null}
-        {turn.items.map((item, index) => {
-          // The thinking block that is still being written stays unfolded;
-          // once the answer starts (or the turn ends) it folds away.
-          const live = turn.state === 'running' && item.kind === 'thinking' && index === turn.items.length - 1
-          return <EngineItemRow key={`${index}-${live ? 'live' : 'kept'}`} item={item} live={live} />
-        })}
+        {turn.items.map((item, index) => (
+          <EngineItemRow key={index} item={item} />
+        ))}
       </ul>
 
       {handed ? <p className="mt-1 text-[11px] text-muted">{handed}</p> : null}
@@ -148,27 +131,7 @@ export default function EnginePanel() {
 }
 
 /** One line of the engine's story, with the icon that matches the act. */
-function EngineItemRow({ item, live = false }: { item: EngineItem; live?: boolean }) {
-  if (item.kind === 'thinking') {
-    // The model's scratchwork, folded like the chat brain's thinking. While
-    // it is the newest thing in a running turn it stays open; afterwards it
-    // is one click, never noise.
-    return (
-      <li>
-        <details
-          open={live || undefined}
-          className="rounded-lg border border-line bg-panel/60 px-3 py-2"
-        >
-          <summary className="cursor-pointer text-[12px] text-muted">
-            Thinking{live ? ' — still going' : ''}
-          </summary>
-          <p className="mt-2 whitespace-pre-wrap break-words text-[12.5px] leading-relaxed text-muted">
-            {item.text}
-          </p>
-        </details>
-      </li>
-    )
-  }
+function EngineItemRow({ item }: { item: EngineItem }) {
   if (item.kind === 'text') {
     return <li className="whitespace-pre-wrap break-words text-[13.5px] leading-relaxed text-ink">{item.text}</li>
   }

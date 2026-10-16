@@ -20,7 +20,7 @@ import type { EngineUsage } from './engine'
 
 export type HandoffSource = {
   prompt: string
-  items: Array<{ kind: 'status' | 'text' | 'thinking' | 'tool' | 'error'; text?: string; name?: string; summary?: string }>
+  items: Array<{ kind: 'status' | 'text' | 'tool' | 'error'; text?: string; name?: string; summary?: string }>
   state: 'running' | 'done' | 'error'
   sessionId: string | null
   usage: EngineUsage | null

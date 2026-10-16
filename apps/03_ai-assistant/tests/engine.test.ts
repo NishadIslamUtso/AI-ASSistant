@@ -116,14 +116,13 @@ test('the wire: init, words, a tool, and a result become readable events', () =>
   )
   assert.deepEqual(events, [
     { kind: 'status', text: 'engine ready' },
-    { kind: 'thinking', text: 'hidden' },
     { kind: 'text', text: 'On it.' },
     { kind: 'tool', name: 'Edit', summary: 'C:\\my notes\\a.md' },
     { kind: 'done', text: 'File edited.' },
   ])
 })
 
-test('the wire: a permission request becomes a card, thinking is folded, not lost', () => {
+test('the wire: a permission request becomes a card, thinking stays private', () => {
   const parser = createEngineParser()
   const events = parser.feed(
     [
@@ -137,7 +136,6 @@ test('the wire: a permission request becomes a card, thinking is folded, not los
   )
   assert.deepEqual(events, [
     { kind: 'permission', requestId: 'req-7', tool: 'Bash', summary: 'npm test', detail: 'npm test' },
-    { kind: 'thinking', text: 'hmm' },
   ])
 })
 
@@ -336,17 +334,6 @@ test('the brain wiring: the Ollama door is set explicitly, no door means no over
     ANTHROPIC_API_KEY: '',
   })
   assert.deepEqual(brainEnvironment(''), {})
-})
-
-test('a key from Models rides the ENGINE: its env points the engine at the provider', () => {
-  // The engine is launched AT the provider with the key in its own environment;
-  // the app itself still calls no provider. The local door is not touched at all.
-  const env = brainEnvironment('http://localhost:11434', 'sk-ant-test')
-  assert.deepEqual(env, {
-    ANTHROPIC_BASE_URL: 'https://api.anthropic.com/v1',
-    ANTHROPIC_API_KEY: 'sk-ant-test',
-  })
-  assert.equal('ANTHROPIC_AUTH_TOKEN' in env, false)
 })
 
 test('the launch arguments are a pure function of the model', () => {

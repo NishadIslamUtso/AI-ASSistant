@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { FolderOpen, MessageSquare, Play, Plus, SquareTerminal, Trash2, X } from 'lucide-react'
+import { FolderOpen, MessageSquare, Play, Plus, Trash2, X } from 'lucide-react'
 import useProjects from '@/state/projects'
 import { bridge } from '@/platform/bridge'
 import { chatsOf } from '@shared/lib/projects'
@@ -29,7 +29,7 @@ export default function ProjectsView({
   onOpenChat: (chatId: string) => void
   onNewChatInProject: (projectId: string) => void
   onWorkHere: (folder: string) => void
-  /** Open Code — the engine's workspace, throttle and thread board — on this project's folder. */
+  /** Jump to the session board in Code, focused on this project's folder. */
   onViewBoard: (folder: string) => void
 }) {
   // The engine's own threads, counted against each project's folder — the
@@ -148,17 +148,14 @@ export default function ProjectsView({
                         {leaf(project.folder)}
                       </span>
                     ) : null}
-                    {project.folder ? (
+                    {(project.folder ? threads[project.folder] ?? 0 : 0) > 0 ? (
                       <button
                         type="button"
                         onClick={() => onViewBoard(project.folder)}
-                        title={`Open this project's folder in Code${(threads[project.folder] ?? 0) > 0 ? ` — ${threads[project.folder]} resumable ${(threads[project.folder] ?? 0) === 1 ? 'thread' : 'threads'}` : ''}`}
-                        className="flex items-center gap-1 rounded-md border border-line px-1.5 py-0.5 text-[10.5px] text-muted hover:text-ink"
+                        title="Open this project's thread on the session board"
+                        className="rounded-md border border-line px-1.5 py-0.5 text-[10.5px] text-muted hover:text-ink"
                       >
-                        <SquareTerminal size={10} aria-hidden /> Code
-                        {(threads[project.folder] ?? 0) > 0 ? (
-                          <span className="text-muted">· {threads[project.folder]}</span>
-                        ) : null}
+                        {threads[project.folder]} {threads[project.folder] === 1 ? 'thread' : 'threads'}
                       </button>
                     ) : null}
                     <div className="ml-auto flex items-center gap-1.5">

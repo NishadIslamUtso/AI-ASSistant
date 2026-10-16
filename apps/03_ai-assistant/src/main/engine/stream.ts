@@ -33,9 +33,6 @@ export function createEngineParser(): EngineParser {
   // streamed. When the finished message arrives and says the same thing, it
   // is not news — showing both would print every answer twice.
   let streamed = ''
-  // Same bookkeeping for the model's thinking: what the thinking deltas
-  // already showed, so the finished thinking block is not printed twice.
-  let streamedThinking = ''
   // How much of `buffer` is already known to hold no newline: everything
   // before this offset was scanned by an earlier feed. A line chopped at a
   // chunk boundary is therefore rescanned only in its new tail — a long-lived
@@ -93,16 +90,12 @@ export function createEngineParser(): EngineParser {
     }
 
     if (message.type === 'stream_event') {
-      // A piece of the engine's words as they form. Thinking deltas ride the
-      // same wire — the model's scratchwork, shown folded so a person can
-      // watch the process without it drowning the answer.
+      // A piece of the engine's words as they form. Anything else about the
+      // stream (message envelopes, block boundaries, thinking deltas) is the
+      // wire's business, not the window's.
       const event = asRecord(message.event)
       if (event.type !== 'content_block_delta') return []
       const delta = asRecord(event.delta)
-      if (delta.type === 'thinking_delta' && typeof delta.thinking === 'string' && delta.thinking) {
-        streamedThinking = streamedThinking.length > 200_000 ? delta.thinking : streamedThinking + delta.thinking
-        return [{ kind: 'thinking', text: delta.thinking }]
-      }
       if (delta.type !== 'text_delta' || typeof delta.text !== 'string' || !delta.text) return []
       streamed = streamed.length > 200_000 ? delta.text : streamed + delta.text
       return [{ kind: 'delta', text: delta.text }]
@@ -121,20 +114,14 @@ export function createEngineParser(): EngineParser {
           events.push({ kind: 'text', text: entry.text })
         } else if (entry.type === 'tool_use' && typeof entry.name === 'string') {
           events.push({ kind: 'tool', name: entry.name, summary: toolSummary(entry.name, entry.input) })
-        } else if (entry.type === 'thinking' && typeof entry.thinking === 'string' && entry.thinking.trim()) {
-          // The finished thinking block. What the stream already showed word
-          // for word is not shown again — same rule as the answer text below.
-          if (entry.thinking !== streamedThinking) {
-            events.push({ kind: 'thinking', text: entry.thinking })
-          }
         }
+        // thinking blocks are the engine's private scratchwork — not shown.
       }
       // What the stream already showed, word for word, is not shown again.
       if (messageText && messageText === streamed) {
         return events.filter((event) => event.kind !== 'text')
       }
       streamed = ''
-      streamedThinking = ''
       return events
     }
 

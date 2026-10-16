@@ -20,13 +20,10 @@ export default function BrainStructureSection({
   vault,
   isDemo,
   onChanged,
-  onOpenBrain,
 }: {
   vault: VaultState
   isDemo: boolean
   onChanged: () => void
-  /** The same graph, first-class: opens the Brain view and closes this sheet. */
-  onOpenBrain?: () => void
 }) {
   const path = vault.path
   const [inspection, setInspection] = useState<Inspection | null>(null)
@@ -196,15 +193,6 @@ export default function BrainStructureSection({
         >
           Use default
         </button>
-        {onOpenBrain ? (
-          <button
-            className="rounded-lg border border-line px-3 py-2 text-[12.5px] hover:bg-white/[0.06]"
-            onClick={onOpenBrain}
-            aria-label="Open the 3D brain"
-          >
-            Open the 3D brain
-          </button>
-        ) : null}
       </div>
       {path ? (
         <p className="break-all text-[11.5px] text-muted">
