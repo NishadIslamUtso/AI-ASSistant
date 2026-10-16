@@ -32,6 +32,7 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
 5. **The community store, for real (his question):** the repo grows `store/`, shipped as `resources/store`; Plugins offers "Add the community store" one-press; URL indexes that list files now download-and-verify-install; provenance badges are truthful (store · checksum verified / shipped / unverified). **The store is furnished (his follow-up): FOUR real packs — Prompt starters (the app's own 8 prompts), Looks (the 5 real accents), starter pack, Anthropic skills curated four (Apache-2.0 only, license text rides along; docx/pdf/pptx/xlsx excluded — source-available, no repack). `store/rebuild.mjs` recomputes digests; the shipped-store test pins index↔folder agreement. Agents/connectors stay refused in plain words until their runtimes. Receipts g37–g38 (Prompt starters installed live, verified).
 
 6. **Code inside Projects (his "you choose", option 1 taken):** Code off the global nav, a Code button on every project card that opens Code scoped to the project's folder (Show-all returns everything; the menu keeps View > Code). Receipts g39–g41.
+7. **DONE (his ask, 2026-10-16): the engine shows its thinking + the working word** — thinking events from the real wire, folded like the chat brain's, open while live; 24 gerunds turn over while the engine works. Receipts g42–g44 (scripted-brain wire run: spawn/parser/store/panel all shipped code).
 
 Receipts g27–g41. Version 0.8.0. Next: TUF A15 acceptance.
 

@@ -116,13 +116,14 @@ test('the wire: init, words, a tool, and a result become readable events', () =>
   )
   assert.deepEqual(events, [
     { kind: 'status', text: 'engine ready' },
+    { kind: 'thinking', text: 'hidden' },
     { kind: 'text', text: 'On it.' },
     { kind: 'tool', name: 'Edit', summary: 'C:\\my notes\\a.md' },
     { kind: 'done', text: 'File edited.' },
   ])
 })
 
-test('the wire: a permission request becomes a card, thinking stays private', () => {
+test('the wire: a permission request becomes a card, thinking is folded, not lost', () => {
   const parser = createEngineParser()
   const events = parser.feed(
     [
@@ -136,6 +137,7 @@ test('the wire: a permission request becomes a card, thinking stays private', ()
   )
   assert.deepEqual(events, [
     { kind: 'permission', requestId: 'req-7', tool: 'Bash', summary: 'npm test', detail: 'npm test' },
+    { kind: 'thinking', text: 'hmm' },
   ])
 })
 

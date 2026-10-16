@@ -153,6 +153,7 @@ export type EngineEvent =
   | { kind: 'session'; id: string }
   /** A piece of the engine's words as they form — the stream, not the summary. */
   | { kind: 'delta'; text: string }
+  | { kind: 'thinking'; text: string }
   | { kind: 'done'; text: string; usage?: EngineUsage }
   | { kind: 'error'; text: string; usage?: EngineUsage }
   | { kind: 'closed' }
