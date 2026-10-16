@@ -33,6 +33,7 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
 
 6. **Code inside Projects (his "you choose", option 1 taken):** Code off the global nav, a Code button on every project card that opens Code scoped to the project's folder (Show-all returns everything; the menu keeps View > Code). Receipts g39–g41.
 7. **DONE (his ask, 2026-10-16): the engine shows its thinking + the working word** — thinking events from the real wire, folded like the chat brain's, open while live; 24 gerunds turn over while the engine works. Receipts g42–g44 (scripted-brain wire run: spawn/parser/store/panel all shipped code).
+8. **HIS DECISION, design pending his go (2026-10-16): in-app engine downloads** — the fixed trio downloadable inside the app into app-controlled locations; headless Ollama functions (NO desktop app); logins redirect to terminal/browser; home = Engine or Models page (his wish). Plus the cross-engine rule: engine features built into the app work no matter the engine; the store stays OURS, never Claude's/Google's. Word list (197) + slop sweep SHIPPED same day.
 
 Receipts g27–g41. Version 0.8.0. Next: TUF A15 acceptance.
 

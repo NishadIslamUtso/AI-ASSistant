@@ -43,7 +43,7 @@ export function buildHandoff(source: HandoffSource): string {
   const lines: string[] = [
     '# Handoff',
     '',
-    `*Written ${source.date} by AI ASSistant. This document is for the assistant that continues this work — human or engine. Everything below is the record of one real task; nothing is guessed.*`,
+    `*Written ${source.date} by AI ASSistant. This document is for the assistant that continues this work, human or engine. Everything below is the record of one real task; nothing is guessed.*`,
     '',
     '## The task',
     '',
@@ -55,7 +55,7 @@ export function buildHandoff(source: HandoffSource): string {
     `- Works in: ${source.workspace || 'the vault (default)'}`,
     source.sessionId
       ? `- This conversation has an id: \`${source.sessionId}\`. Claude Code resumes it with \`claude --resume ${source.sessionId}\` in the workspace above; the app also continues it by itself.`
-      : '- No session id was recorded — start fresh; the notes below carry the context.',
+      : '- No session id was recorded, start fresh; the notes below carry the context.',
     done
       ? `- The turn had ${source.state === 'error' ? 'ended with an error' : 'finished'} when this was written.`
       : '- The turn was still running when this was written; check the real state of the files before trusting anything.',
@@ -67,7 +67,7 @@ export function buildHandoff(source: HandoffSource): string {
   if (tools.length) {
     lines.push(...tools.map(tool => `- ${tool.name}: ${tool.summary ?? ''}`.trimEnd()))
   } else {
-    lines.push('_No tool calls were recorded — the engine answered in words only._')
+    lines.push('_No tool calls were recorded, the engine answered in words only._')
   }
 
   if (lastWords) {

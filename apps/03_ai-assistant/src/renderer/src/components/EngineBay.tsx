@@ -21,7 +21,7 @@ import type { ApprovalMode, EngineId } from '@shared/lib/engine'
 
 const ENGINES: Array<{ id: EngineId; label: string; hint: string }> = [
   { id: 'claude-code', label: 'Claude Code', hint: 'Anthropic’s agent, wired to your free brains' },
-  { id: 'agy', label: 'agy', hint: 'Google’s agent — its own brains, from its own selector' },
+  { id: 'agy', label: 'agy', hint: 'Google’s agent, its own brains, from its own selector' },
 ]
 
 /** The last part of a path, whichever slash the platform uses. */
@@ -32,7 +32,7 @@ const THROTTLE: Array<{ id: ApprovalMode; label: string; note: string }> = [
   {
     id: 'ask',
     label: 'Ask me',
-    note: 'Every step beyond reading asks you first — as a card in the chat.',
+    note: 'Every step beyond reading asks you first, as a card in the chat.',
   },
   {
     id: 'edits',
@@ -44,7 +44,7 @@ const THROTTLE: Array<{ id: ApprovalMode; label: string; note: string }> = [
     label: 'Full speed',
     note:
       'Everything runs without asking. The engine\u2019s own deny rules and guarded deletions still block. ' +
-      'Your machine, your call — takes hold from the next engine start.',
+      'Your machine, your call, takes hold from the next engine start.',
   },
 ]
 
@@ -72,13 +72,13 @@ export default function EngineBay() {
         <Cpu size={12} className="text-muted" aria-hidden />
         <h2 className="text-[10.5px] font-semibold uppercase tracking-wide text-muted">Engine</h2>
         <span
-          className={`ml-auto h-1.5 w-1.5 rounded-full ${engine.running() ? 'animate-pulse bg-ok' : 'bg-muted'}`}
+          className={`ml-auto h-1.5 w-1.5 rounded-full ${engine.running() ? 'bg-ok' : 'bg-muted'}`}
           title={engine.running() ? 'The engine is on this machine' : 'Idle'}
         />
       </header>
 
       {/* The engine selection system. An engine that is not on this machine
-          is shown as missing, with the one command that fixes it — the bay
+          is shown as missing, with the one command that fixes it, the bay
           refuses to offer a pickable lie. */}
       <div className="grid grid-cols-2 gap-1.5" role="radiogroup" aria-label="Which engine">
         {ENGINES.map((entry) => {
@@ -88,7 +88,7 @@ export default function EngineBay() {
           const title = missing
             ? `Not found on this machine. ${known?.install ?? ''}`
             : known?.version
-              ? `${entry.hint} — ${known.version}`
+              ? `${entry.hint}, ${known.version}`
               : entry.hint
           return (
             <button
@@ -182,7 +182,7 @@ export default function EngineBay() {
               <RefreshCw size={11} aria-hidden /> Refresh the list
             </button>
 
-            {/* Bringing a brain home — no terminal needed. Local machines only:
+            {/* Bringing a brain home, no terminal needed. Local machines only:
                 cloud brains come from their own service, never a download. */}
             {engine.settings.id === 'claude-code' ? (
               <form
@@ -223,7 +223,7 @@ export default function EngineBay() {
             />
           </div>
           <p className="mt-1 text-[10.5px] text-muted">
-            {engine.pull.name} — {engine.pull.status || 'working'}
+            {engine.pull.name}, {engine.pull.status || 'working'}
           </p>
         </div>
       ) : null}

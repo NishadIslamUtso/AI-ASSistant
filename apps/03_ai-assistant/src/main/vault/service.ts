@@ -54,7 +54,7 @@ export function resolveVaultRoot(candidates: string[]): { root: string; availabl
 }
 
 const noVaultMessage = (root: string): string =>
-  `No vault at ${root}. Point the app at an existing Markdown vault, or create that folder and try again — an empty replacement vault is never created for you.`
+  `No vault at ${root}. Point the app at an existing Markdown vault, or create that folder and try again, an empty replacement vault is never created for you.`
 
 export function createVaultService({
   vaultPath,
@@ -146,10 +146,10 @@ export function createVaultService({
           .join('\n')
       : ''
     const lines = [
-      `# Monthly Audit — ${label}`,
+      `# Monthly Audit, ${label}`,
       '',
       'Written by the app, once, the first time it opened in this month. No',
-      'scheduler wrote this — opening the app is the schedule. The numbers are',
+      'scheduler wrote this, opening the app is the schedule. The numbers are',
       "the vault's own, read the moment this page was made.",
       '',
       '## The month in numbers',
@@ -164,15 +164,15 @@ export function createVaultService({
       '',
       '## Worth a look',
       '',
-      dead ? `Dead links — targets that resolve to nothing:\n\n${dead}\n` : 'No dead links found.',
+      dead ? `Dead links, targets that resolve to nothing:\n\n${dead}\n` : 'No dead links found.',
       '',
       ambiguous
-        ? `Ambiguous links — a basename several files share:\n\n${ambiguous}\n`
+        ? `Ambiguous links, a basename several files share:\n\n${ambiguous}\n`
         : 'No ambiguous links found.',
       '',
       '## Settle, then move on',
       '',
-      'Fix or archive what this page names, then leave it — next month writes a',
+      'Fix or archive what this page names, then leave it, next month writes a',
       'fresh page beside this one and never edits it.',
       '',
     ]

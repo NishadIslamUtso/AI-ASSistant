@@ -192,7 +192,7 @@ export default function ArtifactsView({
     const answer = await onRestore(selected.id, version)
     if (answer.ok) {
       setVersion(null)
-      setSaid(`Version ${version} was saved again as the newest version — nothing was removed.`)
+      setSaid(`Version ${version} was saved again as the newest version, nothing was removed.`)
     } else {
       setSaid(answer.error || 'That version could not be restored.')
     }
@@ -237,7 +237,7 @@ export default function ArtifactsView({
             <div className="rounded-xl border border-line bg-card p-6">
               <p className="text-[13px]">Nothing here yet.</p>
               <p className="mt-2 max-w-[52ch] text-[12.5px] leading-relaxed text-muted">
-                Ask for something like “make me a pomodoro timer” in a chat — the reply’s document lands here with its
+                Ask for something like “make me a pomodoro timer” in a chat, the reply’s document lands here with its
                 versions, or bring an existing page or drawing in with Import.
               </p>
             </div>
@@ -415,7 +415,7 @@ export default function ArtifactsView({
 
               <p className="mt-2.5 text-[11px] leading-relaxed text-muted">
                 {version !== null && version !== current
-                  ? `Showing version ${version} of ${selected.versionCount}. Putting it back saves it as version ${selected.versionCount + 1} — the newer versions stay.`
+                  ? `Showing version ${version} of ${selected.versionCount}. Putting it back saves it as version ${selected.versionCount + 1}, the newer versions stay.`
                   : `${selected.versionCount === 1 ? 'One version' : `${selected.versionCount} versions, newest shown`} · ${day(selected.updatedAt)}${size(selected.bytes) ? ` · ${size(selected.bytes)}` : ''}`}
               </p>
 

@@ -422,7 +422,7 @@ function ChatRow({
                 </button>
               ))}
               {projects.length === 0 ? (
-                <p className="px-2 py-1.5 text-[11.5px] text-muted">No projects yet — make one on the Projects screen.</p>
+                <p className="px-2 py-1.5 text-[11.5px] text-muted">No projects yet, make one on the Projects screen.</p>
               ) : null}
             </div>
           ) : (

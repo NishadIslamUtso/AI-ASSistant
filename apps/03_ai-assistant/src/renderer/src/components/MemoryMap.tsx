@@ -198,7 +198,7 @@ export default function MemoryMap({ open, onClose }: { open: boolean; onClose: (
       {isDemo ? (
         <div className="p-5">
           <p className="max-w-[560px] text-[12.5px] leading-relaxed text-muted">
-            There is no vault behind this window. The map is drawn from what the app kept on your own machine — your
+            There is no vault behind this window. The map is drawn from what the app kept on your own machine: your
             conversations, and the pages the browser extension captured. Run the desktop app to see it.
           </p>
         </div>
@@ -314,7 +314,7 @@ export default function MemoryMap({ open, onClose }: { open: boolean; onClose: (
                 <p className="max-w-[560px] text-[12.5px] leading-relaxed text-muted">
                   {query || host || kind
                     ? 'Nothing matches that. Clear the filters to see everything the vault holds.'
-                    : 'Nothing is here yet. Conversations this app keeps appear as you have them, and pages appear once the browser extension is installed — it has the port to post to, but has not been run yet.'}
+                    : 'Nothing is here yet. Conversations this app keeps appear as you have them, and pages appear once the browser extension is installed. It has the port to post to, but has not been run yet.'}
                 </p>
               </div>
             ) : (
@@ -354,7 +354,7 @@ export default function MemoryMap({ open, onClose }: { open: boolean; onClose: (
                                 {size(entry.bytes) ? `${size(entry.bytes)} · ` : ''}
                                 {entry.completeness}
                                 {entry.kind === 'visit'
-                                  ? ' — a visit says the page was opened, not that it was read'
+                                  ? ', a visit says the page was opened, not that it was read'
                                   : ''}
                               </div>
                             </div>

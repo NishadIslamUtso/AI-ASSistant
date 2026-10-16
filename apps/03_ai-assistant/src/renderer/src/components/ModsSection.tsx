@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { FolderOpen, Package, PackagePlus, RefreshCw, Sparkles, Trash2, Check, Palette, MessageSquare, BookOpen } from 'lucide-react'
+import { FolderOpen, Package, PackagePlus, RefreshCw, Trash2, Check, Palette, MessageSquare, BookOpen } from 'lucide-react'
+import BrainMark from './BrainMark'
 import { bridge, isDemo } from '@/platform/bridge'
 import { describePermissions, type Pack } from '@shared/lib/packs'
 import { readStored, writeStored } from '@shared/lib/storage'
@@ -133,7 +134,7 @@ export default function ModsSection({
   if (isDemo) {
     return (
       <p className="text-[12px] leading-relaxed text-muted">
-        Mods are installed by the desktop app — this preview has no machine behind it.
+        Mods are installed by the desktop app, this preview has no machine behind it.
       </p>
     )
   }
@@ -141,7 +142,7 @@ export default function ModsSection({
   return (
     <div className="flex flex-col gap-3">
       <p className="text-[12px] leading-relaxed text-muted">
-        A mod is a folder with a <span className="font-mono">manifest.json</span> — skills for the engines, prompts for the
+        A mod is a folder with a <span className="font-mono">manifest.json</span>, skills for the engines, prompts for the
         prompt library, a theme for the app. Nothing here comes from a server: you pick the folder, the app reads it in front of
         you, and every installed pack stays visible below with its real path.
       </p>
@@ -161,7 +162,7 @@ export default function ModsSection({
         title="The app's own browser-page skill and one look, as a pack"
         className="flex w-fit items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-[12px] text-ink hover:border-accent disabled:opacity-60"
       >
-        <Sparkles size={13} aria-hidden /> Install starter pack
+        <BrainMark size={13} title="" /> Install starter pack
       </button>
 
       <ExportPack appearance={appearance} onExported={refresh} />
@@ -169,7 +170,7 @@ export default function ModsSection({
       {answer ? <p className="text-[12px] text-muted">{answer}</p> : null}
       {applied ? (
         <p className="text-[12px] text-ok">
-          <Check size={12} className="inline" aria-hidden /> Theme “{applied}” applied — see Appearance.
+          <Check size={12} className="inline" aria-hidden /> Theme “{applied}” applied, see Appearance.
         </p>
       ) : null}
 
@@ -202,14 +203,14 @@ themes/paper.json`}
                       {via ? (
                         <span
                           className="ml-2 rounded-md border border-line px-1.5 py-0.5 text-[10px] text-muted"
-                          title={via === 'index' ? 'Installed from a store whose index pinned the checksum — verified at install.' : 'Shipped with the app.'}
+                          title={via === 'index' ? 'Installed from a store whose index pinned the checksum, verified at install.' : 'Shipped with the app.'}
                         >
                           {via === 'index' ? 'store · checksum verified' : 'shipped'}
                         </span>
                       ) : (
                         <span
                           className="ml-2 rounded-md border border-warn/50 px-1.5 py-0.5 text-[10px] text-warn"
-                          title="Not from a store's index — you installed it from a folder yourself."
+                          title="Not from a store's index, you installed it from a folder yourself."
                         >
                           unverified
                         </span>
@@ -265,7 +266,7 @@ themes/paper.json`}
                       type="button"
                       onClick={() => remove(pack.id)}
                       disabled={busy}
-                      title={`Remove ${pack.name} — undoes the skills it deployed`}
+                      title={`Remove ${pack.name}, undoes the skills it deployed`}
                       aria-label={`Remove ${pack.name}`}
                       className="rounded-lg border border-line p-1.5 text-muted hover:text-warn disabled:opacity-60"
                     >
@@ -333,7 +334,7 @@ function ExportPack({ appearance, onExported }: { appearance: Appearance; onExpo
       onToggle={event => setOpen((event.target as HTMLDetailsElement).open)}
     >
       <summary className="cursor-pointer text-[12px] text-ink">
-        Export as pack<span className="text-muted"> — your skills and your look, as a folder you can send</span>
+        Export as pack<span className="text-muted">, your skills and your look, as a folder you can send</span>
       </summary>
 
       <p className="mt-2 text-[11.5px] leading-relaxed text-muted">
@@ -363,7 +364,7 @@ function ExportPack({ appearance, onExported }: { appearance: Appearance; onExpo
 
       <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-muted">Skills from this engine</p>
       {!skills.length ? (
-        <p className="mt-1 text-[11.5px] text-muted">The engine's skill folder is empty — install or write skills first.</p>
+        <p className="mt-1 text-[11.5px] text-muted">The engine's skill folder is empty, install or write skills first.</p>
       ) : (
         <ul className="mt-1 flex flex-col gap-1">
           {skills.map(skill => (
@@ -495,14 +496,14 @@ function CommunityPacks({ installed, onInstalled }: {
       <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted">Community packs</h3>
       <p className="mt-1 text-[11.5px] leading-relaxed text-muted">
         A store is an index file, not a service: add a folder holding <span className="font-mono">index.json</span> (a repo, a
-        USB stick) or an https URL that answers it — the app's own community store is offered below. Every entry says what
-        it may do and whether its files still match the checksum the index pinned — a mismatch is refused, never installed.
+        USB stick) or an https URL that answers it, the app's own community store is offered below. Every entry says what
+        it may do and whether its files still match the checksum the index pinned, a mismatch is refused, never installed.
       </p>
 
       {community?.ok && community.path && !indexes.some(item => item.kind === 'folder' && item.locator === community.path) ? (
         <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-line bg-bg px-3 py-2">
           <div className="min-w-0 flex-1">
-            <p className="text-[12px] text-ink">The community store — shipped with this app</p>
+            <p className="text-[12px] text-ink">The community store, shipped with this app</p>
             <p className="truncate text-[10.5px] text-muted" title={community.path}>
               {community.path}
             </p>

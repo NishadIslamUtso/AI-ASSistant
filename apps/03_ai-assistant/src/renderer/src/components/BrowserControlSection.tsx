@@ -21,13 +21,13 @@ type Server = { name: string; command?: string; args?: string[]; url?: string }
 const CHOICES: Array<{ id: string; label: string; note: string; server: Server }> = [
   {
     id: 'chrome-devtools',
-    label: 'Chrome — official DevTools tools',
+    label: 'Chrome, official DevTools tools',
     note: 'Drives your installed Chrome. The first run fetches the tool with npx; after that it is local.',
     server: { name: 'chrome-devtools', command: 'npx', args: ['-y', 'chrome-devtools-mcp@latest'] },
   },
   {
     id: 'playwright',
-    label: 'Playwright — its own browser',
+    label: 'Playwright, its own browser',
     note: 'Downloads and drives a separate browser, so your Chrome is never touched.',
     server: { name: 'playwright', command: 'npx', args: ['-y', '@playwright/mcp@latest'] },
   },
@@ -81,7 +81,7 @@ export default function BrowserControlSection() {
   if (isDemo) {
     return (
       <p className="text-[12px] leading-relaxed text-muted">
-        Browser control belongs to the desktop app — this preview has no engine to grant it to.
+        Browser control belongs to the desktop app, this preview has no engine to grant it to.
       </p>
     )
   }
@@ -89,7 +89,7 @@ export default function BrowserControlSection() {
   return (
     <div className="flex flex-col gap-2.5">
       <p className="text-[12px] leading-relaxed text-muted">
-        Let the engine drive a browser — open sites, click, fill forms — through its own official tool
+        Let the engine drive a browser, open sites, click, fill forms, through its own official tool
         plugins. Every click still comes to you as a permission card first, the same as file edits.
         Passwords and payments are never touched, same rules as the capture extension.
       </p>

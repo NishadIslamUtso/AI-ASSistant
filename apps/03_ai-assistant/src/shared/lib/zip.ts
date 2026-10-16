@@ -145,9 +145,9 @@ export function staticSiteEntries({
     : source
   return [
     { name: 'index.html', content: html },
-    { name: 'README.md', content: `# ${title}\n\nA single-file ${type === 'svg' ? 'SVG' : 'HTML'} app exported from AI ASSistant.\n\n- \`index.html\` — the whole app, no build step, no dependencies.\n- \`vercel.json\` / \`netlify.toml\` — static hosting config; publish the folder as-is.\n\n## Deploy\n\nVercel: \`npx vercel deploy --prod\` in this folder.\nNetlify: \`npx netlify deploy --prod --dir .\`\n\nOr upload the folder to any static host. Because this document is self-contained,\nit makes no network requests of its own.\n${note ? `\n> ${note}\n` : ''}` },
+    { name: 'README.md', content: `# ${title}\n\nA single-file ${type === 'svg' ? 'SVG' : 'HTML'} app exported from AI ASSistant.\n\n- \`index.html\`, the whole app, no build step, no dependencies.\n- \`vercel.json\` / \`netlify.toml\`, static hosting config; publish the folder as-is.\n\n## Deploy\n\nVercel: \`npx vercel deploy --prod\` in this folder.\nNetlify: \`npx netlify deploy --prod --dir .\`\n\nOr upload the folder to any static host. Because this document is self-contained,\nit makes no network requests of its own.\n${note ? `\n> ${note}\n` : ''}` },
     { name: 'vercel.json', content: `${JSON.stringify({ cleanUrls: true, headers: [{ source: '/(.*)', headers: [{ key: 'X-Content-Type-Options', value: 'nosniff' }] }] }, null, 2)}\n` },
-    { name: 'netlify.toml', content: `# Static export — no build step.\n[build]\n  publish = "."\n\n[[headers]]\n  for = "/*"\n  [headers.values]\n    X-Content-Type-Options = "nosniff"\n` },
+    { name: 'netlify.toml', content: `# Static export, no build step.\n[build]\n  publish = "."\n\n[[headers]]\n  for = "/*"\n  [headers.values]\n    X-Content-Type-Options = "nosniff"\n` },
     { name: '.gitignore', content: `node_modules/\n.DS_Store\n${name}-*.zip\n` },
   ]
 }

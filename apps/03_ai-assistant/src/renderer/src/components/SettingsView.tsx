@@ -394,7 +394,7 @@ export default function SettingsView({
     : {
         dot: 'bg-ok',
         label: 'Keys are saved in this app',
-        detail: 'A saved key\'s brains join the engine\'s model picker; sending routes the engine to that provider with the key — the app itself never calls it.',
+        detail: 'A saved key\'s brains join the engine\'s model picker; sending routes the engine to that provider with the key, the app itself never calls it.',
       }
 
   const keeping = isDemo
@@ -435,7 +435,7 @@ export default function SettingsView({
             <div className="text-[12.5px]">
               {isDemo ? 'Not in this window' : `${engineState.settings.id} · ${engineState.settings.model}`}
             </div>
-            {/* The install line the marketplace used to keep — the connector's
+            {/* The install line the marketplace used to keep, the connector's
                 own door must say how to open it. */}
             {!isDemo && engineState.settings.id === 'claude-code' && (
               <div className="mt-0.5 text-[11.5px] text-muted">
@@ -547,7 +547,7 @@ export default function SettingsView({
                 {isDemo
                   ? 'The port the browser extension posts to belongs to the desktop app.'
                   : extension.listening
-                    ? 'The extension posts pages and conversations here. Nothing else answers on that port. The engine reads this door too: the built-in browser-page skill teaches it GET /onui — the latest captured page, with visit-only lines reported as metadata, never as reading.'
+                    ? 'The extension posts pages and conversations here. Nothing else answers on that port. The engine reads this door too: the built-in browser-page skill teaches it GET /onui, the latest captured page, with visit-only lines reported as metadata, never as reading.'
                     : extension.error || 'The extension cannot reach this app at the moment.'}
               </div>
             </div>
@@ -859,7 +859,7 @@ export default function SettingsView({
               <span className="text-[12.5px]">
                 {keyEncryption === 'os'
                   ? 'Sealed by this machine’s keychain.'
-                  : 'Held for this run only — this machine gave the app nothing to seal a key with.'}
+                  : 'Held for this run only, this machine gave the app nothing to seal a key with.'}
               </span>
             ),
           },

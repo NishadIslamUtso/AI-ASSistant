@@ -262,7 +262,7 @@ function CookDialog({ draft, onDone }: { draft: string; onDone: (next: string | 
     <div className="absolute bottom-9 left-1 z-30 w-[340px] rounded-xl border border-line bg-card p-3 shadow-xl" role="dialog" aria-label="Cook this prompt">
       <p className="text-[11px] font-medium uppercase tracking-wide text-muted">Enhanced prompt</p>
       {state === 'looking' ? <p className="mt-2 text-[12px] text-muted">Searching the vault…</p> : null}
-      {state === 'empty' ? <p className="mt-2 text-[12px] text-muted">Write the prompt first — its words are the search.</p> : null}
+      {state === 'empty' ? <p className="mt-2 text-[12px] text-muted">Write the prompt first, its words are the search.</p> : null}
       {state === 'offline' ? <p className="mt-2 text-[12px] text-muted">The vault is not reachable right now.</p> : null}
       {state === 'nothing' ? <p className="mt-2 text-[12px] text-muted">Nothing in the vault matches this prompt.</p> : null}
       {state === 'ready' ? (
@@ -405,7 +405,7 @@ function ModelChip({ open, onToggle }: { open: boolean; onToggle: () => void }) 
         }}
         aria-haspopup="menu"
         aria-expanded={open}
-        title="The models this engine can use — from the engine itself"
+        title="The models this engine can use, from the engine itself"
         className="flex h-7 min-w-0 items-center gap-1.5 rounded-lg px-2 text-[11.5px] text-muted hover:text-ink"
       >
         <Layers size={11} aria-hidden />

@@ -489,7 +489,7 @@ function registerBridges(): void {
     (_event, prompt: string, cwd: string): { ok: boolean; answer: string } => {
       const text = typeof prompt === 'string' ? prompt.trim().slice(0, 20000) : ''
       if (!text) return { ok: false, answer: 'Write what the engine should do first.' }
-      if (!engine) return { ok: false, answer: 'The engine is still waking up — try again in a moment.' }
+      if (!engine) return { ok: false, answer: 'The engine is still waking up, try again in a moment.' }
       // The working folder is the app's decision, never the window's: the
       // folder the owner picked in the engine bay, or the vault when none.
       // The renderer's value is deliberately not consulted (review finding).
@@ -611,9 +611,9 @@ function registerBridges(): void {
       const finalTick = parsePullLine(carry)
       if (finalTick.error) return { ok: false, answer: `the pull failed: ${finalTick.error}` }
       send({ status: 'success', total: null, completed: null, done: true, error: '' })
-      return { ok: true, answer: `${name} is home — it is in the brain list now` }
+      return { ok: true, answer: `${name} is home, it is in the brain list now` }
     } catch {
-      const why = 'the brain door (Ollama) is not answering — start it, then try again'
+      const why = 'the brain door (Ollama) is not answering, start it, then try again'
       send({ status: '', total: null, completed: null, done: false, error: why })
       return { ok: false, answer: why }
     }
@@ -633,7 +633,7 @@ function registerBridges(): void {
       if (!answer.ok) return { ok: false, answer: `the brain door answered ${answer.status}` }
       return { ok: true, answer: `${name} is gone from this machine` }
     } catch {
-      return { ok: false, answer: 'the brain door (Ollama) is not answering — start it, then try again' }
+      return { ok: false, answer: 'the brain door (Ollama) is not answering, start it, then try again' }
     }
   })
 
@@ -856,7 +856,7 @@ function registerBridges(): void {
       root,
     )
     if (!result.ok) return result
-    return { ok: true, answer: `Exported to ${result.folder} — its checksum is pinned in the index beside it.`, folder: result.folder, index: result.index }
+    return { ok: true, answer: `Exported to ${result.folder}, its checksum is pinned in the index beside it.`, folder: result.folder, index: result.index }
   })
 
   // The community store the app ships with: a REAL folder of packs beside the
@@ -1087,7 +1087,7 @@ function registerBridges(): void {
       }
       return { ok: true, models }
     } catch {
-      return { ok: false, models: [], error: 'the brain door (Ollama) is not answering — start Ollama, then refresh' }
+      return { ok: false, models: [], error: 'the brain door (Ollama) is not answering, start Ollama, then refresh' }
     }
   })
 
@@ -1114,7 +1114,7 @@ function registerBridges(): void {
       properties: ['openDirectory', 'createDirectory'],
     })
     if (answer.canceled || !answer.filePaths[0]) {
-      return { ok: false, answer: 'No folder chosen — the vault stays the workplace.' }
+      return { ok: false, answer: 'No folder chosen, the vault stays the workplace.' }
     }
     const workspace = answer.filePaths[0]
     settings = writeSettings(settingsFile, { ...settings, engine: { ...settings.engine, workspace } })
@@ -1464,7 +1464,7 @@ if (!gotLock) {
       mayCapture: () => settings.permissions.browserCapture,
     })
     if (extensionApi.listening) {
-      console.log(`[extension] listening at ${extensionApi.url} — captures, context and the never-check list only`)
+      console.log(`[extension] listening at ${extensionApi.url}, captures, context and the never-check list only`)
     }
     createWindow()
     app.on('activate', () => {

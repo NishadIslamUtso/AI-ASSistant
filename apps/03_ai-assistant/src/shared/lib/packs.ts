@@ -105,7 +105,7 @@ const cleanContributions = (value: unknown): { contributions: PackContributions;
   if (themes.problem) return { contributions: { skills: [], prompts: [], themes: [] }, problem: themes.problem }
   const total = skills.list.length + prompts.list.length + themes.list.length
   if (total > MAX_TOTAL_FILES) return { contributions: { skills: [], prompts: [], themes: [] }, problem: 'This pack is too large to read through in one sitting.' }
-  if (total === 0) return { contributions: { skills: [], prompts: [], themes: [] }, problem: 'This pack contributes nothing — no skills, prompts or themes.' }
+  if (total === 0) return { contributions: { skills: [], prompts: [], themes: [] }, problem: 'This pack contributes nothing, no skills, prompts or themes.' }
   return { contributions: { skills: skills.list, prompts: prompts.list, themes: themes.list }, problem: '' }
 }
 
@@ -192,7 +192,7 @@ export function describePermissions(pack: Pack): string[] {
   const said: string[] = []
   said.push('Installs text: skills an engine reads, prompts you can type, or a look for the app. Nothing runs by itself.')
   if (pack.permissions.files === 'read:vault') {
-    said.push('Says it works with your vault. When its skill asks the ENGINE to read a file, the engine\'s own permission card asks you first — the same Allow/Deny as always.')
+    said.push('Says it works with your vault. When its skill asks the ENGINE to read a file, the engine\'s own permission card asks you first, the same Allow/Deny as always.')
   }
   for (const domain of pack.permissions.web ?? []) {
     said.push(`Names ${domain} as what it is about. Phase 1 packs get no network access from this app; this is a label, shown so you know what you are installing.`)

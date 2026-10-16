@@ -22,7 +22,7 @@ test('the welcome reuses the real profile, engine, and vault plumbing', () => {
   assert.match(view, /setApproval/)
   assert.match(view, /vault\s*\.\s*chooseFolder\(\)/)
   assert.match(view, /settings\s*\.\s*update\(\{ vaultPath: chosen \}\)/)
-  assert.match(view, /Skip — decide later/, 'every step is skippable')
+  assert.match(view, /Skip, decide later/, 'every step is skippable')
 })
 
 test('the welcomed flag is strictly boolean', () => {

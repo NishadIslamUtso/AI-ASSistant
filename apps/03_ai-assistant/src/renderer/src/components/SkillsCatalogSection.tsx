@@ -29,12 +29,12 @@ export default function SkillsCatalogSection() {
   return (
     <div className="flex flex-col gap-2.5">
       <p className="text-[12px] leading-relaxed text-muted">
-        Skills are small rulebooks an engine reads before it works. Install once here and every engine gets it —
+        Skills are small rulebooks an engine reads before it works. Install once here and every engine gets it, so
         Claude Code in its own folder, agy next to the work. The catalog is Anthropic's open collection; their
         license rides along with each file.
       </p>
       {isDemo ? (
-        <p className="text-[12px] text-muted">This preview cannot reach the machine — the real app installs from here.</p>
+        <p className="text-[12px] text-muted">This preview cannot reach the machine, the real app installs from here.</p>
       ) : null}
       <ul className="flex flex-col gap-1.5">
         {SKILL_CATALOG.map((skill) => {

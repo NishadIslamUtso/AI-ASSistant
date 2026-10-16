@@ -474,7 +474,7 @@ test('the monthly audit writes itself once, from the vault\u2019s own numbers', 
   assert.equal(first.written, true)
   assert.equal(first.relative, '06 Review/Monthly Audits/2026-10.md')
   const body = f.read('06 Review/Monthly Audits/2026-10.md')
-  assert.match(body, /# Monthly Audit — 2026-10/)
+  assert.match(body, /# Monthly Audit, 2026-10/)
   assert.match(body, /Notes in 02 Sources: 2/)
   assert.match(body, /Journal entries in 08 Journal\/2026: 1/)
   assert.match(body, /Open loops still open: 1/)

@@ -64,7 +64,7 @@ export default function TitleBar({
             title={`${waiting} question${waiting === 1 ? '' : 's'} from the engine ${waiting === 1 ? 'is' : 'are'} waiting for you. Click to open the cards.`}
             className="flex items-center gap-1.5 rounded-full border border-warn/60 bg-warn/10 px-2.5 py-1 text-[11px] text-ink"
           >
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-warn motion-reduce:animate-none" />
+            <span className="h-1.5 w-1.5 rounded-full bg-warn" />
             Needs you{waiting > 1 ? ` · ${waiting}` : ''}
           </button>
         )}

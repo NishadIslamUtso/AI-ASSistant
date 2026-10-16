@@ -308,7 +308,7 @@ export function startClaudeCodeSession(input: StartSessionInput): EngineSession 
 function notFoundMessage(): string {
   return (
     'Claude Code was not found on this machine. Install it once in PowerShell: ' +
-    'npm install -g @anthropic-ai/claude-code — then fully close AI ASSistant (right-click its tray/taskbar icon, Quit) ' +
+    'npm install -g @anthropic-ai/claude-code, then fully close AI ASSistant (right-click its tray/taskbar icon, Quit) ' +
     'and open it again, so it can see the fresh install.'
   )
 }

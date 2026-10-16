@@ -15,8 +15,8 @@ import type { HouseRules } from '@shared/lib/houseRules'
 const FIELDS: Array<{ key: keyof HouseRules; label: string; hint: string; rows: number }> = [
   { key: 'identity', label: 'Who you are', hint: 'What the engine is inside this app', rows: 3 },
   { key: 'artifacts', label: 'Artifacts', hint: 'The contract: build real files the app can show', rows: 3 },
-  { key: 'permissions', label: 'Approvals', hint: 'How asking and approving works — your standing instructions live here', rows: 3 },
-  { key: 'memory', label: 'Memory and searching', hint: 'What may be read, and when — the no-sweeping rule', rows: 3 },
+  { key: 'permissions', label: 'Approvals', hint: 'How asking and approving works, your standing instructions live here', rows: 3 },
+  { key: 'memory', label: 'Memory and searching', hint: 'What may be read, and when, the no-sweeping rule', rows: 3 },
   { key: 'style', label: 'How you write', hint: 'Plain words, real results, no mocking', rows: 3 },
 ]
 
@@ -41,7 +41,7 @@ export default function HouseRulesSection() {
       setStatus(
         answer.ok
           ? `Saved and delivered to ${answer.written.length} engine${answer.written.length === 1 ? '' : 's'}.`
-          : 'Saving needs the desktop app — this window is the interface only.',
+          : 'Saving needs the desktop app, this window is the interface only.',
       )
     } finally {
       setSaving(false)
@@ -83,8 +83,8 @@ export default function HouseRulesSection() {
         ) : null}
       </div>
       <p className="text-[11px] text-muted">
-        Blank fields fall back to the default rule. The rules land as a marked block inside each engine's own file —
-        Claude Code's CLAUDE.md and agy's GEMINI.md — and nothing you wrote around that block is ever touched.
+        Blank fields fall back to the default rule. The rules land as a marked block inside each engine's own file, as
+        Claude Code's CLAUDE.md and agy's GEMINI.md, and nothing you wrote around that block is ever touched.
       </p>
     </div>
   )

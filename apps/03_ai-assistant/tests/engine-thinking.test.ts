@@ -148,9 +148,15 @@ test('a remembered thinking-only history is worth showing', async () => {
 })
 
 test('the working words are a real list, picked from it, one per call', () => {
-  assert.ok(GERUNDS.length >= 20, 'enough words to stay fresh')
-  assert.ok(new Set(GERUNDS).size === GERUNDS.length, 'no duplicates')
-  for (const word of GERUNDS) assert.match(word, /^[A-Z][a-z]+ing$/, `a gerund: ${word}`)
+  // His list (189) merged with the app's first two dozen — playwright-grade
+  // whimsy included: Beboppin', Flambéing, Sock-hopping, Clauding.
+  assert.ok(GERUNDS.length >= 190, 'enough words to stay fresh')
+  const keyed = GERUNDS.map(word => word.toLowerCase())
+  assert.ok(new Set(keyed).size === keyed.length, 'no duplicates')
+  for (const word of GERUNDS) {
+    assert.match(word, /^[A-Z]/, `capitalized: ${word}`)
+    assert.match(word, /(ing|in')$/, `a working word: ${word}`)
+  }
   let calls = 0
   const first = pickGerund(() => {
     calls += 1
@@ -165,7 +171,7 @@ test('the panel shows the working word and folds the thinking away from the answ
   const panel = read('../src/renderer/src/components/EnginePanel.tsx')
   assert.match(panel, /pickGerund/, 'the working word comes from the shared list')
   assert.doesNotMatch(panel, /· working/, 'the frozen label is gone')
-  assert.match(panel, /Thinking\{live \? ' — still going' : ''\}/, 'a live thinking block says so')
+  assert.match(panel, /Thinking\{live \? ', still going' : ''\}/, 'a live thinking block says so')
   assert.match(panel, /aria-live/, 'the waiting word is announced')
   // The handoff keeps the scratchwork out of the vault document.
   const handoff = read('../src/shared/lib/handoff.ts')

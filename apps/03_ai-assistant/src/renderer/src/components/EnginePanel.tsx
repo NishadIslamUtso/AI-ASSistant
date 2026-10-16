@@ -59,7 +59,7 @@ export default function EnginePanel() {
       <header className="flex items-center gap-2">
         <span
           className={`h-1.5 w-1.5 rounded-full ${
-            turn.state === 'running' ? 'animate-pulse bg-warn' : turn.state === 'error' ? 'bg-warn' : 'bg-ok'
+            turn.state === 'running' ? 'bg-warn' : turn.state === 'error' ? 'bg-warn' : 'bg-ok'
           }`}
         />
         <h2 className="text-[12px] font-medium text-muted">
@@ -91,7 +91,7 @@ export default function EnginePanel() {
 
       <ul className="mt-2 flex flex-col gap-1.5">
         {turn.state === 'running' && turn.items.length === 0 ? (
-          <li className="text-[12.5px] italic text-muted" aria-live="polite">{word}…</li>
+          <li className="text-[12.5px] text-muted" aria-live="polite">{word}…</li>
         ) : null}
         {turn.items.map((item, index) => {
           // The thinking block that is still being written stays unfolded;
@@ -160,7 +160,7 @@ function EngineItemRow({ item, live = false }: { item: EngineItem; live?: boolea
           className="rounded-lg border border-line bg-panel/60 px-3 py-2"
         >
           <summary className="cursor-pointer text-[12px] text-muted">
-            Thinking{live ? ' — still going' : ''}
+            Thinking{live ? ', still going' : ''}
           </summary>
           <p className="mt-2 whitespace-pre-wrap break-words text-[12.5px] leading-relaxed text-muted">
             {item.text}

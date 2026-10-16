@@ -86,7 +86,7 @@ export default function MessageRow({
         ) : null}
 
         {message.stage ? (
-          <p className="mb-2 text-[12px] italic text-muted">{message.stage}</p>
+          <p className="mb-2 text-[12px] text-muted">{message.stage}</p>
         ) : null}
 
         {message.content ? (

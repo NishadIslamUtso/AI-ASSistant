@@ -27,7 +27,7 @@ export async function installCatalogSkill(
     if (!response.ok) return { ok: false, answer: `The catalog answered ${response.status} for ${entry.name}.` }
     text = await response.text()
   } catch {
-    return { ok: false, answer: 'The catalog could not be reached — are you online?' }
+    return { ok: false, answer: 'The catalog could not be reached, are you online?' }
   }
   if (!text || text.length > 200_000) return { ok: false, answer: 'That skill file is not one this app will install.' }
   const parsed = parseSkillMd(text)

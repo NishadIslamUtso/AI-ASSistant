@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { ArrowRight, Check, Cpu, FolderOpen, Sparkles } from 'lucide-react'
+import { ArrowRight, Check, Cpu, FolderOpen } from 'lucide-react'
+import BrainMark from './BrainMark'
 import { useEngine } from '@/state/engine'
 import { bridge } from '@/platform/bridge'
 import { isDemo } from '@/platform/bridge'
@@ -62,7 +63,7 @@ export default function FirstRunView({
     <div className="flex h-full items-center justify-center overflow-y-auto bg-bg" aria-label="Welcome">
       <div className="w-full max-w-[440px] rounded-2xl border border-line bg-card p-6">
         <div className="flex items-center gap-2.5">
-          <Sparkles size={18} className="text-accent" aria-hidden />
+          <BrainMark size={18} title="" />
           <h1 className="text-[19px] font-semibold text-ink">Welcome to AI ASSistant</h1>
         </div>
 
@@ -100,12 +101,12 @@ export default function FirstRunView({
               <Cpu size={13} aria-hidden /> Which brain should the engine use?
             </h2>
             <p className="mt-1 text-[11.5px] text-muted">
-              The list is what the engine can really use right now. Cloud brains leave the machine — they are labelled.
+              The list is what the engine can really use right now. Cloud brains leave the machine, they are labelled.
             </p>
             <div className="mt-2 flex max-h-36 flex-col gap-1 overflow-y-auto">
               {engine.models.entries.length === 0 ? (
                 <p className="text-[12px] text-muted">
-                  {engine.models.error || 'No brains reported yet — you can pick one any time in the Engine bay.'}
+                  {engine.models.error || 'No brains reported yet, you can pick one any time in the Engine bay.'}
                 </p>
               ) : (
                 engine.models.entries.map((entry) => (
@@ -187,7 +188,7 @@ export default function FirstRunView({
           </div>
         ) : null}
 
-        {isDemo ? <p className="mt-3 text-[10.5px] text-muted">This preview cannot reach the machine — the real app remembers every choice.</p> : null}
+        {isDemo ? <p className="mt-3 text-[10.5px] text-muted">This preview cannot reach the machine, the real app remembers every choice.</p> : null}
       </div>
     </div>
   )
@@ -219,7 +220,7 @@ function StepButtons({
         </button>
       ) : null}
       <button type="button" onClick={skip} className="text-[11.5px] text-muted hover:text-ink">
-        Skip — decide later
+        Skip, decide later
       </button>
     </div>
   )

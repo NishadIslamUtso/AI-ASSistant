@@ -141,7 +141,7 @@ function forward(
     }
     response.end(
       JSON.stringify({
-        error: `${label} is not reachable on this machine. Start it and try again — nothing was sent anywhere else.`,
+        error: `${label} is not reachable on this machine. Start it and try again, nothing was sent anywhere else.`,
       })
     )
   })

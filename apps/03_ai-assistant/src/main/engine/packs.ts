@@ -90,7 +90,7 @@ export type PackTargets = {
 
 export function installPackFromFolder(folder: string, targets: PackTargets, via?: 'index' | 'starter'): InstallAnswer {
   const manifestPath = join(folder, 'manifest.json')
-  if (!existsSync(manifestPath)) return { ok: false, answer: 'That folder has no manifest.json — a pack is a folder with one.' }
+  if (!existsSync(manifestPath)) return { ok: false, answer: 'That folder has no manifest.json, a pack is a folder with one.' }
   const manifestFile = readCapped(manifestPath)
   if (manifestFile.problem) return { ok: false, answer: manifestFile.problem }
   let parsed: unknown
@@ -231,6 +231,6 @@ export function removePack(
     rmSync(resolved, { recursive: true, force: true })
     return { ok: true, answer: `${clean} removed.` }
   } catch {
-    return { ok: false, answer: 'The pack folder would not delete. It is safe to remove by hand — see its path in the list.' }
+    return { ok: false, answer: 'The pack folder would not delete. It is safe to remove by hand, see its path in the list.' }
   }
 }

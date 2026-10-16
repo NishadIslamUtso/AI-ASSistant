@@ -71,7 +71,7 @@ export function exportPack(
   const wanted = [...new Set(Array.isArray(input.skills) ? input.skills.slice(0, 30) : [])]
   const themeAppearance = input.theme && typeof input.theme === 'object' ? input.theme : null
   if (!wanted.length && !themeAppearance) {
-    return { ok: false, answer: 'Pick at least one skill, or include the theme — an empty pack contributes nothing.' }
+    return { ok: false, answer: 'Pick at least one skill, or include the theme, an empty pack contributes nothing.' }
   }
   const contributions: Pack['contributes'] = { skills: [], prompts: [], themes: [] }
   const files: Record<string, string> = {}
@@ -109,7 +109,7 @@ export function exportPack(
     return { ok: false, answer: 'The destination would leave the export folder.' }
   }
   if (existsSync(folder)) {
-    return { ok: false, answer: `${folder} already exists — rename the pack or remove the old folder first.` }
+    return { ok: false, answer: `${folder} already exists, rename the pack or remove the old folder first.` }
   }
 
   // Write the pack: manifest first (so the folder always identifies itself),
@@ -157,7 +157,7 @@ export function exportPack(
     } catch {
       return {
         ok: false,
-        answer: `The pack was written, but ${indexFile} is not a readable index — it was left untouched. Fix or move it, then export again.`,
+        answer: `The pack was written, but ${indexFile} is not a readable index, it was left untouched. Fix or move it, then export again.`,
       }
     }
   }

@@ -125,7 +125,7 @@ export default function ProjectsView({
           <p className="mt-6 text-[12.5px] text-muted">Reading the projects…</p>
         ) : projects.length === 0 ? (
           <p className="mt-6 text-[12.5px] text-muted">
-            No projects yet. A project keeps its chats, its instruction and its folder in one place — one click starts
+            No projects yet. A project keeps its chats, its instruction and its folder in one place. One click starts
             the first.
           </p>
         ) : (
@@ -152,7 +152,7 @@ export default function ProjectsView({
                       <button
                         type="button"
                         onClick={() => onViewBoard(project.folder)}
-                        title={`Open this project's folder in Code${(threads[project.folder] ?? 0) > 0 ? ` — ${threads[project.folder]} resumable ${(threads[project.folder] ?? 0) === 1 ? 'thread' : 'threads'}` : ''}`}
+                        title={`Open this project's folder in Code${(threads[project.folder] ?? 0) > 0 ? `: ${threads[project.folder]} resumable ${(threads[project.folder] ?? 0) === 1 ? 'thread' : 'threads'}` : ''}`}
                         className="flex items-center gap-1 rounded-md border border-line px-1.5 py-0.5 text-[10.5px] text-muted hover:text-ink"
                       >
                         <SquareTerminal size={10} aria-hidden /> Code
@@ -195,7 +195,7 @@ export default function ProjectsView({
                         value={draftInstruction}
                         onChange={(event) => setDraftInstruction(event.target.value)}
                         rows={3}
-                        placeholder="The instruction for this project — what it is, how its work should be done."
+                        placeholder="The instruction for this project: what it is, how its work should be done."
                         aria-label={`Instruction for ${project.name}`}
                         className="w-full resize-y rounded-lg border border-line bg-bg px-3 py-2 text-[12.5px] leading-relaxed text-ink outline-none placeholder:text-muted focus:border-accent/60"
                       />

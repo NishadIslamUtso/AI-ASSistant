@@ -71,7 +71,7 @@ export function createEngineParser(): EngineParser {
       // The brain not answering yet: say so, or the window looks frozen.
       if (subtype === 'api_retry') {
         const attempt = typeof message.attempt === 'number' ? message.attempt : null
-        return [{ kind: 'status', text: attempt ? `the brain is not answering — retry ${attempt}` : 'the brain is not answering — retrying' }]
+        return [{ kind: 'status', text: attempt ? `the brain is not answering, retry ${attempt}` : 'the brain is not answering, retrying' }]
       }
       return []
     }

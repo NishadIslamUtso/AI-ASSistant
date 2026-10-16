@@ -121,7 +121,7 @@ export function parseIndex(raw: string): { name: string; packs: IndexEntry[] } |
     if (!packName) return { problem: `The pack "${id}" needs a name.` }
     const version = cleanText(entry['version'], 20)
     if (!/^\d+\.\d+\.\d+$/.test(version)) return { problem: `The pack "${id}" needs a version like 1.0.0.` }
-    if (!isHex64(entry['checksum'])) return { problem: `The pack "${id}" needs a sha-256 checksum (64 hex characters) — an index that cannot prove its packs is not an index this app trusts.` }
+    if (!isHex64(entry['checksum'])) return { problem: `The pack "${id}" needs a sha-256 checksum (64 hex characters), an index that cannot prove its packs is not an index this app trusts.` }
     const source = cleanText(entry['source'], 300)
     if (!source) return { problem: `The pack "${id}" needs a source.` }
     if (source.includes('..') || source.startsWith('/')) return { problem: `The pack "${id}" names a source outside the index folder.` }
@@ -358,7 +358,7 @@ export async function installFromIndex(
     }
     const { digest, problem } = packDigest(staging)
     if (problem || digest !== entry.checksum) {
-      return { ok: false, answer: problem || 'The downloaded files do not match the checksum the index pinned — refused, nothing installed.' }
+      return { ok: false, answer: problem || 'The downloaded files do not match the checksum the index pinned, refused, nothing installed.' }
     }
     const result = installPackFromFolder(staging, targets, 'index')
     if (!result.ok) return { ok: false, answer: result.answer }

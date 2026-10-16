@@ -70,7 +70,7 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
       // Engine #2 arrives after its Windows check (architecture doc, 6.3).
       // Until then it refuses honestly instead of pretending to start.
       if (input.settings.id === 'agy') {
-        const text = 'agy is not wired in yet — its Windows check comes first (plan 6.3).'
+        const text = 'agy is not wired in yet, its Windows check comes first (plan 6.3).'
         queueMicrotask(() => {
           input.onEvent({ kind: 'error', text } satisfies EngineEvent)
           input.onClose?.(null)
@@ -83,7 +83,7 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
         }
         // Same engine, new task — no relaunch, no refusal.
         const sent = session.send(prompt)
-        if (!sent) return { ok: false, answer: 'The engine just closed — try again.' }
+        if (!sent) return { ok: false, answer: 'The engine just closed, try again.' }
         busy = true
         return { ok: true, answer: 'started' }
       }

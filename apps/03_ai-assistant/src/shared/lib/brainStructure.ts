@@ -24,7 +24,7 @@ export const BRAIN_FOLDERS: ReadonlyArray<{ relative: string; purpose: string }>
   {
     relative: '05 Knowledge',
     purpose:
-      'Reusable synthesis, always linked to sources: short, single-topic notes derived from the capture record — never invented, never source of truth.',
+      'Reusable synthesis, always linked to sources: short, single-topic notes derived from the capture record, never invented, never source of truth.',
   },
   {
     relative: '10 People',
@@ -77,7 +77,7 @@ export function indexContent(kind: BrainKind): string {
     '# Index',
     '',
     'The map of this vault, maintained by the engine. When something is added,',
-    'moved, or decided, a line goes under **Changes** — the map is the first',
+    'moved, or decided, a line goes under **Changes**, the map is the first',
     'thing read, so it must be the first thing kept true.',
     '',
     '## Where things live',
@@ -86,27 +86,27 @@ export function indexContent(kind: BrainKind): string {
   const places: Array<[string, string]> =
     kind === 'app-structure' || kind === 'empty' || kind === 'other'
       ? [
-          ['00 System', 'The app\'s system documents. Privacy & Access is the never-check list — absolute.'],
+          ['00 System', 'The app\'s system documents. Privacy & Access is the never-check list, absolute.'],
           ['01 Inbox', 'Intake that still needs attention.'],
           ['02 Sources', 'The capture record. Written once by the app, never edited by anyone.'],
-          ['03 Memory', 'Entities, events, connections — the seeded memory layer.'],
-          ['04 Working Memory', 'Current Snapshot and Open Loops — what the app is holding right now.'],
+          ['03 Memory', 'Entities, events, connections, the seeded memory layer.'],
+          ['04 Working Memory', 'Current Snapshot and Open Loops, what the app is holding right now.'],
           ['05 Knowledge', 'Reusable synthesis, always linked to sources. Not source of truth.'],
-          ['06 Review', 'Questions, conflicts, keep-or-forget — ask rather than guess.'],
+          ['06 Review', 'Questions, conflicts, keep-or-forget, ask rather than guess.'],
           ['07 Sharing Receipts', 'What was sent where, and when, with the approval kept.'],
-          ['08 Journal', 'Dated notes — the app\'s own journal captures land here.'],
+          ['08 Journal', 'Dated notes, the app\'s own journal captures land here.'],
           ['09 Activity & Undo', 'The audit log of every capture.'],
           ['10 People', 'One file per person, decisions linked to sources.'],
         ]
       : kind === 'llm-wiki'
         ? [
             ['raw', 'The intake. Read it, extract from it, never edit it.'],
-            ['wiki', 'Synthesized, single-topic notes — the engine\'s own writing.'],
+            ['wiki', 'Synthesized, single-topic notes, the engine\'s own writing.'],
           ]
         : kind === 'obsidian'
           ? [['(the vault\'s own folders)', 'This vault came with its own layout; the app added only what was missing.']]
           : []
-  for (const [place, what] of places) lines.push(`- **${place}** — ${what}`)
+  for (const [place, what] of places) lines.push(`- **${place}**, ${what}`)
   lines.push('', '## Changes', '')
   return lines.join('\n')
 }
@@ -120,8 +120,8 @@ export function indexContent(kind: BrainKind): string {
  */
 export function rulesContent(kind: BrainKind, forClaude: boolean): string {
   const title = forClaude
-    ? '# CLAUDE.md — how to work in this vault'
-    : '# AGENTS.md — how to work in this vault'
+    ? '# CLAUDE.md, how to work in this vault'
+    : '# AGENTS.md, how to work in this vault'
   const lines = [
     title,
     '',
@@ -146,7 +146,7 @@ export function rulesContent(kind: BrainKind, forClaude: boolean): string {
   )
   if (kind === 'app-structure' || kind === 'empty' || kind === 'other') {
     lines.push(
-      '- `00 System/Privacy & Access.md` lists excluded patterns. They are absolute: never read, index, quote, or link a file whose path matches one — and never copy its contents into a new note.'
+      '- `00 System/Privacy & Access.md` lists excluded patterns. They are absolute: never read, index, quote, or link a file whose path matches one, and never copy its contents into a new note.'
     )
   } else {
     lines.push('- If this vault gains a privacy list (the app keeps one in `00 System/Privacy & Access.md`), its patterns are absolute: never read, index, or quote matching files.')
@@ -170,10 +170,10 @@ export function rulesContent(kind: BrainKind, forClaude: boolean): string {
     '  ---',
     '  ```',
     '',
-    '- Link only files that exist. A `[[link]]` to a file that is not there is a lie in bold brackets — create the note or drop the link. Link by the file\'s path from the vault root (`[[05 Knowledge/Foo]]`), not by bare name: two files sharing a name make bare links ambiguous, and the app\'s link check reports them.',
-    '- Start every new note from a template in `00 System/Templates/` — `Person.md` for someone new, `Knowledge Note.md` for synthesis. Never leave a template\'s placeholders in a finished note.',
-    '- A new fact that fits an existing verified note is appended under `## Evolution [YYYY-MM-DD]` — history stays, nothing is silently rewritten. A fact that contradicts it gets `## Contradiction` and both sides.',
-    '- Status is a lifecycle, not a mood: `raw` while written, `processing` while you work it, `verified` only when you have re-read it against its sources — and stamp `last_ai_audit` with the date you did.',
+    '- Link only files that exist. A `[[link]]` to a file that is not there is a lie in bold brackets, create the note or drop the link. Link by the file\'s path from the vault root (`[[05 Knowledge/Foo]]`), not by bare name: two files sharing a name make bare links ambiguous, and the app\'s link check reports them.',
+    '- Start every new note from a template in `00 System/Templates/`, `Person.md` for someone new, `Knowledge Note.md` for synthesis. Never leave a template\'s placeholders in a finished note.',
+    '- A new fact that fits an existing verified note is appended under `## Evolution [YYYY-MM-DD]`, history stays, nothing is silently rewritten. A fact that contradicts it gets `## Contradiction` and both sides.',
+    '- Status is a lifecycle, not a mood: `raw` while written, `processing` while you work it, `verified` only when you have re-read it against its sources, and stamp `last_ai_audit` with the date you did.',
     '- A file tagged `#manual` belongs to the owner alone: never edit its text, and never touch even its frontmatter without being asked.',
     '- Say what a source says, never what it implies about being read or agreed with. A visit is not a reading.',
     '- When a new fact contradicts an existing verified note, add a `## Contradiction` section to the old note and say both sides. Do not silently pick a winner.',
@@ -181,7 +181,7 @@ export function rulesContent(kind: BrainKind, forClaude: boolean): string {
     '## Bookkeeping',
     '',
     '- After any change, append one line under `## Changes` in `index.md`: the date, what was done, where.',
-    '- When a source has been fully used, note it and move on — the sources folder keeps everything, so nothing needs deleting.',
+    '- When a source has been fully used, note it and move on, the sources folder keeps everything, so nothing needs deleting.',
     '',
     '## Growing the structure',
     '',
@@ -246,7 +246,7 @@ created: <YYYY-MM-DD>
 One topic. Say only what the sources say.
 
 ## Sources
-- [[02 Sources/...]] — what this source contributed
+- [[02 Sources/...]], what this source contributed
 
 ## Evolution
 `

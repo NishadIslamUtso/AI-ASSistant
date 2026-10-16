@@ -119,7 +119,7 @@ export default function VaultView({ onAddToComposer }: { onAddToComposer: (path:
                 onClick={() => {
                   void bridge.vault.exportCopy().then((answer) => setExported(answer.answer))
                 }}
-                title="A timestamped, portable copy of every markdown file — hand it to Obsidian, a backup, or another machine"
+                title="A timestamped, portable copy of every markdown file, hand it to Obsidian, a backup, or another machine"
                 className="flex shrink-0 items-center gap-1 rounded-lg border border-line px-2.5 py-1.5 text-[11.5px] text-muted hover:text-ink"
               >
                 Export copy
@@ -159,7 +159,7 @@ export default function VaultView({ onAddToComposer }: { onAddToComposer: (path:
         <div className="mt-3 flex min-h-0 flex-1 gap-4">
           {/* The tree, grouped by the folders that really exist. */}
           <div className="min-w-0 flex-1 overflow-y-auto">
-            {capped ? <p className="mb-2 text-[11px] text-muted">Large vault — the list stops early.</p> : null}
+            {capped ? <p className="mb-2 text-[11px] text-muted">Large vault, the list stops early.</p> : null}
             {hits ? (
               <div>
                 <div className="flex items-center gap-2">

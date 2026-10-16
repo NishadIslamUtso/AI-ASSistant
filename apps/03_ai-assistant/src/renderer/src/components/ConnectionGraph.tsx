@@ -82,7 +82,7 @@ export default function ConnectionGraph({
         aria-label="3D graph of vault connections"
       />
       <p className="border-t border-line px-2.5 py-1.5 text-[10.5px] text-muted">
-        Connections — drag to rotate, scroll to zoom. Edges are resolved [[links]]; dead and ambiguous ones are counted
+        Connections, drag to rotate, scroll to zoom. Edges are resolved [[links]]; dead and ambiguous ones are counted
         in Structure details.
       </p>
     </div>

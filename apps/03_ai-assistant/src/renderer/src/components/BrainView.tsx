@@ -101,7 +101,7 @@ export default function BrainView({
         <ConnectionGraph path={path} isDemo={isDemo} variant="full" />
       </div>
       <p className="px-5 pb-4 text-[11px] text-muted">
-        Drag to rotate, scroll to zoom. Edges are resolved [[links]] only — dead and ambiguous links stay
+        Drag to rotate, scroll to zoom. Edges are resolved [[links]] only, dead and ambiguous links stay
         counted in the numbers above and in Settings › Vault, never drawn as if they connected.
       </p>
     </div>

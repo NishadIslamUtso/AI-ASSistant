@@ -83,7 +83,7 @@ export default function CodeView({
     // Done is real: the engine forgets the resume id, the card becomes history.
     void bridge.engine.forgetSession(workspace).then(() => {
       persist(markDone(board, workspace, sessionId, new Date().toISOString()))
-      setNotice('Thread done — the next launch there starts clean.')
+      setNotice('Thread done, the next launch there starts clean.')
       load()
     })
   }
@@ -102,7 +102,7 @@ export default function CodeView({
           <Terminal size={18} className="text-muted" aria-hidden />
           <h1 className="text-[20px] font-semibold text-ink">Code</h1>
           <span
-            className={`h-2 w-2 rounded-full ${engine.alive ? 'animate-pulse bg-ok' : 'bg-muted'}`}
+            className={`h-2 w-2 rounded-full ${engine.alive ? 'bg-ok' : 'bg-muted'}`}
             title={engine.alive ? 'The engine is running' : 'The engine starts with the next task'}
           />
           <span className="ml-auto flex min-w-0 items-center gap-1.5 text-[11.5px] text-muted">
@@ -115,7 +115,7 @@ export default function CodeView({
         {view.scoped ? (
           <p className="mt-2 flex flex-wrap items-center gap-2 text-[12px] text-muted" role="status">
             <span className="min-w-0 truncate" title={focusFolder}>
-              Showing this project's folder — {leaf(focusFolder)}
+              Showing this project's folder, {leaf(focusFolder)}
             </span>
             {onClearFocus ? (
               <button
@@ -213,12 +213,12 @@ export default function CodeView({
             <p className="mt-2 text-[12.5px] text-muted">Reading the board…</p>
           ) : view.sessions.length === 0 && view.done.length === 0 ? (
             <p className="mt-2 text-[12.5px] text-muted">
-              No threads yet. Give the engine work in a folder and its thread appears here — close the app, come back,
+              No threads yet. Give the engine work in a folder and its thread appears here, close the app, come back,
               and the conversation continues.
             </p>
           ) : (
             <div className="mt-3 grid grid-cols-2 gap-3">
-              {/* Continuing — the engine resumes these. */}
+              {/* Continuing, the engine resumes these. */}
               <div className="rounded-xl border border-line bg-panel p-2.5">
                 <p className="px-0.5 text-[11px] font-medium text-muted">
                   Continuing · {view.sessions.length}
@@ -254,7 +254,7 @@ export default function CodeView({
                                     aria-label={`Copy the path of ${leaf(path)}`}
                                     onClick={() => {
                                       void navigator.clipboard?.writeText(path).catch(() => undefined)
-                                      setNotice(`${leaf(path)} — path copied; add it to the composer by name.`)
+                                      setNotice(`${leaf(path)}, path copied; add it to the composer by name.`)
                                     }}
                                     className="min-w-0 flex-1 truncate rounded px-1 py-0.5 text-left font-mono text-[10.5px] text-muted hover:text-ink"
                                   >
@@ -307,7 +307,7 @@ export default function CodeView({
                 )}
               </div>
 
-              {/* Done — history; the resume id is gone. */}
+              {/* Done, history; the resume id is gone. */}
               <div className="rounded-xl border border-line bg-panel p-2.5">
                 <p className="px-0.5 text-[11px] font-medium text-muted">Done · {view.done.length}</p>
                 {view.done.length === 0 ? (
@@ -348,7 +348,7 @@ export default function CodeView({
           )}
           <p className="mt-2 text-[11px] text-muted">
             Threads continue automatically: the next task in the same folder picks up where this one ended. “Done” is
-            the one way to end that — it cannot be undone.
+            the one way to end that, it cannot be undone.
           </p>
         </section>
       </div>

@@ -497,7 +497,7 @@ export default function App() {
           rewriteErrorFor={rewrite.errorFor}
           preview={
             isDemo
-              ? 'Browser preview — this window is the interface only. Models, files and your vault live on your own machine, in the desktop app.'
+              ? 'Browser preview, this window is the interface only. Models, files and your vault live on your own machine, in the desktop app.'
               : ''
           }
         />

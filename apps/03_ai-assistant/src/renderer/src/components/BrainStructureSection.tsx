@@ -62,8 +62,8 @@ export default function BrainStructureSection({
       const fresh = (result.conflicts ?? []).length
       const parts: string[] = []
       if (written.length) parts.push(`Structure added: ${written.length} file${written.length === 1 ? '' : 's'}.`)
-      if (fresh) parts.push(`${fresh} file${fresh === 1 ? ' exists' : 's exist'} in two wordings — yours was kept, the default sits beside it.`)
-      setNotice(parts.join(' ') || 'Structure already in place — nothing to add.')
+      if (fresh) parts.push(`${fresh} file${fresh === 1 ? ' exists' : 's exist'} in two wordings, yours was kept, the default sits beside it.`)
+      setNotice(parts.join(' ') || 'Structure already in place, nothing to add.')
       if (fresh) setOpen(true)
       setConflicts(result.conflicts ?? [])
       inspect(root)
@@ -106,8 +106,8 @@ export default function BrainStructureSection({
       const written = result.written ?? []
       setNotice(
         written.length
-          ? `Default vault set up at ${result.path} — ${written.length} structure file${written.length === 1 ? '' : 's'} written.`
-          : `Default vault at ${result.path} — already complete.`
+          ? `Default vault set up at ${result.path}, ${written.length} structure file${written.length === 1 ? '' : 's'} written.`
+          : `Default vault at ${result.path}, already complete.`
       )
       inspect(result.path || '')
     } catch (error) {
@@ -127,7 +127,7 @@ export default function BrainStructureSection({
         return
       }
       setConflicts(current => current.filter(entry => entry.added !== conflict.added))
-      setNotice(`${conflict.original}: settled — ${action === 'mine' ? 'yours kept' : action === 'new' ? 'default kept' : action === 'both' ? 'both kept' : 'combined'}.`)
+      setNotice(`${conflict.original}: settled, ${action === 'mine' ? 'yours kept' : action === 'new' ? 'default kept' : action === 'both' ? 'both kept' : 'combined'}.`)
       inspect(path)
     } catch (error) {
       setNotice((error as Error).message)
@@ -174,7 +174,7 @@ export default function BrainStructureSection({
   const linksLine = links
     ? links.error
       ? links.error
-      : `${links.checked} links across ${links.files} notes — ${links.dead.length} dead, ${links.ambiguous.length} ambiguous, ${links.edges.length} connected.`
+      : `${links.checked} links across ${links.files} notes, ${links.dead.length} dead, ${links.ambiguous.length} ambiguous, ${links.edges.length} connected.`
     : ''
 
   return (
@@ -212,7 +212,7 @@ export default function BrainStructureSection({
           {counts ? ` · ${counts}` : ''}
         </p>
       ) : (
-        <p className="text-[11.5px] text-muted">No folder chosen yet — the default is Documents\ASSistant\AI-Brain.</p>
+        <p className="text-[11.5px] text-muted">No folder chosen yet, the default is Documents\ASSistant\AI-Brain.</p>
       )}
       {notice ? (
         <p className="break-words text-[12px]" role="status">
@@ -239,7 +239,7 @@ export default function BrainStructureSection({
           {conflicts.length ? (
             <div className="flex flex-col gap-1.5">
               <p className="text-[11.5px] text-muted">
-                In two wordings — yours and the app's default. Pick now, or leave them; both files stay.
+                In two wordings, yours and the app's default. Pick now, or leave them; both files stay.
               </p>
               {conflicts.map(conflict => (
                 <div key={conflict.original} className="flex flex-wrap items-center gap-1.5">
@@ -262,7 +262,7 @@ export default function BrainStructureSection({
           {inspection?.ok && inspection.differing?.length ? (
             <div className="flex flex-wrap items-center gap-2">
               <span className="min-w-0 flex-1 text-[11.5px] text-muted">
-                Newer wording available for {inspection.differing.join(', ')} — notes never touched.
+                Newer wording available for {inspection.differing.join(', ')}, notes never touched.
               </span>
               <button
                 className="rounded border border-line px-2 py-1 text-[11px] text-muted hover:bg-white/[0.06] hover:text-ink disabled:opacity-50"

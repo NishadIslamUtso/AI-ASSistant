@@ -17,8 +17,8 @@ import type { EngineAvailability, EngineId } from '../../shared/lib/engine'
 
 const INSTALL_HINT: Record<EngineId, string> = {
   'claude-code':
-    'Install it once in PowerShell: npm install -g @anthropic-ai/claude-code — then fully quit and reopen AI ASSistant.',
-  agy: 'Install it from google-antigravity/antigravity-cli (antigravity.google) — beware fake "gemini-antigravity-cli" repos that hand out exe files.',
+    'Install it once in PowerShell: npm install -g @anthropic-ai/claude-code, then fully quit and reopen AI ASSistant.',
+  agy: 'Install it from google-antigravity/antigravity-cli (antigravity.google), beware fake "gemini-antigravity-cli" repos that hand out exe files.',
 }
 
 /** True when the version answer looks like the engine talking, not an error page. */
@@ -90,14 +90,14 @@ export function agyModelSource(installed: boolean): ModelSource {
           ok: false,
           models: [],
           error:
-            'agy is not on this machine yet — its brain list is Google\u2019s own (plan-dependent) and appears once agy is installed and signed in. Your Ollama brains cannot plug into agy: it has no custom door.',
+            'agy is not on this machine yet, its brain list is Google\u2019s own (plan-dependent) and appears once agy is installed and signed in. Your Ollama brains cannot plug into agy: it has no custom door.',
         }
       }
       return {
         ok: false,
         models: [],
         error:
-          'agy is installed. Sign in once by running `agy` in a terminal, then reopen the bay — its own brain list (Gemini family, plan-gated) will be read from the machine. Ollama brains cannot plug into agy.',
+          'agy is installed. Sign in once by running `agy` in a terminal, then reopen the bay, its own brain list (Gemini family, plan-gated) will be read from the machine. Ollama brains cannot plug into agy.',
       }
     },
   }
