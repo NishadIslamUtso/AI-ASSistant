@@ -14,6 +14,14 @@
  * recognise, is refused at install — never "installed with warnings".
  */
 
+/**
+ * The community store this app ships with: the project's own repo, on the v3
+ * branch, answering an index.json the same way any other store must. It is a
+ * suggestion with a working link, not a service — removable like any index,
+ * and never fetched until it is added.
+ */
+export const COMMUNITY_INDEX_URL = 'https://raw.githubusercontent.com/NishadIslamUtso/AI-ASSistant/v3/store/index.json'
+
 export type PackContributions = {
   skills: string[]
   prompts: string[]

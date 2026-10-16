@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { FolderOpen, Package, PackagePlus, RefreshCw, Sparkles, Trash2, Check, Palette, MessageSquare, BookOpen } from 'lucide-react'
 import { bridge, isDemo } from '@/platform/bridge'
-import { describePermissions, type Pack } from '@shared/lib/packs'
+import { COMMUNITY_INDEX_URL, describePermissions, type Pack } from '@shared/lib/packs'
 import { readStored, writeStored } from '@shared/lib/storage'
 import { savePrompt } from '@shared/lib/prompts'
 import type { Appearance } from '../state/appearance'
@@ -407,6 +407,7 @@ type IndexEntryView = {
   name: string
   version: string
   author: string
+  downloadable?: boolean
   description: string
   permissions: Record<string, unknown>
   verified: boolean
@@ -483,9 +484,39 @@ function CommunityPacks({ installed, onInstalled }: {
       <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted">Community packs</h3>
       <p className="mt-1 text-[11.5px] leading-relaxed text-muted">
         A store is an index file, not a service: add a folder holding <span className="font-mono">index.json</span> (a repo, a
-        USB stick) or an https URL that answers it. Every entry says what it may do and whether its files still match the
-        checksum the index pinned — a mismatch is refused, never installed.
+        USB stick) or an https URL that answers it — the app's own community store is offered below. Every entry says what
+        it may do and whether its files still match the checksum the index pinned — a mismatch is refused, never installed.
       </p>
+
+      {!indexes.some(item => item.kind === 'url' && item.locator === COMMUNITY_INDEX_URL) ? (
+        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-line bg-bg px-3 py-2">
+          <div className="min-w-0 flex-1">
+            <p className="text-[12px] text-ink">The community store</p>
+            <p className="truncate text-[10.5px] text-muted" title={COMMUNITY_INDEX_URL}>
+              {COMMUNITY_INDEX_URL}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (busy) return
+              setBusy(true)
+              setAnswer('')
+              void bridge.mods
+                .indexAdd('url', COMMUNITY_INDEX_URL)
+                .then(reply => {
+                  setAnswer(reply.answer)
+                  if (reply.ok) browseAll()
+                })
+                .finally(() => setBusy(false))
+            }}
+            disabled={busy}
+            className="rounded-lg border border-line px-2.5 py-1.5 text-[12px] text-ink hover:border-accent disabled:opacity-60"
+          >
+            Add the community store
+          </button>
+        </div>
+      ) : null}
 
       <div className="mt-2 flex items-center gap-1.5">
         <input
@@ -579,12 +610,15 @@ function CommunityPacks({ installed, onInstalled }: {
                             </span>
                           ) : entry.verified ? (
                             <span className="ml-2 rounded-md border border-line px-1.5 py-0.5 text-[10px] text-muted">checksum verified</span>
+                          ) : entry.downloadable ? (
+                            <span className="ml-2 rounded-md border border-line px-1.5 py-0.5 text-[10px] text-muted">download · checked on arrival</span>
                           ) : (
                             <span className="ml-2 rounded-md border border-warn/50 px-1.5 py-0.5 text-[10px] text-warn">not installable</span>
                           )}
                         </p>
                         {entry.description ? <p className="mt-0.5 text-[11.5px] text-muted">{entry.description}</p> : null}
                         {!entry.verified && entry.problem ? <p className="mt-0.5 text-[11px] text-warn">{entry.problem}</p> : null}
+                        {entry.downloadable ? <p className="mt-0.5 text-[11px] text-muted">Downloads beside its index, then must match the pinned checksum byte for byte before anything installs.</p> : null}
                         <details className="mt-1">
                           <summary className="cursor-pointer text-[11px] text-muted hover:text-ink">What it may do</summary>
                           <ul className="mt-1 flex flex-col gap-0.5">
@@ -599,8 +633,8 @@ function CommunityPacks({ installed, onInstalled }: {
                           <button
                             type="button"
                             onClick={() => install(index.kind, index.locator, entry.id)}
-                            disabled={busy || !entry.verified}
-                            title={entry.verified ? 'Verify the checksum again and install' : entry.problem || 'Cannot be verified against the index'}
+                            disabled={busy || (!entry.verified && !entry.downloadable)}
+                            title={entry.verified ? 'Verify the checksum again and install' : entry.downloadable ? 'Download, check against the pinned checksum, then install' : entry.problem || 'Cannot be verified against the index'}
                             className="mt-1.5 rounded-lg border border-line px-2.5 py-1 text-[11.5px] text-ink hover:border-accent disabled:opacity-50"
                           >
                             Install

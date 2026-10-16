@@ -136,9 +136,20 @@ test('install from a folder index copies the verified pack; a URL index refuses 
     const missing = await installFromIndex({ kind: 'folder', path: root }, 'other-pack', targets)
     assert.equal(missing.ok, false)
     if (!missing.ok) assert.match(missing.answer, /does not list/)
-    const url = await installFromIndex({ kind: 'url', url: 'https://example.org/index.json' }, 'good-pack', targets)
+    const indexUrl = 'https://example.org/index.json'
+    const served: Record<string, string> = {
+      [indexUrl]: JSON.stringify({
+        name: 'Test index',
+        packs: [{ id: 'good-pack', name: 'Good pack', version: '1.0.0', author: 'tester', checksum: digest, source: 'good-pack' }],
+      }),
+    }
+    const url = await installFromIndex({ kind: 'url', url: indexUrl }, 'good-pack', targets, async (asked) => {
+      assert.ok(asked in served, `unexpected fetch: ${asked}`)
+      return served[asked]!
+    })
     assert.equal(url.ok, false)
-    if (!url.ok) assert.match(url.answer, /folder indexes/)
+    // This index names no files, so nothing could be checked on arrival.
+    if (!url.ok) assert.match(url.answer, /lists no files/)
   } finally {
     rmSync(root, { recursive: true, force: true })
     rmSync(store, { recursive: true, force: true })
