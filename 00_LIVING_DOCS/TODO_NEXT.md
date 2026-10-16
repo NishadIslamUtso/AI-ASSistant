@@ -22,6 +22,15 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
   `gemini-antigravity-cli` repos = scams, warned).
 - 315/315 tests, tsc clean, pushed (main = v3).
 
+## NOW — his four messages answered and made real (2026-10-16, after Mods P3)
+
+1. **Models ↔ engines, verified:** sends are engine-only; a Models key now rides the ENGINE (provider brains join the engine's picker; the engine is launched at the provider with the key in its env; the app never calls the provider itself).
+2. **Monthly self-organization, now real:** the first boot or vault choice of a month writes `06 Review/Monthly Audits/<YYYY-MM>.md` from the vault's own numbers; write-once; no scheduler.
+3. **Marketplace dissolved (his order):** modal + sidebar button + account-menu entry deleted; Connectors (engines + extension) and Plugins (packs) are the homes.
+4. **3D first-class (his order, the Claude-OS view):** Brain in the nav + Ctrl+7 + "Open the 3D brain" in Settings › Vault; same graph engine, full height, live counts.
+
+Receipts g27–g33. Version 0.8.0. Next: D installer rebuild (recipe in RELEASE-WINDOWS.md), then TUF A15 acceptance.
+
 ## NOW — the acceptance round-trip (everything hangs on this)
 
 - [ ] **His run on the TUF A15** with the v0.6.0 installer (BUILT 2026-10-16 — AI-ASSistant-Setup-0.6.0.exe, 88,062,356 B, sha256 c0c9c086…5ea38c):

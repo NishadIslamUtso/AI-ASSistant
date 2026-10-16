@@ -16,8 +16,8 @@ import ArtifactsView from './components/ArtifactsView'
 import TodayView from './components/TodayView'
 import ProjectsView from './components/ProjectsView'
 import FirstRunView from './components/FirstRunView'
-import MarketplaceModal from './components/MarketplaceModal'
 import useProjects from './state/projects'
+import BrainView from './components/BrainView'
 import VaultView from './components/VaultView'
 import CodeView from './components/CodeView'
 import useArtifactLibrary, { adoptionRecords } from './state/artifactLibrary'
@@ -58,7 +58,6 @@ export default function App() {
   const chats = useChats(setNotice)
   const [profile, setProfile] = usePersistentState('ai-assistant.profile', DEFAULT_PROFILE, normalizeProfile, setNotice)
   const [welcomed, setWelcomed] = usePersistentState('ai-assistant.welcomed', false, (value) => value === true, setNotice)
-  const [marketOpen, setMarketOpen] = useState(false)
   const { projects } = useProjects(true)
   const [model, setModel] = usePersistentState(
     'ai-assistant.model',
@@ -101,7 +100,7 @@ export default function App() {
       setNotice('')
     })
     const offSettings = bridge.app?.onMenu?.('menu:settings', () => setSettingsOpen(true))
-    const offViews = (['chat', 'artifacts', 'today', 'projects', 'vault', 'code'] as const).map(view =>
+    const offViews = (['chat', 'artifacts', 'today', 'projects', 'vault', 'brain', 'code'] as const).map(view =>
       bridge.app?.onMenu?.(`menu:view:${view}`, () => setView(view))
     )
     return () => {
@@ -399,13 +398,16 @@ export default function App() {
             setSettingsOpen(true)
           }}
           onOpenMemory={() => setMemoryOpen(true)}
-          onOpenMarketplace={() => setMarketOpen(true)}
           onSetChatProject={(chatId, projectId) => chats.setProject(chatId, projectId)}
           onPin={chats.pin}
           onRenameChat={chats.rename}
           profileName={profile.name}
         />
-        {view === 'code' ? <CodeView /> : view === 'vault' ? (
+        {view === 'code' ? (
+          <CodeView />
+        ) : view === 'brain' ? (
+          <BrainView vault={vault} isDemo={isDemo} onOpenVault={() => setView('vault')} />
+        ) : view === 'vault' ? (
           <VaultView
             onAddToComposer={(path, content) => {
               // A note becomes context: quoted, capped, and named — never a
@@ -533,12 +535,15 @@ export default function App() {
           }}
           vault={vault}
           onChanged={() => setVaultRevision(revision => revision + 1)}
+          onOpenBrain={() => {
+            setSettingsOpen(false)
+            setView('brain')
+          }}
           appearance={appearance}
           onAppearanceChange={setAppearance}
           inference={inference}
           onInferenceChange={setInference}
           />
-      <MarketplaceModal open={marketOpen} onClose={() => setMarketOpen(false)} />
       </div>
     </div>
   )

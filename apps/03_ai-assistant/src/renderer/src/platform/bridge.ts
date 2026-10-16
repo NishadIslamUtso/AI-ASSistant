@@ -361,7 +361,7 @@ export type EngineBridge = {
   onPullEvent: (listener: (tick: unknown) => void) => () => void
   readHouseRules: () => Promise<{ rules: HouseRules; defaults: HouseRules }>
   writeHouseRules: (rules: HouseRules) => Promise<{ ok: boolean; written: string[] }>
-  setModel: (model: string) => Promise<{ ok: boolean; answer: string }>
+  setModel: (model: string, provider?: 'anthropic') => Promise<{ ok: boolean; answer: string }>
   setApproval: (mode: ApprovalMode) => Promise<{ ok: boolean; answer: string }>
   pickWorkspace: () => Promise<{ ok: boolean; answer: string }>
   send: (prompt: string, cwd: string) => Promise<{ ok: boolean; answer: string }>

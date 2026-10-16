@@ -1,16 +1,14 @@
-import { Database, FolderOpen, MessageSquare, Shapes, SquareTerminal, Sun } from 'lucide-react'
+import { Brain, Database, FolderOpen, MessageSquare, Shapes, SquareTerminal, Sun } from 'lucide-react'
 
 /**
  * The app's own sections, at the top of the sidebar.
  *
- * Two entries, because two screens exist. Code, Projects, Vault and Today are
- * in the design and are not built yet; they are named in one muted line rather
- * than drawn as entries that do nothing. A nav that looks complete and is not
+ * Every entry is a screen that exists; a nav that looks complete and is not
  * is worse than a short one that is — that is the rule this file exists to
  * keep.
  */
 
-export type View = 'chat' | 'artifacts' | 'today' | 'projects' | 'vault' | 'code'
+export type View = 'chat' | 'artifacts' | 'today' | 'projects' | 'vault' | 'brain' | 'code'
 
 const ITEMS: Array<{ id: View; label: string; Icon: typeof MessageSquare }> = [
   { id: 'chat', label: 'Chat', Icon: MessageSquare },
@@ -18,6 +16,7 @@ const ITEMS: Array<{ id: View; label: string; Icon: typeof MessageSquare }> = [
   { id: 'today', label: 'Today', Icon: Sun },
   { id: 'projects', label: 'Projects', Icon: FolderOpen },
   { id: 'vault', label: 'Vault', Icon: Database },
+  { id: 'brain', label: 'Brain', Icon: Brain },
   { id: 'code', label: 'Code', Icon: SquareTerminal },
 ]
 

@@ -336,6 +336,17 @@ test('the brain wiring: the Ollama door is set explicitly, no door means no over
   assert.deepEqual(brainEnvironment(''), {})
 })
 
+test('a key from Models rides the ENGINE: its env points the engine at the provider', () => {
+  // The engine is launched AT the provider with the key in its own environment;
+  // the app itself still calls no provider. The local door is not touched at all.
+  const env = brainEnvironment('http://localhost:11434', 'sk-ant-test')
+  assert.deepEqual(env, {
+    ANTHROPIC_BASE_URL: 'https://api.anthropic.com/v1',
+    ANTHROPIC_API_KEY: 'sk-ant-test',
+  })
+  assert.equal('ANTHROPIC_AUTH_TOKEN' in env, false)
+})
+
 test('the launch arguments are a pure function of the model', () => {
   assert.deepEqual(engineArguments('qwen2.5-coder:3b').slice(-2), ['--model', 'qwen2.5-coder:3b'])
   assert.equal(engineArguments('').includes('--model'), false)
