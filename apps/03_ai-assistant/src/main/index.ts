@@ -25,6 +25,7 @@ import { parsePullLine, validateModelName } from './engine/pull'
 import { deployMcp, deploySkill, scanClaudeSkills, type McpServer, type VaultSkill } from './engine/deploy'
 import { installCatalogSkill } from './engine/skillCatalogInstall'
 import { installPackFromFolder, listPacks, removePack } from './engine/packs'
+import { normalizeBoard } from '../shared/lib/sessionsBoard'
 import { exportVaultCopy } from './vault/exportCopy'
 import { deployHouseRules } from './engine/houseRulesDeploy'
 import { DEFAULT_HOUSE_RULES, type HouseRules } from '../shared/lib/houseRules'
@@ -527,6 +528,34 @@ function registerBridges(): void {
   ipcMain.handle('mods:remove', (_event, id: string): { ok: boolean; answer: string } =>
     removePack(String(id ?? ''), join(app.getPath('userData'), 'extensions'), skillTargets()),
   )
+
+  // The session board (A.5): the owner's own organisation of the engine's
+  // resumable threads — which files each thread touches, and which are done.
+  // The resume ids themselves stay in engine-sessions.json; this file only
+  // carries the owner's links and history.
+  const boardFile = (): string => join(app.getPath('userData'), 'sessions-board.json')
+  ipcMain.handle('sessions:board-read', (): unknown => {
+    try {
+      return JSON.parse(readFileSync(boardFile(), 'utf8'))
+    } catch {
+      return { continuing: {}, done: [] }
+    }
+  })
+  ipcMain.handle('sessions:board-write', (_event, value: unknown): { ok: boolean } => {
+    try {
+      writeFileSync(boardFile(), JSON.stringify(normalizeBoard(value), null, 2), 'utf8')
+      return { ok: true }
+    } catch {
+      return { ok: false }
+    }
+  })
+  ipcMain.handle('sessions:pick-files', async (): Promise<string[]> => {
+    const picked = await dialog.showOpenDialog({
+      title: 'Which files does this thread touch?',
+      properties: ['openFile', 'multiSelections'],
+    })
+    return picked.canceled ? [] : picked.filePaths
+  })
 
   // Projects: the owner's named homes for related work. Stored once,
   // validated on the way in and the way out; a damaged file means "no

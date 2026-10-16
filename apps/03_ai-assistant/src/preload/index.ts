@@ -107,6 +107,9 @@ const api = {
     setWorkspace: (folder: string): Promise<{ ok: boolean; answer: string }> =>
       ipcRenderer.invoke('engine:workspace-set', folder),
     sessions: (): Promise<Array<{ workspace: string; sessionId: string }>> => ipcRenderer.invoke('engine:sessions'),
+    boardRead: (): Promise<unknown> => ipcRenderer.invoke('sessions:board-read'),
+    boardWrite: (board: unknown): Promise<{ ok: boolean }> => ipcRenderer.invoke('sessions:board-write', board),
+    pickFiles: (): Promise<string[]> => ipcRenderer.invoke('sessions:pick-files'),
     forgetSession: (workspace: string): Promise<{ ok: boolean }> => ipcRenderer.invoke('engine:sessions-forget', workspace),
     openFolder: (folder: string): Promise<{ ok: boolean }> => ipcRenderer.invoke('app:open-folder', folder),
   },

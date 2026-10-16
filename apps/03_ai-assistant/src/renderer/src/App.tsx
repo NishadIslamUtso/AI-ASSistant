@@ -427,6 +427,12 @@ export default function App() {
                 setNotice(answer.ok ? `The engine now works in ${folder}` : answer.answer)
               })
             }}
+            onViewBoard={(folder) => {
+              void bridge.engine.setWorkspace(folder).then((answer) => {
+                if (answer.ok) setNotice(`The engine now works in ${folder}`)
+                setView('code')
+              })
+            }}
           />
         ) : view === 'today' ? (
           <TodayView
