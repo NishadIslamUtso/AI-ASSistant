@@ -24,6 +24,8 @@ import { ENGINE_IMAGE_MIMES, MAX_ENGINE_IMAGE_CHARS as ENGINE_IMAGE_CHARS, MAX_E
 import { listCheckpoints, restoreCheckpoint } from './engine/checkpoints'
 import { createRecipeManager } from './recipes'
 import { createCompactManager } from './compact'
+import { buildRepoMap } from './repoMap'
+import { createHookRunner } from './hooks'
 import { createDownloadManager, type DownloadTick } from './engine/downloads'
 import { agyModelSource, detectEngine } from './engine/availability'
 import { parsePullLine, validateModelName } from './engine/pull'
@@ -533,7 +535,12 @@ function registerBridges(): void {
         settings: settings.engine,
         auth, images,
         checkpointDir: join(app.getPath('userData'), 'checkpoints'),
-        onEvent: pushEngineEvent,
+        onEvent: (event: EngineEvent) => {
+          pushEngineEvent(event)
+          if (event.kind === 'done') void hookRunner.run('turn-done').then((lines) => lines.forEach((line) => pushEngineEvent({ kind: 'status', text: line })))
+          if (event.kind === 'error') void hookRunner.run('turn-error').then((lines) => lines.forEach((line) => pushEngineEvent({ kind: 'status', text: line })))
+          if (event.kind === 'permission') void hookRunner.run('permission').then((lines) => lines.forEach((line) => pushEngineEvent({ kind: 'status', text: line })))
+        },
       })
     },
   )
@@ -598,6 +605,40 @@ function registerBridges(): void {
     engine.fresh()
     return { ok: true, answer: 'Session ended and its resume id forgotten. The next task starts fresh.' }
   })
+
+  // The repo map: the working folder's structure on one page — the folder the
+  // engine already works in, never a path handed over from the window.
+  ipcMain.handle('repo:map', async (): Promise<unknown> => buildRepoMap(settings.engine.workspace || vaultRoot()))
+
+  // Hooks: the owner's own commands at the engine's moments. Added by hand,
+  // shown in full, capped; packs cannot contribute one (the manifest refuses
+  // what it does not know). A hook's failure is reported, never fatal.
+  const hooksFile = (): string => join(app.getPath('userData'), 'hooks.json')
+  const hookRunner = createHookRunner({
+    load: () => {
+      try {
+        const parsed = JSON.parse(readFileSync(hooksFile(), 'utf8')) as unknown
+        return Array.isArray(parsed) ? (parsed as never[]) : []
+      } catch {
+        return []
+      }
+    },
+    save: (hooks) => {
+      writeFileSync(hooksFile(), JSON.stringify(hooks, null, 2), 'utf8')
+    },
+  })
+  const readHooks = (): Array<{ id: string; name: string; event: string; command: string }> => {
+    try {
+      const parsed = JSON.parse(readFileSync(hooksFile(), 'utf8')) as Array<{ id: string; name: string; event: string; command: string }>
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }
+  ipcMain.handle('hooks:list', () => ({ ok: true, hooks: readHooks() }))
+  ipcMain.handle('hooks:save', (_event, hook: unknown) => hookRunner.upsert(hook as never))
+  ipcMain.handle('hooks:remove', (_event, id: string) => hookRunner.remove(typeof id === 'string' ? id : ''))
+  ipcMain.handle('hooks:test', (_event, command: string) => hookRunner.test(typeof command === 'string' ? command : ''))
 
   // Checkpoints: what the app kept the moment before an allowed write, and
   // the way back. Read from the folder the engine was handed at send time.

@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUp, ChevronDown, CookingPot, Cpu, FolderOpen, Layers, Mic, MicOff, Paperclip, Play, ScrollText, Square, Swords, X } from 'lucide-react'
+import { ArrowUp, ChevronDown, CookingPot, Cpu, FolderOpen, Layers, Map, Mic, MicOff, Paperclip, Play, ScrollText, Square, Swords, X } from 'lucide-react'
 import type { Project } from '@shared/lib/projects'
 import type { Attachment } from '@shared/types'
 import type { Recipe } from '@shared/lib/recipes'
 import { renderRecipe } from '@shared/lib/recipes'
 import { loadRecipes, runRecipe, useRecipes } from '@/state/recipes'
+import { mapContextBlock } from '@shared/lib/repoMap'
+import { getEngineApi } from '@/platform/bridge'
 import { vaultGet, type VaultReply } from '@shared/lib/vault'
 import { useEngine, type EngineTurn } from '@/state/engine'
 import useDismiss from '@/hooks/useDismiss'
@@ -207,6 +209,7 @@ export default function Composer({
             {listening ? <MicOff size={13} /> : <Mic size={13} />}
           </button>
           <RecipeButton />
+          <MapButton onInsert={(map) => onChange(value.trim() ? `${value.trimEnd()}\n\n${map}\n` : `${map}\n`)} />
           <span className="ml-auto" />
           <EngineChip open={boxOpen === 'engine'} onToggle={() => setBoxOpen(boxOpen === 'engine' ? null : 'engine')} />
           <ModelChip open={boxOpen === 'models'} onToggle={() => setBoxOpen(boxOpen === 'models' ? null : 'models')} />
@@ -732,5 +735,81 @@ function RecipeRunDialog({ recipe, onClose }: { recipe: Recipe; onClose: () => v
         </div>
       </div>
     </div>
+  )
+}
+
+/**
+ * The map of the working folder, one press away: structure only, bounded,
+ * honest about cuts. Copy takes it anywhere; Add to message rides it with
+ * the next work order so the engine starts knowing what lives where.
+ */
+function MapButton({ onInsert }: { onInsert: (mapBlock: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [answer, setAnswer] = useState<{ ok: boolean; map?: string; files?: number; dirs?: number; truncated?: boolean; answer?: string } | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    setLoading(true)
+    setCopied(false)
+    void getEngineApi().repoMap().then((reply) => {
+      setAnswer(reply)
+      setLoading(false)
+    })
+  }, [open])
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        title="Map the working folder: structure on one page, bounded, honest about cuts"
+        aria-label="Map the working folder"
+        className="flex h-7 items-center gap-1.5 rounded-lg px-1.5 text-muted hover:text-ink"
+      >
+        <Map size={13} aria-hidden />
+      </button>
+      {open ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6" role="dialog" aria-label="Map of the working folder" onClick={() => setOpen(false)}>
+          <div className="max-h-[80vh] w-full max-w-[560px] overflow-y-auto rounded-2xl border border-line bg-card p-5" onClick={event => event.stopPropagation()}>
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="text-[15px] font-semibold text-ink">Map of the working folder</h2>
+              <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="text-muted hover:text-ink">
+                <X size={15} />
+              </button>
+            </div>
+            {loading ? <p className="mt-3 text-[12.5px] text-muted">Walking the folder…</p> : null}
+            {!loading && answer && !answer.ok ? <p className="mt-3 text-[12px] text-warn">{answer.answer}</p> : null}
+            {!loading && answer?.ok ? (
+              <>
+                <p className="mt-2 text-[11.5px] text-muted">
+                  {answer.files} files · {answer.dirs} folders{answer.truncated ? ' · cut at the bounds, and the map says so' : ''} · the engine still reads the files itself
+                </p>
+                <pre className="mt-1.5 max-h-[320px] overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-line bg-bg p-2.5 text-[11.5px] leading-relaxed text-ink">
+                  {answer.map}
+                </pre>
+                <div className="mt-4 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { void navigator.clipboard?.writeText(answer.map ?? '').catch(() => undefined); setCopied(true) }}
+                    className="h-8 rounded-lg border border-line px-3 text-[12px] text-ink hover:border-ok"
+                  >
+                    {copied ? 'Copied' : 'Copy'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { onInsert(mapContextBlock(answer.map ?? '')); setOpen(false) }}
+                    className="h-8 rounded-lg bg-accent px-3 text-[12.5px] font-medium text-white hover:bg-accent/90"
+                  >
+                    Add to message
+                  </button>
+                </div>
+              </>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+    </>
   )
 }

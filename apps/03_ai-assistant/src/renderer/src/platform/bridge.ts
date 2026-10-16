@@ -380,10 +380,17 @@ export type EngineBridge = {
     list: () => Promise<{ ok: boolean; checkpoints: Array<{ copy: string; original: string; at: string }> }>
     restore: (copy: string) => Promise<{ ok: boolean; answer: string }>
   }
+  hooks: {
+    list: () => Promise<{ ok: boolean; hooks: Array<{ id: string; name: string; event: string; command: string }> }>
+    save: (hook: unknown) => Promise<{ ok: boolean; answer: string }>
+    remove: (id: string) => Promise<{ ok: boolean; answer: string }>
+    test: (command: string) => Promise<{ ok: boolean; answer: string }>
+  }
   battle: {
     record: (entry: { prompt: string; winner: string; loser: string; tie: boolean; blind: boolean }) => Promise<{ ok: boolean; answer: string }>
     ledger: () => Promise<{ ok: boolean; entries: Array<{ prompt: string; winner: string; loser: string; tie: boolean; at: string }> }>
   }
+  repoMap: () => Promise<{ ok: boolean; answer?: string; map?: string; files?: number; dirs?: number; truncated?: boolean; root?: string }>
   compact: {
     save: (input: { brief: string; workspace: string; at: string }) => Promise<{ ok: boolean; answer: string; file?: string }>
   }
@@ -437,10 +444,17 @@ const demoEngineBridge: EngineBridge = {
     list: async () => ({ ok: true, checkpoints: [] }),
     restore: async () => ({ ok: false, answer: 'Checkpoints live in the desktop app.' }),
   },
+  hooks: {
+    list: async () => ({ ok: true, hooks: [] }),
+    save: async () => ({ ok: false, answer: 'Hooks live in the desktop app.' }),
+    remove: async () => ({ ok: false, answer: 'Hooks live in the desktop app.' }),
+    test: async () => ({ ok: false, answer: 'Hooks run in the desktop app.' }),
+  },
   battle: {
     record: async () => ({ ok: false, answer: 'The tally lives in the desktop app.' }),
     ledger: async () => ({ ok: true, entries: [] }),
   },
+  repoMap: async () => ({ ok: false, answer: 'The map is drawn in the desktop app.' }),
   compact: {
     save: async () => ({ ok: false, answer: 'Briefs live in the desktop app.' }),
   },

@@ -8,6 +8,7 @@ import BrowserControlSection from './BrowserControlSection'
 import ModsSection from './ModsSection'
 import EngineBay from './EngineBay'
 import RecipesSection from './RecipesSection'
+import HooksSection from './HooksSection'
 import { useEngine } from '@/state/engine'
 import type { VaultState } from '../hooks/useVault'
 import {
@@ -64,7 +65,7 @@ import {
  * browser preview there is no folder to choose and no model to run.
  */
 
-export type SectionId = 'agents' | 'house' | 'skills' | 'recipes' | 'extensions' | 'engine' | 'system' | 'connectors' | 'appearance' | 'models' | 'performance' | 'vault'
+export type SectionId = 'agents' | 'hooks' | 'house' | 'skills' | 'recipes' | 'extensions' | 'engine' | 'system' | 'connectors' | 'appearance' | 'models' | 'performance' | 'vault'
 
 type Row = {
   /** What the row is called, and what the rail's search matches on. */
@@ -84,6 +85,7 @@ const SECTIONS: readonly {
   { id: 'system', title: 'System', group: 'This computer' },
   { id: 'connectors', title: 'Connectors', group: 'This computer' },
   { id: 'agents', title: 'Agent access', group: 'This app', resettable: true },
+  { id: 'hooks', title: 'Hooks', group: 'This app' },
   { id: 'house', title: 'House rules', group: 'This app' },
   { id: 'skills', title: 'Skills', group: 'This app' },
   { id: 'recipes', title: 'Recipes', group: 'This app' },
@@ -131,6 +133,12 @@ function SectionIcon({ id }: { id: SectionId }) {
     skills: (
       <>
         <path d="M10 3.5 11.8 7.6 16 8.2 13 11.2 13.7 15.5 10 13.4 6.3 15.5 7 11.2 4 8.2 8.2 7.6z" />
+      </>
+    ),
+    hooks: (
+      <>
+        <rect x="2.5" y="4.5" width="15" height="11" rx="1.5" />
+        <path d="M6 8.5l2.5 2L6 12.5M10.5 12.5H14" />
       </>
     ),
     recipes: (
@@ -1096,6 +1104,13 @@ export default function SettingsView({
         label: 'The engine bay',
         terms: 'engine agent claude-code agy brain model pull download detect install throttle folder',
         body: <EngineBay />,
+      },
+    ],
+    hooks: [
+      {
+        label: 'Your commands at the engine\u2019s moments',
+        terms: 'hooks commands run turn done error permission automate formatter terminal events claude code',
+        body: <HooksSection />,
       },
     ],
     recipes: [

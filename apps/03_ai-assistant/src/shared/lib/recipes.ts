@@ -35,6 +35,7 @@ export function recipeSlug(name: string): string {
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9._-]+/g, '-')
+    .replace(/-{2,}/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 60)
   return slug || ''

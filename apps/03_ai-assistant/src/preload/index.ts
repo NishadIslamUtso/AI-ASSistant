@@ -75,12 +75,21 @@ const engineApi = {
     restore: (copy: string): Promise<{ ok: boolean; answer: string }> =>
       ipcRenderer.invoke('engine:checkpoint:restore', copy),
   },
+  hooks: {
+    list: (): Promise<{ ok: boolean; hooks: Array<{ id: string; name: string; event: string; command: string }> }> =>
+      ipcRenderer.invoke('hooks:list'),
+    save: (hook: unknown): Promise<{ ok: boolean; answer: string }> => ipcRenderer.invoke('hooks:save', hook),
+    remove: (id: string): Promise<{ ok: boolean; answer: string }> => ipcRenderer.invoke('hooks:remove', id),
+    test: (command: string): Promise<{ ok: boolean; answer: string }> => ipcRenderer.invoke('hooks:test', command),
+  },
   battle: {
     record: (entry: { prompt: string; winner: string; loser: string; tie: boolean; blind: boolean }): Promise<{ ok: boolean; answer: string }> =>
       ipcRenderer.invoke('battle:record', entry),
     ledger: (): Promise<{ ok: boolean; entries: Array<{ prompt: string; winner: string; loser: string; tie: boolean; at: string }> }> =>
       ipcRenderer.invoke('battle:ledger'),
   },
+  repoMap: (): Promise<{ ok: boolean; answer?: string; map?: string; files?: number; dirs?: number; truncated?: boolean; root?: string }> =>
+    ipcRenderer.invoke('repo:map'),
   compact: {
     save: (input: { brief: string; workspace: string; at: string }): Promise<{ ok: boolean; answer: string; file?: string }> =>
       ipcRenderer.invoke('compact:save', input),
