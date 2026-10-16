@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FolderOpen, Package, PackagePlus, RefreshCw, Trash2, Check, Palette, MessageSquare, BookOpen } from 'lucide-react'
+import { FolderOpen, Package, PackagePlus, RefreshCw, Sparkles, Trash2, Check, Palette, MessageSquare, BookOpen } from 'lucide-react'
 import { bridge, isDemo } from '@/platform/bridge'
 import { describePermissions, type Pack } from '@shared/lib/packs'
 import { readStored, writeStored } from '@shared/lib/storage'
@@ -107,6 +107,19 @@ export default function ModsSection({
       .finally(() => setBusy(false))
   }
 
+  const installStarter = (): void => {
+    if (busy || isDemo) return
+    setBusy(true)
+    setAnswer('')
+    void bridge.mods
+      .installStarter()
+      .then(reply => {
+        setAnswer(reply.answer)
+        if (reply.ok) refresh()
+      })
+      .finally(() => setBusy(false))
+  }
+
   const applyTheme = (pack: Pack): void => {
     const appearance = packTheme(pack.id)
     if (!appearance) {
@@ -141,6 +154,17 @@ export default function ModsSection({
       >
         <FolderOpen size={13} aria-hidden /> Install from folder…
       </button>
+      <button
+        type="button"
+        onClick={installStarter}
+        disabled={busy}
+        title="The app's own browser-page skill and one look, as a pack"
+        className="flex w-fit items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-[12px] text-ink hover:border-accent disabled:opacity-60"
+      >
+        <Sparkles size={13} aria-hidden /> Install starter pack
+      </button>
+
+      <ExportPack appearance={appearance} onExported={refresh} />
 
       {answer ? <p className="text-[12px] text-muted">{answer}</p> : null}
       {applied ? (
@@ -248,6 +272,133 @@ themes/paper.json`}
 
       <CommunityPacks installed={packs.map(item => ({ id: item.pack.id, version: item.pack.version }))} onInstalled={refresh} />
     </div>
+  )
+}
+
+/**
+ * Phase 3 — publish. The engine's real skills (read from its folder, listed
+ * here) and the app's current look become a pack folder with a ready-made
+ * index.json entry beside it: send the folder to share it, or add it as an
+ * index to install from it with the checksum check.
+ */
+function ExportPack({ appearance, onExported }: { appearance: Appearance; onExported: () => void }) {
+  const [open, setOpen] = useState(false)
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [skills, setSkills] = useState<Array<{ name: string; description: string }>>([])
+  const [picked, setPicked] = useState<string[]>([])
+  const [withTheme, setWithTheme] = useState(false)
+  const [answer, setAnswer] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    if (!open || skills.length) return
+    void bridge.skills.scan().then(list => {
+      setSkills((list ?? []).map(item => ({ name: item.name, description: item.description })))
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
+
+  const run = (): void => {
+    if (busy) return
+    setBusy(true)
+    setAnswer('')
+    void bridge.mods
+      .exportPack({
+        name,
+        description,
+        author: 'me',
+        skills: picked,
+        theme: withTheme ? { accent: appearance.accent, width: appearance.width, textSize: appearance.textSize, font: appearance.font, motion: appearance.motion } : null,
+      })
+      .then(reply => {
+        setAnswer(reply.answer)
+        if (reply.ok) onExported()
+      })
+      .finally(() => setBusy(false))
+  }
+
+  return (
+    <details
+      className="mt-1 rounded-xl border border-line bg-card p-3"
+      onToggle={event => setOpen((event.target as HTMLDetailsElement).open)}
+    >
+      <summary className="cursor-pointer text-[12px] text-ink">
+        Export as pack<span className="text-muted"> — your skills and your look, as a folder you can send</span>
+      </summary>
+
+      <p className="mt-2 text-[11.5px] leading-relaxed text-muted">
+        The pack lands in your home folder under <span className="font-mono">AI-ASSistant packs</span>, with an{' '}
+        <span className="font-mono">index.json</span> beside it. Send the folder to share it; anyone can add it as an
+        index above and install it with the checksum verified.
+      </p>
+
+      <div className="mt-2 flex flex-col gap-2">
+        <input
+          type="text"
+          value={name}
+          onChange={event => setName(event.target.value)}
+          placeholder="Pack name"
+          aria-label="Export pack name"
+          className="w-full rounded-lg border border-line bg-panel px-2.5 py-1.5 text-[12px] text-ink placeholder:text-muted"
+        />
+        <input
+          type="text"
+          value={description}
+          onChange={event => setDescription(event.target.value)}
+          placeholder="What it is for (one line)"
+          aria-label="Export pack description"
+          className="w-full rounded-lg border border-line bg-panel px-2.5 py-1.5 text-[12px] text-ink placeholder:text-muted"
+        />
+      </div>
+
+      <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-muted">Skills from this engine</p>
+      {!skills.length ? (
+        <p className="mt-1 text-[11.5px] text-muted">The engine's skill folder is empty — install or write skills first.</p>
+      ) : (
+        <ul className="mt-1 flex flex-col gap-1">
+          {skills.map(skill => (
+            <li key={skill.name}>
+              <label className="flex cursor-pointer items-start gap-2 rounded-lg px-1 py-0.5 hover:bg-white/[0.03]">
+                <input
+                  type="checkbox"
+                  checked={picked.includes(skill.name)}
+                  onChange={event =>
+                    setPicked(current => (event.target.checked ? [...current, skill.name] : current.filter(item => item !== skill.name)))
+                  }
+                  aria-label={`Include the ${skill.name} skill`}
+                  className="mt-0.5"
+                />
+                <span className="min-w-0">
+                  <span className="block text-[12px] text-ink">{skill.name}</span>
+                  {skill.description ? <span className="block truncate text-[11px] text-muted">{skill.description}</span> : null}
+                </span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <label className="mt-2 flex cursor-pointer items-center gap-2">
+        <input
+          type="checkbox"
+          checked={withTheme}
+          onChange={event => setWithTheme(event.target.checked)}
+          aria-label="Include the current look as a theme"
+        />
+        <span className="text-[12px] text-ink">Include the current look as a theme</span>
+      </label>
+
+      <button
+        type="button"
+        onClick={run}
+        disabled={busy || !name.trim()}
+        className="mt-2 w-fit rounded-lg border border-line px-3 py-1.5 text-[12px] text-ink hover:border-accent disabled:opacity-60"
+      >
+        {busy ? 'Exporting…' : 'Export pack'}
+      </button>
+      {answer ? <p className="mt-1 text-[11.5px] text-muted">{answer}</p> : null}
+    </details>
   )
 }
 

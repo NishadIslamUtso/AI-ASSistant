@@ -160,6 +160,9 @@ const api = {
     /** Install one skill from the app's own catalog, into every engine. */
     installCatalog: (name: string): Promise<{ ok: boolean; answer: string; written?: string[] }> =>
       ipcRenderer.invoke('skills:install-catalog', name),
+    /** The skills the engine folder really holds — the export list. */
+    scan: (): Promise<Array<{ name: string; description: string; body: string; source: string }>> =>
+      ipcRenderer.invoke('skills:scan'),
   },
   mods: {
     installFromFile: (): Promise<{ ok: boolean; answer: string; pack?: unknown; prompts?: Array<{ name: string; body: string }>; themes?: Array<{ name: string; appearance: Record<string, string> }>; folder?: string }> =>
@@ -175,6 +178,10 @@ const api = {
       ipcRenderer.invoke('mods:index-browse', { kind, locator }),
     indexInstall: (kind: string, locator: string, id: string): Promise<{ ok: boolean; answer: string; written?: string[]; folder?: string }> =>
       ipcRenderer.invoke('mods:index-install', { kind, locator, id }),
+    exportPack: (payload: { name: string; description: string; author: string; skills: string[]; theme: Record<string, string> | null }): Promise<{ ok: boolean; answer: string; folder?: string; index?: string }> =>
+      ipcRenderer.invoke('mods:export', payload),
+    installStarter: (): Promise<{ ok: boolean; answer: string; folder?: string; written?: string[] }> =>
+      ipcRenderer.invoke('mods:install-starter'),
   },
   mcp: {
     /** The one MCP server list, and which engine configs it was deployed to. */

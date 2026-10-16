@@ -48,6 +48,21 @@ const THEME_VALUES: Record<string, Set<string>> = {
   motion: new Set(['system', 'reduced']),
 }
 
+/** The look rules one validator, shared by pack themes and pack exports. */
+export function cleanThemeAppearance(appearance: Record<string, unknown>): { clean?: Record<string, string>; problem?: string } {
+  const clean: Record<string, string> = {}
+  for (const [key, value] of Object.entries(appearance)) {
+    if (!THEME_KEYS.has(key)) return { problem: `The theme sets "${key}", which is not a look this app knows.` }
+    const allowed = THEME_VALUES[key]
+    if (typeof value !== 'string' || !allowed?.has(value)) {
+      return { problem: `The theme sets ${key} to something the app does not offer.` }
+    }
+    clean[key] = value
+  }
+  if (!Object.keys(clean).length) return { problem: 'The theme sets no look at all.' }
+  return { clean }
+}
+
 const readTheme = (path: string): { theme?: PackTheme; problem?: string } => {
   const file = readCapped(path)
   if (file.problem) return { problem: file.problem }
@@ -59,18 +74,10 @@ const readTheme = (path: string): { theme?: PackTheme; problem?: string } => {
   }
   const record = (parsed && typeof parsed === 'object' ? parsed : {}) as Record<string, unknown>
   const appearance = (record['appearance'] && typeof record['appearance'] === 'object' ? record['appearance'] : {}) as Record<string, unknown>
-  const clean: Record<string, string> = {}
-  for (const [key, value] of Object.entries(appearance)) {
-    if (!THEME_KEYS.has(key)) return { problem: `${basename(path)} sets "${key}", which is not a look this app knows.` }
-    const allowed = THEME_VALUES[key]
-    if (typeof value !== 'string' || !allowed?.has(value)) {
-      return { problem: `${basename(path)} sets ${key} to something the app does not offer.` }
-    }
-    clean[key] = value
-  }
-  if (!Object.keys(clean).length) return { problem: `${basename(path)} sets no look at all.` }
+  const theme = cleanThemeAppearance(appearance)
+  if (theme.problem || !theme.clean) return { problem: theme.problem?.replace('The theme', basename(path)) ?? `${basename(path)} sets no look at all.` }
   const name = typeof record['name'] === 'string' ? record['name'].slice(0, 60) : basename(path, '.json')
-  return { theme: { name, appearance: clean } }
+  return { theme: { name, appearance: theme.clean } }
 }
 
 export type PackTargets = {

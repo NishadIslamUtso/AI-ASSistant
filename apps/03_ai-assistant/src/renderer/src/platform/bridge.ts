@@ -98,6 +98,7 @@ export type DesktopBridge = {
   skills: {
     /** Install one skill from the app's own catalog, into every engine. */
     installCatalog: (name: string) => Promise<{ ok: boolean; answer: string; written?: string[] }>
+    scan: () => Promise<Array<{ name: string; description: string; body: string; source: string }>>
   }
   /** Mods, Phase 1: a pack is a folder with a manifest; install, list, remove. */
   mods: {
@@ -122,6 +123,8 @@ export type DesktopBridge = {
       packs?: Array<{ id: string; name: string; version: string; author: string; description: string; permissions: Record<string, unknown>; checksum: string; source: string; verified: boolean; problem: string }>
     }>
     indexInstall: (kind: string, locator: string, id: string) => Promise<{ ok: boolean; answer: string; written?: string[]; folder?: string }>
+    exportPack: (payload: { name: string; description: string; author: string; skills: string[]; theme: Record<string, string> | null }) => Promise<{ ok: boolean; answer: string; folder?: string; index?: string }>
+    installStarter: () => Promise<{ ok: boolean; answer: string; folder?: string; written?: string[] }>
   }
   /** The engine's tool servers (MCP). Browser control is one entry in this list. */
   mcp: {
@@ -222,7 +225,10 @@ const demoBridge: DesktopBridge = {
       error: 'Settings are part of the desktop app. This window is the interface only, so there is no folder to change.',
     }),
   },
-  skills: { installCatalog: async () => ({ ok: false, answer: 'Installing skills needs the desktop app.' }) },
+  skills: {
+    installCatalog: async () => ({ ok: false, answer: 'Installing skills needs the desktop app.' }),
+    scan: async () => [],
+  },
   mods: {
     installFromFile: async () => ({ ok: false, answer: 'Installing packs needs the desktop app — it is the one that talks to the engines.' }),
     list: async () => [],
@@ -232,6 +238,8 @@ const demoBridge: DesktopBridge = {
     indexRemove: async () => ({ ok: false }),
     indexBrowse: async () => ({ ok: false, problem: 'Browsing a pack index needs the desktop app.' }),
     indexInstall: async () => ({ ok: false, answer: 'Installing from an index needs the desktop app.' }),
+    exportPack: async () => ({ ok: false, answer: 'Exporting a pack needs the desktop app.' }),
+    installStarter: async () => ({ ok: false, answer: 'Installing the starter pack needs the desktop app.' }),
   },
   mcp: {
     read: async () => ({ servers: [] }),

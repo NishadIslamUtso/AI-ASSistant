@@ -25,7 +25,9 @@ import { parsePullLine, validateModelName } from './engine/pull'
 import { deployMcp, deploySkill, scanClaudeSkills, type McpServer, type VaultSkill } from './engine/deploy'
 import { installCatalogSkill } from './engine/skillCatalogInstall'
 import { installPackFromFolder, listPacks, removePack } from './engine/packs'
+import { exportPack } from './engine/exportPack'
 import { installFromIndex, readIndex } from './engine/storeIndex'
+import { starterPackFiles } from './engine/vaultSkills'
 import { deployBuiltInSkills } from './engine/vaultSkills'
 import { applyConflictAction, brainFileContents, classifyBrainRoot, defaultVaultPath, planBrainApply, planBrainRefresh } from '../shared/lib/brainStructure'
 import { normalizeBoard } from '../shared/lib/sessionsBoard'
@@ -804,6 +806,51 @@ function registerBridges(): void {
     const source = toSource(String(payload?.kind ?? ''), String(payload?.locator ?? ''))
     if (!source) return { ok: false as const, answer: 'That is not a folder path or an https URL.' }
     return installFromIndex(source, String(payload?.id ?? ''), { storeRoot: join(app.getPath('userData'), 'extensions'), ...skillTargets() })
+  })
+
+  // Mods (Phase 3): publish. Export turns the engine's real skills and the
+  // app's current look into a pack folder plus an index.json entry beside it
+  // — send the folder to share it, or add it as an index to install from it.
+  ipcMain.handle('mods:export', (_event, payload: { name?: string; description?: string; author?: string; skills?: string[]; theme?: Record<string, string> | null }) => {
+    const home = process.env['USERPROFILE'] || process.env['HOME'] || ''
+    if (!home) return { ok: false as const, answer: 'No home folder is known, so there is nowhere to export to.' }
+    const root = join(home, 'AI-ASSistant packs')
+    const skills = scanClaudeSkills(join(home, '.claude', 'skills'))
+    const result = exportPack(
+      {
+        name: String(payload?.name ?? ''),
+        description: String(payload?.description ?? ''),
+        author: String(payload?.author ?? ''),
+        skills: Array.isArray(payload?.skills) ? payload.skills.map(String) : [],
+        theme: payload?.theme ?? null,
+      },
+      skills,
+      root,
+    )
+    if (!result.ok) return result
+    return { ok: true, answer: `Exported to ${result.folder} — its checksum is pinned in the index beside it.`, folder: result.folder, index: result.index }
+  })
+
+  // The starter pack: the app's own real files, written to a temp folder and
+  // installed through the very same path a friend's folder would take.
+  ipcMain.handle('mods:install-starter', (): { ok: boolean; answer: string; folder?: string; written?: string[] } => {
+    const files = starterPackFiles()
+    const staging = join(app.getPath('temp'), `ai-assistant-starter-${Date.now()}`)
+    try {
+      mkdirSync(staging, { recursive: true })
+      for (const [relative, text] of Object.entries(files)) {
+        const full = join(staging, relative)
+        mkdirSync(dirname(full), { recursive: true })
+        writeFileSync(full, text, 'utf8')
+      }
+      const result = installPackFromFolder(staging, { storeRoot: join(app.getPath('userData'), 'extensions'), ...skillTargets() })
+      if (!result.ok) return { ok: false, answer: result.answer }
+      return { ok: true, answer: `${result.pack.name} installed.`, folder: result.folder, written: result.written }
+    } catch {
+      return { ok: false, answer: 'The starter pack could not be staged. Nothing was installed.' }
+    } finally {
+      rmSync(staging, { recursive: true, force: true })
+    }
   })
 
   // The session board (A.5): the owner's own organisation of the engine's

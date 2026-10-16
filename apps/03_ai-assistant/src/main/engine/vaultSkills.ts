@@ -61,6 +61,34 @@ answer, the app is not running — say that plainly instead of retrying in a
 loop.`,
 }
 
+/**
+ * The starter pack (Mods Phase 3): the app's own real skill(s) and one real
+ * look, packed as a folder any install path accepts. This is the store's
+ * first furnishing — exported from constants the app itself deploys, so the
+ * bytes here are the bytes the engines already read.
+ */
+export function starterPackFiles(): Record<string, string> {
+  const skill = toClaudeSkill(BROWSER_PAGE_SKILL)
+  return {
+    'manifest.json': JSON.stringify(
+      {
+        id: 'ai-assistant.starter',
+        name: 'AI ASSistant starter pack',
+        version: '1.0.0',
+        author: 'AI ASSistant',
+        description: 'The app'+String.fromCharCode(39)+'s browser-page skill: see the page the user has open, through the local door. One look to start from.',
+        license: 'unspecified',
+        permissions: { shell: false },
+        contributes: { skills: ['skills/browser-page/SKILL.md'], prompts: [], themes: ['themes/dawn.json'] },
+      },
+      null,
+      2,
+    ),
+    [`skills/browser-page/SKILL.md`]: skill.content,
+    'themes/dawn.json': JSON.stringify({ name: 'Dawn', appearance: { accent: 'amber' } }, null, 2),
+  }
+}
+
 /** Deploy our skills into the folders that exist. Returns where files landed. */
 export function deployBuiltInSkills(targets: { claudeSkillsDir: string; agySkillsDir: string }): string[] {
   const written: string[] = []
