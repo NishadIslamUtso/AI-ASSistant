@@ -1,5 +1,9 @@
 # HANDOVER_LIVING.md — Current State + Gaps (Living)
 
+> **2026-10-16:** the live state moved to `TODO_NEXT.md` + `CHANGELOG.md` — the
+> read-order below is 2026-10-15 era and kept for the record. Judges: start at
+> `JUDGE-BRIEF.md` in this folder.
+
 > **2026-10-15:** the app is UN-PARKED and hosts the engine — read
 > `ARCHITECTURE-ENGINE.md`, then the 2026-10-15 changelog entry (six judge
 > reviews, all defects fixed, 298/298). CLAUDE-SETUP.md's app-parked line is

@@ -1,5 +1,8 @@
 # AI ASSistant — TODOLIST (light-shell reframe)
 
+> **2026-10-16:** historical record. The live list is `TODO_NEXT.md`; where they
+> disagree, TODO_NEXT wins (that rule is older than this note).
+
 **Written 2026-10-15**, after the "I do everything in Claude anyway" conversation.
 **PARKED 2026-10-15** … **UN-PARKED same day, evening (owner):** *"gonna
 implement that, and agy cli too… claude code will run on it normally, it's

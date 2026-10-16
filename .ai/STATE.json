@@ -1,134 +1,79 @@
 {
-  "date": "2026-10-14",
-  "time_updated": "2026-10-14 (after midnight) Asia/Dhaka",
+  "date": "2026-10-16",
+  "time_updated": "2026-10-16 (evening) Asia/Dhaka",
   "timezone": "Asia/Dhaka",
-  "repo_version": "2.0.0-ai-assistant",
+  "repo_version": "ai-assistant 0.9.0",
   "canonical_repo": "https://github.com/NishadIslamUtso/AI-ASSistant",
   "workflow": {
-    "active_branch": "arena/3c06e1bf-ai-assistant-v3",
-    "integration_branch": "main",
-    "rule": "Finished, verified work lands as a commit on the branch, is merged --no-ff into main, both are pushed, then it is reported. Never merge anything the user did not ask for.",
+    "active_branch": "v3",
+    "integration_branch": "main (FROZEN \u2014 moves only when the owner orders a merge)",
+    "rule": "One landing = one commit on v3, only after the owner's explicit go. Chain before push: full vitest suite + tsc clean + build green + porcelain-empty status; push once; ls-remote confirms the exact sha. Docs in sync at every landing.",
     "last_landed": [
-      "this turn: the owner's SVG becomes the canonical icon everywhere (resources/icon.svg + favicon verbatim, no tile), installer 0.1.2",
-      "2601e1c  The logo, audited instead of eyeballed - and an installer that proves it",
-      "3563975  merge: the icon audited for real (into main)"
+      "a76f507 audit build 0.9.0: auto-keep in the rulebook + memory-home fix; acceptance exe rebuilt",
+      "20b3e72 auto memory: the vault remembers, visibly (his three answers)",
+      "5ab8ac8 the finale five: copy/edit, extended thinking, context totals, the work line, the turn journal",
+      "1fb7def adversary reviewer (report-only) \u2014 g59",
+      "e648dc0 watch mode \u2014 g58"
     ],
-    "verify_with": "git log --oneline -6 && git diff --stat main arena/3c06e1bf-ai-assistant-v3"
+    "verify_with": "git log --oneline -6 && cd apps/03_ai-assistant && npx vitest run && npx tsc --noEmit"
   },
-  "note_for_next_ai": "The repo is the source of truth, not any handover text. Verify a file exists before trusting a status list. ALWAYS run `git rev-list --left-right --count HEAD...origin/<branch>` before committing: the sandbox has been silently reset to an old base more than once. The app is AI ASSistant, NOT a Claude clone - do not reintroduce Claude branding. Nothing fake goes in front of the user: a screen may not exist without working. NOTE 2026-10-14: the desktop checkers had been running the app through puppeteer.connect() with the default 800x600 viewport applied to a window it did not create, so every screenshot showed a cramped window nobody sees; `defaultViewport: null` fixed all of them. Use it in any new checker.",
+  "note_for_next_ai": "The repo is the source of truth, not any handover text. Verify a file exists before trusting a status list. ALWAYS re-align with the remote before committing: the sandbox snapshot can come back stale (git-restore ritual: re-add origin, fetch, reset --mixed onto the remote tip). The app is AI ASSistant, NOT a Claude clone - do not reintroduce Claude branding. Nothing fake goes in front of the user: a screen may not exist without working; no test may depend on a mock engine (the scripted shim used for live drives in the sandbox is NOT shipped and no test imports it). The engines do the work: the app spawns the engine binary on its own wire in its own folder; the app never talks to model APIs for engine work. Permission cards are the only approval path. Owner's hardware reality: 8GB RAM / 4GB VRAM - keep bundles lean; quantized local brains only.",
   "apps": {
     "03_ai-assistant": {
       "path": "apps/03_ai-assistant",
-      "status": "ACTIVE - the app. Verified in the sandbox (28 files / 269 tests, typecheck, both builds, desktop smoke, seven end-to-end desktop checks, browser check). Three of the mockups' eight screens exist (Chat, Settings, Artifacts); Today, Vault, Projects, Code and first-run are next.",
-      "tech": "Electron 40 + electron-vite 5 + Vite 6 + React 19 + TypeScript 5.7 + Tailwind 4 + Vitest 2; yaml for frontmatter; no other runtime dependency",
+      "status": "ACTIVE - the app, version 0.9.0. Verified in the sandbox: 73 test files / 589 tests, tsc clean, build green, and every feature live-driven against a real stream-json wire with screenshot receipts (00_LIVING_DOCS/receipts/, g27-g64). All fourteen OFFERED features + media + auto memory BUILT. The one open item: the owner's acceptance run on his TUF A15 (Windows) with AI-ASSistant-Setup-0.9.0.exe (sha256 267a7530...).",
+      "tech": "Electron 40 + electron-vite 5 + Vite 6 + React 19 + TypeScript 5.7 + Tailwind 4 + Vitest 2; engines are EXTERNAL binaries (claude CLI, agy, ollama) - no engine SDK is a dependency",
+      "engines": {
+        "claude-code": "Claude Code CLI on its native stream-json wire (src/main/engine/claudeCode.ts + stream.ts); house rules deploy into its CLAUDE.md block",
+        "agy": "Google Antigravity CLI on its own wire (src/main/engine/socket.ts); house rules deploy into its AGENTS.md block",
+        "ollama": "headless local brains; functions only, no desktop app assumed"
+      },
       "layout": {
-        "src/main": "main process: settings.ts (atomic writes), vault/ (service, routes, files, text, blacklist, zip, errors), api/ (loopback guard + server for future use)",
-        "src/preload": "index.ts - the ONLY bridge: settings.read/update, vault.chooseFolder",
-        "src/renderer/src": "components (AppNav, Sidebar (collapsible/resizable), TitleBar, ChatView, MessageRow, Composer, ArtifactsView, ArtifactThumb, SettingsView, ArtifactsRail, ArtifactCard/Preview, BrainMark), hooks (useChat, useModels, useVault, useArtifactRewrite, usePersistentState, useDesignTokens, useDismiss), state (appearance, performance, chats, artifactEdits, artifactView), platform/bridge.ts, styles/globals.css",
-        "src/shared": "lib (capture, chat, inference, markdown, prompts, skills, storage, vault, zip, design-systems/), types.ts",
-        "tests": "28 files / 269 tests; tests/pending/ holds three parked suites + README"
+        "src/main": "index.ts (doors), settings, journal.ts (turn journal), memoryFiles.ts (memory reader), recipes.ts, repoMap.ts, watcher.ts, compact.ts, hooks.ts, vault/ (service), api/ (loopback-guarded server), artifacts/, cloud/, extension/, engine/ (availability, claudeCode, socket, stream, deploy, downloads, checkpoints, packs, pull, skillCatalogInstall, storeIndex, exportPack, vaultSkills, houseRulesDeploy)",
+        "src/preload": "index.ts - the ONLY bridge between main and renderer",
+        "src/renderer/src": "components (App, Sidebar, TitleBar, ChatView/EnginePanel, Composer, ArtifactsView, BrainView, VaultView, CodeView, ProjectsView, TodayView, FirstRun, SettingsView + panes incl. MemorySection, EngineBay, WatchSection, dialogs), state (engine, split, battle, compact, review, watch, memory, chats, library, ...), platform/bridge.ts",
+        "src/shared": "lib (engine, houseRules, memory, watchMode, review, split, compact, recipes, battles, capture, chat, markdown, prompts, skills, storage, vault, ...), types.ts",
+        "tests": "73 files / 589 tests; includes the 44-cut wire-chunk regression and real-filesystem memory reader tests"
       },
-      "features_implemented": [
-        "The Artifacts screen: a real library on disk (append-only versions, atomic index, remove moves files to the library's own .trash and names where, a damaged index is repaired from the files, path traversal refused before it is a path), with real thumbnails (script-less sandbox, loaded only near the viewport), version chips that preview and re-save an older version, rename/duplicate/copy-out/export-folder, adoption of artifacts already in saved conversations, and the folder named in a footer",
-        "Browsing Maps: a timeline of what the vault holds (conversations, captured pages, visits) with site grouping, kind filters, search and a time window, read from the vault through /api/vault/sources \u2014 a visit is labelled a visit, never reading",
-        "Settings > Agent access: switches for the local model, browser captures, keeping conversations and each keyed provider \u2014 every one enforced in the main process (refused before anything leaves or is written), with the not-built capabilities stated as such",
-        "Every reply labelled where it came from: local, or online \u00b7 <provider>",
-        "Extension port on 127.0.0.1:8765: the browser extension can post captures, read context and capsules, and round-trip the never-check list \u2014 capture side only, chrome-extension:// origins only, visible in Settings > System",
-        "Real chat against Ollama at 127.0.0.1:11434 with streaming, abort, regenerate, edit-and-resend, branching",
-        "Artifacts: extracted from replies, sandboxed preview, code view, version history, ZIP export",
-        "Comment mode: append-only rewrite of one artifact at a time with versions",
-        "Vault writes: every finished conversation becomes Markdown in the vault, with 09 Activity & Undo appended",
-        "Settings as a full window (rail + panes): System, Appearance, Performance, Vault, plus search and per-section Reset",
-        "Appearance rewrites the theme tokens themselves (accent, conversation width) and survives reload",
-        "Performance: Ollama options from profile presets or custom values, measured against the chosen profile",
-        "Vault folder chosen through the main process; missing folders are refused and never replaced",
-        "Online providers (Claude/Anthropic, GPT/OpenAI, Gemini, OpenRouter, Groq, DeepSeek, Grok, any OpenAI-compatible endpoint): off until a key is saved in Settings > Models, key sealed by the machine and never handed to the interface",
-        "Cloud models named provider/model and answered through the same /api/ollama/chat address, as the same NDJSON records \u2014 one streaming path for local and online alike",
-        "Browser preview build that states plainly it is the interface only",
-        "Windows installer (NSIS, assisted, per-user, unsigned): AI-ASSistant-Setup-0.1.0.exe (~84 MB) built by electron-builder 26.15.3 from electron-builder.yml, icon rendered from the app's own BrainMark, en-US locale only, maximum compression; release notes in apps/03_ai-assistant/RELEASE-WINDOWS.md",
-        "The sidebar collapses to a 56px rail and can be dragged 200-420px wide (double-click resets); both remembered. The chat's artifacts rail hides and returns",
-        "The logo's internal ids are stripped to letters and digits before entering url(#...) references (React 19 wraps useId in punctuation, which is unsafe there), and the window icon is wired for the development build"
+      "features_landed_2026_10_16": [
+        "Engine downloads (official endpoints only, staged+recorded, installer a separate permission)",
+        "Brain battles: blind A/B, local ledger, no Elo (g52)",
+        "Recipes: frontmatter-checked markdown work orders (g53)",
+        "Compaction: handoff brief + fresh session + seed exactly once (g54)",
+        "Repo map: bounded honest tree of the working folder (g55)",
+        "Hooks: owner commands at turn-done/error/permission, hand-added only (g56)",
+        "Split: engine writes 2-6 steps, app runs them in order; finished-block-wins parsing + 44-cut wire test (g57)",
+        "Watch mode: quiet-debounce, gap, tail-chase cooldown, deletions never fire (g58)",
+        "Adversary reviewer: report-only, CLEAN strict, verdict on the card (g59)",
+        "Copy/Edit on the finished card; Edit returns the order to the composer",
+        "Extended thinking: the engine's own MAX_THINKING_TOKENS env at launch, default sets nothing (g60)",
+        "Context totals: honest per-window turns/tokens/cost in the header",
+        "The work line: busy sends park, drain in order, sequencers hold (g61)",
+        "Turn journal: engine-journal.json cap 60, 'Earlier sessions' on cold load (g62)",
+        "Cold-window init fix: the engine wires on mount, not on first send",
+        "Auto memory: 'What you keep' section deploys in every engine's rulebook (auto-keep, g64); Settings > Memory pane: order shown before send, list with clip note, per-file remove; path guard (folder-only, no traversal, markdown only); engine writes ride the permission cards (g63)",
+        "Memory home fix: the pane reads the same root the engine spawns in (workspace || vault)"
       ],
-      "known_gaps": [
-        "Most of the mockups' screens do not exist yet: Today, Vault, Projects, Code and the first-run welcome screen. The nav names only what works, in one muted line, rather than drawing dead entries",
-        "Artifacts step 1b: the Import button (file picker in the main process) and Tweaks (design-token sliders over the existing withDesignTokens machinery)",
-        "The extension itself is still a starter: it is not loaded, not ported into this app's flow, and captures nothing until it is - so Browsing Maps is mostly what the app itself kept",
-        "Agent access governs what exists (models, captures, keeping, provider keys); Files, Shell, Web and MCP appear as \"not built yet\" until each one exists"
-      ],
-      "verified": {
-        "tests": "npm test -> 28 files / 269 tests pass",
-        "typecheck": "npm run typecheck -> clean",
-        "web_build": "npm run build:web -> clean",
-        "desktop_build": "npm run build -> clean (main, preload, renderer)",
-        "desktop_smoke": "npm run smoke -> SMOKE OK title=\"AI ASSistant\" size=1280x820 errors=0 warnings=0",
-        "browser_check": "outside the repo: 33 assertions including the Models pane, tokenised width, reload persistence, search, reset, 0 console problems",
-        "desktop_e2e_vault": "outside the repo: typed into the app -> answered -> conversation found in the vault -> 09 Activity & Undo appended -> vault moved from Settings -> second conversation in the new vault, console clean",
-        "desktop_e2e_cloud": "outside the repo: provider-shaped server -> Settings > Models -> endpoint typed, key saved, Test answered 1 model -> model picked from the composer menu -> the provider\u2019s own answer; provider asked exactly once with Bearer <key>, nothing plaintext on disk, console clean",
-        "user_windows_test": "NOT DONE",
-        "desktop_e2e_extension": "outside the repo: the app opens the port; a script playing the extension captures a conversation that lands in the vault as Markdown, reads and writes the never-check list, is refused as a page, is refused with no origin, finds no chat route, and sees the port named in Settings > System; console clean",
-        "desktop_e2e_agent_access": "outside the repo: a capture through the extension port lands in the vault; Browser extension switched off in the window -> settings file records it, next capture 403 with the reason, nothing written, port reports captures:false; switched on in the same pane -> accepted; Keep conversations off -> chip says Vault off and a typed message is answered but written nowhere; on -> next conversation kept; console clean",
-        "desktop_e2e_memory_map": "outside the repo: a vault seeded like a week of capture (7 entries incl. a deliberately half-written jsonl line) -> Browsing Maps in the real app shows exactly 7, the four titles, docs.example as the busiest site, no half.example; site click -> 2 and the header count follows, search -> 1, Visits -> 3, a visit says it is not reading, and a vault moved away underneath the app is reported; console clean",
-        "installer_build": "electron-builder: dist:linux dir + Windows NSIS installer both produced after a clean typecheck + build",
-        "installer_payload": "listed out of the installer's own $PLUGINSDIR/app-64.7z: AI ASSistant.exe, resources/app.asar 31.9 MB, Uninstall AI ASSistant.exe, elevate.exe, en-US.pak only (21 entries)",
-        "installer_linux_boot": "the same config's linux-unpacked bundle: SMOKE OK title=\"AI ASSistant\" size=1280x820 errors=0 warnings=0",
-        "installer_windows_install": "NOT DONE - no Windows machine in the sandbox; a Wine silent install proves nothing (extraction outruns the timeout). Installing it on the TUF A15 is the owner's own test.",
-        "desktop_e2e_artifacts": "outside the repo (shot-tools/check-artifact-library.cjs, 7.5 s, green): the app starts with an empty app-data folder; a message is sent; the mock model answers with a real HTML document; index.json and items/<id>/v1.html are read OFF DISK before the screen is trusted; the grid shows one card with the real title/date/v1; the thumbnail's srcdoc carries the document and its sandbox is empty; rename changes the name on disk; remove empties the grid, shows the empty state, and the files are found in .trash/ while the item folder is gone; 12 logo url(#...) references resolve, 0 broken; the collapsed sidebar rail measures 56px; console clean",
-        "installer_windows_build": "AI-ASSistant-Setup-0.1.2.exe rebuilt after the purge, 87929333 bytes, sha256 a8fa8f275f68036930920b617bdeed1cb108df2e11396ab0f872d27ac4631f4a; exe icon re-verified (7 sizes, pink 982 at 64, corner alpha 0); NSIS rebuilds hash differently \u2014 RELEASE-WINDOWS.md tracks the in-workspace file",
-        "icon": "resources/icon.svg is the owner's own export, byte-identical, also the favicon; BrainMark renders the same artwork (32/32 paths match) and gained his <desc>; render-mark.cjs sources the SVG file, refuses on component drift (paths/colours/circles), unresolved url(#...), or bad pixels (transparent corners required)",
-        "old_artwork_purge": "per owner order: ghost render, tiled sheet, /var/tmp scratch deleted; extension icons re-rendered (were 68-byte stubs); dist-web rebuilt; signature scan of every SVG in repo = zero different-artwork files; claude-logo.svg in archived clones left (Claude's brand, not our mark); old renders remain in git history (rewrite on request)"
+      "installer": {
+        "file": "AI-ASSistant-Setup-0.9.0.exe",
+        "bytes": 88204306,
+        "sha256": "267a753011b0431d749b9b6c7bc26971664efc7bdaa9c8f802b61cbb54c58c07",
+        "note": "unsigned (SmartScreen expected); NSIS per-user; rebuild recipe in 00_LIVING_DOCS/RELEASE-WINDOWS.md"
       },
-      "build_cmd": "npm install && npm run build | npm run dist:win (installer) | npm run dist:win:dir (unpacked) | npm run dist:linux",
-      "run_cmd": "npm run dev (desktop) | npm run build:web && npm run preview:web (browser preview) | the installer, on Windows",
-      "version": "0.1.2"
+      "open_items": [
+        "The owner's TUF A15 acceptance run on the 0.9.0 exe - the only gate",
+        "The owner will redo the UI/UX himself later (his words, 2026-10-16)"
+      ]
     },
     "01_claude-exact-pixel-clone": {
       "path": "apps/01_claude-exact-pixel-clone",
-      "status": "HISTORICAL - the first clone, built to match six Claude screenshots (191547-191707). Kept as the port source for libs/hooks/server logic only, never for JSX.",
-      "tech": "Vite + React + Tailwind + Express vault API on 127.0.0.1:8765 + start-app.bat",
-      "tests": "16 files / 235 tests, 15 pre-existing failures",
-      "note": "Its vault API (server/vault-api.cjs, port 8765) is NOT part of the app. The app's vault service is in-process."
+      "status": "HISTORICAL - port source for libs/hooks/server logic."
     },
     "02_electron-claude-clone-v6": {
       "path": "apps/02_electron-claude-clone-v6",
-      "status": "HISTORICAL reference - artifacts/workbench/thinking implementations",
-      "note": "Not pixel-accurate to the old screenshots; superseded."
+      "status": "HISTORICAL reference."
     }
   },
-  "extension": {
-    "path": "extension/",
-    "status": "starter + spec implemented, NOT wired to the app",
-    "blocking_gap": "resolved - the app opens 127.0.0.1:8765 for chrome-extension:// origins (capture side only). What remains is the extension itself: it is still a starter, has not been loaded or run against the app, and therefore captures nothing from a browser yet",
-    "features_implemented": [
-      "manifest.json (MV3), lib/blacklist.js pattern matching (host-aware), lib/capsule.js data model, lib/vault-writer.js",
-      "spec for Capsule Hub + Quillbot behaviour, default-check-everything policy, never-check blacklist, failure logging"
-    ]
-  },
-  "vault": {
-    "path": "vault/AI-Brain/",
-    "status": "canonical memory - 63 tracked Markdown files, 00 System to 90 Archive",
-    "rules": [
-      "Conversations land in 02 Sources/Conversations/AI ASSistant/<year>/<id>.md",
-      "Entity files are never created by conversations",
-      "Days are Asia/Dhaka days",
-      "The app never creates a replacement vault when the configured folder is missing"
-    ]
-  },
-  "docs": {
-    "living": "00_LIVING_DOCS/ (REQUIREMENTS, HANDOVER, ARCHITECTURE, DECISIONS_LOG, CHANGELOG, TODO_NEXT)",
-    "machine": ".ai/ (AGENT_INSTRUCTIONS.md, STATE.json, CONTEXT.json, INDEX.json) mirrored in ai/",
-    "root": "README.md, BRANCH_TESTING.md, TESTING_CHECKLIST.md",
-    "app": "apps/03_ai-assistant/WEB-PREVIEW.md, apps/03_ai-assistant/tests/pending/README.md",
-    "historical": "spec/ (old clone specs), docs/originals/ (the original requirement files), memory/sessions/"
-  },
-  "external_sources": {
-    "open-design": {
-      "url": "https://github.com/nexu-io/open-design",
-      "license": "Apache-2.0",
-      "taken": "design-system token sets and the skills mechanism (idea only)",
-      "attribution": "apps/01_claude-exact-pixel-clone/THIRD_PARTY_NOTICES.md"
-    }
-  },
-  "open_source": {
-    "ready": "No hardcoded names, emails, paths or model tags. Profile values are neutral defaults. Screenshots are local reference only and must never be bundled into a distributable."
-  }
+  "receipts": "00_LIVING_DOCS/receipts/SCREENS-GALLERY.html - 74 figures (g27-g64), each captured from a live drive of the shipped build on a real stream-json wire; the CHANGELOG cites figure ids per feature.",
+  "judge_entry": "00_LIVING_DOCS/JUDGE-BRIEF.md"
 }

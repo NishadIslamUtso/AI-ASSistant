@@ -1,4 +1,8 @@
 # AI ASSistant — build todo
+
+> **2026-10-16:** the mirror-the-workspace era ended — `CHANGELOG.md` +
+> `TODO_NEXT.md` are the live plan now. This file remains the historical reference
+> (the mockup + feature tables).
 > **Mirror of the owner's live plan file.** The workspace copy
 > (`/home/user/BUILD-TODO.md`) is edited during work; this copy is refreshed at
 > every landing so a clone of this branch alone carries the full plan. If they

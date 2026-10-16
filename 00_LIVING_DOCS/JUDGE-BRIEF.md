@@ -1,147 +1,143 @@
-# JUDGE BRIEF — read me first (written for the owner's reviewing agent, 2026-10-15)
+# JUDGE BRIEF — read me first (rewritten 2026-10-16 for the owner's external AI judges)
 
-You are reviewing the work of an AI building **AI ASSistant** for its owner,
-Nishad. This document tells you what the OWNER wanted, what was actually done,
-where the evidence lives, and what is deliberately still open. Judge the work
-against the owner's intent — not against items that were never scheduled yet.
+You are judging work done by an AI (Arena.ai Agent Mode) building **AI ASSistant**
+for its owner, Nishad (Utso). This document tells you what the owner wanted, what
+was built, where the evidence lives, and what is deliberately still open. Judge the
+work against the owner's intent — not against items he declined or postponed.
 
-## 1 · What the owner wanted (his words, his rules — standing)
+## 1 · The owner's standing words (his rules; they outrank everything)
 
-- **Free, except his own buy-button:** "the priority is to make it and use it
-  for free… except the API cost if and only if I ever decide to purchase a
-  subscription. Other than that, everything must be free." (2026-10-15)
-- **His app is the face; Claude Code is the engine inside it; agy CLI is
-  engine #2:** "gonna implement that, and agy cli too, and make my the way i
-  want it to be, basically claude code will run on it normally, it's features
-  will work in the app normally too." (2026-10-15)
-- **Total layout freedom was the point** — he rejected VS Code's fixed UI:
-  "it destroys the entire purpose of freely changing app layout."
-- **The mockups are the design authority**; a nav item appears only when its
-  screen works (no dead buttons, no placeholders, zero mocking).
-- **Console-clean CI** (a warning fails the build), real data only (nothing
-  invented in the UI), PowerShell 5.1 rules on his machine (no `&&`), no
-  Vercel, no Claude branding in user-facing copy (the app is AI ASSistant;
-  his SVG is the only mark), docs stay in sync at every landing.
-- **Plain-words rule:** he reads everything — explain like he knows no tech.
-- **Plan first, code only after his "go"** — every landing on this branch had
-  his explicit go/next.
+- **Free, except his own buy-button:** "the priority is to make it and use it for
+  free… except the API cost if and only if I ever decide to purchase a
+  subscription."
+- **The app is the face; real engines do the work:** Claude Code CLI is engine #1,
+  Google Antigravity ("agy") is engine #2, headless Ollama carries the free local
+  brains. His words: "claude code will run on it normally, it's features will work
+  in the app normally too." The app NEVER talks to model APIs itself for engine
+  work — the engine's own binary does, on its own wire, in its own folder.
+- **The two-layer rule (his, amended):** engine-native features surfaced where
+  drivable (that usually beats forcing); app-built features keep every promised
+  capability working on EVERY engine; never single-engine with no fallback; the
+  engines are fully swappable from the UI.
+- **Zero mocking:** nothing in front of the owner that does not work — no
+  placeholder screens, no invented data, no fake replies. A missing thing says so
+  in plain words.
+- **The mockups are the design authority;** AI-slop patterns are banned by name
+  (15 + similar), his 189-gerund word list governs copy.
+- **Plan first, code only after his explicit "go"** — every batch on this branch
+  had one (GOs 1–9 on 2026-10-16, his literal "next" / "do as much as possible" /
+  "can't you just do all of them in one go").
+- **One landing = one commit;** tests + typecheck + build green, porcelain empty,
+  push once, ls-remote confirms. Docs in sync at every landing.
+- ENGLISH ONLY in the product.
 
-## 2 · What was done (all merged into `main`; working branch
-`arena/3c06e1bf-ai-assistant-v3`)
+## 2 · What the branch is
 
-Free setup on his machine (verified by his own runs): Ollama auto-start
-(hidden, context 16384), Claude Code CLI v2.1.300 wired to free brains
-(`gemma4:cloud` default, local `qwen2.5-coder:3b` seatbelt), 11 skills live,
-mod marketplace connected. Paywalls hit and refused per the Free Gate:
-Claude in Chrome (paid-only), Desktop app Code tab (paid-only), VS Code
-fallback (owner veto).
+- **`v3` is the live branch. `main` is a frozen archive** — it moves only when the
+  owner himself orders a merge. Judge the v3 tip (`a76f507` at this brief's
+  writing; check `git log` for later).
+- The 2026-10-16 chain, one batch per commit: downloader `c29f803` → battles
+  `cc3c535` → recipes `48e4170` → compaction `b555d88` → repo map + hooks
+  `7a2800d` → split `ad086db` → watch mode `e648dc0` + adversary reviewer
+  `1fb7def` → the finale five `5ab8ac8` → auto memory `20b3e72` → the audit build
+  `a76f507`.
 
-In this repo (the app), latest landings with commits to inspect:
+## 3 · What is claimed (every line checkable in code)
 
-| Commit | What it is |
-|---|---|
-| `bfda13a` | Architecture doc: face/engine/socket, SDK-vs-stream decision, 6-phase plan |
-| `78e0eb1` | **Engine back room:** `src/main/engine/{stream,claudeCode,socket}.ts`, settings.engine, 5 IPC doors, preload API; wire parser with 12 tests (split/broken lines, permission control requests, failures) |
-| `2261704` | **Engine face:** composer Engine toggle, work-order panel (`EnginePanel.tsx`), Allow/Deny permission cards wired to the control wire, honest demo refusals in browser preview |
-| `d8788c7` | **Feature audit** (`FEATURE-AUDIT.md`): every take-item from BUILD-TODO / app-feature-matrix / redesign plan / Claude-OS list, status verified against code |
+The app: Electron + React + TypeScript + Tailwind 4, at `apps/03_ai-assistant/`.
 
-Evidence you can run (in `apps/03_ai-assistant`):
+1. **The engine spine** — `src/main/engine/`: availability, claudeCode (real
+   stream-json wire), socket (agy), stream (shared parser), deploy, downloads,
+   checkpoints, packs, pull, skillCatalogInstall, storeIndex, exportPack,
+   vaultSkills, houseRulesDeploy. The composer's brain pickers read FROM the
+   engines' own doors.
+2. **Composer superpowers** — Split (engine writes steps, app runs them in order),
+   Battles (blind A/B between two brains, local ledger, no Elo), Recipes
+   (frontmatter-checked markdown work orders), Compaction (handoff brief + fresh
+   session), repo map (bounded honest tree), pictures on the real wire as base64
+   blocks, video decoded to frames, dictation + Listen (the window's own speech),
+   Plan-first (the CLI's own `--permission-mode plan`).
+3. **Turn tools** — Copy/Edit on the finished card, extended thinking (the
+   engine's own documented env knob, set at launch), honest context totals ("N
+   turns this window · X in · Y out · $Z" — accumulated from the engines' real
+   usage lines, never pretending to read the engine's head), the work line (busy
+   sends park and drain in order), checkpoints (the file's old self kept before an
+   approved Write/Edit; one-press restore), the repetition guard, the adversary
+   reviewer (REPORT-ONLY self-check), watch mode (folder quiet-debounce, gap,
+   anti-tail-chase), the turn journal ("Earlier sessions on this machine").
+4. **Auto memory (the owner's design, his three answers)** — auto-keep but show
+   everything; the memory lives in his vault structure as real markdown
+   (`06 Review/Memory/engine-notes.md`); the ENGINE writes it through its own
+   tools, so every line rides the app's permission cards. The rulebook section
+   "What you keep" (`src/shared/lib/houseRules.ts`) deploys into each engine's own
+   rules file so the engine can note things during NORMAL work; the Settings ›
+   Memory pane shows the pass order before sending, lists what exists, and
+   removes exactly one file after confirm. Path guard: `src/shared/lib/memory.ts`
+   + `src/main/memoryFiles.ts` (memory folder only, no `..`, no hidden parts,
+   markdown only).
+5. **Store / mods** — pack folder + manifest, permissions in plain words before
+   install, sha-256-pinned indexes, tamper refusal, export-as-pack, starter pack,
+   four furnished packs; agents/connectors refused in plain words until their
+   runtimes exist.
+6. **The permission cards** — the ONLY approval path. Engine-native approval
+   requests surface as cards; app features that act (recipes, watch, memory pass,
+   splits) send ordinary turns through the ONE send path so the cards stay awake
+   for everything.
 
+## 4 · How to verify
+
+```bash
+git clone -b v3 https://github.com/NishadIslamUtso/AI-ASSistant.git
+cd AI-ASSistant/apps/03_ai-assistant
+npm ci && npx vitest run      # 73 files / 589 tests
+npx tsc --noEmit              # clean
+npm run build                 # electron-vite build
 ```
-npx vitest run          # 298 tests, all passing
-npx tsc --noEmit -p tsconfig.json   # clean
-```
 
-**POST-VERDICT (same day):** six judge reviews ran the real CLI and found
-real defects — ALL fixed with regression tests (permission flags, multi-turn,
-Stop wedge, Bangla-safe decoding, flush, surfaced denials/retries, model
-validation, agy honesty, warnings-fail smoke, CI workflow). The counts above
-are post-fix. The engine round-trip on the owner's machine is still the final ✅.
+- **Receipts:** `00_LIVING_DOCS/receipts/SCREENS-GALLERY.html` — 74 figures
+  (g27–g64), every one captured from a live drive of the shipped build driving a
+  real stream-json wire (a scripted stand-in CLI stands in for the real one in the
+  sandbox; it is NOT shipped, and no test depends on it — the zero-mocking rule
+  covers tests too). The CHANGELOG cites figure ids per feature; spot-check a
+  claim against its figure.
+- **Installer:** `AI-ASSistant-Setup-0.9.0.exe`, 88,204,306 B, sha256
+  `267a753011b0431d749b9b6c7bc26971664efc7bdaa9c8f802b61cbb54c58c07`. Rebuild
+  recipe: `00_LIVING_DOCS/RELEASE-WINDOWS.md` (NSIS timestamps make per-build
+  hashes differ; judge the recipe, not byte-equality).
+- **Live engine turns** need the real CLIs/keys on the judging machine. Without
+  them, the evidence base is: the tests, the wire-level parser/chunk tests (a
+  44-cut byte-chop regression test demands identical events), the code itself,
+  and the receipts.
 
-Deliberate engineering decision to scrutinize: the engine drives the **real
-installed CLI in stream-json mode** (permission-gated, multi-turn — see the changelog's 2026-10-15 entry) rather than the Agent SDK — reasons in
-`ARCHITECTURE-ENGINE.md` §Job 2 (sandbox could not install the SDK; the CLI
-was already owner-verified; fully testable; keeps the mods door open). The
-SDK remains the documented fallback.
+## 5 · Deliberately open (do not count these as failures)
 
-## 3 · Honestly open (planned, NOT done — do not credit or penalize as done)
+- **The TUF A15 acceptance run** — on the owner's Windows machine, on the 0.9.0
+  exe. It is the one remaining gate, and it is HIS run, not the AI's.
+- **The owner will redo the UI/UX himself later** (his words, 2026-10-16); the
+  animated-logo question he answered "don't worry about it".
+- The browser extension stays a capture-side starter per the owner's locked scope
+  (TODO_NEXT §C).
 
-1. Windows **installer** for the current build (next landing; he has run none of
-   the engine work yet).
-2. Six designed screens: Today (07), Projects (04), Vault (05), Code (06),
-   first-run init (08), appearance polish (09).
-3. One-click **undo** after an approved engine action (approval cards exist).
-4. **Session-insight extraction** feeding Today.
-5. **MCP server** exposing vault + artifacts.
-6. **agy** adapter (socket exists; Windows support check not yet run).
-7. Chat-shell luxuries per BUILD-TODO (branching, split chats, regenerate,
-   mermaid, exports beyond HTML, prompt library…).
-8. Claude-OS knowledge-lifecycle takes.
+## 6 · What to give back (the verdict format)
 
-## 4 · Repo map for you
+Score 0–10 with one paragraph each:
 
-- `00_LIVING_DOCS/` — CLAUDE-SETUP (active plan), TODOLIST (feature record),
-  BUILD-TODO (full take-list), FEATURE-AUDIT (what's in vs open, verified),
-  ARCHITECTURE-ENGINE (the design), HANDOVER (reading order), CHANGELOG,
-  DECISIONS_LOG, this brief.
-- `memory/sessions/` — the running session log, including mistakes and their
-  fixes (the builder keeps an honest ledger).
-- `apps/03_ai-assistant/` — the app (Electron + Vite + React + TS).
-- Branch hygiene (2026-10-15): 12 stale session branches deleted; every tip
-  preserved as a `keep/*` tag (feature-source branches included — BUILD-TODO
-  still cites them). Remaining: `main`, the working branch, `brain01`
-  (owner's), `archive/workspace` + `archive/ai-assistant-app` (owner's
-  archives, public by his choice).
+1. **Claim-vs-code truthfulness** — spot-check at least five CHANGELOG claims
+   against the actual code and receipts; call out ANY inflation by name.
+2. **Test honesty** — do the 589 assert real behavior, or tautologies? Any mocking
+   that violates the zero-mocking rule?
+3. **Architecture** — does the two-layer rule hold in the code (no engine
+   lock-in; app features engine-agnostic; one send path)?
+4. **Security & privacy** — permission cards as the only approval path; the
+   memory path guard; local-only claims; keys sealed to the machine.
+5. **Code quality & docs** — structure, naming, the plain-words rule; do the
+   living docs match reality?
+6. **The receipts** — do the cited figures support the specific claims they are
+   cited for?
 
-## 5 · How to judge
+Then: a findings list (SEVERE / MODERATE / MINOR, each with file:line or a
+quote), every claim you could NOT verify said out loud, and a final verdict: does
+the work match what it claims — yes or no — and what would change your mind.
 
-1. **Fidelity to §1** — does every change serve the owner's stated intent?
-2. **Truthfulness** — pick any "done" claim in the docs and verify it in code.
-   The builder's standard is zero claimed-but-absent work.
-3. **Engineering quality** — the engine module: contract typing, parser
-   robustness tests, permission wire, refusal-as-answer (never exceptions at
-   the UI), house style kept (narrow typed doors, plain-words comments).
-4. **Safety & cost** — nothing paid was purchased or risked; permissions
-   gate the engine; secrets never cross to the renderer.
-5. Say clearly what you would do differently, with reasons — the owner will
-   relay it and the builder continues from it.
-
----
-
-## 2026-10-16 — v0.4.0: Track A (the spine), five landings, 343 tests
-
-Where to look, in order: `main/engine/stream.ts` (session id, usage,
-permission detail from the real wire), `main/engine/socket.ts`
-(SessionMemory: one session id per workspace, resumed with the engine's own
-`--resume` after a restart; a living engine is never resumed from file),
-`main/engine/availability.ts` (each engine found via its own `--version`;
-agy's model source is honest in both states), `main/engine/pull.ts` +
-`engine:pull` (the brain door's own progress stream, names validated),
-`main/engine/deploy.ts` (one skills/MCP vault → each engine's exact format),
-`main/engine/houseRulesDeploy.ts` (marker-bounded block in each engine's own
-global file; owner words preserved across re-deploys — tested),
-`shared/lib/houseRules.ts` (canonical rulebook + per-brain footnotes),
-`shared/lib/engine.ts` (the engine-blind contract everything speaks).
-UI: EngineBay (engine system, brain list FROM the engine, workplace,
-throttle, pull), EnginePanel (work card with usage + before/after),
-Settings → House rules. 343 vitest tests, tsc clean.
-
-
-## 2026-10-16 — v0.6.0: Track B (the face) + Track C (the hardening) + Track D (the practice)
-
-The app now has all six designed screens — Chat, Artifacts, Today, Projects,
-Vault, Code, First-run, Settings — every one real, nav shows nothing that
-does not work. Judge the engine spine by: `main/engine/` (claudeCode.ts —
-launch line pins the two permission flags, partial messages on; stream.ts —
-the wire parser with chunk-boundary scan-offset and token streaming;
-socket.ts — one session per workspace, resumed by the engine's own --resume);
-the hardening by `tests/engine-process.test.ts` (machine credentials stripped
-from the engine's env, quiet deliberate stop, Windows taskkill /T /F,
-EPIPE-guarded writes); the queue by `tests/engine-view.test.ts` (cards queue
-in arrival order; a window opened mid-turn hydrates the remembered history,
-phantoms dropped). Face: Projects (per-project instruction + folder +
-chats), Vault (tree/search/preview/export copy), Code (workspace, throttle,
-real resumable threads), First-run (three skippable real choices). Practice:
-Handoff (a finished turn → one vault document with the resume id), Skills
-catalog (Settings > Skills → anthropics/skills → both engines' own folders),
-caveman hint for small local brains. 387 tests, tsc clean, $0.
+**English only. Be harsh; finding nothing is suspicious. Do not grade effort —
+grade truth.**

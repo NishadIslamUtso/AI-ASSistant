@@ -4,9 +4,14 @@ Run it in this order; each line is a thing you can see with your own eyes.
 
 ## 1. Automated (no machine required)
 
-- [ ] `cd apps/03_ai-assistant && npm install` completes
-- [ ] `npm test` → **269 tests, 28 files, all passing**
-- [ ] `npm run typecheck` → no output
+- [ ] `cd apps/03_ai-assistant && npm ci` completes
+- [ ] `npx vitest run` → **589 tests, 73 files, all passing**
+- [ ] `npx tsc --noEmit` → no output
+
+> Every engine-era feature (battles, split, recipes, compaction, watch, review,
+> checkpoints, extended thinking, the work line, the journal, auto memory) is
+> receipt-verified live: `00_LIVING_DOCS/receipts/SCREENS-GALLERY.html` (g51–g64).
+> This checklist stays the pre-merge core.
 - [ ] `npm run build:web` → clean, writes `dist-web/`
 - [ ] `npm run preview:web` → the preview opens on http://localhost:4174
 
@@ -66,7 +71,9 @@ Run it in this order; each line is a thing you can see with your own eyes.
 
 ## 7. The Windows installer
 
-- [ ] `npm run dist:win` → `dist/AI-ASSistant-Setup-<version>.exe` (~84 MB)
+- [ ] `npm run dist:win` → `dist/AI-ASSistant-Setup-<version>.exe` (~88 MB; the
+      shipped build is 0.9.0, sha256 `267a7530…` — table in
+      `00_LIVING_DOCS/RELEASE-WINDOWS.md`)
 - [ ] SmartScreen says *unknown publisher* — expected, not a failure (`apps/03_ai-assistant/RELEASE-WINDOWS.md`
       says so before it appears)
 - [ ] Installing needs no admin rights; **uninstalling leaves the vault and settings in place**

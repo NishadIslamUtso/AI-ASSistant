@@ -48,6 +48,10 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
 
 Receipts g27–g64. Version 0.9.0 (acceptance build). The OFFERED list is BUILT; auto memory BUILT. Next: TUF A15 acceptance on the 0.9.0 exe (his run) — the only gate left.
 
+**For judges/reviewers (his order, 2026-10-16):** start at `JUDGE-BRIEF.md` in
+this folder; the receipts are shipped in-repo at `receipts/` here (g27–g64);
+`.ai/STATE.json` and the README carry the same truth machine-readably.
+
 ## NOW — the acceptance round-trip (everything hangs on this)
 
 - [ ] **His run on the TUF A15** with the v0.8.0 installer (BUILT 2026-10-16 — AI-ASSistant-Setup-0.8.0.exe, 88,129,252 B, sha256 aa10fb3d…75a8c):

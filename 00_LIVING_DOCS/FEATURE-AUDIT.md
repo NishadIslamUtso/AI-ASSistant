@@ -1,5 +1,9 @@
 # FEATURE AUDIT — every "take" item, checked against the code (2026-10-15)
 
+> **2026-10-16:** statuses below are frozen at 2026-10-15. Everything since —
+> the engine era: the OFFERED 1–14, media, auto memory — has landed and is logged
+> in `CHANGELOG.md`; `TODO_NEXT.md` items 1–15-done are the current truth.
+
 **Why this exists:** the owner asked "are you SURE everything I mentioned is done?"
 The honest answer after checking every record against the actual source files:
 **no — here is the complete map.** Sources audited: `BUILD-TODO.md` (12 sections,

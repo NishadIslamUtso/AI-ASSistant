@@ -18,6 +18,8 @@ look human-made.
 ## 2. Mandatory Read Order
 
 1. `README.md` — where the app is, and **the owner's standing instructions in his own words**
+1b. `00_LIVING_DOCS/JUDGE-BRIEF.md` — **judges and reviewers start there**
+1c. `00_LIVING_DOCS/TODO_NEXT.md` — the live state (items 1–15-done = built)
 2. `.ai/CONTEXT.json` — who the owner is, the hardware, capture policy, model constraints
 3. `.ai/STATE.json` — what is built, what is verified, what is missing
 4. `00_LIVING_DOCS/REQUIREMENTS_LIVING.md` — the living truth and its acceptance checklist
@@ -32,8 +34,9 @@ Nothing goes in front of the owner that does not work. No placeholder screens, n
 plain words. Every automated check that runs the UI fails the build on **any console error or warning**.
 
 ### Living docs rule
-Every change updates `00_LIVING_DOCS/REQUIREMENTS_LIVING.md`, `CHANGELOG.md`, `HANDOVER_LIVING.md`,
+Every change updates `00_LIVING_DOCS/TODO_NEXT.md` + `CHANGELOG.md` (the live pair since 2026-10-16),
 `.ai/STATE.json`, and writes `memory/sessions/<date>-session.md`. This is the whole point of the repo.
+Work lands on `v3` only; `main` is frozen until the owner orders a merge.
 
 ### The owner's standing instructions (do not relitigate)
 - Build to the approved mockups; **where a mockup would be broken or dishonest, infer the intent and fix it**.
