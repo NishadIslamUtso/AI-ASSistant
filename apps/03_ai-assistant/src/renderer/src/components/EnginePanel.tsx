@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Handshake, Wrench, FilePen, Terminal, Search, CircleCheck, TriangleAlert, Square } from 'lucide-react'
+import { Handshake, Minimize2, Wrench, FilePen, Terminal, Search, CircleCheck, TriangleAlert, Square, X } from 'lucide-react'
 import { buildHandoff, handoffFileName } from '@shared/lib/handoff'
 import { pickGerund } from '@shared/lib/gerunds'
+import { BRIEF_ORDER } from '@shared/lib/compact'
 import { bridge } from '@/platform/bridge'
 import { useEngine, type EngineItem } from '@/state/engine'
+import { cancelBrief, clearCompactNotice, finishCompact, useCompact, writeBrief } from '@/state/compact'
 
 /**
  * The engine's work order, drawn where the conversation can see it.
@@ -39,6 +41,8 @@ export default function EnginePanel() {
     const timer = setInterval(() => setWord(pickGerund()), 3_500)
     return () => clearInterval(timer)
   }, [running])
+  const [compacting, setCompacting] = useState(false)
+  const compact = useCompact()
   if (!turn) return null
 
   // The handoff: the finished turn written into the vault as one document a
@@ -64,6 +68,7 @@ export default function EnginePanel() {
   }
 
   return (
+    <>
     <section
       aria-label="Engine work"
       className="mx-auto mb-3 w-full max-w-[var(--chat-width)] rounded-xl border border-line bg-card px-4 py-3"
@@ -97,7 +102,24 @@ export default function EnginePanel() {
             <Handshake size={10} /> Hand off
           </button>
         )}
+        {turn.state !== 'running' ? (
+          <button
+            type="button"
+            onClick={() => setCompacting(true)}
+            title="Compact: the engine pours this conversation into a brief, the session ends fresh, the brief rides along"
+            className="flex items-center gap-1 rounded-lg border border-line px-2 py-0.5 text-[11px] text-muted hover:text-ink"
+          >
+            <Minimize2 size={10} /> Compact
+          </button>
+        ) : null}
       </header>
+
+      {compact.notice ? (
+        <p role="status" className="mt-1.5 rounded-lg border border-line bg-bg px-2 py-1 text-[11.5px] leading-relaxed text-ink">
+          {compact.notice}
+          <button type="button" onClick={clearCompactNotice} aria-label="Dismiss" className="ml-2 text-muted hover:text-ink">×</button>
+        </p>
+      ) : null}
 
       <p className="mt-1.5 line-clamp-3 text-[12.5px] text-muted">
         ▸ {turn.prompt}
@@ -188,6 +210,8 @@ export default function EnginePanel() {
         </div>
       ) : null}
     </section>
+    {compacting ? <CompactDialog onClose={() => setCompacting(false)} /> : null}
+    </>
   )
 }
 
@@ -296,5 +320,92 @@ export function DiffBlock({ detail }: { detail: string }) {
         )
       })}
     </pre>
+  )
+}
+
+/**
+ * The Compact dialog, in two honest steps. Step one shows the work order and
+ * lets the engine write the brief; step two shows the brief IN FULL and only
+ * then ends the session. Cancel at any point and the conversation is exactly
+ * as it was — a compaction that did not happen costs nothing.
+ */
+function CompactDialog({ onClose }: { onClose: () => void }) {
+  const compact = useCompact()
+  const engine = useEngine()
+  const busy = compact.phase === 'briefing' || compact.phase === 'ending'
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6" role="dialog" aria-label="Compact the conversation" onClick={() => { if (!busy) { cancelBrief(); onClose() } }}>
+      <div className="max-h-[85vh] w-full max-w-[560px] overflow-y-auto rounded-2xl border border-line bg-card p-5" onClick={event => event.stopPropagation()}>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-[15px] font-semibold text-ink">Compact the conversation</h2>
+            <p className="mt-1 text-[12px] leading-relaxed text-muted">
+              Only the engine knows how full its head is. Compact asks it to pour what matters into a
+              brief, ends this session, and hands the brief to the next one. The cards above stay here;
+              nothing you can see is deleted.
+            </p>
+          </div>
+          <button type="button" onClick={() => { if (!busy) { cancelBrief(); onClose() } }} aria-label="Close" className="text-muted hover:text-ink">
+            <X size={15} />
+          </button>
+        </div>
+
+        {compact.phase === 'idle' || compact.phase === 'briefing' ? (
+          <>
+            <p className="mt-4 text-[11px] font-medium uppercase tracking-wide text-muted">What will be sent</p>
+            <pre className="mt-1.5 max-h-[160px] overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-line bg-bg p-2.5 text-[12px] leading-relaxed text-ink">
+              {BRIEF_ORDER}
+            </pre>
+            {compact.error ? <p className="mt-2 text-[11.5px] text-warn">{compact.error}</p> : null}
+            <div className="mt-4 flex items-center justify-between gap-2">
+              <p className="text-[11px] leading-snug text-muted">The engine writes the brief as a normal turn; nothing ends yet.</p>
+              <button
+                type="button"
+                onClick={() => void writeBrief()}
+                disabled={compact.phase === 'briefing'}
+                className={`flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-medium ${compact.phase === 'briefing' ? 'bg-white/[0.06] text-muted' : 'bg-accent text-white hover:bg-accent/90'}`}
+              >
+                {compact.phase === 'briefing' ? 'Pouring…' : 'Write the brief'}
+              </button>
+            </div>
+          </>
+        ) : null}
+
+        {compact.phase === 'ready' || compact.phase === 'ending' ? (
+          <>
+            <p className="mt-4 text-[11px] font-medium uppercase tracking-wide text-muted">
+              The brief, in full · {compact.words} words
+            </p>
+            <pre className="mt-1.5 max-h-[240px] overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-line bg-bg p-2.5 text-[12px] leading-relaxed text-ink">
+              {compact.brief}
+            </pre>
+            {compact.error ? <p className="mt-2 text-[11.5px] text-warn">{compact.error}</p> : null}
+            <div className="mt-4 flex items-center justify-between gap-2">
+              <p className="text-[11px] leading-snug text-muted">
+                Ending ends {engine.settings.id}'s session and forgets the resume thread. The brief rides with your next message.
+              </p>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => { cancelBrief(); onClose() }}
+                  className="h-8 rounded-lg border border-line px-3 text-[12px] text-muted hover:text-ink"
+                >
+                  Keep the session
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void finishCompact().then((ok) => { if (ok) onClose() })}
+                  disabled={compact.phase === 'ending'}
+                  className={`h-8 rounded-lg px-3 text-[12.5px] font-medium ${compact.phase === 'ending' ? 'bg-white/[0.06] text-muted' : 'bg-accent text-white hover:bg-accent/90'}`}
+                >
+                  {compact.phase === 'ending' ? 'Ending…' : 'Compact now'}
+                </button>
+              </div>
+            </div>
+          </>
+        ) : null}
+      </div>
+    </div>
   )
 }

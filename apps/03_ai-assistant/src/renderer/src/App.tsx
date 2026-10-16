@@ -12,6 +12,7 @@ import Sidebar from './components/Sidebar'
 import { type View } from './components/AppNav'
 import ChatView from './components/ChatView'
 import { engineStore } from '@/state/engine'
+import { seedWrap } from '@/state/compact'
 import ArtifactsView from './components/ArtifactsView'
 import TodayView from './components/TodayView'
 import ProjectsView from './components/ProjectsView'
@@ -394,8 +395,9 @@ export default function App() {
     if (!text.trim() && attachments.length === 0) return
     // The only path: the engine. The text is a work order. The same
     // keep-the-draft-on-refusal rule applies, so nothing is ever typed twice.
+    // After a Compact, the brief rides along with exactly one send.
     const answer = await engineStore().send(
-      text.trim() || (attachments.length ? 'Read what I attached and tell me what you see.' : ''),
+      seedWrap(text.trim() || (attachments.length ? 'Read what I attached and tell me what you see.' : '')),
       attachments.filter(entry => entry.kind === 'image' && entry.data).map(entry => ({ mime: entry.mime || 'image/png', data: entry.data || '' })),
     )
     if (answer.ok) {

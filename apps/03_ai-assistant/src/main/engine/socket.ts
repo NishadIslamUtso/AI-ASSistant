@@ -23,6 +23,10 @@ export type EngineSocket = {
   turnBusy(): boolean
   running(): boolean
   stop(): void
+  /** End the session AND forget its resume id: the next send starts fresh.
+   *  Compaction's second half — without the forget, --resume would drag the
+   *  whole long conversation right back in. */
+  fresh(): void
 }
 
 /**
@@ -40,6 +44,7 @@ export const noSessionMemory: SessionMemory = { load: () => '', save: () => unde
 export function createEngineSocket(memory: SessionMemory = noSessionMemory): EngineSocket {
   let session: EngineSession | null = null
   let busy = false
+  let currentCwd = ''
 
   const onEvent = (input: EngineStartInput, event: EngineEvent): void => {
     // The socket owns the busy flag: a finished or failed task frees the
@@ -67,6 +72,8 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
 
   return {
     send(prompt: string, input: EngineStartInput & { images?: Array<{ mime: string; data: string }> }): EngineAnswer {
+      currentCwd = input.cwd
+
       // Engine #2 arrives after its Windows check (architecture doc, 6.3).
       // Until then it refuses honestly instead of pretending to start.
       if (input.settings.id === 'agy') {
@@ -103,5 +110,11 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
     turnBusy: () => busy,
     running: () => session?.isRunning() === true,
     stop: () => session?.stop(),
+    fresh: () => {
+      session?.stop()
+      session = null
+      busy = false
+      if (currentCwd) memory.save(currentCwd, '')
+    },
   }
 }

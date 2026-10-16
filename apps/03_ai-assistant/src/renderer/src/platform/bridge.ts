@@ -384,6 +384,10 @@ export type EngineBridge = {
     record: (entry: { prompt: string; winner: string; loser: string; tie: boolean; blind: boolean }) => Promise<{ ok: boolean; answer: string }>
     ledger: () => Promise<{ ok: boolean; entries: Array<{ prompt: string; winner: string; loser: string; tie: boolean; at: string }> }>
   }
+  compact: {
+    save: (input: { brief: string; workspace: string; at: string }) => Promise<{ ok: boolean; answer: string; file?: string }>
+  }
+  fresh: () => Promise<{ ok: boolean; answer: string }>
   recipes: {
     list: () => Promise<{ ok: boolean; recipes: Recipe[]; broken: Array<{ file: string; answer: string }> }>
     save: (recipe: unknown) => Promise<{ ok: boolean; answer: string }>
@@ -437,6 +441,10 @@ const demoEngineBridge: EngineBridge = {
     record: async () => ({ ok: false, answer: 'The tally lives in the desktop app.' }),
     ledger: async () => ({ ok: true, entries: [] }),
   },
+  compact: {
+    save: async () => ({ ok: false, answer: 'Briefs live in the desktop app.' }),
+  },
+  fresh: async () => ({ ok: false, answer: 'Sessions live in the desktop app.' }),
   recipes: {
     list: async () => ({ ok: true, recipes: [], broken: [] }),
     save: async () => ({ ok: false, answer: 'Recipes live in the desktop app.' }),

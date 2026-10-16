@@ -23,6 +23,7 @@ import { APPROVAL_MODES, type ApprovalMode, type EngineEvent, type EngineId, typ
 import { ENGINE_IMAGE_MIMES, MAX_ENGINE_IMAGE_CHARS as ENGINE_IMAGE_CHARS, MAX_ENGINE_ATTACHMENTS as ENGINE_IMAGE_LIMIT } from '../shared/lib/media'
 import { listCheckpoints, restoreCheckpoint } from './engine/checkpoints'
 import { createRecipeManager } from './recipes'
+import { createCompactManager } from './compact'
 import { createDownloadManager, type DownloadTick } from './engine/downloads'
 import { agyModelSource, detectEngine } from './engine/availability'
 import { parsePullLine, validateModelName } from './engine/pull'
@@ -586,6 +587,17 @@ function registerBridges(): void {
   ipcMain.handle('recipes:list', () => recipes.list())
   ipcMain.handle('recipes:save', (_event, recipe: unknown) => recipes.save(recipe as never))
   ipcMain.handle('recipes:remove', (_event, name: string) => recipes.remove(typeof name === 'string' ? name : ''))
+
+  // Compaction: the brief's receipt on disk, and the fresh start. The brief
+  // is the ENGINE's own words; these doors only keep the record and end the
+  // session so the next send cannot --resume the long conversation back in.
+  const briefs = createCompactManager(join(app.getPath('userData'), 'handoffs'))
+  ipcMain.handle('compact:save', (_event, input: { brief?: string; workspace?: string; at?: string }) => briefs.save(input ?? {}))
+  ipcMain.handle('engine:fresh', (): { ok: boolean; answer: string } => {
+    if (!engine) return { ok: false, answer: 'The engine door is not open on this machine yet.' }
+    engine.fresh()
+    return { ok: true, answer: 'Session ended and its resume id forgotten. The next task starts fresh.' }
+  })
 
   // Checkpoints: what the app kept the moment before an allowed write, and
   // the way back. Read from the folder the engine was handed at send time.
