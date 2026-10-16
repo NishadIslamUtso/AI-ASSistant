@@ -29,7 +29,11 @@ it useful. The rules below are few and absolute.
   ---
   ```
 
-- Link only files that exist. A `[[link]]` to a file that is not there is a lie in bold brackets — create the note or drop the link.
+- Link only files that exist. A `[[link]]` to a file that is not there is a lie in bold brackets — create the note or drop the link. Link by the file's path from the vault root (`[[05 Knowledge/Foo]]`), not by bare name: two files sharing a name make bare links ambiguous, and the app's link check reports them.
+- Start every new note from a template in `00 System/Templates/` — `Person.md` for someone new, `Knowledge Note.md` for synthesis. Never leave a template's placeholders in a finished note.
+- A new fact that fits an existing verified note is appended under `## Evolution [YYYY-MM-DD]` — history stays, nothing is silently rewritten. A fact that contradicts it gets `## Contradiction` and both sides.
+- Status is a lifecycle, not a mood: `raw` while written, `processing` while you work it, `verified` only when you have re-read it against its sources — and stamp `last_ai_audit` with the date you did.
+- A file tagged `#manual` belongs to the owner alone: never edit its text, and never touch even its frontmatter without being asked.
 - Say what a source says, never what it implies about being read or agreed with. A visit is not a reading.
 - When a new fact contradicts an existing verified note, add a `## Contradiction` section to the old note and say both sides. Do not silently pick a winner.
 

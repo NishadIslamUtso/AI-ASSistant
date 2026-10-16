@@ -177,11 +177,19 @@ const api = {
   },
   structure: {
     /** What a folder is, and exactly what a structure apply would add. */
-    inspect: (root: string): Promise<{ ok: boolean; kind?: string; present?: string[]; missing?: string[]; error?: string }> =>
+    inspect: (
+      root: string
+    ): Promise<{ ok: boolean; kind?: string; present?: string[]; missing?: string[]; differing?: string[]; error?: string }> =>
       ipcRenderer.invoke('structure:inspect', root),
     /** Add every missing structure file; existing files are never rewritten. */
-    apply: (root: string): Promise<{ ok: boolean; kind?: string; written?: string[]; skipped?: string[]; error?: string }> =>
-      ipcRenderer.invoke('structure:apply', root),
+    apply: (
+      root: string,
+      options?: { refresh?: boolean }
+    ): Promise<{ ok: boolean; kind?: string; written?: string[]; refreshed?: string[]; skipped?: string[]; differing?: string[]; error?: string }> =>
+      ipcRenderer.invoke('structure:apply', root, options),
+    /** Every [[link]] in the vault, resolved and counted: dead and ambiguous reported. */
+    linkCheck: (): Promise<{ files: number; checked: number; dead: Array<{ from: string; target: string }>; ambiguous: Array<{ from: string; target: string; matches: string[] }>; error?: string }> =>
+      ipcRenderer.invoke('vault:link-check'),
   },
   vault: {
     /** The operating system's folder picker. null when the person closed it. */

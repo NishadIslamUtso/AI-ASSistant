@@ -26,7 +26,7 @@ import { deployMcp, deploySkill, scanClaudeSkills, type McpServer, type VaultSki
 import { installCatalogSkill } from './engine/skillCatalogInstall'
 import { installPackFromFolder, listPacks, removePack } from './engine/packs'
 import { deployBuiltInSkills } from './engine/vaultSkills'
-import { classifyBrainRoot, planBrainApply } from '../shared/lib/brainStructure'
+import { brainFileContents, classifyBrainRoot, planBrainApply, planBrainRefresh } from '../shared/lib/brainStructure'
 import { normalizeBoard } from '../shared/lib/sessionsBoard'
 import { exportVaultCopy } from './vault/exportCopy'
 import { deployHouseRules } from './engine/houseRulesDeploy'
@@ -256,19 +256,29 @@ function registerBridges(): void {
     }
     const { kind } = classifyBrainRoot(names)
     const plan = planBrainApply(kind, relative => existsSync(join(root, relative)))
-    return { kind: plan.kind, present: plan.present, missing: plan.missing, writes: plan.writes }
+    const differing = planBrainRefresh(kind, relative => {
+      try {
+        const full = join(root, relative)
+        return existsSync(full) ? readFileSync(full, 'utf8') : null
+      } catch {
+        return null
+      }
+    })
+    return { kind: plan.kind, present: plan.present, missing: plan.missing, differing, writes: plan.writes }
   }
 
   ipcMain.handle('structure:inspect', (_event, root: string) => {
     try {
       const plan = structurePlan(root)
-      return 'error' in plan ? { ok: false, error: plan.error } : { ok: true, kind: plan.kind, present: plan.present, missing: plan.missing }
+      return 'error' in plan
+        ? { ok: false, error: plan.error }
+        : { ok: true, kind: plan.kind, present: plan.present, missing: plan.missing, differing: plan.differing }
     } catch (error) {
       return { ok: false, error: (error as Error).message }
     }
   })
 
-  ipcMain.handle('structure:apply', (_event, root: string) => {
+  ipcMain.handle('structure:apply', (_event, root: string, options: { refresh?: boolean } | undefined) => {
     try {
       const plan = structurePlan(root)
       if ('error' in plan) return { ok: false, error: plan.error }
@@ -278,6 +288,21 @@ function registerBridges(): void {
         mkdirSync(dirname(full), { recursive: true })
         writeFileSync(full, file.content, { encoding: 'utf8', flag: 'wx' })
         written.push(file.relative)
+      }
+      // Refresh is the owner's explicit press: only the app's own rulebooks
+      // (index map + CLAUDE.md/AGENTS.md wording) are brought up to date —
+      // never a README, never a note, never anything that was missing anyway.
+      let refreshed: string[] = []
+      if (options?.refresh === true && plan.differing.length) {
+        // The new wording comes from the library itself, not from plan.writes:
+        // a differing file is present, so it was never in the writes plan.
+        const contents = brainFileContents(plan.kind)
+        for (const relative of plan.differing) {
+          const content = contents.get(relative)
+          if (content === undefined) continue
+          writeFileSync(join(root, relative), content, { encoding: 'utf8' })
+          refreshed.push(relative)
+        }
       }
       // Inside an app vault, the own audit log records the additions.
       if (plan.kind === 'app-structure' && written.length && resolve(root) === resolve(vaultRoot())) {
@@ -290,9 +315,20 @@ function registerBridges(): void {
           // The files are on disk either way; a log failure is reported, not hidden.
         }
       }
-      return { ok: true, kind: plan.kind, written, skipped: plan.present }
+      return { ok: true, kind: plan.kind, written, refreshed, skipped: plan.present, differing: plan.differing }
     } catch (error) {
       return { ok: false, error: (error as Error).message }
+    }
+  })
+
+  // The link check: every [[link]] in the vault, resolved by exact path and
+  // counted honestly — dead links and ambiguous bare names are reported, never
+  // repaired behind the owner's back. Read-only.
+  ipcMain.handle('vault:link-check', () => {
+    try {
+      return createVaultService({ vaultPath: vaultRoot() }).links()
+    } catch (error) {
+      return { files: 0, checked: 0, dead: [], ambiguous: [], error: (error as Error).message }
     }
   })
 

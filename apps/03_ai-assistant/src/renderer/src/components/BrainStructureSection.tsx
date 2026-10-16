@@ -9,7 +9,7 @@ import { bridge } from '../platform/bridge'
  * is already there is never rewritten.
  */
 
-type Inspection = { ok: boolean; kind?: string; present?: string[]; missing?: string[]; error?: string }
+type Inspection = { ok: boolean; kind?: string; present?: string[]; missing?: string[]; differing?: string[]; error?: string }
 
 const KIND_LABEL: Record<string, string> = {
   'app-structure': 'This vault already speaks the app\'s structure.',
@@ -32,6 +32,7 @@ export default function BrainStructureSection({ path, isDemo }: { path: string; 
   const [adopted, setAdopted] = useState<{ root: string; inspection: Inspection } | null>(null)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
+  const [links, setLinks] = useState<{ files: number; checked: number; dead: Array<{ from: string; target: string }>; ambiguous: Array<{ from: string; target: string; matches: string[] }>; error?: string } | null>(null)
 
   useEffect(() => {
     if (isDemo || !path) return
@@ -93,6 +94,52 @@ export default function BrainStructureSection({ path, isDemo }: { path: string; 
     }
   }
 
+  async function refresh(root: string): Promise<void> {
+    setBusy(true)
+    setNotice('')
+    try {
+      const result = await bridge.structure.apply(root, { refresh: true })
+      if (!result.ok) {
+        setNotice(result.error || 'Nothing was written.')
+        return
+      }
+      const refreshed = result.refreshed ?? []
+      const written = result.written ?? []
+      const parts: string[] = []
+      if (refreshed.length) parts.push(`Replaced with the current wording: ${refreshed.join(', ')}. Notes were never touched.`)
+      if (written.length) parts.push(`Added ${written.length} missing file${written.length === 1 ? '' : 's'}: ${written.join(', ')}.`)
+      setNotice(parts.length ? parts.join(' ') : 'Already up to date — nothing replaced.')
+      const fresh = await bridge.structure.inspect(root)
+      if (root === path) setInspection(fresh)
+    } catch (error) {
+      setNotice((error as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function checkLinks(): Promise<void> {
+    setBusy(true)
+    try {
+      setLinks(await bridge.structure.linkCheck())
+    } catch (error) {
+      setLinks({ files: 0, checked: 0, dead: [], ambiguous: [], error: (error as Error).message })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  function linksLine(): string {
+    if (!links) return ''
+    if (links.error) return links.error
+    const dead = links.dead.length
+    const ambiguous = links.ambiguous.length
+    if (!dead && !ambiguous) return `${links.checked} links across ${links.files} notes — every one resolves.`
+    const deadNames = dead ? `${dead} dead (${links.dead.slice(0, 3).map(h => h.target).join(', ')}${dead > 3 ? '…' : ''})` : ''
+    const ambNames = ambiguous ? `${ambiguous} ambiguous bare names (${links.ambiguous.slice(0, 3).map(h => h.target).join(', ')}${ambiguous > 3 ? '…' : ''})` : ''
+    return `${links.checked} links across ${links.files} notes — ${[deadNames, ambNames].filter(Boolean).join(', ')}.`
+  }
+
   if (isDemo) {
     return (
       <p className="text-[12px] text-muted">
@@ -130,6 +177,37 @@ export default function BrainStructureSection({ path, isDemo }: { path: string; 
           >
             Set up structure…
           </button>
+          <button
+            className="rounded-lg border border-line px-3 py-2 text-[12.5px] hover:bg-white/[0.06] disabled:opacity-50"
+            disabled={busy}
+            onClick={() => void checkLinks()}
+            aria-label="Check links"
+          >
+            Check links
+          </button>
+        </div>
+      ) : null}
+      {links ? (
+        <p className="break-words text-[12px] text-muted" role="status">
+          {linksLine()}
+        </p>
+      ) : null}
+      {inspection?.ok && inspection.differing?.length ? (
+        <div className="flex flex-col gap-2 rounded-lg border border-line bg-card p-2.5">
+          <p className="text-[12px] text-muted">
+            The app's wording of {inspection.differing.join(', ')} is newer than what the vault holds. Your notes are
+            never touched — only that file's rules text.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              className="rounded-lg border border-line px-3 py-2 text-[12.5px] hover:bg-white/[0.06] disabled:opacity-50"
+              disabled={busy}
+              onClick={() => void refresh(path)}
+              aria-label="Replace rulebooks with current wording"
+            >
+              Replace with current wording
+            </button>
+          </div>
         </div>
       ) : null}
       {asked ? (

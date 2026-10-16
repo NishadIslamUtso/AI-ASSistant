@@ -191,3 +191,16 @@ Question: how do real MV3 extensions inject text into a focused field and queue 
 Rejected: none this sweep — all three confirm the existing architecture rather than replace it.
 
 Fix shipped with the receipts (the exact ERROR shots): vault-writer's offline path could reject out of a torn-down context ("Extension context invalidated" at vault-writer.js:51/:30, capsule-inject.js:35) — the queue call is now guarded inside the writer, and capsule-inject swallows context-invalidation rejections it cannot act on. Queue≤200 / activity≤100 caps kept. Manifest 0.1.1 → 0.1.2.
+
+## 2026-10-16 (day III) — the Obsidian/LLM-wiki convo sources, read for real (his correction accepted: the convo was mine to research, not just summarize)
+
+His prompt convo pointed at specific repos and guides. Fetched and read (receipts = commit histories, not README vibes):
+
+| Source | What it really is | Verdict |
+| --- | --- | --- |
+| AgriciDaniel/claude-obsidian | Karpathy-pattern Obsidian+Claude plugin (v2.2.0, 282 commits): wikilink LINTER (dead/ambiguous detection, exact-path resolution, skips dot-dirs, `--exclude` globs), scaffold pins Obsidian to ABSOLUTE link format because shortest-path links resolve differently in Obsidian's UI than in every exact-path tool ("genuinely wrong the moment two files share a basename") | ADOPTED — link check (`/links`, dead+ambiguous, exact path, dot-dirs skipped); rulebooks now demand path links, not bare names |
+| huytieu/COG-second-brain | 35 skills/10 agents/people CRM; two transferable engineering lessons in its own fix history: (1) "a mandate no session honors teaches the model to discount the rest of the file" — few rules, all honored; (2) "a behavioral trigger cannot live in a lazily loaded file" — triggers belong in CLAUDE.md, skill bodies hold procedures. Also framework/content separation (rulebooks = framework, follow app version; notes = content, owner's) + cog-update.sh refresh flow | ADOPTED — rulebook refresh = explicit owner press (Replace), never auto-overwrite; rules stay short. Trigger lesson confirms rulebooks-over-skills split |
+| COG daily-journal bug (#26/#34) | journal "automatic" skill logged nothing: trigger was inside SKILL.md (lazily loaded) | Conforming evidence — our always-apply rules live in CLAUDE.md/AGENTS.md at the root, skills carry procedures only (browser-page skill already split this way) |
+| Leaked-prompt mythology (asgeirtj repo etc.) | Real Anthropic event = npm package briefly shipped unminified TS (readable, not "hacked"); "512k-line leak" numbers + "hardcoded in models" claims unverified/false — system prompts are runtime text, not weights | REJECTED as fact-base; only the structural pattern (constraints/error-handling blocks, fail-don't-guess) is real practice, and the app already embodies it |
+
+Also shipped from the sweep: `#manual` owner-lockout + `## Evolution [date]` append + status lifecycle audit stamps in the rulebooks; `00 System/Templates/Person.md` + `Knowledge Note.md` (style-matched to the existing Entity/Sharing Receipt templates) generated for app-shaped vaults, never for adopted foreign layouts.

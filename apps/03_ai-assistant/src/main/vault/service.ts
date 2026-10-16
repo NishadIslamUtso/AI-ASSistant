@@ -578,6 +578,74 @@ export function createVaultService({
     return { page }
   }
 
+  /**
+   * Link check (adapted from the research repos' wikilink linters): every
+   * [[link]] in every markdown note, resolved the way the rulebook demands —
+   * by exact vault-relative path. A link to nothing is reported dead; a bare
+   * name that matches several files is reported ambiguous instead of guessed.
+   * Counted, never fixed silently.
+   */
+  function links(): {
+    files: number
+    checked: number
+    dead: Array<{ from: string; target: string }>
+    ambiguous: Array<{ from: string; target: string; matches: string[] }>
+  } {
+    const store = vault()
+    const notes: Array<{ relative: string; body: string }> = []
+    const walk = (directory: string, prefix: string): void => {
+      let entries
+      try {
+        entries = readdirSync(join(directory, prefix), { withFileTypes: true })
+      } catch {
+        return
+      }
+      for (const entry of entries) {
+        if (entry.name.startsWith('.')) continue
+        const child = prefix ? `${prefix}/${entry.name}` : entry.name
+        if (entry.isDirectory()) walk(directory, child)
+        else if (entry.name.endsWith('.md')) {
+          // Templates hold placeholder links ([[source-id]]) by design: they
+          // are not claims about the vault, so they are not scanned. The notes
+          // created FROM them are.
+          if (child === '00 System/Templates' || child.startsWith('00 System/Templates/')) continue
+          const body = store.read(child)
+          if (body) notes.push({ relative: child, body })
+        }
+      }
+    }
+    walk(store.root, '')
+    const basenames = new Map<string, string[]>()
+    for (const note of notes) {
+      const base = note.relative.split('/').slice(-1)[0].replace(/\.md$/, '')
+      basenames.set(base, [...(basenames.get(base) ?? []), note.relative])
+    }
+    const resolveOne = (target: string): string[] => {
+      const clean = target.trim().replace(/^\.\//, '')
+      if (!clean) return []
+      const asPath = clean.endsWith('.md') ? clean : `${clean}.md`
+      const direct = notes.find(note => note.relative === asPath)
+      if (direct) return [direct.relative]
+      const hits = basenames.get(clean) ?? []
+      return hits
+    }
+    const dead: Array<{ from: string; target: string }> = []
+    const ambiguous: Array<{ from: string; target: string; matches: string[] }> = []
+    let checked = 0
+    const pattern = /\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]/g
+    for (const note of notes) {
+      for (const match of note.body.matchAll(pattern)) {
+        checked += 1
+        const target = match[1].trim()
+        const hits = resolveOne(target)
+        if (hits.length === 0) dead.push({ from: note.relative, target })
+        else if (hits.length > 1) ambiguous.push({ from: note.relative, target, matches: hits })
+      }
+    }
+    return { files: notes.length, checked, dead, ambiguous }
+  }
+
+
   return {
     root,
     available,
@@ -588,6 +656,7 @@ export function createVaultService({
     blacklist,
     updateBlacklist,
     capture,
+    links,
     onui,
     listEntries,
     capsules,

@@ -161,7 +161,11 @@ export function rulesContent(kind: BrainKind, forClaude: boolean): string {
     '  ---',
     '  ```',
     '',
-    '- Link only files that exist. A `[[link]]` to a file that is not there is a lie in bold brackets — create the note or drop the link.',
+    '- Link only files that exist. A `[[link]]` to a file that is not there is a lie in bold brackets — create the note or drop the link. Link by the file\'s path from the vault root (`[[05 Knowledge/Foo]]`), not by bare name: two files sharing a name make bare links ambiguous, and the app\'s link check reports them.',
+    '- Start every new note from a template in `00 System/Templates/` — `Person.md` for someone new, `Knowledge Note.md` for synthesis. Never leave a template\'s placeholders in a finished note.',
+    '- A new fact that fits an existing verified note is appended under `## Evolution [YYYY-MM-DD]` — history stays, nothing is silently rewritten. A fact that contradicts it gets `## Contradiction` and both sides.',
+    '- Status is a lifecycle, not a mood: `raw` while written, `processing` while you work it, `verified` only when you have re-read it against its sources — and stamp `last_ai_audit` with the date you did.',
+    '- A file tagged `#manual` belongs to the owner alone: never edit its text, and never touch even its frontmatter without being asked.',
     '- Say what a source says, never what it implies about being read or agreed with. A visit is not a reading.',
     '- When a new fact contradicts an existing verified note, add a `## Contradiction` section to the old note and say both sides. Do not silently pick a winner.',
     '',
@@ -181,6 +185,63 @@ function readmeContent(folder: { relative: string; purpose: string }): string {
   return `# ${folder.relative.split('/').slice(-1)[0]}\n\n${folder.purpose}\n`
 }
 
+/** A new person note starts here; the engine copies it, never invents fields. */
+const PERSON_TEMPLATE = `---
+id: person-<stable-id>
+type: person
+status: confirmed
+importance: normal
+sensitivity: ordinary
+retention: keep-until-user-deletes
+created: <YYYY-MM-DD>
+updated: <YYYY-MM-DD>
+sources: ["[[source-id]]"]
+related: []
+---
+
+# {{title}}
+
+## Overview
+Who this is, in two sentences, with the source for each claim.
+
+## Decisions
+### <YYYY-MM-DD> - What was decided
+- decision: ...
+- context: ...
+- source: "[[source-id]]"
+
+## Meetings
+- [[source-id]] - what it was
+
+## Open Loops
+- ...
+
+## Sources
+- [[source-id]]
+`
+
+/** A synthesized note starts here; status stays raw until audited against its sources. */
+const KNOWLEDGE_TEMPLATE = `---
+id: <YYYYMMDDHHMMSS>
+title: "Short title"
+type: concept
+status: raw
+tags: [lowercase-tags]
+connections: ["[[05 Knowledge/an-existing-note]]"]
+last_ai_audit: ""
+created: <YYYY-MM-DD>
+---
+
+# {{title}}
+
+One topic. Say only what the sources say.
+
+## Sources
+- [[02 Sources/...]] — what this source contributed
+
+## Evolution
+`
+
 /** The exact bytes each structure path gets, adapted to the vault kind. */
 export function brainFileContents(kind: BrainKind): Map<string, string> {
   const contents = new Map<string, string>()
@@ -188,7 +249,34 @@ export function brainFileContents(kind: BrainKind): Map<string, string> {
   contents.set('index.md', indexContent(kind))
   contents.set('CLAUDE.md', rulesContent(kind, true))
   contents.set('AGENTS.md', rulesContent(kind, false))
+  // Templates are part of the app-shaped vault: an adopted foreign layout is
+  // never handed a 00 System folder it did not ask for.
+  if (kind === 'app-structure' || kind === 'empty') {
+    contents.set('00 System/Templates/Person.md', PERSON_TEMPLATE)
+    contents.set('00 System/Templates/Knowledge Note.md', KNOWLEDGE_TEMPLATE)
+  }
   return contents
+}
+
+/**
+ * Which already-present rulebooks differ from the app's current wording —
+ * reported by inspect, rewritten by apply only when the owner presses
+ * Replace. Rulebooks are the app's own files (COG's framework/content split):
+ * they follow the app version, while every note stays the owner's.
+ */
+export function planBrainRefresh(
+  kind: BrainKind,
+  readExisting: (relative: string) => string | null
+): string[] {
+  const contents = brainFileContents(kind)
+  const differing: string[] = []
+  for (const relative of ['index.md', 'CLAUDE.md', 'AGENTS.md']) {
+    const current = contents.get(relative)
+    if (current === undefined) continue
+    const existing = readExisting(relative)
+    if (existing !== null && existing !== current) differing.push(relative)
+  }
+  return differing
 }
 
 /**
