@@ -31,7 +31,9 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
 
 5. **The community store, for real (his question):** the repo grows `store/`, shipped as `resources/store`; Plugins offers "Add the community store" one-press; URL indexes that list files now download-and-verify-install; provenance badges are truthful (store · checksum verified / shipped / unverified). **The store is furnished (his follow-up): FOUR real packs — Prompt starters (the app's own 8 prompts), Looks (the 5 real accents), starter pack, Anthropic skills curated four (Apache-2.0 only, license text rides along; docx/pdf/pptx/xlsx excluded — source-available, no repack). `store/rebuild.mjs` recomputes digests; the shipped-store test pins index↔folder agreement. Agents/connectors stay refused in plain words until their runtimes. Receipts g37–g38 (Prompt starters installed live, verified).
 
-Receipts g27–g36. Version 0.8.0 (installer rebuilt to ship the store). Next: TUF A15 acceptance.
+6. **Code inside Projects (his "you choose", option 1 taken):** Code off the global nav, a Code button on every project card that opens Code scoped to the project's folder (Show-all returns everything; the menu keeps View > Code). Receipts g39–g41.
+
+Receipts g27–g41. Version 0.8.0. Next: TUF A15 acceptance.
 
 ## NOW — the acceptance round-trip (everything hangs on this)
 
