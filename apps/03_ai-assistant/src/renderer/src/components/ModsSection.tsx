@@ -18,7 +18,7 @@ import type { Appearance } from '../state/appearance'
  * the same list with a new source.
  */
 
-type Listed = { pack: Pack; folder: string; installedAt: string }
+type Listed = { pack: Pack; folder: string; installedAt: string; via?: string }
 
 const THEMES_KEY = 'ai-assistant.pack-themes'
 
@@ -187,7 +187,7 @@ themes/paper.json`}
         </p>
       ) : (
         <ul className="flex flex-col gap-2">
-          {packs.map(({ pack, folder }) => {
+          {packs.map(({ pack, folder, via }) => {
             const perms = describePermissions(pack)
             return (
               <li key={pack.id} className="rounded-xl border border-line bg-card p-3">
@@ -199,12 +199,21 @@ themes/paper.json`}
                       <span className="text-[11px] text-muted">
                         v{pack.version} · {pack.author}
                       </span>
-                      <span
-                        className="ml-2 rounded-md border border-warn/50 px-1.5 py-0.5 text-[10px] text-warn"
-                        title="Not from the built-in index — you installed it from a folder yourself."
-                      >
-                        unverified
-                      </span>
+                      {via ? (
+                        <span
+                          className="ml-2 rounded-md border border-line px-1.5 py-0.5 text-[10px] text-muted"
+                          title={via === 'index' ? 'Installed from a store whose index pinned the checksum — verified at install.' : 'Shipped with the app.'}
+                        >
+                          {via === 'index' ? 'store · checksum verified' : 'shipped'}
+                        </span>
+                      ) : (
+                        <span
+                          className="ml-2 rounded-md border border-warn/50 px-1.5 py-0.5 text-[10px] text-warn"
+                          title="Not from a store's index — you installed it from a folder yourself."
+                        >
+                          unverified
+                        </span>
+                      )}
                     </p>
                     {pack.description ? <p className="mt-0.5 text-[11.5px] text-muted">{pack.description}</p> : null}
                     <p className="mt-0.5 text-[11.5px] text-muted">
@@ -423,7 +432,7 @@ type IndexEntryView = {
  * are listed but not installable, and say so.
  */
 function CommunityPacks({ installed, onInstalled }: {
-  installed: Array<{ id: string; version: string }>
+  installed: Array<{ id: string; version: string; via?: string }>
   onInstalled: () => void
 }) {
   const [indexes, setIndexes] = useState<Array<{ kind: 'folder' | 'url'; locator: string; addedAt: string }>>([])

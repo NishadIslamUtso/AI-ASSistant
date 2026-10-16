@@ -863,9 +863,11 @@ function registerBridges(): void {
   // extension's resources — offline from the first run. In dev it is the
   // repo's own store/; packaged, the copy electron-builder ships.
   ipcMain.handle('mods:community-index', (): { ok: boolean; path?: string } => {
+    // Launched from source, getAppPath can be the built main/ folder; the
+    // checkout root (two up) is what actually holds store/.
     const candidates = app.isPackaged
       ? [join(process.resourcesPath || '', 'store')]
-      : [join(app.getAppPath(), 'store')]
+      : [join(app.getAppPath(), 'store'), join(app.getAppPath(), '..', '..', 'store')]
     for (const candidate of candidates) {
       if (candidate && existsSync(join(candidate, 'index.json'))) return { ok: true, path: candidate }
     }
@@ -884,7 +886,7 @@ function registerBridges(): void {
         mkdirSync(dirname(full), { recursive: true })
         writeFileSync(full, text, 'utf8')
       }
-      const result = installPackFromFolder(staging, { storeRoot: join(app.getPath('userData'), 'extensions'), ...skillTargets() })
+      const result = installPackFromFolder(staging, { storeRoot: join(app.getPath('userData'), 'extensions'), ...skillTargets() }, 'starter')
       if (!result.ok) return { ok: false, answer: result.answer }
       return { ok: true, answer: `${result.pack.name} installed.`, folder: result.folder, written: result.written }
     } catch {

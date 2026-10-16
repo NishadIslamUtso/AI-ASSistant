@@ -29,7 +29,9 @@ memory guards). Where this and TODOLIST.md disagree on ORDER, this file wins.
 3. **Marketplace dissolved (his order):** modal + sidebar button + account-menu entry deleted; Connectors (engines + extension) and Plugins (packs) are the homes.
 4. **3D first-class (his order, the Claude-OS view):** Brain in the nav + Ctrl+7 + "Open the 3D brain" in Settings › Vault; same graph engine, full height, live counts.
 
-Receipts g27–g33. Version 0.8.0. Next: D installer rebuild (recipe in RELEASE-WINDOWS.md), then TUF A15 acceptance.
+5. **The community store, for real (his question):** the repo grows `store/` (index + starter pack, checksum pinned by test), shipped as `resources/store`; Plugins offers "Add the community store" one-press; URL indexes that list files now download-and-verify-install; provenance badges are truthful (store · checksum verified / shipped / unverified). Receipts g34–g36.
+
+Receipts g27–g36. Version 0.8.0 (installer rebuilt to ship the store). Next: TUF A15 acceptance.
 
 ## NOW — the acceptance round-trip (everything hangs on this)
 

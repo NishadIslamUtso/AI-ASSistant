@@ -313,7 +313,7 @@ export async function installFromIndex(
   if (source.kind === 'folder') {
     if (!entry.verified) return { ok: false, answer: entry.problem || 'The pack did not pass the checksum check, so it is refused.' }
     const folder = join(resolve(source.path), entry.source)
-    const result = installPackFromFolder(folder, targets)
+    const result = installPackFromFolder(folder, targets, 'index')
     if (!result.ok) return { ok: false, answer: result.answer }
     return { ok: true, answer: `${result.pack.name} ${result.pack.version} installed from the index (checksum verified).`, written: result.written, folder: result.folder }
   }
@@ -360,7 +360,7 @@ export async function installFromIndex(
     if (problem || digest !== entry.checksum) {
       return { ok: false, answer: problem || 'The downloaded files do not match the checksum the index pinned — refused, nothing installed.' }
     }
-    const result = installPackFromFolder(staging, targets)
+    const result = installPackFromFolder(staging, targets, 'index')
     if (!result.ok) return { ok: false, answer: result.answer }
     return { ok: true, answer: `${result.pack.name} ${result.pack.version} installed from the store (downloaded, checksum verified).`, written: result.written, folder: result.folder }
   } finally {
