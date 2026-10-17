@@ -296,7 +296,13 @@ test('a symlink out of the vault is refused and nothing lands outside', (t) => {
   const outside = mkdtempSync(join(tmpdir(), 'ai-assistant-outside-'))
   t.after(() => rmSync(outside, { recursive: true, force: true }))
   mkdirSync(join(root, '02 Sources'))
-  symlinkSync(outside, join(root, '02 Sources/Conversations'), 'dir')
+  try {
+    symlinkSync(outside, join(root, '02 Sources/Conversations'), 'dir')
+  } catch {
+    // Windows denies symlinks without admin/developer-mode; the escape guard
+    // itself is pinned on this filesystem and in the memory-files tests.
+    t.skip('this filesystem denies symlinks')
+  }
   assert.throws(() => service.capture(conversation()), InputError)
   assert.equal(readdirSync(outside).length, 0)
 })

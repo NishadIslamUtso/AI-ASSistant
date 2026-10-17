@@ -22,7 +22,7 @@
   "apps": {
     "03_ai-assistant": {
       "path": "apps/03_ai-assistant",
-      "status": "76 files / 621 tests across 78 files after the judges\u2019 security and honesty round (2026-10-17): IPC origin guard + navigation lock, fail-closed checkpoints, gear-aware engine reuse, per-engine session memory, watch fire proven end to end",
+      "status": "78 files / 621 tests on Electron 41.10.7; Windows-hostile tests honestly guarded; extension port paired per-install; audit: shipped runtime clean, dev-toolchain findings risk-accepted in CHANGELOG",
       "tech": "Electron 40 + electron-vite 5 + Vite 6 + React 19 + TypeScript 5.7 + Tailwind 4 + Vitest 2; engines are EXTERNAL binaries (claude CLI, agy, ollama) - no engine SDK is a dependency",
       "engines": {
         "claude-code": "Claude Code CLI on its native stream-json wire (src/main/engine/claudeCode.ts + stream.ts); house rules deploy into its CLAUDE.md block",

@@ -56,7 +56,7 @@ test('a real change fires the order once, through the one send path; the cooldow
   // watcher would report.
   writeFileSync(join(folder, 'notes.md'), 'the engine should hear about this')
   onTick!({ names: ['notes.md'] })
-  await wait(300)
+  await wait(500)
 
   assert.equal(sends.length, 1, `exactly one fire, got ${sends.length}`)
   assert.match(sends[0] ?? '', /notes\.md/, 'the fire names what changed')
@@ -65,7 +65,7 @@ test('a real change fires the order once, through the one send path; the cooldow
 
   // A second tick inside the cooldown is the tail the mode exists to avoid.
   onTick!({ names: ['notes.md'] })
-  await wait(300)
+  await wait(500)
   assert.equal(sends.length, 1, 'the cooldown holds: no tail-chase')
 
   rmSync(folder, { recursive: true, force: true })

@@ -51,11 +51,14 @@ async function withPort(t: { after: (fn: () => unknown) => void }): Promise<{
   const call = async (
     method: string,
     route: string,
-    options: { body?: unknown; origin?: string; contentType?: string } = {}
+    options: { body?: unknown; origin?: string; contentType?: string; pair?: string | false } = {}
   ): Promise<Call> => {
     const headers: Record<string, string> = {}
     if (options.body !== undefined) headers['content-type'] = options.contentType || 'application/json'
     if (options.origin !== undefined) headers.origin = options.origin
+    // The pairing token rides every call unless a test is deliberately
+    // checking the refusal.
+    if (options.pair !== false) headers['x-oddbrain-pair'] = options.pair || api.pairToken
     const response = await fetch(`${api.url}${route}`, {
       method,
       headers,
@@ -138,6 +141,11 @@ test('a web page gets nothing, and is not even told the port is there', async t 
   // No Origin header at all: refused too. A browser always sends one, so a
   // request without one is not a browser extension.
   const bare = await call('GET', '/health')
+  const unpaired = await call('GET', '/health', { origin: EXT, pair: false })
+  assert.equal(unpaired.status, 401, 'an unpaired extension is refused, politely and in full')
+  assert.match(unpaired.body.error, /not paired with OddBrain yet/)
+  const wrongToken = await call('GET', '/health', { origin: EXT, pair: 'not-the-token'.padEnd(48, 'x') })
+  assert.equal(wrongToken.status, 401, 'a wrong token is the same refusal')
   assert.equal(bare.status, 403)
   assert.match(bare.body.error, /says where it is calling from/)
 })
@@ -156,7 +164,7 @@ test('captures switched off in Agent access are refused, and nothing is written'
   const post = (route: string, body: unknown): Promise<Response> =>
     fetch(`${api.url}${route}`, {
       method: 'POST',
-      headers: { origin: EXT, 'content-type': 'application/json' },
+      headers: { origin: EXT, 'content-type': 'application/json', 'x-oddbrain-pair': api.pairToken },
       body: JSON.stringify(body),
     })
 
@@ -178,8 +186,8 @@ test('captures switched off in Agent access are refused, and nothing is written'
 
   // Reading is still allowed: the never-check list is what keeps a site private,
   // and the extension has to be able to show it while captures are off.
-  assert.equal((await fetch(`${api.url}/blacklist`, { headers: { origin: EXT } })).status, 200)
-  const health = await (await fetch(`${api.url}/health`, { headers: { origin: EXT } })).json()
+  assert.equal((await fetch(`${api.url}/blacklist`, { headers: { origin: EXT, 'x-oddbrain-pair': api.pairToken } })).status, 200)
+  const health = await (await fetch(`${api.url}/health`, { headers: { origin: EXT, 'x-oddbrain-pair': api.pairToken } })).json()
   assert.equal((health as { captures: boolean }).captures, false, 'the extension can see why instead of retrying')
 
   // On again, without a restart.
@@ -335,12 +343,13 @@ test('a vault that is not there is reported, not created — and the port says s
   const service = createVaultService({ vaultPath: missing, clock: CLOCK })
   const api = await startExtensionApi({ port: 0, vault: service })
   t.after(() => api.close())
-  const response = await fetch(`${api.url}/health`, { headers: { origin: EXT } })
+  const pair = { origin: EXT, 'x-oddbrain-pair': api.pairToken }
+  const response = await fetch(`${api.url}/health`, { headers: pair })
   const health = await response.json()
   assert.equal(health.available, false)
   const capture = await fetch(`${api.url}/capture`, {
     method: 'POST',
-    headers: { origin: EXT, 'content-type': 'application/json' },
+    headers: { ...pair, 'content-type': 'application/json' },
     body: JSON.stringify(conversation()),
   })
   assert.equal(capture.status, 503)

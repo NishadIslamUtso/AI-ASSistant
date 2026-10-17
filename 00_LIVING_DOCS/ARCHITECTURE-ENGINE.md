@@ -88,7 +88,8 @@ A new back-room module: `src/main/engine/`. It has three jobs:
 
 Built on the **raw stream** (drive the installed CLI in its official
 stream-json mode) instead of the Agent SDK, for four honest reasons:
-(1) the SDK can't be installed in my sandbox, so I'd be coding its API blind —
+(1) the SDK can't be exercised in my sandbox (its install needs a real agent
+    round-trip to verify, and npm only proves it is published — `@anthropic-ai/claude-agent-sdk` 0.3.301 and `@anthropic-ai/mcpb` 2.1.2 are public), so I'd be coding its API blind —
 the raw stream I can test here, and IS tested (12 wire tests);
 (2) it drives the very CLI already verified on his machine (v2.1.300 +
 gemma4:cloud) — zero new dependencies, version-matched;

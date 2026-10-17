@@ -148,6 +148,12 @@ test('a poisoned archive path is refused, never written', async () => {
 })
 
 test('the staged ollama runtime: started by the app, pid recorded, stopped for real', async () => {
+  if (process.platform === 'win32') {
+    // Windows cannot exec an extensionless shebang script, so this real
+    // process lifecycle is pinned on POSIX; the Windows stop path (taskkill
+    // tree-kill) is pinned separately in the stopArguments tests.
+    return
+  }
   const { mkdtempSync, writeFileSync, mkdirSync, chmodSync, existsSync } = await import('node:fs')
   const { readFile } = await import('node:fs/promises')
   const { tmpdir } = await import('node:os')

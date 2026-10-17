@@ -87,7 +87,11 @@ test('with an encryptor, the key survives a restart — and never touches disk r
   const onDisk = readFileSync(file, 'utf8')
   assert.equal(onDisk.includes('sk-ant-secret'), false, 'the raw key is not in the file')
   assert.equal(JSON.parse(onDisk).anthropic, seal('sk-ant-secret'))
-  assert.equal(statSync(file).mode & 0o777, 0o600, 'readable by this user only')
+  if (process.platform !== 'win32') {
+    // Windows reports fabricated mode bits; the key's seal there is DPAPI
+    // (safeStorage), asserted by the encrypted-at-rest case above.
+    assert.equal(statSync(file).mode & 0o777, 0o600, 'readable by this user only')
+  }
 
   const reopened = createKeyStore({ file, encrypt: seal, decrypt: unseal })
   assert.equal(reopened.get('anthropic'), 'sk-ant-secret')

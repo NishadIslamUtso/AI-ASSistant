@@ -1,4 +1,5 @@
 import { app, BrowserWindow, dialog, Menu, safeStorage, shell, globalShortcut } from 'electron'
+import { randomBytes } from 'node:crypto'
 import { handle, lockNavigation, pinOwnOrigins } from './ipcGuard'
 import { dirname, join, resolve } from 'node:path'
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
@@ -1753,10 +1754,29 @@ app.whenReady().then(async () => {
     // The extension's own port. Narrow on purpose (see src/main/extension/server.ts):
     // it carries the capture side of the vault and nothing that could spend a key
     // or change a setting. A busy port is reported, never fatal.
+    // The pairing token: generated once on this machine, persisted next to the
+    // rest of the app's own state, handed to the port so every restart accepts
+    // the same paired extension. The extension's pairing screen shows where it
+    // lives; nothing here trusts the network with it.
+    let pairToken = ''
+    try {
+      const pairFile = join(app.getPath('userData'), 'extension-pair.json')
+      const raw = JSON.parse(readFileSync(pairFile, 'utf8')) as { token?: string }
+      if (typeof raw.token === 'string' && raw.token.length >= 32) pairToken = raw.token
+    } catch {}
+    if (!pairToken) {
+      pairToken = randomBytes(24).toString('hex')
+      try {
+        writeFileSync(join(app.getPath('userData'), 'extension-pair.json'), JSON.stringify({ token: pairToken }), 'utf8')
+      } catch {
+        // A failed save means a fresh token next boot; the extension re-pairs. Fine.
+      }
+    }
     extensionApi = await startExtensionApi({
       port: extensionPortWanted(),
       vault,
       mayCapture: () => settings.permissions.browserCapture,
+      pairToken,
     })
     if (extensionApi.listening) {
       console.log(`[extension] listening at ${extensionApi.url}, captures, context and the never-check list only`)

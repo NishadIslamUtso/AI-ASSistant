@@ -1,4 +1,5 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
+import { randomBytes, timingSafeEqual } from 'node:crypto'
 import { BODY_LIMIT, readBody } from '../api/body'
 import { handleVaultRequest } from '../vault/routes'
 import type { VaultService } from '../vault/service'
@@ -24,14 +25,17 @@ import type { VaultService } from '../vault/service'
  * them immediately — the origin rule decides who may ask, the permission decides
  * whether there is anything to answer with.
  *
- * And who it answers: a browser extension's id does not exist until the person
- * installs it, so any `chrome-extension://` origin is answered. That is safe
- * because of what the port can *do*, not because of who is asking — the worst an
- * extension can do here is add a capture or change the never-check list, which is
- * exactly what the person installed it for. A web page can never pass the origin
- * test: script cannot set its own `Origin` header, and a page sending one gets a
- * refusal. A local program could forge the header — and a local program on this
- * machine can already read the vault's files directly.
+ * And who it answers: the ORIGIN rule says which browsers may talk, and the
+ * PAIRING TOKEN says which extension may. An extension's id does not exist
+ * until the person installs it, so the origin cannot be an allowlist — every
+ * installed extension would pass it, including ones the person never asked
+ * to read their vault. So every request carries `x-oddbrain-pair: <token>`,
+ * a secret generated on this machine for this install; without it the port
+ * refuses with a sentence saying why. The token lives in the app's own
+ * folder, and the extension's pairing screen (ships with the extension's
+ * first release) is how it crosses over. A web page can pass neither test:
+ * script cannot set its own `Origin` header, and a page sending one gets a
+ * refusal.
  */
 
 /** Fixed, so the extension can find the app without asking anybody. */
@@ -57,6 +61,8 @@ export const EXTENSION_ROUTES = new Map<string, string[]>([
 export type ExtensionApi = {
   port: number
   url: string
+  /** The per-install pairing secret the extension must present. */
+  pairToken: string
   /** False when the port was already taken: the app keeps running, and says so. */
   listening: boolean
   error: string
@@ -133,11 +139,18 @@ export function startExtensionApi(options: {
    * blocked, and the app always passes the real answer.
    */
   mayCapture?: () => boolean
+  /**
+   * The per-install pairing secret. Absent means one is generated for this
+   * run; production hands the persisted one so a paired extension keeps
+   * working across restarts.
+   */
+  pairToken?: string
 }): Promise<ExtensionApi> {
   const wanted = options.port ?? DEFAULT_EXTENSION_PORT
   const host = options.host || '127.0.0.1'
   const service = options.vault
   const mayCapture = (): boolean => (options.mayCapture ? options.mayCapture() : true)
+  const pairToken = options.pairToken ?? randomBytes(24).toString('hex')
 
   const server = createServer((request, response) => {
     void handle(request, response).catch(error => {
@@ -208,6 +221,26 @@ export function startExtensionApi(options: {
         },
         decision.allow,
         { Allow: allowedMethods.join(', ') }
+      )
+      return
+    }
+
+    // The pairing gate: the origin proves a BROWSER extension is asking, the
+    // token proves it is THIS person's extension.
+    const presented = header(request.headers['x-oddbrain-pair'])
+    const expected = Buffer.from(pairToken)
+    const got = Buffer.from(presented)
+    const same = got.length === expected.length && timingSafeEqual(got, expected)
+    if (!same) {
+      send(
+        response,
+        401,
+        {
+          ok: false,
+          error:
+            'This extension is not paired with OddBrain yet. Open OddBrain, copy the pairing token from Settings > Agent access, and send it as the x-oddbrain-pair header.',
+        },
+        decision.allow
       )
       return
     }
@@ -303,6 +336,7 @@ export function startExtensionApi(options: {
       resolve({
         port: wanted,
         url: `http://${host}:${wanted}`,
+        pairToken,
         listening: false,
         error: reason,
         close: async () => {},
@@ -317,6 +351,7 @@ export function startExtensionApi(options: {
       resolve({
         port,
         url: `http://${host}:${port}`,
+        pairToken,
         listening: true,
         error: '',
         close: () => new Promise<void>(done => server.close(() => done())),
