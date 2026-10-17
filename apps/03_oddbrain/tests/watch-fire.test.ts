@@ -14,6 +14,18 @@ import { join } from 'node:path'
 
 const wait = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms))
 
+/**
+ * Poll for a condition instead of sleeping a stopwatch. A fixed wait measures
+ * the MACHINE: on a loaded CI runner the same async chain that takes 50ms at
+ * home can take 600ms, and a 500ms nap turns into a false "never fired". The
+ * deadline is generous because the failure this guard exists for is a fire
+ * that never comes — waiting longer cannot hide it, only confirm it.
+ */
+const until = async (check: () => boolean, deadlineMs = 5000, step = 25): Promise<void> => {
+  const limit = Date.now() + deadlineMs
+  while (!check() && Date.now() < limit) await wait(step)
+}
+
 test('a real change fires the order once, through the one send path; the cooldown holds', async () => {
   // The debounce and quiet windows are product values (seconds). The seam
   // shortens them for the test only — the machinery under test is unchanged.
@@ -56,7 +68,7 @@ test('a real change fires the order once, through the one send path; the cooldow
   // watcher would report.
   writeFileSync(join(folder, 'notes.md'), 'the engine should hear about this')
   onTick!({ names: ['notes.md'] })
-  await wait(500)
+  await until(() => sends.length === 1)
 
   assert.equal(sends.length, 1, `exactly one fire, got ${sends.length}`)
   assert.match(sends[0] ?? '', /notes\.md/, 'the fire names what changed')
@@ -64,6 +76,9 @@ test('a real change fires the order once, through the one send path; the cooldow
   assert.equal(watchState().runs, 1, 'the counter tells the truth')
 
   // A second tick inside the cooldown is the tail the mode exists to avoid.
+  // The tail's own debounce is the same 40ms the first fire used, so a fixed
+  // 500ms window is ~12x the machine-slowdown margin for it to betray a
+  // broken cooldown in; a working cooldown never sends at all.
   onTick!({ names: ['notes.md'] })
   await wait(500)
   assert.equal(sends.length, 1, 'the cooldown holds: no tail-chase')
