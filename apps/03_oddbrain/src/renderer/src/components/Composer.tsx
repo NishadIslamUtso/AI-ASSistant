@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowUp, ChevronDown, CookingPot, Cpu, FolderOpen, Layers, ListOrdered, Map, Mic, MicOff, Paperclip, Play, ScrollText, Square, Swords, X } from 'lucide-react'
+import { modelLabel } from '@shared/lib/engine'
 import type { Project } from '@shared/lib/projects'
 import type { Attachment } from '@shared/types'
 import type { Recipe } from '@shared/lib/recipes'
@@ -497,7 +498,10 @@ function EngineChip({ open, onToggle }: { open: boolean; onToggle: () => void })
                 }`}
               >
                 <span className="min-w-0 flex-1 truncate">{entry.id}</span>
-                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${entry.found ? 'bg-ok' : 'bg-muted'}`} />
+                {/* Words, not a coloured dot: a green light here read as
+                    "this engine works" while turns were failing — the owner
+                    called it a fake green dot, and it was. */}
+                {!entry.found ? <span className="shrink-0 text-[10px] text-warn">not installed</span> : null}
               </button>
             ))
           )}
@@ -568,7 +572,7 @@ function ModelChip({ open, onToggle }: { open: boolean; onToggle: () => void }) 
         className="flex h-7 min-w-0 items-center gap-1.5 rounded-lg px-2 text-[11.5px] text-muted hover:text-ink"
       >
         <Layers size={11} aria-hidden />
-        <span className="min-w-0 max-w-[160px] truncate">{engine.settings.model || 'choose a model'}</span>
+        <span className="min-w-0 max-w-[160px] truncate">{modelLabel(engine.settings.model)}</span>
         <ChevronDown size={11} />
       </button>
 
@@ -587,6 +591,26 @@ function ModelChip({ open, onToggle }: { open: boolean; onToggle: () => void }) 
               aria-label="Filter models"
               className="mb-1 h-7 w-full rounded-lg border border-line bg-bg px-2 text-[12px] text-ink outline-none placeholder:text-muted focus:border-accent/60"
             />
+          ) : null}
+          {/* The engine's own choice, always first and always real: it is
+              whatever the engine itself logs in with — never a name this app
+              invented. */}
+          {engine.settings.id === 'claude-code' ? (
+            <button
+              type="button"
+              role="menuitemradio"
+              aria-checked={engine.settings.model === ''}
+              onClick={() => {
+                void engine.setModel('')
+                onToggle()
+              }}
+              className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[12.5px] ${
+                engine.settings.model === '' ? 'bg-white/[0.06] text-ink' : 'text-muted hover:text-ink'
+              }`}
+            >
+              <span className="min-w-0 flex-1 truncate">{modelLabel('')}</span>
+              <span className="shrink-0 text-[10.5px] text-muted">its own login</span>
+            </button>
           ) : null}
           {engine.models.entries.length === 0 ? (
             <p className="px-2.5 py-2 text-[12px] leading-relaxed text-muted">

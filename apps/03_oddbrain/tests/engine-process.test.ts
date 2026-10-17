@@ -96,17 +96,19 @@ test('the free gate: machine Anthropic credentials never reach the engine', () =
   const child = fakeEngine({ pid: 100 })
   const { spawn, calls, queue } = spawnCapturing()
   queue(child)
-  sessionOn(child, spawn, { settings: { ...DEFAULT_ENGINE, baseUrl: 'http://localhost:11434' } })
+  sessionOn(child, spawn, { settings: { ...DEFAULT_ENGINE, model: 'qwen2.5-coder:3b', baseUrl: 'http://localhost:11434' } })
   const env = calls[0]?.env ?? {}
-  assert.equal(env['ANTHROPIC_BASE_URL'], 'http://localhost:11434', 'the chosen brain is applied')
+  assert.equal(env['ANTHROPIC_BASE_URL'], 'http://localhost:11434', 'a NAMED brain rides its door')
   assert.notEqual(env['ANTHROPIC_API_KEY'], 'sk-machine-secret')
 
-  // With no brain chosen, the engine starts with none — never the machine's.
+  // With no brain chosen, the engine runs AS ITSELF: no door, no model, and
+  // never the machine's own credentials. The owner's machine proved why —
+  // an empty choice forced at a dead door retries forever.
   const child2 = fakeEngine({ pid: 101 })
   const second = spawnCapturing()
   second.queue(child2)
-  sessionOn(child2, second.spawn, { settings: { ...DEFAULT_ENGINE, baseUrl: '' } })
-  assert.equal(second.calls[0]?.env?.['ANTHROPIC_BASE_URL'], undefined)
+  sessionOn(child2, second.spawn, { settings: { ...DEFAULT_ENGINE, model: '', baseUrl: 'http://localhost:11434' } })
+  assert.equal(second.calls[0]?.env?.['ANTHROPIC_BASE_URL'], undefined, 'no brain picked, no door forced')
 })
 
 test('the Windows stop takes the whole tree: taskkill /pid <pid> /T /F', () => {

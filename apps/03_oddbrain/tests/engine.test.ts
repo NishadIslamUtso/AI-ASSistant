@@ -96,7 +96,8 @@ test('the launch line pins the two permission flags — without them no card can
   assert.match(args.join(' '), /--output-format stream-json/)
   assert.match(args.join(' '), /--input-format stream-json/)
   assert.match(args.join(' '), /--verbose/)
-  assert.match(args.join(' '), /--model gemma4:cloud/)
+  assert.ok(!args.join(' ').includes('--model'), 'an empty model choice never becomes a flag')
+  assert.match(engineArguments('gemma4:cloud').join(' '), /--model gemma4:cloud/, 'a named brain is passed verbatim')
 })
 
 test('the wire: init, words, a tool, and a result become readable events', () => {
@@ -676,9 +677,9 @@ test('engine settings: a damaged file falls back to the defaults that work', () 
 test('engine settings: a model name can never carry shell meaning', () => {
   // The model reaches a command line, so anything shell-shaped falls back to
   // the safe default instead of travelling further.
-  assert.equal(normalizeEngine({ model: 'gemma4:cloud & del /q *' }).model, DEFAULT_ENGINE.model)
+  assert.equal(normalizeEngine({ model: 'gemma4:cloud & del /q *' }).model, '')
   assert.equal(normalizeEngine({ model: 'x"; calc' }).model, DEFAULT_ENGINE.model)
-  assert.equal(normalizeEngine({ model: 'gemma4:cloud' }).model, 'gemma4:cloud')
+  assert.equal(normalizeEngine({ model: 'gemma4:cloud' }).model, '', 'the app\u2019s own invented default migrates to the honest empty choice')
   // The throttle: anything unknown falls back to ask; the real modes persist.
   assert.equal(normalizeEngine({ approval: 'yolo' }).approval, 'ask')
   assert.equal(normalizeEngine({ approval: 'full' }).approval, 'full')

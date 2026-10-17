@@ -526,7 +526,7 @@ export default function App() {
       <TitleBar
         engineModel={engineStore().settings.model}
         engineId={engineStore().settings.id}
-        engineAlive={engineStore().alive}
+        engineAlive={engineStore().turn?.state === 'running'}
         onOpenEngine={() => setView('chat')}
         preview={isDemo}
         // Re-checked when a conversation is kept, so a vault that went missing

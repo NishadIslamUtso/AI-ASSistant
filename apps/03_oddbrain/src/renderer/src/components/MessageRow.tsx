@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Volume2, Square as StopSquare } from 'lucide-react'
 import type { Artifact, Message } from '@shared/types'
 import type { ElementPick } from '@shared/lib/artifacts'
 import { ttsSupported } from '@shared/lib/media'
+import { THINKING_OPEN_EVENT, setThinkingOpen, thinkingOpenNow } from '@shared/lib/thinkingOpen'
 import { parseCloudModel } from '@shared/lib/providers'
 import type { ArtifactView } from '@/state/artifactView'
 import ArtifactCard from './ArtifactCard'
@@ -106,6 +107,13 @@ export default function MessageRow({
   }
 
   const streaming = message.status === 'streaming'
+  // The owner's rule: collapsed unless he opened one — and then ALWAYS open.
+  const [thinkingOpen, setThinkingOpenState] = useState(thinkingOpenNow())
+  useEffect(() => {
+    const follow = (): void => setThinkingOpenState(thinkingOpenNow())
+    window.addEventListener(THINKING_OPEN_EVENT, follow)
+    return () => window.removeEventListener(THINKING_OPEN_EVENT, follow)
+  }, [])
   return (
     <div className="flex gap-3.5">
       <span className="mt-0.5 shrink-0">
@@ -113,7 +121,11 @@ export default function MessageRow({
       </span>
       <div className="min-w-0 flex-1">
         {message.thinking ? (
-          <details className="mb-2 rounded-lg border border-line bg-panel/60 px-3 py-2">
+          <details
+            open={thinkingOpen || undefined}
+            onToggle={(event) => setThinkingOpen((event.target as HTMLDetailsElement).open)}
+            className="mb-2 rounded-lg border border-line bg-panel/60 px-3 py-2"
+          >
             <summary className="cursor-pointer text-[12px] text-muted">
               Thinking{streaming ? ' (still going)' : ''}
             </summary>

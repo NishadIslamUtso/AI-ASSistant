@@ -183,7 +183,15 @@ export function startClaudeCodeSession(input: StartSessionInput): EngineSession 
         ...sanitizeEnvironment(process.env),
         ...(input.auth?.apiKey
           ? brainEnvironment('https://api.anthropic.com/v1', input.auth.apiKey)
-          : brainEnvironment(input.settings.baseUrl)),
+          : // A named brain rides the door it came from. An EMPTY model means
+            // the engine runs as itself — its own login, its own default —
+            // and is never pointed at a door that may not even exist. The
+            // owner's machine proved the old shape: claude-code forced at a
+            // dead localhost door, retrying forever ("the brain is not
+            // answering") while the dot lied green.
+            input.settings.model
+            ? brainEnvironment(input.settings.baseUrl)
+            : {}),
         ...(enginePathSync() !== (process.env['PATH'] ?? '') ? { PATH: enginePathSync() } : {}),
         // The engine's own extended-thinking knob, its documented variable,
         // set only when the owner asked for it through the chip.

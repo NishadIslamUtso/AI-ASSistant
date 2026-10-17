@@ -68,7 +68,12 @@ export type EngineSettings = {
 
 export const DEFAULT_ENGINE: EngineSettings = {
   id: 'claude-code',
-  model: 'gemma4:cloud',
+  // Empty on purpose: the engine runs AS ITSELF — its own login, its own
+  // default brain. The old default here was `gemma4:cloud`, a name this app
+  // invented and painted as if the machine had said it; the owner caught it
+  // ("fake model names") and the fabrication dies today. A model is only
+  // ever set from a list the MACHINE produced.
+  model: '',
   baseUrl: 'http://localhost:11434',
   workspace: '',
   approval: 'ask',
@@ -113,6 +118,14 @@ export type EngineAvailability = {
   path?: string
 }
 
+/** What an empty model choice is called, everywhere the UI shows it. */
+export const OWN_CHOICE_MODEL_LABEL = 'the engine’s own choice'
+
+/** The honest label for a model: the name, or what empty means. */
+export function modelLabel(model: string): string {
+  return model || OWN_CHOICE_MODEL_LABEL
+}
+
 const ENGINES: readonly EngineId[] = ['claude-code', 'agy']
 
 /**
@@ -138,7 +151,9 @@ export function normalizeEngine(raw: unknown): EngineSettings {
   const model = text(value.model, DEFAULT_ENGINE.model, 300)
   return {
     id,
-    model: MODEL_PATTERN.test(model) ? model : DEFAULT_ENGINE.model,
+    // `gemma4:cloud` was this app's own invented default; settings saved by
+    // older builds carry it. It migrates to the honest empty choice.
+    model: MODEL_PATTERN.test(model) && model !== 'gemma4:cloud' ? model : '',
     baseUrl: text(value.baseUrl, DEFAULT_ENGINE.baseUrl, 2048),
     workspace: typeof value.workspace === 'string' ? value.workspace.trim().slice(0, 4096) : '',
     approval: APPROVAL_MODES.includes(value.approval as ApprovalMode)

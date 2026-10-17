@@ -32,7 +32,7 @@ changelog, which records development in a promotional voice.
 ```bash
 git clone https://github.com/NishadIslamUtso/OddBrain.git
 cd OddBrain/apps/03_oddbrain
-npm ci && npx vitest run      # 93 files / 689 tests
+npm ci && npx vitest run      # 94 files / 700 tests
 npx tsc --noEmit && npm run build
 ```
 

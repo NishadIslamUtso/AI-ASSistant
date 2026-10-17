@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 import { Copy, Eye, Handshake, ListOrdered, Minimize2, Pencil, Wrench, FilePen, Terminal, Search, CircleCheck, TriangleAlert, Square, X } from 'lucide-react'
 import { buildHandoff, handoffFileName } from '@shared/lib/handoff'
 import { PHASE_LABEL, pairingAt, pairingMotion, phaseFromTurn, WAITING_LOADER, type MotionRole } from '@shared/lib/motionKit'
 import { Mascot } from '../motion/Mascot'
 import { BRIEF_ORDER } from '@shared/lib/compact'
+import { modelLabel } from '@shared/lib/engine'
+import { THINKING_OPEN_EVENT, setThinkingOpen, thinkingOpenNow } from '@shared/lib/thinkingOpen'
 import { bridge } from '@/platform/bridge'
 import { useEngine, type EngineItem } from '@/state/engine'
 import { cancelBrief, clearCompactNotice, finishCompact, useCompact, writeBrief } from '@/state/compact'
@@ -67,6 +70,24 @@ export default function EnginePanel() {
   const compact = useCompact()
   const review = useReview()
   const [copied, setCopied] = useState(false)
+  // The strip above the composer is collapsible, as the owner asked. It
+  // always unfolds itself while a permission question waits — Allow/Deny
+  // must never hide behind a fold. Remembered, so it stays as he left it.
+  const [panelOpen, setPanelOpen] = useState(() => {
+    try {
+      return localStorage.getItem('ai-assistant.engine-panel-open') !== '0'
+    } catch {
+      return true
+    }
+  })
+  const setPanel = (open: boolean): void => {
+    setPanelOpen(open)
+    try {
+      localStorage.setItem('ai-assistant.engine-panel-open', open ? '1' : '0')
+    } catch {
+      /* storage refused — the fold lives only for this visit */
+    }
+  }
   // No live turn: the card waits, but the record of earlier sessions still
   // shows — a fresh window should know what happened here before it opened.
   if (!turn) {
@@ -139,13 +160,23 @@ export default function EnginePanel() {
       className="mx-auto mb-3 w-full max-w-[var(--chat-width)] rounded-xl border border-line bg-card px-4 py-3"
     >
       <header className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setPanel(!panelOpen)}
+          aria-expanded={panelOpen}
+          aria-label={panelOpen ? 'Collapse the engine strip' : 'Expand the engine strip'}
+          title={panelOpen ? 'Collapse' : 'Expand'}
+          className="shrink-0 text-muted hover:text-ink"
+        >
+          {panelOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+        </button>
         <span
-          className={`h-1.5 w-1.5 rounded-full ${
+          className={`h-1.5 w-1.5 shrink-0 rounded-full ${
             turn.state === 'running' ? 'bg-warn' : turn.state === 'error' ? 'bg-warn' : 'bg-ok'
           }`}
         />
         <h2 className="text-[12px] font-medium text-muted">
-          Engine · {engine.settings.id} · {engine.settings.model}
+          Engine · {engine.settings.id} · {modelLabel(engine.settings.model)}
           {' · ' + (engine.settings.workspace ? engine.settings.workspace.split(/[\\/]/).filter(Boolean).at(-1) : 'vault')}
           {turn.state === 'running' ? ` · ${PHASE_LABEL[phase]}…` : turn.state === 'error' ? ' · stopped' : ' · done'}
           {` · ${formatTotals(engine.totals)}`}
@@ -211,6 +242,7 @@ export default function EnginePanel() {
         ) : null}
       </header>
 
+      {(panelOpen || turn.permissions.length > 0) ? (<>
       {review.error ? (
         <p className="mt-1.5 text-[11.5px] text-warn">
           {review.error}
@@ -357,6 +389,7 @@ export default function EnginePanel() {
           </div>
         </div>
       ) : null}
+      </>) : null}
     </section>
     {engine.journal.length ? (
       <details aria-label="Earlier sessions" className="mx-auto mb-3 w-full max-w-[var(--chat-width)] rounded-xl border border-line bg-card px-4 py-2.5">
@@ -384,14 +417,24 @@ export default function EnginePanel() {
 
 /** One line of the engine's story, with the icon that matches the act. */
 function EngineItemRow({ item, live = false }: { item: EngineItem; live?: boolean }) {
+  // The owner's rule, same as the chat brain: collapsed unless he opened
+  // one anywhere — once opened, every thinking block shows open.
+  const [open, setOpen] = useState(live || thinkingOpenNow())
+  useEffect(() => {
+    const follow = (): void => setOpen(live || thinkingOpenNow())
+    window.addEventListener(THINKING_OPEN_EVENT, follow)
+    return () => window.removeEventListener(THINKING_OPEN_EVENT, follow)
+  }, [live])
   if (item.kind === 'thinking') {
-    // The model's scratchwork, folded like the chat brain's thinking. While
-    // it is the newest thing in a running turn it stays open; afterwards it
-    // is one click, never noise.
     return (
       <li>
         <details
-          open={live || undefined}
+          open={open || undefined}
+          onToggle={(event) => {
+            const now = (event.target as HTMLDetailsElement).open
+            setOpen(now)
+            if (!live) setThinkingOpen(now)
+          }}
           className="rounded-lg border border-line bg-panel/60 px-3 py-2"
         >
           <summary className="cursor-pointer text-[12px] text-muted">

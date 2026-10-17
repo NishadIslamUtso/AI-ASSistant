@@ -10,7 +10,7 @@
       "permissions": {
         "shell": false
       },
-      "checksum": "e9bf1bd32a2ee19b59216337d50836d78ab3ad4eedbbeccdcd61f88ae2f806bb",
+      "checksum": "b1875e3a49967f36d5dc3a9e2d7fccf96c842d4ef192c8e9538a1e44fea3c246",
       "source": "packs/ai-assistant.looks",
       "files": [
         "manifest.json",
@@ -53,7 +53,7 @@
       "permissions": {
         "shell": false
       },
-      "checksum": "3737f064d72aa822dfcd8a74161e5756243bc2c138ee45fbde2923c5136305cf",
+      "checksum": "a99bb3ccd0d31141ac5364e74783e426868b3da8f9c3319e4644735732690d49",
       "source": "packs/ai-assistant.starter",
       "files": [
         "manifest.json",

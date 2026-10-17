@@ -131,8 +131,14 @@ export default function EngineBay() {
                 active ? 'border-accent text-ink' : 'border-line text-muted hover:text-ink'
               } ${missing ? 'opacity-60' : ''}`}
             >
-              {entry.label}
-              {missing ? <span className="ml-1 text-[10px] text-warn">not installed</span> : null}
+              <span className="block truncate">{entry.label}</span>
+              {missing ? (
+                <span className="text-[10px] text-warn">not installed</span>
+              ) : known?.version ? (
+                <span className="block truncate text-[10px] text-muted" title={known.path || ''}>
+                  installed · {known.version}
+                </span>
+              ) : null}
             </button>
           )
         })}
