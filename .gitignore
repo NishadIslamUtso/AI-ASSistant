@@ -95,3 +95,6 @@ archive_zips/
 tmp/
 temp/
 *.tmp
+
+# CI failure reports (posted as commit comments, never committed)
+junit-*.xml
