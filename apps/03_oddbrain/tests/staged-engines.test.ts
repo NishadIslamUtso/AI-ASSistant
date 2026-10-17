@@ -52,7 +52,12 @@ test('registering the same root twice does not duplicate candidates', () => {
   registerStagingRoot('/once')
   registerStagingRoot('/once')
   const candidates = engineCandidates('agy', env)
-  assert.equal(candidates.filter((p) => p.startsWith('/once')).length, 5)
+  // Counted through join, not a literal slash: on Windows join makes
+  // backslash paths and a '/once' prefix would match nothing (the owner's
+  // CI caught this test being Linux-shaped — the code was right, the pin
+  // was not).
+  const fromOnce = candidates.filter((p) => p.startsWith(join('/once', 'agy')) || p === join('/once', 'agy.exe') || p === join('/once', 'agy'))
+  assert.equal(fromOnce.length, 5, JSON.stringify(candidates))
 })
 
 test('the boot registers the app data engines folder, and retries name the actual fix', () => {
