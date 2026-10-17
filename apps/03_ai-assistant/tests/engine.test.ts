@@ -466,6 +466,9 @@ test('the socket: agy routes to its own adapter and an engine switch starts fres
   const socket = createEngineSocket()
   socket.send('x', {
     cwd: '.',
+    // Each session stops by ITS OWN pinned dialect: the switch calls the old
+    // session's stop, so the agy session pins POSIX too.
+    platform: 'linux',
     settings: { ...DEFAULT_ENGINE, id: 'agy', model: 'gemini-3-pro' },
     onEvent: rec.on,
     spawnProcess: fake,

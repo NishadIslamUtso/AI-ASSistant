@@ -222,7 +222,9 @@ export function startAgySession(input: EngineStartInput & { spawnProcess?: typeo
       const platform = input.platform ?? process.platform
       if (platform === 'win32' && child.pid) {
         // agy.exe may spawn children the same way claude does: take the tree.
-        spawn('taskkill', stopArguments(child.pid), { stdio: 'ignore' })
+        // Through the session's own spawner, exactly like claudeCode's stop —
+        // the tree-kill is observable and testable, never a module secret.
+        start('taskkill', stopArguments(child.pid), { stdio: 'ignore' })
       } else {
         child.kill('SIGTERM')
       }
