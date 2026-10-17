@@ -38,7 +38,8 @@ test('a window with no local turn still sees the engine working elsewhere', asyn
   assert.equal(store.ambient.busy, false)
 
   assert.ok(emit, 'the store subscribed to engine events')
-  emit!({ kind: 'status', message: 'editing src/app.ts' })
+  // The REAL status event shape, exactly as the engine emits it.
+  emit!({ kind: 'status', text: 'editing src/app.ts' } as Parameters<NonNullable<typeof emit>>[0])
   assert.equal(store.ambient.busy, true, 'work in another window lights the ambient strip')
   assert.match(store.ambient.note, /editing src\/app\.ts/)
 

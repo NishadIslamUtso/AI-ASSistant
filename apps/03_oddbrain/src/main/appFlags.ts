@@ -13,14 +13,18 @@
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 
-export type AppFlags = { loginItem: boolean; warmRuntime: boolean }
+export type AppFlags = { loginItem: boolean; warmRuntime: boolean; keepLoadedAlways: boolean }
 
-export const DEFAULT_FLAGS: AppFlags = { loginItem: false, warmRuntime: false }
+export const DEFAULT_FLAGS: AppFlags = { loginItem: false, warmRuntime: false, keepLoadedAlways: false }
 
 export function loadAppFlags(file: string): AppFlags {
   try {
     const parsed = JSON.parse(readFileSync(file, 'utf8')) as Partial<AppFlags>
-    return { loginItem: parsed.loginItem === true, warmRuntime: parsed.warmRuntime === true }
+    return {
+      loginItem: parsed.loginItem === true,
+      warmRuntime: parsed.warmRuntime === true,
+      keepLoadedAlways: parsed.keepLoadedAlways === true,
+    }
   } catch {
     // Missing or damaged = off. A broken flag file must not start processes.
     return { ...DEFAULT_FLAGS }

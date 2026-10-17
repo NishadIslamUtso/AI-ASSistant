@@ -96,8 +96,12 @@ export type ChatPayload = {
  * stay-forever). The override wins only when it is set — the profile is
  * still the default answer.
  */
-export function effectiveKeepAlive(profileKeepAlive: string, override?: string): string {
-  return override && override.length > 0 ? override : profileKeepAlive
+export function effectiveKeepAlive(profileKeepAlive: string, override?: string | number): string | number {
+  // A number (-1 = hold forever, Ollama's own docs) passes through as-is; an
+  // empty string is no override at all.
+  return override === 0 || (typeof override === 'string' && override.length === 0)
+    ? profileKeepAlive
+    : (override ?? profileKeepAlive)
 }
 
 export async function streamChat(
@@ -105,7 +109,7 @@ export async function streamChat(
   signal: AbortSignal | undefined,
   onRecord: (record: OllamaRecord) => void,
   inference?: InferenceSettings | string,
-  keepAliveOverride?: string
+  keepAliveOverride?: string | number
 ): Promise<void> {
   // Inference options are the caller's business, so the memory profile can be
   // changed in Settings without touching this file. Anything unresolvable

@@ -170,9 +170,13 @@ const api = {
     /** Open the vault folder in the file manager — the owner's own folder. */
     openVaultFolder: (): Promise<{ ok: boolean }> => ipcRenderer.invoke('vault:open-folder'),
     flags: {
-      get: (): Promise<{ loginItem: boolean; warmRuntime: boolean }> => ipcRenderer.invoke('app:flags:get'),
-      set: (patch: { loginItem?: boolean; warmRuntime?: boolean }): Promise<{ loginItem: boolean; warmRuntime: boolean }> =>
-        ipcRenderer.invoke('app:flags:set', patch),
+      get: (): Promise<{ loginItem: boolean; warmRuntime: boolean; keepLoadedAlways: boolean }> =>
+        ipcRenderer.invoke('app:flags:get'),
+      set: (patch: { loginItem?: boolean; warmRuntime?: boolean; keepLoadedAlways?: boolean }): Promise<{
+        loginItem: boolean
+        warmRuntime: boolean
+        keepLoadedAlways: boolean
+      }> => ipcRenderer.invoke('app:flags:set', patch),
     },
     /** Open a https://github.com link in the person's browser. */
     openExternal: (url: string): Promise<{ ok: boolean }> => ipcRenderer.invoke('app:open-external', url),

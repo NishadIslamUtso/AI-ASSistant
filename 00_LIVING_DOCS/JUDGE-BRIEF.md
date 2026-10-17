@@ -26,7 +26,7 @@ Verify with:
 ```bash
 git clone -b v3 https://github.com/NishadIslamUtso/OddBrain.git
 cd OddBrain/apps/03_oddbrain
-npm ci && npx vitest run      # 86 files / 661 tests
+npm ci && npx vitest run      # 89 files / 670 tests
 npx tsc --noEmit && npm run build
 ```
 
@@ -56,7 +56,7 @@ promoted from allow-failure to a required, green gate on 2026-10-17).
    was built cross-platform (wine) but never installed by a human.
 5. **The test suite is honest as of 2026-10-17, and its honesty is
    mutation-checked.** 169 asserts that read source files were removed, and
-   the count stands at 86 files / 661 tests after the judge rounds added
+   the count stands at 89 files / 670 tests after the judge rounds added
    behavioral tests: a bricked watch mode now fails the suite, a checkpoint
    that cannot save now denies the change instead of allowing blind, and a
    zip bomb is refused before it inflates. A small number of

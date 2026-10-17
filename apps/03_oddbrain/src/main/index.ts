@@ -316,9 +316,11 @@ function registerBridges(): void {
 
   handle('cloud:clear-key', (_event, id: string) => {
     keyStore?.clear(String(id || ''))
-    // A cleared key must not keep speaking: a live engine launched with it is
-    // stopped here, so the next turn relaunches with whatever the machine has.
-    engine?.stop()
+    // A cleared key must not keep speaking — but only ITS engine: the app has
+    // one engine process, and stopping it because some OTHER provider's key
+    // was cleared would interrupt an unrelated conversation. The engine says
+    // which provider's key it was launched with.
+    if (engine?.usedAuthProvider?.() === String(id || '')) engine?.stop()
     return cloudView()
   })
 
@@ -584,10 +586,11 @@ function registerBridges(): void {
   // The two "keep it running" switches, in their own file (see appFlags.ts).
   const appFlagsFile = (): string => join(app.getPath('userData'), 'app-flags.json')
   handle('app:flags:get', () => loadAppFlags(appFlagsFile()))
-  handle('app:flags:set', (_event, patch: { loginItem?: boolean; warmRuntime?: boolean }) => {
+  handle('app:flags:set', (_event, patch: { loginItem?: boolean; warmRuntime?: boolean; keepLoadedAlways?: boolean }) => {
     const clean = {
       ...(typeof patch?.loginItem === 'boolean' ? { loginItem: patch.loginItem } : {}),
       ...(typeof patch?.warmRuntime === 'boolean' ? { warmRuntime: patch.warmRuntime } : {}),
+      ...(typeof patch?.keepLoadedAlways === 'boolean' ? { keepLoadedAlways: patch.keepLoadedAlways } : {}),
     }
     const next = saveAppFlags(appFlagsFile(), clean)
     // The login item is the OS's own mechanism; the flag file is only the
@@ -597,8 +600,9 @@ function registerBridges(): void {
     }
     // Turning warm ON takes effect immediately too: a runtime that is already
     // answering is left alone, a missing one is not started blind — the
-    // staged copy must exist.
-    if (clean.warmRuntime === true) void warmStartRuntime()
+    // staged copy must exist. (The always-loaded env applies when the runtime
+    // next starts; a running one is never restarted under the person's feet.)
+    if (clean.warmRuntime === true || clean.keepLoadedAlways === true) void warmStartRuntime()
     return next
   })
 
@@ -1435,7 +1439,10 @@ async function warmStartRuntime(): Promise<void> {
     if (!downloadManager) return
     const status = downloadManager.ollamaStatus()
     if (status && typeof status === 'object' && 'running' in status && (status as { running?: boolean }).running) return
-    await downloadManager.ollamaStart()
+    // The always-loaded switch is a RUNTIME property: Ollama's own env sets
+    // the default hold forever, so every brain the engine drives stays warm.
+    const flags = loadAppFlags(join(app.getPath('userData'), 'app-flags.json'))
+    await downloadManager.ollamaStart(flags.keepLoadedAlways ? { OLLAMA_KEEP_ALIVE: '-1' } : undefined)
   } catch {
     // A runtime that will not start is the Engine page's problem to show;
     // boot itself must never fail because an optional warm-up refused.
@@ -1722,16 +1729,6 @@ app.whenReady().then(async () => {
     // immediately (drives and tests use this door).
     applyQuickShortcut()
     if (process.argv.includes('--quick')) createQuickWindow()
-    // The two keep-it-running flags, honored every boot: the login item is
-    // re-asserted (the OS can lose it on updates), the runtime warms only if
-    // the person asked and it is not already answering.
-    try {
-      const flags = loadAppFlags(join(app.getPath('userData'), 'app-flags.json'))
-      if (flags.loginItem) app.setLoginItemSettings({ openAtLogin: true })
-      if (flags.warmRuntime) void warmStartRuntime()
-    } catch {
-      // Flags are a preference; a failure reading them is not a failed launch.
-    }
     engine = createEngineSocket({
       // Engine sessions, remembered per workspace so a conversation survives
       // an app restart (the engine's own --resume). A damaged file means
@@ -1764,6 +1761,18 @@ app.whenReady().then(async () => {
       },
     })
     registerBridges()
+    // The keep-it-running flags, honored every boot — HERE, after the bridges
+    // registered, because the warm runtime starts through the download
+    // manager that registerBridges creates. Called earlier, it once returned
+    // silently on a null manager: a switch that promised at every launch and
+    // kept the promise at none.
+    try {
+      const flags = loadAppFlags(join(app.getPath('userData'), 'app-flags.json'))
+      if (flags.loginItem) app.setLoginItemSettings({ openAtLogin: true })
+      if (flags.warmRuntime || flags.keepLoadedAlways) void warmStartRuntime()
+    } catch {
+      // Flags are a preference; a failure reading them is not a failed launch.
+    }
     // The vault, whenever it exists, is brought up to the current structure at
     // boot: missing files are written, same-name files are never replaced, and
     // two-wording files keep both copies for the owner to settle in Settings.

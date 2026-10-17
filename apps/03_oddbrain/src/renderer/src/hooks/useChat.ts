@@ -361,7 +361,7 @@ export default function useChat({
           sweep(piece.content)
         },
         inference,
-        readStored<boolean>('oddbrain.keepLoadedAlways', false).value ? '-1' : undefined
+        readStored<boolean>('oddbrain.keepLoadedAlways', false).value ? -1 : undefined
       )
       final.status = 'complete'
       final.stage = ''

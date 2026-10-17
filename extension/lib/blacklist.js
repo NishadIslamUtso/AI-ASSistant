@@ -32,6 +32,21 @@ function localApi() {
  * tests). The app refuses every request without it, so the blacklist - read
  * AND the update posts - must speak the same dialect as captures.
  */
+/**
+ * The background speaks to the app (its origin is allowed and it carries the
+ * pair token); a content script's own fetch runs with the PAGE's origin and
+ * is refused by design. So every server call here goes by message first and
+ * only falls back to a direct fetch where no listener exists (the tests, a
+ * bare-module context).
+ */
+async function relayOrDirect(message, direct) {
+  try {
+    const answer = await chrome.runtime.sendMessage(message)
+    if (answer && typeof answer === 'object' && 'relay' in answer) return answer.relay
+  } catch (e) { /* no listener in this context */ }
+  return direct()
+}
+
 async function pairHeadersFor(json) {
   if (typeof pairHeaders === 'function') return pairHeaders(json)
   try {
@@ -96,18 +111,20 @@ async function writeStoredPatterns(list) {
 
 async function getBlacklist() {
   const stored = await readStoredPatterns()
-  try {
-    const response = await fetch(`${localApi()}${BLACKLIST_ENDPOINT}`, { headers: await pairHeadersFor(false) })
-    if (!response.ok) return stored
-    const data = await response.json()
-    const vault = Array.isArray(data?.excluded_patterns) ? data.excluded_patterns : null
-    if (!vault) return stored
-    await writeStoredPatterns(vault)   // keep the offline copy current
-    return vault
-  } catch (e) {
-    // App not running is normal; the cached copy is still authoritative enough.
-    return stored
-  }
+  return relayOrDirect({ type: 'ob-blacklist-get' }, async () => {
+    try {
+      const response = await fetch(`${localApi()}${BLACKLIST_ENDPOINT}`, { headers: await pairHeadersFor(false) })
+      if (!response.ok) return stored
+      const data = await response.json()
+      const vault = Array.isArray(data?.excluded_patterns) ? data.excluded_patterns : null
+      if (!vault) return stored
+      await writeStoredPatterns(vault)   // keep the offline copy current
+      return vault
+    } catch (e) {
+      // App not running is normal; the cached copy is still authoritative enough.
+      return stored
+    }
+  })
 }
 
 async function checkBlacklist(url) {
@@ -120,26 +137,30 @@ async function addToBlacklist(pattern) {
   const list = await readStoredPatterns()
   if (!list.includes(value)) list.push(value)
   await writeStoredPatterns(list)
-  try {
-    await fetch(`${localApi()}/capture`, {
-      method: 'POST',
-      headers: await pairHeadersFor(true),
-      body: JSON.stringify({ type: 'blacklist_update', excluded_patterns: list }),
-    })
-  } catch (e) { /* queued on the next successful read */ }
+  await relayOrDirect({ type: 'ob-blacklist-update', excluded_patterns: list }, async () => {
+    try {
+      await fetch(`${localApi()}/capture`, {
+        method: 'POST',
+        headers: await pairHeadersFor(true),
+        body: JSON.stringify({ type: 'blacklist_update', excluded_patterns: list }),
+      })
+    } catch (e) { /* queued on the next successful read */ }
+  })
 }
 
 async function removeFromBlacklist(pattern) {
   const value = String(pattern || '').trim()
   const list = (await readStoredPatterns()).filter(item => item !== value)
   await writeStoredPatterns(list)
-  try {
-    await fetch(`${localApi()}/capture`, {
-      method: 'POST',
-      headers: await pairHeadersFor(true),
-      body: JSON.stringify({ type: 'blacklist_update', excluded_patterns: list }),
-    })
-  } catch (e) { /* queued on the next successful read */ }
+  await relayOrDirect({ type: 'ob-blacklist-update', excluded_patterns: list }, async () => {
+    try {
+      await fetch(`${localApi()}/capture`, {
+        method: 'POST',
+        headers: await pairHeadersFor(true),
+        body: JSON.stringify({ type: 'blacklist_update', excluded_patterns: list }),
+      })
+    } catch (e) { /* queued on the next successful read */ }
+  })
 }
 
 // Loaded as a classic content script in the browser, where these must stay

@@ -253,8 +253,8 @@ const ingest = (event: EngineEvent): void => {
   // answers remain the owning window's business.
   if (!state.turn && event.kind !== 'closed') {
     const note =
-      event.kind === 'status' && 'message' in (event as Record<string, unknown>)
-        ? String((event as { message?: unknown }).message ?? '').slice(0, 120)
+      event.kind === 'status' && 'text' in (event as Record<string, unknown>)
+        ? String((event as { text?: unknown }).text ?? '').slice(0, 120)
         : event.kind === 'tool'
           ? 'using a tool'
           : event.kind === 'text'

@@ -86,7 +86,7 @@ async function loadBlacklist() {
       const pattern = btn.dataset.pattern;
       const d = await chrome.storage.sync.get({excluded_patterns: []});
       const filtered = (d.excluded_patterns||[]).filter(x=>x!==pattern);
-      await chrome.storage.sync.set({excluded_patterns: filtered});
+      await blacklistChanged(filtered);
       loadBlacklist();
     });
   });
@@ -116,6 +116,15 @@ document.getElementById('pair-clear')?.addEventListener('click', async () => {
 });
 loadPairing();
 
+// Blacklist changes ride the same message door as captures: the background
+// tells the APP (the vault is the source of truth), and the local copy below
+// is the offline mirror. A write that only touched this browser would be
+// silently undone by the next sync from the app.
+async function blacklistChanged(list) {
+  await chrome.storage.sync.set({excluded_patterns: list});
+  try { await chrome.runtime.sendMessage({type: "ob-blacklist-update", excluded_patterns: list}); } catch(e) {}
+}
+
 document.getElementById('blacklist-add')?.addEventListener('click', async () => {
   const input = document.getElementById('blacklist-input');
   const pattern = input.value.trim();
@@ -124,7 +133,7 @@ document.getElementById('blacklist-add')?.addEventListener('click', async () => 
   const list = data.excluded_patterns || [];
   if (!list.includes(pattern)) {
     list.push(pattern);
-    await chrome.storage.sync.set({excluded_patterns: list});
+    await blacklistChanged(list);
     input.value = '';
     loadBlacklist();
   }

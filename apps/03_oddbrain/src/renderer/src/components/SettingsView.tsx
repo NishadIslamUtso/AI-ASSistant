@@ -1182,7 +1182,7 @@ export default function SettingsView({
       {
         label: 'Model stays loaded',
         terms: 'keep alive warm loaded always memory cold start ollama',
-        note: 'On, the free local brain never unloads between chats — replies start instantly, at the cost of the memory it holds. Off, the memory profile decides.',
+        note: 'On, the local runtime holds the brain loaded for good (it applies when the runtime starts), so replies begin instantly at the cost of the memory it holds. Off, the memory profile decides.',
         body: <KeepLoadedRow />,
       },
       {
@@ -1465,9 +1465,30 @@ export default function SettingsView({
 }
 
 
-/** The model-stays-loaded switch: a stored preference the next send reads. */
+/**
+ * The model-stays-loaded switch — a RUNTIME property, not a per-send one:
+ * the app's sends ride the engine pointed at the local runtime, so the hold
+ * lives in the runtime's own env (OLLAMA_KEEP_ALIVE=-1) when it starts. The
+ * app's flags file is where the switch is remembered; the direct-chat path
+ * keeps the same answer for the road it still drives.
+ */
 function KeepLoadedRow(): React.JSX.Element {
-  const [on, setOn] = usePersistentState<boolean>('oddbrain.keepLoadedAlways', false)
+  const [state, setState] = useState<{ on: boolean; loaded: boolean }>({ on: false, loaded: false })
+  useEffect(() => {
+    if (isDemo) return
+    void bridge.app?.flags
+      ?.get()
+      .then(flags => setState({ on: flags.keepLoadedAlways === true, loaded: true }))
+      .catch(() => setState({ on: false, loaded: true }))
+  }, [])
+  const flip = (): void => {
+    const next = !state.on
+    setState({ on: next, loaded: true })
+    if (!isDemo) void bridge.app?.flags?.set({ keepLoadedAlways: next }).catch(() => undefined)
+  }
+  if (isDemo) {
+    return <span className="text-[11.5px] text-muted">A desktop-app switch — this window is the interface only.</span>
+  }
   return (
     <div className="flex gap-1.5 sm:justify-end">
       {[
@@ -1478,10 +1499,10 @@ function KeepLoadedRow(): React.JSX.Element {
           key={option.label}
           type="button"
           className={`rounded-full border px-3 py-1 text-[12px] ${
-            on === option.value ? 'border-accent bg-accent/15 text-ink' : 'border-line text-muted hover:bg-white/[0.06]'
+            state.on === option.value ? 'border-accent bg-accent/15 text-ink' : 'border-line text-muted hover:bg-white/[0.06]'
           }`}
-          onClick={() => setOn(option.value)}
-          aria-pressed={on === option.value}
+          onClick={() => { if (option.value !== state.on) flip() }}
+          aria-pressed={state.on === option.value}
         >
           {option.label}
         </button>

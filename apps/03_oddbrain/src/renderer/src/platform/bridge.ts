@@ -53,8 +53,12 @@ export type DesktopBridge = {
     /** Desktop only: open the vault folder in the file manager. */
     openVaultFolder?: () => Promise<{ ok: boolean }>
     flags?: {
-      get: () => Promise<{ loginItem: boolean; warmRuntime: boolean }>
-      set: (patch: { loginItem?: boolean; warmRuntime?: boolean }) => Promise<{ loginItem: boolean; warmRuntime: boolean }>
+      get: () => Promise<{ loginItem: boolean; warmRuntime: boolean; keepLoadedAlways: boolean }>
+      set: (patch: { loginItem?: boolean; warmRuntime?: boolean; keepLoadedAlways?: boolean }) => Promise<{
+        loginItem: boolean
+        warmRuntime: boolean
+        keepLoadedAlways: boolean
+      }>
     }
     /** Desktop only: open a github.com link in the person's browser. */
     openExternal?: (url: string) => Promise<{ ok: boolean }>

@@ -81,21 +81,52 @@ async function setupHistoryListener() {
 
 setupHistoryListener();
 
-// Message handler for popup to request permissions
-chrome.runtime.onMessage.addListener(async (msg) => {
+// Message handler for popup and content scripts. The sendResponse/return-true
+// pattern, not a returned Promise: Promise answers are only honoured by the
+// newest Chromium releases, and sendResponse works on every version this
+// extension will ever meet.
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.type === "ob-capture") {
     // The one door for every page capture: the shared handler carries the
     // pair token, drops refusals as metadata-only, and queues true offline
     // captures for the flush.
-    return await handleCaptureRelay(msg.payload);
+    handleCaptureRelay(msg.payload).then(sendResponse).catch((e) => sendResponse({ok:false, error:String(e && e.message || e)}));
+    return true; // the channel stays open for the async answer
+  }
+  if (msg.type === "ob-blacklist-get") {
+    (async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:8765/blacklist", { headers: await pairHeaders(false) });
+        if (!res.ok) return sendResponse({relay: null});
+        const data = await res.json();
+        sendResponse({relay: Array.isArray(data && data.excluded_patterns) ? data.excluded_patterns : null});
+      } catch (e) { sendResponse({relay: null}); }
+    })();
+    return true;
+  }
+  if (msg.type === "ob-blacklist-update") {
+    (async () => {
+      try {
+        await fetch("http://127.0.0.1:8765/capture", {
+          method: "POST",
+          headers: await pairHeaders(true),
+          body: JSON.stringify({ type: "blacklist_update", excluded_patterns: msg.excluded_patterns || [] }),
+        });
+        sendResponse({relay: true});
+      } catch (e) { sendResponse({relay: null}); }
+    })();
+    return true;
   }
   if (msg.type === "request_broad_access") {
-    const granted = await chrome.permissions.request({origins: ["<all_urls>"]});
-    return {granted};
+    chrome.permissions.request({origins: ["<all_urls>"]}).then((granted) => sendResponse({granted}));
+    return true;
   }
   if (msg.type === "request_history") {
-    const granted = await chrome.permissions.request({permissions: ["history"]});
-    if (granted) setupHistoryListener();
-    return {granted};
+    chrome.permissions.request({permissions: ["history"]}).then(async (granted) => {
+      if (granted) await setupHistoryListener();
+      sendResponse({granted});
+    });
+    return true;
   }
+  return undefined;
 });

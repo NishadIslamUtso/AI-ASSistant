@@ -41,7 +41,7 @@ export type DownloadManager = {
   executeInstaller(engine: string, platform?: string): { ok: boolean; answer: string }
   ollamaBinary(): string | null
   /** The staged Ollama runtime, started and stopped by the app, for real. */
-  ollamaStart(): Promise<{ ok: boolean; answer: string }>
+  ollamaStart(env?: { OLLAMA_KEEP_ALIVE: string }): Promise<{ ok: boolean; answer: string }>
   ollamaStop(): Promise<{ ok: boolean; answer: string }>
   ollamaStatus(): Promise<{ ok: boolean; answer: string; running: boolean }>
 }
@@ -267,7 +267,7 @@ export function createDownloadManager(options: {
     },
 
     /** The staged runtime, started detached: its pid lives in our folder. */
-    async ollamaStart() {
+    async ollamaStart(env?: { OLLAMA_KEEP_ALIVE: string }) {
       const binary = this.ollamaBinary()
       if (!binary) return { ok: false, answer: 'The Ollama runtime is not staged yet. Download it first.' }
       if ((await this.ollamaStatus()).running) {
@@ -279,6 +279,7 @@ export function createDownloadManager(options: {
         cwd: join(root, 'ollama', 'app'),
         detached: true,
         stdio: 'ignore',
+        ...(env ? { env: { ...process.env, ...env } } : {}),
       })
       child.unref()
       if (!child.pid) return { ok: false, answer: 'The runtime could not be started.' }

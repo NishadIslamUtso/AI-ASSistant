@@ -17,6 +17,8 @@ import { startAgySession } from './agy'
 export type EngineAnswer = { ok: boolean; answer: string }
 
 export type EngineSocket = {
+  /** Which provider's key the LIVE process was launched with, if any. */
+  usedAuthProvider(): string | null
   /** Hand the engine a task — starts it on the first one, reuses it after. */
   send(prompt: string, input: EngineStartInput & {
     images?: Array<{ mime: string; data: string }>
@@ -72,6 +74,9 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
   // the next turn — a living process launched with the old key would otherwise
   // keep billing and speaking as the old credential until it happened to stop.
   let sessionKeyFingerprint: string | null = null
+  // And WHICH provider's key it was: clearing one provider's key must not
+  // stop a session that was launched with another's.
+  let sessionAuthProvider: string | null = null
 
   const onEvent = (input: EngineStartInput, event: EngineEvent): void => {
     // The socket owns the busy flag: a finished or failed task frees the
@@ -153,6 +158,7 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
       sessionThinking = input.settings.thinking
       sessionBaseUrl = input.settings.baseUrl
       sessionKeyFingerprint = input.auth?.apiKey ?? null
+      sessionAuthProvider = input.auth?.provider ?? null
       if (!session.isRunning()) {
         return { ok: false, answer: 'The engine could not be started on this machine.' }
       }
@@ -166,6 +172,7 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
       return { ok: true, answer: 'started' }
     },
     current: () => session,
+    usedAuthProvider: () => sessionAuthProvider,
     turnBusy: () => busy,
     running: () => session?.isRunning() === true,
     stop: () => session?.stop(),
@@ -182,6 +189,7 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
       sessionThinking = null
       sessionBaseUrl = null
       sessionKeyFingerprint = null
+      sessionAuthProvider = null
       currentCwd = ''
     },
   }

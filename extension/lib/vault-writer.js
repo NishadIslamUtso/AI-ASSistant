@@ -97,17 +97,16 @@ async function handleCaptureRelay(payload) {
     await recordActivity({...dataWithTime, success:true});
     return {ok:true};
   } catch (e) {
-    // The crash in the approved screenshots: the extension was reloaded (or
-    // its context torn down) while a write was in flight, and the rejection
-    // escaped as an unhandled promise. The queue is best-effort by design —
-    // a dead context has nothing to queue into, so record nothing and stay
-    // quiet. A live context queues as before (the outbox, not a rejection).
+    // Network failure (the app is down, the context died mid-write): the
+    // outbox holds it for the flush. Queueing IS the handling - rethrowing
+    // here made a live content script run this handler AGAIN, parking the
+    // same capture twice. A dead context has nothing to queue into; stay quiet.
     try {
       await queueCapture(dataWithTime);
+      return {ok:false, queued:true};
     } catch (queued) {
-      // Nothing to do: the context is gone; the page is fine.
+      return {ok:false, queued:false, offline:true};
     }
-    throw e;
   }
 }
 
@@ -140,6 +139,13 @@ async function queueCapture(payload) {
   }
 }
 
+/**
+ * The outbox flush. Delivered (2xx) leaves; a refusal (401/403) is dropped
+ * ON PURPOSE with a metadata-only record - the app said no, and holding the
+ * page text it refused would be the leak the pairing rule exists to prevent;
+ * anything else (5xx, network) stays for the next flush. Only a thrown fetch
+ * used to be retried, which silently deleted captures on a plain HTTP error.
+ */
 async function flushQueue() {
   if (!isExtensionValid()) return;
   try {
@@ -149,7 +155,13 @@ async function flushQueue() {
     const remaining = [];
     for (const item of q) {
       try {
-        await fetch(`${LOCAL_API}/capture`, {method:"POST", headers: await pairHeaders(true), body: JSON.stringify(item)});
+        const res = await fetch(`${LOCAL_API}/capture`, {method:"POST", headers: await pairHeaders(true), body: JSON.stringify(item)});
+        if (res.ok) continue;
+        if (res.status === 401 || res.status === 403) {
+          await recordActivity(rejectionRecord(item, res.status === 401 ? "not paired - dropped from the outbox" : "refused by the app - dropped from the outbox"));
+          continue;
+        }
+        remaining.push(item);
       } catch(e) {
         remaining.push(item);
       }
