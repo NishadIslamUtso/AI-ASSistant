@@ -28,7 +28,7 @@ vanish on every sandbox restart; this is the whole ritual, start to finish.
 | 0.4.0 | AI-ASSistant-Setup-0.4.0.exe | 88,049,746 | 0c19f17a… | 2026-10-15 |
 | 0.6.0 | AI-ASSistant-Setup-0.6.0.exe | 88,062,356 | c0c9c0861873b7b2db69c0d5d924563aa04b9cd53b015c44a8c4a640835ea38c | 2026-10-16 (rebuild; 1st build's copy was lost to the workspace size cap — two 88 MB exes at once exceed it. The 0.4.0 exe was deleted to make room; NSIS timestamps make each build's hash differ) |
 | 0.8.0 | AI-ASSistant-Setup-0.8.0.exe | 88,171,076 | 2ca94dd2f3350f4c0794bbb25745b107700a66fe94742623ea17a2fdb93fea7b | 2026-10-16 (rebuild 4, THE shipped build: the furnished store in resources/store + Code inside Projects. Ships everything to date. Copy at /home/user/AI-ASSistant-Setup-0.8.0.exe) |
-| 0.9.0 | OddBrain-Setup-0.9.0.exe | 96,950,376 | a174b77738a39ce4bc1f93167bbf0b58a0ddb3bee4cb29259ec7d0334758e491 | 2026-10-17 (the OddBrain build: rename + fuses via afterPack; the pre-rename exe was deleted the same day, per the one-exe rule. Copy at /home/user/OddBrain-Setup-0.9.0.exe) |
+| 0.9.0 | OddBrain-Setup-0.9.0.exe | 100,260,934 | 3d227fcb99852df9f6d5d856e1eab6cd60b77148ed97262888082acc85630740 | 2026-10-17, rebuilt after dawn (the shipped build: Electron 41.10.7 runtime, the paired extension port, the per-hop redirect pin, the installer Run button, the Windows-green suite; rename + fuses via afterPack; the earlier 0.9.0 exe was replaced the same day, per the one-exe rule. Copy at /home/user/OddBrain-Setup-0.9.0.exe) |
 
 ## What the person installing will see
 
@@ -45,4 +45,4 @@ Electron fuses on the packaged binary (no `ELECTRON_RUN_AS_NODE`, no
 32-bit support (`dpkg --add-architecture i386; apt install wine32 wine`), a
 fresh prefix (`rm -rf ~/.wine && wineboot -u`), and `XDG_RUNTIME_DIR` set —
 electron-builder exercises the produced installer under wine as part of the
-build. Output: `dist/OddBrain-Setup-0.9.0.exe` (sha256 a174b77738a39ce4bc1f93167bbf0b58a0ddb3bee4cb29259ec7d0334758e491).
+build. Output: `dist/OddBrain-Setup-0.9.0.exe` — latest rebuild sha256 3d227fcb99852df9f6d5d856e1eab6cd60b77148ed97262888082acc85630740 (100,260,934 bytes, Electron 41.10.7; the a174b777… build predates the paired extension port and is replaced).
