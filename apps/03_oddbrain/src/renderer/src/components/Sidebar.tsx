@@ -4,6 +4,7 @@ import { PanelLeftClose, PanelLeftOpen, Plus, Search, X } from 'lucide-react'
 import type { Chat } from '@shared/types'
 import { searchChats } from '@shared/lib/search'
 import { initials } from '@shared/lib/profile'
+import { Mascot } from '../motion/Mascot'
 import { groupChats } from '@/state/useChats'
 import { bridge } from '@/platform/bridge'
 import usePersistentState from '@/hooks/usePersistentState'
@@ -148,7 +149,12 @@ export default function Sidebar({
           className="flex h-9 w-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-white/[0.06] hover:text-ink"
         >
           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand/25 text-[11px] font-semibold text-brand">
-            {initials(profileName)}
+            <span className="relative" title="OddBrain is on this machine">
+              {initials(profileName)}
+              <span className="absolute -top-3 -right-2" aria-hidden>
+                <Mascot role="idle" size={22} seed={3} periodMs={8000} />
+              </span>
+            </span>
           </span>
         </button>
       </aside>

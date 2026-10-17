@@ -12,6 +12,7 @@
  */
 
 import { readStored } from '@shared/lib/storage'
+import { designSystemCss, isDesignSystem } from '@shared/lib/design-systems'
 
 export type AccentName = 'violet' | 'blue' | 'teal' | 'amber' | 'rose'
 export type WidthName = 'focused' | 'comfortable' | 'wide'
@@ -44,6 +45,12 @@ export type Appearance = {
    * Empty when no pack style is applied; Reset clears it.
    */
   packCss: string
+  /**
+   * A whole design system — one of the sixteen the original HTML design
+   * shipped. Empty means the app's own look. A design system and a pack
+   * theme are one look at a time: picking either clears the other.
+   */
+  designSystem: string
 }
 
 export const APPEARANCE_KEY = 'ai-assistant.appearance'
@@ -110,10 +117,13 @@ export const DEFAULT_APPEARANCE: Appearance = Object.freeze({
   mascotWords: true,
   rowExplanations: true,
   packCss: '',
+  designSystem: '',
 })
 
 /** The id of the <style> element a pack theme's stylesheet lives in. */
 export const PACK_STYLE_ID = 'ob-pack-style'
+/** The id of the <style> element the active design system lives in. */
+export const DESIGN_SYSTEM_STYLE_ID = 'ob-design-system'
 
 export function accentHex(name: AccentName): string {
   return (ACCENTS.find(accent => accent.name === name) || ACCENTS[0]).hex
@@ -156,6 +166,7 @@ export function normalizeAppearance(value: unknown): Appearance {
     rowExplanations:
       typeof input.rowExplanations === 'boolean' ? input.rowExplanations : DEFAULT_APPEARANCE.rowExplanations,
     packCss: typeof input.packCss === 'string' ? input.packCss.slice(0, 200_000) : '',
+    designSystem: typeof input.designSystem === 'string' && isDesignSystem(input.designSystem) ? input.designSystem : '',
   }
 }
 
@@ -194,9 +205,24 @@ export function applyAppearance(
   appearance: Appearance,
   root: StyledRoot = document.documentElement
 ): void {
+  const active = appearance.designSystem !== '' && isDesignSystem(appearance.designSystem)
   const variables = appearanceVariables(appearance)
-  for (const [name, value] of Object.entries(variables)) root.style.setProperty(name, value)
-  applyPackStyle(appearance.packCss ?? '')
+  for (const [name, value] of Object.entries(variables)) {
+    // The design system owns the accent, the ink on it and the reading
+    // type — inline styles beat stylesheets, so those keys stay OFF the
+    // root while a system is active, or its own choices could never land.
+    if (active && (name === '--color-accent' || name === '--accent-ink' || name === '--transcript-font' || name === '--transcript-size')) continue
+    root.style.setProperty(name, value)
+  }
+  applyPackStyle(active ? '' : (appearance.packCss ?? ''))
+  applyDesignSystem(active ? appearance.designSystem : '')
+  if (active) {
+    // The system IS the palette. The app's light/datalogy rules key off
+    // data-theme with higher specificity than the system's stylesheet —
+    // pinning 'dark' (which carries no rules of its own) takes both out of
+    // the fight, so the system's own light or dark palette stands alone.
+    if (typeof root.setAttribute === 'function') root.setAttribute('data-theme', 'dark')
+  }
   // The theme is a palette swap, not a variable: it lives in the stylesheet as
   // `[data-theme='light']`, so `System` is the attribute's absence and the OS's
   // preference answers. The accent stays inline — it is chosen separately and
@@ -204,7 +230,9 @@ export function applyAppearance(
   if (appearance.theme === 'light' || appearance.theme === 'dark') {
     if (typeof root.setAttribute === 'function') root.setAttribute('data-theme', appearance.theme)
   } else if (typeof root.removeAttribute === 'function') {
-    root.removeAttribute('data-theme')
+    // With a design system active the attribute was pinned 'dark' above —
+    // the system IS the palette, so it is left alone here.
+    if (!appearance.designSystem) root.removeAttribute('data-theme')
   }
 }
 
@@ -223,9 +251,21 @@ export function applyStoredAppearance(): void {
  * Guarded for the node test environment, which has no document.
  */
 export function applyPackStyle(css: string): void {
+  applyStyleElement(PACK_STYLE_ID, css)
+}
+
+/**
+ * The active design system, as its own style element LAST in the head — one
+ * whole look, applied to every screen through the app's tokens.
+ */
+export function applyDesignSystem(id: string): void {
+  applyStyleElement(DESIGN_SYSTEM_STYLE_ID, id ? designSystemCss(id) : '')
+}
+
+function applyStyleElement(elementId: string, css: string): void {
   const doc = typeof document !== 'undefined' ? document : undefined
   if (!doc || typeof doc.getElementById !== 'function' || typeof doc.createElement !== 'function') return
-  const existing = doc.getElementById(PACK_STYLE_ID)
+  const existing = doc.getElementById(elementId)
   if (!css) {
     existing?.remove()
     return
@@ -233,7 +273,7 @@ export function applyPackStyle(css: string): void {
   let element = existing
   if (!element) {
     element = doc.createElement('style')
-    element.id = PACK_STYLE_ID
+    element.id = elementId
     doc.head.appendChild(element)
   }
   if (element.textContent !== css) element.textContent = css

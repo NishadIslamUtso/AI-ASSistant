@@ -87,7 +87,7 @@ export default function ModsSection({
         if (theme && pack?.id) {
           const css = typeof theme.css === 'string' ? theme.css : ''
           rememberTheme(pack.id, { appearance: theme.appearance, css })
-          onAppearanceChange({ ...currentAppearance(), ...theme.appearance, packCss: css } as Appearance)
+          onAppearanceChange({ ...currentAppearance(), ...theme.appearance, packCss: css, designSystem: '' } as Appearance)
           setApplied(theme.name)
         }
         setAnswer(reply.answer)
@@ -132,7 +132,8 @@ export default function ModsSection({
       return
     }
     // The whole style goes on: the token block AND the pack's own stylesheet.
-    onAppearanceChange({ ...currentAppearance(), ...theme.appearance, packCss: theme.css } as Appearance)
+    // One look at a time: a pack theme replaces any design system.
+    onAppearanceChange({ ...currentAppearance(), ...theme.appearance, packCss: theme.css, designSystem: '' } as Appearance)
     setAnswer(`Theme applied from ${pack.name}${theme.css ? ' — its full stylesheet is on' : ''}.`)
   }
 

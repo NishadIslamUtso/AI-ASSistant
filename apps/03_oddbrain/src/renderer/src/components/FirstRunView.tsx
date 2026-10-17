@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ArrowRight, Check, Cpu, FolderOpen } from 'lucide-react'
 import BrainMark from './BrainMark'
+import { Mascot } from '../motion/Mascot'
 import { useEngine } from '@/state/engine'
 import { bridge } from '@/platform/bridge'
 import { isDemo } from '@/platform/bridge'
@@ -81,6 +82,11 @@ export default function FirstRunView({
         <div className="flex items-center gap-2.5">
           <BrainMark size={18} title="" />
           <h1 className="text-[19px] font-semibold text-ink">Welcome to OddBrain</h1>
+        </div>
+        {/* The kit's animation greets the owner on screen one — the logo
+            animates, it does not sit still on the welcome card. */}
+        <div className="mt-2 flex justify-center" aria-hidden>
+          <Mascot role="resting" size={88} seed={7} />
         </div>
 
         <div className="mt-3 flex items-center gap-1.5" aria-hidden>

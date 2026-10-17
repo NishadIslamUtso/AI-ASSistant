@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { DEFAULT_DESIGN_SYSTEM, loadDesignTokens } from '@shared/lib/design-systems'
 
 /**
@@ -9,19 +9,8 @@ import { DEFAULT_DESIGN_SYSTEM, loadDesignTokens } from '@shared/lib/design-syst
  * the artifact still renders, it just renders without the styling pass.
  */
 export function useDesignTokens(id: string = DEFAULT_DESIGN_SYSTEM): string {
-  const [tokens, setTokens] = useState('')
-  useEffect(() => {
-    let cancelled = false
-    loadDesignTokens(id)
-      .then(value => {
-        if (!cancelled) setTokens(value || '')
-      })
-      .catch(() => {
-        if (!cancelled) setTokens('')
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [id])
+  // The sixteen sets ship in the bundle, so the load is a lookup now — the
+  // hook keeps its shape so its callers do not change.
+  const [tokens] = useState(() => loadDesignTokens(id) || '')
   return tokens
 }

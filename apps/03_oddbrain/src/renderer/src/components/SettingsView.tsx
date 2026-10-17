@@ -6,6 +6,7 @@ import BrainStructureSection from './BrainStructureSection'
 import SkillsCatalogSection from './SkillsCatalogSection'
 import BrowserControlSection from './BrowserControlSection'
 import ModsSection from './ModsSection'
+import { DESIGN_SYSTEMS } from '@shared/lib/design-systems'
 import ErrorBoundary from './ErrorBoundary'
 import EngineBay from './EngineBay'
 import RecipesSection from './RecipesSection'
@@ -798,6 +799,48 @@ export default function SettingsView({
             : []),
         ],
     appearance: [
+      {
+        label: 'Design system',
+        terms: 'design system claude linear apple stripe notion vercel airbnb glassmorphism neobrutalism editorial retro dashboard shadcn minimal modern theme look style whole appearance',
+        note: 'A whole look from the original design — palette, type, corners, shadows, every screen. It replaces the accent while active.',
+        body: (
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 sm:justify-end">
+            <button
+              type="button"
+              className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 text-left text-[12px] ${
+                appearance.designSystem === '' ? 'border-accent text-ink' : 'border-line text-muted hover:text-ink'
+              }`}
+              onClick={() => onAppearanceChange({ ...appearance, designSystem: '' })}
+              aria-label="Design system: the app's own look"
+              aria-pressed={appearance.designSystem === ''}
+            >
+              <span className="h-5 w-5 shrink-0 rounded-md border border-line bg-bg" />
+              <span className="min-w-0 truncate">App default</span>
+            </button>
+            {DESIGN_SYSTEMS.map(system => (
+              <button
+                key={system.id}
+                type="button"
+                className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 text-left text-[12px] ${
+                  appearance.designSystem === system.id ? 'border-accent text-ink' : 'border-line text-muted hover:text-ink'
+                }`}
+                onClick={() => onAppearanceChange({ ...appearance, designSystem: system.id, packCss: '' })}
+                aria-label={`Design system: ${system.label}`}
+                aria-pressed={appearance.designSystem === system.id}
+                title={system.label}
+              >
+                <span
+                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-line"
+                  style={{ background: system.bg }}
+                >
+                  <span className="h-2 w-2 rounded-full" style={{ background: system.accent }} />
+                </span>
+                <span className="min-w-0 truncate">{system.label}</span>
+              </button>
+            ))}
+          </div>
+        ),
+      },
       {
         label: 'Theme',
         terms: 'theme dark light system appearance night day palette',
