@@ -23,14 +23,6 @@ jobs:
       - name: Tests
         working-directory: apps/03_oddbrain
         run: npx vitest run --reporter=default --reporter=junit --outputFile=junit-linux.xml
-      - name: Smoke — the window opens and the console is clean
-        working-directory: apps/03_oddbrain
-        timeout-minutes: 5
-        env:
-          ELECTRON_DISABLE_SANDBOX: 1
-        run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libnss3 libnspr4 libasound2t64
-          xvfb-run -a npx electron . --smoke
       - name: Linux speaks
         if: always()
         uses: actions/github-script@v7
@@ -62,6 +54,14 @@ jobs:
       - name: Build
         working-directory: apps/03_oddbrain
         run: npm run build
+      - name: Smoke — the window opens and the console is clean
+        working-directory: apps/03_oddbrain
+        timeout-minutes: 5
+        env:
+          ELECTRON_DISABLE_SANDBOX: 1
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libnss3 libnspr4 libasound2t64
+          xvfb-run -a npx electron . --smoke
 
   windows:
     runs-on: windows-latest
@@ -81,11 +81,6 @@ jobs:
       - name: Tests
         working-directory: apps/03_oddbrain
         run: npx vitest run --reporter=default --reporter=junit --outputFile=junit-windows.xml
-      - name: Smoke — the window opens and the console is clean
-        working-directory: apps/03_oddbrain
-        timeout-minutes: 5
-        shell: pwsh
-        run: npx electron . --smoke
       - name: Windows speaks
         if: always()
         uses: actions/github-script@v7
@@ -117,3 +112,8 @@ jobs:
       - name: Build
         working-directory: apps/03_oddbrain
         run: npm run build
+      - name: Smoke — the window opens and the console is clean
+        working-directory: apps/03_oddbrain
+        timeout-minutes: 5
+        shell: pwsh
+        run: npx electron . --smoke

@@ -463,7 +463,10 @@ test('the socket: a changed launch flag relaunches the engine with the new flags
   }) as unknown as typeof import('node:child_process').spawn
   const rec = recorder()
   const socket = createEngineSocket()
-  const base = { cwd: '.', onEvent: rec.on, spawnProcess: fake }
+  // The stop rules are the engine's dialect, not the CI host's (a Windows
+  // host tree-kills through the fake and the kill count lies); this test is
+  // about launch flags, so every session speaks POSIX.
+  const base = { cwd: '.', platform: 'linux', onEvent: rec.on, spawnProcess: fake }
 
   // Same engine, same model, only the THINKING budget changed: the running
   // process was launched without the new flag — a silent gear mismatch — so
