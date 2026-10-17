@@ -28,6 +28,8 @@ jobs:
   windows:
     runs-on: windows-latest
     continue-on-error: true
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -41,7 +43,19 @@ jobs:
         run: npx tsc --noEmit -p tsconfig.json
       - name: Tests
         working-directory: apps/03_ai-assistant
-        run: npx vitest run
+        run: npx vitest run --reporter=default --reporter=junit --outputFile=junit-windows.xml
+      - name: Windows speaks
+        if: always()
+        working-directory: apps/03_ai-assistant
+        shell: pwsh
+        run: |
+          if (Test-Path junit-windows.xml) {
+            $raw = Get-Content junit-windows.xml -Raw
+            if ($raw.Length -gt 30000) { $raw = '...truncated...' + $raw.Substring($raw.Length - 30000) }
+            $body = "windows junit (tail):``n``````xml``n$raw``n``````"
+            $json = @{ body = $body } | ConvertTo-Json
+            Invoke-RestMethod -Method Post -Uri "$env:GITHUB_API_URL/repos/$env:GITHUB_REPOSITORY/commits/$env:GITHUB_SHA/comments" -Headers @{ Authorization = "Bearer $env:GITHUB_TOKEN" } -ContentType 'application/json' -Body $json | Out-Null
+          }
       - name: Build
         working-directory: apps/03_ai-assistant
         run: npm run build
