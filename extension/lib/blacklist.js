@@ -26,6 +26,24 @@ function localApi() {
   return (typeof LOCAL_API !== 'undefined' && LOCAL_API) || 'http://127.0.0.1:8765'
 }
 
+/**
+ * The pairing header, borrowed from vault-writer when the two scripts share a
+ * world (the browser), or built here when this module stands alone (the
+ * tests). The app refuses every request without it, so the blacklist - read
+ * AND the update posts - must speak the same dialect as captures.
+ */
+async function pairHeadersFor(json) {
+  if (typeof pairHeaders === 'function') return pairHeaders(json)
+  try {
+    const data = await chrome.storage.local.get({ pairToken: '' })
+    const headers = { 'Content-Type': 'application/json' }
+    if (typeof data.pairToken === 'string' && data.pairToken) headers['x-oddbrain-pair'] = data.pairToken
+    return headers
+  } catch (e) {
+    return json ? { 'Content-Type': 'application/json' } : { Accept: 'application/json' }
+  }
+}
+
 /** Escape everything regex-special except *, which stays a wildcard. */
 function escapePattern(text) {
   return String(text).replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')
@@ -79,7 +97,7 @@ async function writeStoredPatterns(list) {
 async function getBlacklist() {
   const stored = await readStoredPatterns()
   try {
-    const response = await fetch(`${localApi()}${BLACKLIST_ENDPOINT}`, { headers: { Accept: 'application/json' } })
+    const response = await fetch(`${localApi()}${BLACKLIST_ENDPOINT}`, { headers: await pairHeadersFor(false) })
     if (!response.ok) return stored
     const data = await response.json()
     const vault = Array.isArray(data?.excluded_patterns) ? data.excluded_patterns : null
@@ -105,7 +123,7 @@ async function addToBlacklist(pattern) {
   try {
     await fetch(`${localApi()}/capture`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await pairHeadersFor(true),
       body: JSON.stringify({ type: 'blacklist_update', excluded_patterns: list }),
     })
   } catch (e) { /* queued on the next successful read */ }
@@ -118,7 +136,7 @@ async function removeFromBlacklist(pattern) {
   try {
     await fetch(`${localApi()}/capture`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await pairHeadersFor(true),
       body: JSON.stringify({ type: 'blacklist_update', excluded_patterns: list }),
     })
   } catch (e) { /* queued on the next successful read */ }

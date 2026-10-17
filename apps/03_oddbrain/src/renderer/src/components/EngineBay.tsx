@@ -26,6 +26,15 @@ const ENGINES: Array<{ id: EngineId; label: string; hint: string }> = [
   { id: 'agy', label: 'agy', hint: 'Google’s agent, its own brains, from its own selector' },
 ]
 
+/** The honest fine print, per engine, shown where the engine is chosen. */
+const ENGINE_NOTES: Partial<Record<EngineId, string>> = {
+  agy:
+    'agy answers and chats, but raises no permission cards here — its CLI has no stdio ' +
+    'prompt door, so anything beyond Ask is throttled by agy itself, not approved by you. ' +
+    'Its brain list appears when Google ships one to the CLI; until a signed-in Windows ' +
+    'turn is proven, treat this door as experimental.',
+}
+
 /** The last part of a path, whichever slash the platform uses. */
 const leaf = (folder: string): string => folder.split(/[\\/]/).filter(Boolean).at(-1) ?? folder
 
@@ -116,6 +125,11 @@ export default function EngineBay() {
             </button>
           )
         })}
+        {ENGINE_NOTES[engine.settings.id] ? (
+          <p className="col-span-2 rounded-lg border border-line bg-card px-2.5 py-2 text-[11px] leading-relaxed text-muted" role="note">
+            {ENGINE_NOTES[engine.settings.id]}
+          </p>
+        ) : null}
       </div>
 
       {/* The brain, chosen from the engine's own list. */}

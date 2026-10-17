@@ -21,6 +21,7 @@ import { askLocal } from '@shared/lib/ask'
 import { extractCitations } from '@shared/lib/citations'
 import { wantsChart } from '@shared/lib/chart'
 import type { InferenceSettings } from '@shared/lib/inference'
+import { readStored } from '@shared/lib/storage'
 
 /**
  * Sending a message, and everything that happens after it.
@@ -359,7 +360,8 @@ export default function useChat({
           patch(chat.id, assistant.id, final)
           sweep(piece.content)
         },
-        inference
+        inference,
+        readStored<boolean>('oddbrain.keepLoadedAlways', false).value ? '-1' : undefined
       )
       final.status = 'complete'
       final.stage = ''

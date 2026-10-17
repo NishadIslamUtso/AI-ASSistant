@@ -45,6 +45,7 @@ const fetchStub = () => {
 
 const loadWriter = async () => (await import('../../extension/lib/vault-writer.js')) as {
   postCapture(payload: unknown): Promise<{ ok: boolean; unpaired?: boolean }>
+  handleCaptureRelay(payload: unknown): Promise<{ ok: boolean; unpaired?: boolean }>
   flushQueue(): Promise<void>
 }
 
@@ -96,5 +97,47 @@ describe('the extension speaks the pairing dialect', () => {
     const writer = await loadWriter()
     await writer.postCapture({ type: 'page', url: 'https://example.com' })
     expect(captures[0].headers['x-oddbrain-pair']).toBeUndefined()
+  })
+
+  it('a refused capture keeps METADATA ONLY in the activity log \u2014 never the page text', async () => {
+    ;(globalThis as Record<string, unknown>).fetch = vi.fn(async () => ({ ok: false, status: 401, json: async () => ({}) }))
+    const writer = await loadWriter()
+    await writer.handleCaptureRelay({ type: 'page', url: 'https://example.com/private', title: 'Private', content: 'AUDIT_PRIVATE_CONTENT' })
+    const activity = (storage.activity as Array<Record<string, unknown>>) ?? []
+    const entry = activity.find(item => /not paired/i.test(String(item.reason ?? '')))
+    expect(entry).toBeTruthy()
+    expect(entry!['content']).toBeUndefined()
+    expect(JSON.stringify(entry)).not.toContain('AUDIT_PRIVATE_CONTENT')
+    expect((storage.queue as unknown[] | undefined) ?? []).toHaveLength(0)
+    expect(entry!['url']).toBe('https://example.com/private')
+    expect(entry!['type']).toBe('page')
+  })
+
+  it('a 403 refusal is metadata-only too \u2014 rejected means rejected', async () => {
+    ;(globalThis as Record<string, unknown>).fetch = vi.fn(async () => ({ ok: false, status: 403, json: async () => ({}) }))
+    const writer = await loadWriter()
+    const answer = await writer.handleCaptureRelay({ type: 'page', url: 'https://x.test', content: 'AUDIT_PRIVATE_CONTENT' })
+    expect(answer.unpaired).toBe(false)
+    const activity = (storage.activity as Array<Record<string, unknown>>) ?? []
+    expect(activity.some(item => JSON.stringify(item).includes('AUDIT_PRIVATE_CONTENT'))).toBe(false)
+  })
+
+  it('from inside a page the capture is RELAYED to the background \u2014 no page-origin fetch at all', async () => {
+    const relays: Array<{ type: string; payload: unknown }> = []
+    ;(globalThis as Record<string, unknown>).chrome = {
+      runtime: { id: 'test-extension-id', sendMessage: async (msg: { type: string; payload: unknown }) => { relays.push(msg); return { ok: true } } },
+      storage: (globalThis as Record<string, unknown>).chrome && undefined,
+    }
+    // restore a storage stub for this context
+    ;(globalThis as Record<string, unknown>).chrome = {
+      runtime: { id: 'test-extension-id', sendMessage: async (msg: { type: string; payload: unknown }) => { relays.push(msg); return { ok: true } } },
+      storage: { local: { get: async (d: Stored) => ({ ...d }), set: async () => undefined } },
+    }
+    const writer = await loadWriter()
+    const answer = await writer.postCapture({ type: 'page', url: 'https://example.com' })
+    expect(answer).toEqual({ ok: true })
+    expect(relays).toHaveLength(1)
+    expect(relays[0]!.type).toBe('ob-capture')
+    expect(captures).toHaveLength(0, 'the page context never speaks to the app directly')
   })
 })

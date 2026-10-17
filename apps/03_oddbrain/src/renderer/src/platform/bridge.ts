@@ -52,6 +52,10 @@ export type DesktopBridge = {
     platform: string
     /** Desktop only: open the vault folder in the file manager. */
     openVaultFolder?: () => Promise<{ ok: boolean }>
+    flags?: {
+      get: () => Promise<{ loginItem: boolean; warmRuntime: boolean }>
+      set: (patch: { loginItem?: boolean; warmRuntime?: boolean }) => Promise<{ loginItem: boolean; warmRuntime: boolean }>
+    }
     /** Desktop only: open a github.com link in the person's browser. */
     openExternal?: (url: string) => Promise<{ ok: boolean }>
     /** Desktop only: the native menu's events (File > New chat, Go > screens). */

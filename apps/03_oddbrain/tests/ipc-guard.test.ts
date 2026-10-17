@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect, beforeEach } from 'vitest'
-import { pinOwnOrigins, urlIsOurs } from '../src/main/ipcGuard'
+import { pinOwnOrigins, resetOwnOrigins, urlIsOurs } from '../src/main/ipcGuard'
 
 /**
  * The one origin check, adversarially. These are the URLs a hostile page
@@ -11,6 +11,8 @@ import { pinOwnOrigins, urlIsOurs } from '../src/main/ipcGuard'
 const DEV = 'http://localhost:5173'
 const PACKAGED = 'http://127.0.0.1:49152'
 const APP_FILE = 'file:///C:/Program%20Files/OddBrain/resources/app.asar/index.html'
+
+beforeEach(() => resetOwnOrigins())
 
 describe('the one origin check', () => {
   beforeEach(() => pinOwnOrigins([DEV, PACKAGED, APP_FILE]))
@@ -53,15 +55,25 @@ describe('the one origin check', () => {
     expect(urlIsOurs('')).toBe(false)
   })
 
-  it('refuses everything when nothing was pinned yet', () => {
+  it('refuses everything when nothing is pinned - the fresh-slate rule', () => {
+    resetOwnOrigins()
     pinOwnOrigins([])
     expect(urlIsOurs(DEV + '/')).toBe(false)
     expect(urlIsOurs(APP_FILE)).toBe(false)
   })
 
-  it('survives being re-pinned, and un-pins what is gone', () => {
-    pinOwnOrigins([DEV])
-    expect(urlIsOurs(PACKAGED + '/')).toBe(false)
+  it('pinning is additive: a later window joins, nothing is silently un-trusted', () => {
+    // The quick window can be created after the main window (or before the
+    // API exists); pinning it must not wipe the main window's trust.
+    pinOwnOrigins(['http://localhost:5174'])
+    expect(urlIsOurs(PACKAGED + '/')).toBe(true)
     expect(urlIsOurs(DEV + '/')).toBe(true)
+    expect(urlIsOurs('http://localhost:5174/')).toBe(true)
+  })
+
+  it('only resetOwnOrigins un-trusts — the tests\u2019 fresh slate', () => {
+    resetOwnOrigins()
+    expect(urlIsOurs(DEV + '/')).toBe(false)
+    expect(urlIsOurs(APP_FILE)).toBe(false)
   })
 })

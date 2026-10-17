@@ -1,4 +1,8 @@
-// Background v1.1 - optional history, less warnings
+// Background v1.2 - page captures relay through here (a page's own origin
+// cannot speak to the app; the background speaks as the extension, with the
+// pairing token), optional history, fewer warnings.
+
+importScripts('lib/vault-writer.js');
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({id: "collect-now", title: "Collect this page now", contexts: ["page"]});
@@ -79,6 +83,12 @@ setupHistoryListener();
 
 // Message handler for popup to request permissions
 chrome.runtime.onMessage.addListener(async (msg) => {
+  if (msg.type === "ob-capture") {
+    // The one door for every page capture: the shared handler carries the
+    // pair token, drops refusals as metadata-only, and queues true offline
+    // captures for the flush.
+    return await handleCaptureRelay(msg.payload);
+  }
   if (msg.type === "request_broad_access") {
     const granted = await chrome.permissions.request({origins: ["<all_urls>"]});
     return {granted};

@@ -72,6 +72,21 @@ export default function EnginePanel() {
   if (!turn) {
     return (
       <>
+        {/* Live work seen from ANOTHER window: this window owns no turn, so it
+            shows the machine's activity read-only — cards stay with the window
+            that can answer them. */}
+        {engine.ambient.busy ? (
+          <section
+            aria-label="Engine working in another window"
+            className="mx-auto mb-3 flex w-full max-w-[var(--chat-width)] items-center gap-2 rounded-xl border border-line bg-card px-4 py-2"
+          >
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-warn" aria-hidden />
+            <p className="text-[12px] text-muted">
+              The engine is working in another window — <span className="text-ink">{engine.ambient.note || 'working'}</span>.
+              Its cards are answered there; this window watches.
+            </p>
+          </section>
+        ) : null}
         {engine.journal.length ? (
           <details aria-label="Earlier sessions" className="mx-auto mb-3 w-full max-w-[var(--chat-width)] rounded-xl border border-line bg-card px-4 py-2.5">
             <summary className="cursor-pointer text-[12px] font-medium text-muted">

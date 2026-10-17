@@ -169,6 +169,11 @@ const api = {
     platform: process.platform,
     /** Open the vault folder in the file manager — the owner's own folder. */
     openVaultFolder: (): Promise<{ ok: boolean }> => ipcRenderer.invoke('vault:open-folder'),
+    flags: {
+      get: (): Promise<{ loginItem: boolean; warmRuntime: boolean }> => ipcRenderer.invoke('app:flags:get'),
+      set: (patch: { loginItem?: boolean; warmRuntime?: boolean }): Promise<{ loginItem: boolean; warmRuntime: boolean }> =>
+        ipcRenderer.invoke('app:flags:set', patch),
+    },
     /** Open a https://github.com link in the person's browser. */
     openExternal: (url: string): Promise<{ ok: boolean }> => ipcRenderer.invoke('app:open-external', url),
     /** The native menu talks to the window through these channels. */

@@ -48,8 +48,36 @@ async function safeStorageSet(obj) {
   }
 }
 
-async function postCapture(payload) {
-  if (!isExtensionValid()) return;
+/**
+ * A REFUSED capture is recorded as metadata only - type, address, title,
+ * time, reason. Never the page text: a browser record of a capture the app
+ * declined is exactly the leak the pairing rule exists to prevent.
+ * (The offline queue below is different by design: it is the outbox for a
+ * capture the person's OWN extension made, held until the app returns,
+ * clearable from the popup.)
+ */
+function rejectionRecord(dataWithTime, reason) {
+  return { type: dataWithTime.type, url: dataWithTime.url, title: dataWithTime.title, captured_at: dataWithTime.captured_at, success: false, queued: false, reason };
+}
+
+async function recordActivity(entry) {
+  try {
+    const act = await safeStorageGet({activity: []});
+    const activity = act.activity || [];
+    activity.push(entry);
+    if (activity.length > 100) activity.shift();
+    await safeStorageSet({activity});
+  } catch(e) {}
+}
+
+/**
+ * The whole capture conversation with the app, in one function the background
+ * service worker runs for every content script. Pages cannot reach the app
+ * themselves (their own origin is refused at the door), so a capture travels:
+ * content script -> this handler in the background (extension origin + pair
+ * token) -> OddBrain. The popup may run it directly - same code.
+ */
+async function handleCaptureRelay(payload) {
   const dataWithTime = {...payload, captured_at: new Date().toISOString()};
   try {
     const res = await fetch(`${LOCAL_API}/capture`, {
@@ -57,35 +85,23 @@ async function postCapture(payload) {
       headers: await pairHeaders(true),
       body: JSON.stringify(dataWithTime)
     });
-    if (res.status === 401) {
-      // Not paired (or rotated out): the app refused this capture. Queueing
-      // would keep page contents in this browser without consent, so the
-      // capture is dropped and the reason is recorded instead.
-      try {
-        const act = await safeStorageGet({activity: []});
-        const activity = act.activity || [];
-        activity.push({...dataWithTime, success:false, queued:false, reason:"not paired - paste the token from OddBrain Settings > Plugins > Agent access"});
-        if (activity.length > 100) activity.shift();
-        await safeStorageSet({activity});
-      } catch(e) {}
-      return {ok:false, unpaired:true};
+    if (res.status === 401 || res.status === 403) {
+      // Not paired (or rotated out), or the origin was refused: the app
+      // declined this capture. Nothing but the metadata is kept.
+      await recordActivity(rejectionRecord(dataWithTime, res.status === 401
+        ? "not paired - paste the token from OddBrain Settings > Plugins > Agent access"
+        : "refused by the app (" + res.status + ")"));
+      return {ok:false, unpaired: res.status === 401};
     }
     if (!res.ok) throw new Error("API not ok "+res.status);
-    // Save to activity log
-    try {
-      const act = await safeStorageGet({activity: []});
-      const activity = act.activity || [];
-      activity.push({...dataWithTime, success:true});
-      if (activity.length > 100) activity.shift();
-      await safeStorageSet({activity});
-    } catch(e) {}
+    await recordActivity({...dataWithTime, success:true});
     return {ok:true};
   } catch (e) {
     // The crash in the approved screenshots: the extension was reloaded (or
     // its context torn down) while a write was in flight, and the rejection
     // escaped as an unhandled promise. The queue is best-effort by design —
     // a dead context has nothing to queue into, so record nothing and stay
-    // quiet. A live context queues as before.
+    // quiet. A live context queues as before (the outbox, not a rejection).
     try {
       await queueCapture(dataWithTime);
     } catch (queued) {
@@ -93,6 +109,18 @@ async function postCapture(payload) {
     }
     throw e;
   }
+}
+
+async function postCapture(payload) {
+  if (!isExtensionValid()) return;
+  // Relay first: inside a web page, the request must go out from the
+  // background (the page's own origin cannot speak to the app). No receiver
+  // (the popup, or a plain test) runs the handler right here instead.
+  try {
+    const answer = await chrome.runtime.sendMessage({type: "ob-capture", payload});
+    if (answer) return answer;
+  } catch(e) { /* no listener in this context - run it here */ }
+  return handleCaptureRelay(payload);
 }
 
 async function queueCapture(payload) {
@@ -181,5 +209,5 @@ setInterval(() => { try { flushQueue(); } catch(e) {} }, 30000);
 
 /* Test seam: a plain-script library in the browser, a module under test. */
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { getPairToken, pairHeaders, postCapture, flushQueue, getContext, queueCapture };
+  module.exports = { getPairToken, pairHeaders, postCapture, handleCaptureRelay, flushQueue, getContext, queueCapture };
 }

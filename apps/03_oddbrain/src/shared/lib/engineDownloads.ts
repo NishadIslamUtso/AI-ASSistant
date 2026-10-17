@@ -42,7 +42,7 @@ export const ENGINE_DOWNLOADS: Record<string, EngineDownloadInfo | undefined> = 
     windows: 'https://ollama.com/download/ollama-windows-amd64.zip',
     kind: 'zip',
     host: 'ollama.com',
-    redirectHosts: ['github.com', 'objects.githubusercontent.com'],
+    redirectHosts: ['github.com', 'objects.githubusercontent.com', 'release-assets.githubusercontent.com'],  // verified live 2026-10-17: ollama.com -> github.com/... /releases/download/vX -> release-assets.githubusercontent.com -> 200
     note: 'The headless runtime only, from ollama.com\u2019s own zip. No desktop app, no tray, nothing autostarts: start and stop it right here — or run your own Ollama and leave this staged copy alone.',
   },
   agy: {

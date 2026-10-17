@@ -591,6 +591,18 @@ export default function SettingsView({
     ],
     system: [
       {
+        label: 'Run at startup',
+        terms: 'startup boot login launch windows start with computer',
+        note: 'OddBrain opens when the computer starts. The switch is Windows\u2019 own Startup list — you can undo it there too.',
+        body: <StartupRow flag="loginItem" onLabel="Opens with Windows" offLabel="Opens when you open it" />,
+      },
+      {
+        label: 'Warm runtime',
+        terms: 'warm runtime ollama headless background always running startup local',
+        note: 'The staged local runtime starts quietly with the app, so the free brains answer instantly instead of cold-loading. Nothing autostarts unless this is on.',
+        body: <StartupRow flag="warmRuntime" onLabel="Starts with the app" offLabel="Starts when you press start" />,
+      },
+      {
         label: 'App',
         terms: 'version platform about',
         body: (
@@ -1168,6 +1180,12 @@ export default function SettingsView({
         ],
     performance: [
       {
+        label: 'Model stays loaded',
+        terms: 'keep alive warm loaded always memory cold start ollama',
+        note: 'On, the free local brain never unloads between chats — replies start instantly, at the cost of the memory it holds. Off, the memory profile decides.',
+        body: <KeepLoadedRow />,
+      },
+      {
         label: 'Memory profile',
         terms: 'vram gpu context cpu fastest',
         body: (
@@ -1446,6 +1464,82 @@ export default function SettingsView({
   )
 }
 
+
+/** The model-stays-loaded switch: a stored preference the next send reads. */
+function KeepLoadedRow(): React.JSX.Element {
+  const [on, setOn] = usePersistentState<boolean>('oddbrain.keepLoadedAlways', false)
+  return (
+    <div className="flex gap-1.5 sm:justify-end">
+      {[
+        { label: 'Off', value: false },
+        { label: 'Always', value: true },
+      ].map(option => (
+        <button
+          key={option.label}
+          type="button"
+          className={`rounded-full border px-3 py-1 text-[12px] ${
+            on === option.value ? 'border-accent bg-accent/15 text-ink' : 'border-line text-muted hover:bg-white/[0.06]'
+          }`}
+          onClick={() => setOn(option.value)}
+          aria-pressed={on === option.value}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * The machine-level keep-it-running switches (login item, warm runtime).
+ * Read from the app's own flags file through the guarded door; the desktop
+ * app is the only machine they exist on, so the browser preview says so.
+ */
+function StartupRow({
+  flag,
+  onLabel,
+  offLabel,
+}: {
+  flag: 'loginItem' | 'warmRuntime'
+  onLabel: string
+  offLabel: string
+}): React.JSX.Element {
+  const [state, setState] = useState<{ on: boolean; loaded: boolean }>({ on: false, loaded: false })
+  useEffect(() => {
+    if (isDemo) return
+    void bridge.app?.flags
+      ?.get()
+      .then(flags => setState({ on: flags[flag] === true, loaded: true }))
+      .catch(() => setState({ on: false, loaded: true }))
+  }, [flag])
+  const flip = (): void => {
+    const next = !state.on
+    setState({ on: next, loaded: true })
+    if (!isDemo) void bridge.app?.flags?.set({ [flag]: next }).catch(() => undefined)
+  }
+  if (isDemo) {
+    return <span className="text-[11.5px] text-muted">A desktop-app switch — this window is the interface only.</span>
+  }
+  return (
+    <div className="flex items-center gap-3 sm:justify-end">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={state.on}
+        aria-label={flag === 'loginItem' ? 'Run at startup' : 'Warm runtime'}
+        onClick={flip}
+        className={`relative h-[22px] w-[40px] shrink-0 rounded-full border transition-colors ${
+          state.on ? 'border-accent bg-accent/30' : 'border-line bg-card'
+        } ${state.loaded ? '' : 'opacity-50'}`}
+      >
+        <span
+          className={`absolute top-[2px] h-[16px] w-[16px] rounded-full transition-all ${state.on ? 'left-[20px] bg-accent' : 'left-[2px] bg-muted'}`}
+        />
+      </button>
+      <span className="text-[11.5px] text-muted">{state.on ? onLabel : offLabel}</span>
+    </div>
+  )
+}
 
 /** The quick window's global hotkey (Ctrl+Shift+O). One toggle; the main
  *  window always keeps its own Send — this only moves the system-wide key. */

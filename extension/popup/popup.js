@@ -56,7 +56,7 @@ async function loadCapsules() {
       <div class="capsule-title">${c.title}</div>
       <div class="capsule-meta">v${c.version} • ${(c.goals||[]).join(', ').slice(0,60) || c.background.slice(0,60)} • ${new Date(c.updated).toLocaleDateString()}</div>
     </div>
-  `).join('') || '<p style="color:#aaa;font-size:11px;">No capsules yet. Click Capture as Capsule on any AI chat.</p>';
+  `).join('') || '<p style="color:var(--muted);font-size:11px;">No capsules yet. Click Capture as Capsule on any AI chat.</p>';
 
   list.querySelectorAll('.capsule').forEach(el => {
     el.addEventListener('dragstart', e => {
@@ -79,7 +79,7 @@ async function loadBlacklist() {
       <span>${p}</span>
       <button data-pattern="${p}" class="remove-blacklist">Remove</button>
     </div>
-  `).join('') || '<p style="color:#aaa;font-size:11px;">Empty = check everything (your default rule)</p>';
+  `).join('') || '<p style="color:var(--muted);font-size:11px;">Empty = check everything (your default rule)</p>';
 
   list.querySelectorAll('.remove-blacklist').forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -140,7 +140,7 @@ async function loadActivity() {
     <div class="log">
       ${item.queued ? '[QUEUED] ' : ''}${item.type} - ${(item.url||item.title||'').slice(0,60)} - ${item.reason||item.capture_status||''} - ${new Date(item.captured_at||Date.now()).toLocaleTimeString()}
     </div>
-  `).join('') || '<p style="color:#aaa;font-size:11px;">No activity yet</p>';
+  `).join('') || '<p style="color:var(--muted);font-size:11px;">No activity yet</p>';
 }
 
 document.getElementById('capture-current')?.addEventListener('click', async () => {

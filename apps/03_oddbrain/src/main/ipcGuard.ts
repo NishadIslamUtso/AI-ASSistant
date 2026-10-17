@@ -29,8 +29,9 @@ const ownFileUrls = new Set<string>()
  * their exact URL, not by scheme.
  */
 export function pinOwnOrigins(urls: Array<string | undefined | null>): void {
-  ownOriginSet.clear()
-  ownFileUrls.clear()
+  // Additive on purpose: windows are created at different times (the quick
+  // window can open before the API exists), and pinning one must never wipe
+  // another's trust. Tests start from resetOwnOrigins().
   for (const raw of urls) {
     if (typeof raw !== 'string' || raw.length === 0) continue
     try {
@@ -45,6 +46,12 @@ export function pinOwnOrigins(urls: Array<string | undefined | null>): void {
       // Not a URL — pinning it would be a lie. Skipped.
     }
   }
+}
+
+/** A fresh slate — the tests' beginning, not the app's per-window ritual. */
+export function resetOwnOrigins(): void {
+  ownOriginSet.clear()
+  ownFileUrls.clear()
 }
 
 /**

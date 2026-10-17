@@ -68,7 +68,10 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
   // changed under it would only apply on the next start, silently.
   let sessionThinking: string | null = null
   let sessionBaseUrl: string | null = null
-  let sessionHadKey = false
+  // The key's VALUE, not just its presence: rotating a cloud key must reach
+  // the next turn — a living process launched with the old key would otherwise
+  // keep billing and speaking as the old credential until it happened to stop.
+  let sessionKeyFingerprint: string | null = null
 
   const onEvent = (input: EngineStartInput, event: EngineEvent): void => {
     // The socket owns the busy flag: a finished or failed task frees the
@@ -121,7 +124,7 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
         sessionApproval !== input.settings.approval ||
         sessionThinking !== input.settings.thinking ||
         sessionBaseUrl !== input.settings.baseUrl ||
-        sessionHadKey !== Boolean(input.auth?.apiKey) ||
+        sessionKeyFingerprint !== (input.auth?.apiKey ?? null) ||
         currentCwd !== input.cwd
       if (session?.isRunning() && !gearChanged) {
         if (busy) {
@@ -149,7 +152,7 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
       sessionApproval = input.settings.approval
       sessionThinking = input.settings.thinking
       sessionBaseUrl = input.settings.baseUrl
-      sessionHadKey = Boolean(input.auth?.apiKey)
+      sessionKeyFingerprint = input.auth?.apiKey ?? null
       if (!session.isRunning()) {
         return { ok: false, answer: 'The engine could not be started on this machine.' }
       }
@@ -178,7 +181,7 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
       sessionApproval = null
       sessionThinking = null
       sessionBaseUrl = null
-      sessionHadKey = false
+      sessionKeyFingerprint = null
       currentCwd = ''
     },
   }

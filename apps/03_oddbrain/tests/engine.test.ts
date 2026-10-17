@@ -484,8 +484,125 @@ test('the socket: a changed launch flag relaunches the engine with the new flags
 
   // And an UNCHANGED gear still reuses: the fix must not turn every send into a relaunch.
   const third = socket.send('c', { ...base, settings: { ...DEFAULT_ENGINE, thinking: 'extended' } })
+
   assert.equal(third.ok, true)
   assert.equal(spawnCount, 2, 'same launch flags, same process')
+  socket.stop()
+})
+
+test('the socket: swapping the brain mid-conversation resumes the same session under the new model', async () => {
+  const { EventEmitter } = await import('node:events')
+  type FakeChild = import('node:child_process').ChildProcess & {
+    stdout: import('node:events').EventEmitter
+    stderr: import('node:events').EventEmitter
+    stdin: { write(data: string): boolean }
+    pid: number; killed: boolean; exitCode: number | null; signalCode: null
+    kill(): void
+  }
+  const started: Array<{ command: string; args: string[] }> = []
+  const makeChild = (): FakeChild => {
+    const child = new EventEmitter() as unknown as FakeChild
+    child.stdout = new EventEmitter()
+    child.stderr = new EventEmitter()
+    child.stdin = { write: () => true }
+    child.pid = 8888
+    child.killed = false
+    child.exitCode = null
+    child.signalCode = null
+    child.kill = () => { child.killed = true }
+    return child
+  }
+  const children: FakeChild[] = []
+  const fake = ((_command: string, args: string[]) => {
+    const child = makeChild()
+    children.push(child)
+    started.push({ command: 'claude', args: [...args] })
+    return child
+  }) as unknown as typeof import('node:child_process').spawn
+  const rec = recorder()
+  // The app passes its disk-backed memory; the test passes the same contract
+  // in RAM. (The default socket ships a no-op memory on purpose — a test
+  // without a memory must not fake a resume.)
+  const remembered = new Map<string, string>()
+  const socket = createEngineSocket({ load: key => remembered.get(key) ?? '', save: (key, id) => void remembered.set(key, id) })
+  const base = { cwd: '.', platform: 'linux', onEvent: rec.on, spawnProcess: fake }
+
+  // Turn one on brain A. The engine reports its session id; the socket
+  // remembers it for THIS engine+folder.
+  const first = socket.send('what is in this folder?', { ...base, settings: { ...DEFAULT_ENGINE, model: 'brain-a' } })
+  assert.ok(first.ok)
+  const sessionLine = JSON.stringify({ type: 'system', subtype: 'init', session_id: 'sess-77' }) + '\n'
+  children[0]!.stdout.emit('data', Buffer.from(sessionLine, 'utf8'))
+  const doneLine = JSON.stringify({ type: 'result', subtype: 'success', result: 'ok' }) + '\n'
+  children[0]!.stdout.emit('data', Buffer.from(doneLine, 'utf8'))
+  assert.ok(remembered.size === 1, 'the session id was remembered for this engine+folder')
+
+  // Mid-conversation, the person picks brain B: an honest relaunch, and the
+  // resume id rides along so the conversation's memory is not lost.
+  const second = socket.send('now continue', { ...base, settings: { ...DEFAULT_ENGINE, model: 'brain-b' } })
+  assert.ok(second.ok, second.answer)
+  assert.equal(children.length, 2, 'a brain swap relaunches')
+  assert.equal(children[0]!.killed, true, 'the old brain is set aside')
+  // THE contract: the fresh process is launched with the NEW model AND the
+  // SAME session id — the conversation's memory survives the swap.
+  const swapArgs = started[1]!.args
+  assert.ok(swapArgs.includes('--model') && swapArgs.includes('brain-b'), `the swap launches brain-b: ${swapArgs.join(' ')}`)
+  assert.ok(swapArgs.includes('--resume') && swapArgs.includes('sess-77'), `the swap resumes the conversation: ${swapArgs.join(' ')}`)
+  children[1]!.stdout.emit('data', Buffer.from(doneLine, 'utf8'))
+  const third = socket.send('and again', { ...base, settings: { ...DEFAULT_ENGINE, model: 'brain-b' } })
+  assert.ok(third.ok, third.answer)
+  assert.equal(children.length, 2, 'the new brain, unchanged, is reused')
+  socket.stop()
+})
+
+test('the socket: a rotated or cleared cloud key reaches the next turn', async () => {
+  const { EventEmitter } = await import('node:events')
+  type FakeChild = import('node:child_process').ChildProcess & {
+    stdout: import('node:events').EventEmitter
+    stderr: import('node:events').EventEmitter
+    stdin: { write(data: string): boolean }
+    pid: number; killed: boolean; exitCode: number | null; signalCode: null
+    kill(): void
+  }
+  const makeChild = (): FakeChild => {
+    const child = new EventEmitter() as unknown as FakeChild
+    child.stdout = new EventEmitter()
+    child.stderr = new EventEmitter()
+    child.stdin = { write: () => true }
+    child.pid = 7777
+    child.killed = false
+    child.exitCode = null
+    child.signalCode = null
+    child.kill = () => { child.killed = true }
+    return child
+  }
+  const children: FakeChild[] = []
+  const fake = (() => {
+    const child = makeChild()
+    children.push(child)
+    return child
+  }) as unknown as typeof import('node:child_process').spawn
+  const rec = recorder()
+  const socket = createEngineSocket()
+  const base = { cwd: '.', platform: 'linux', onEvent: rec.on, spawnProcess: fake }
+
+  // The key's VALUE is launch gear: arriving, rotating and reusing behave
+  // exactly like any other flag change — the old process never keeps billing
+  // under a secret the UI no longer shows.
+  const done = JSON.stringify({ type: 'result', subtype: 'success', result: 'done' }) + '\n'
+  const first = socket.send('a', { ...base, settings: { ...DEFAULT_ENGINE }, auth: { provider: 'anthropic' as const, apiKey: 'sk-old' } })
+  assert.ok(first.ok)
+  assert.equal(children.length, 1)
+  children[0].stdout.emit('data', Buffer.from(done, 'utf8'))
+  const second = socket.send('b', { ...base, settings: { ...DEFAULT_ENGINE }, auth: { provider: 'anthropic' as const, apiKey: 'sk-new' } })
+  assert.ok(second.ok)
+  assert.equal(children.length, 2, 'a rotated key relaunches')
+  assert.equal(children[0].killed, true, 'the old credential is set aside')
+  children[1].stdout.emit('data', Buffer.from(done, 'utf8'))
+  const third = socket.send('c', { ...base, settings: { ...DEFAULT_ENGINE }, auth: { provider: 'anthropic' as const, apiKey: 'sk-new' } })
+  assert.ok(third.ok)
+  assert.equal(children.length, 2, 'the same key reuses the living process')
+  assert.equal(children[1].killed, false)
   socket.stop()
 })
 

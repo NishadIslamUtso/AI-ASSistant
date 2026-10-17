@@ -90,21 +90,33 @@ export type ChatPayload = {
   [key: string]: unknown
 }
 
+/**
+ * The memory profile says how long a brain stays loaded after a chat; the
+ * person's "always loaded" switch overrides it ('-1' is Ollama's own
+ * stay-forever). The override wins only when it is set — the profile is
+ * still the default answer.
+ */
+export function effectiveKeepAlive(profileKeepAlive: string, override?: string): string {
+  return override && override.length > 0 ? override : profileKeepAlive
+}
+
 export async function streamChat(
   payload: ChatPayload,
   signal: AbortSignal | undefined,
   onRecord: (record: OllamaRecord) => void,
-  inference?: InferenceSettings | string
+  inference?: InferenceSettings | string,
+  keepAliveOverride?: string
 ): Promise<void> {
   // Inference options are the caller's business, so the memory profile can be
   // changed in Settings without touching this file. Anything unresolvable
   // degrades to the 4 GB profile rather than sending undefined to Ollama.
   const { options, keepAlive }: { options: InferenceOptions; keepAlive: string } =
     resolveInference(inference)
+  const effective = effectiveKeepAlive(keepAlive, keepAliveOverride)
   const response = await fetch(`${API}/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...payload, stream: true, keep_alive: keepAlive, options }),
+    body: JSON.stringify({ ...payload, stream: true, keep_alive: effective, options }),
     signal,
   })
   if (!response.ok) {

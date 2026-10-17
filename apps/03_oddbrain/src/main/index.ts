@@ -1,5 +1,7 @@
 import { app, BrowserWindow, dialog, Menu, safeStorage, shell, globalShortcut } from 'electron'
 import { randomBytes } from 'node:crypto'
+import { pathToFileURL } from 'node:url'
+import { loadAppFlags, saveAppFlags } from './appFlags'
 import { handle, lockNavigation, pinOwnOrigins } from './ipcGuard'
 import { dirname, join, resolve } from 'node:path'
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
@@ -314,6 +316,9 @@ function registerBridges(): void {
 
   handle('cloud:clear-key', (_event, id: string) => {
     keyStore?.clear(String(id || ''))
+    // A cleared key must not keep speaking: a live engine launched with it is
+    // stopped here, so the next turn relaunches with whatever the machine has.
+    engine?.stop()
     return cloudView()
   })
 
@@ -571,9 +576,31 @@ function registerBridges(): void {
   handle('engine:download:remove', (_event, engine: string) => downloads.remove(typeof engine === 'string' ? engine : ''))
   // The staged Ollama runtime, started and stopped HERE — the download
   // module's copy says this, so the doors must exist to make it true.
+  downloadManager = downloads
   handle('engine:download:serve-start', () => downloads.ollamaStart())
   handle('engine:download:serve-stop', () => downloads.ollamaStop())
   handle('engine:download:serve-status', () => downloads.ollamaStatus())
+
+  // The two "keep it running" switches, in their own file (see appFlags.ts).
+  const appFlagsFile = (): string => join(app.getPath('userData'), 'app-flags.json')
+  handle('app:flags:get', () => loadAppFlags(appFlagsFile()))
+  handle('app:flags:set', (_event, patch: { loginItem?: boolean; warmRuntime?: boolean }) => {
+    const clean = {
+      ...(typeof patch?.loginItem === 'boolean' ? { loginItem: patch.loginItem } : {}),
+      ...(typeof patch?.warmRuntime === 'boolean' ? { warmRuntime: patch.warmRuntime } : {}),
+    }
+    const next = saveAppFlags(appFlagsFile(), clean)
+    // The login item is the OS's own mechanism; the flag file is only the
+    // memory of the choice, so the OS is told the same instant.
+    if (typeof clean.loginItem === 'boolean') {
+      app.setLoginItemSettings({ openAtLogin: next.loginItem })
+    }
+    // Turning warm ON takes effect immediately too: a runtime that is already
+    // answering is left alone, a missing one is not started blind — the
+    // staged copy must exist.
+    if (clean.warmRuntime === true) void warmStartRuntime()
+    return next
+  })
 
   // The battle tally: a PRIVATE local ledger of what won for this person.
   // Real counts only, capped, never sent anywhere. No public scoreboard.
@@ -1385,6 +1412,36 @@ let api: LocalApi | null = null
 // only a smaller door into the one send path. Never a second engine.
 let quickWindow: BrowserWindow | null = null
 
+/**
+ * The exact file URL the packaged app loads, with or without the quick flag —
+ * the same string loadFile resolves to, pinned so the guard trusts precisely
+ * this page and nothing else on disk.
+ */
+function appRendererFileUrl(query = ''): string {
+  const url = pathToFileURL(join(__dirname, '../renderer/index.html'))
+  return `${url.href.split('#')[0]}${query}`
+}
+
+/**
+ * The warm-runtime promise, kept at boot and when the switch is turned on:
+ * start the staged Ollama headless ONLY when it exists and is not already
+ * answering — never a second copy of somebody's own runtime.
+ */
+/** Set once the download manager exists; the warm-up refuses to run blind. */
+let downloadManager: ReturnType<typeof createDownloadManager> | null = null
+
+async function warmStartRuntime(): Promise<void> {
+  try {
+    if (!downloadManager) return
+    const status = downloadManager.ollamaStatus()
+    if (status && typeof status === 'object' && 'running' in status && (status as { running?: boolean }).running) return
+    await downloadManager.ollamaStart()
+  } catch {
+    // A runtime that will not start is the Engine page's problem to show;
+    // boot itself must never fail because an optional warm-up refused.
+  }
+}
+
 function createQuickWindow(): void {
   if (quickWindow && !quickWindow.isDestroyed()) {
     quickWindow.show()
@@ -1412,7 +1469,10 @@ function createQuickWindow(): void {
   if (devServer) void quickWindow.loadURL(`${devServer}/?quick=1`)
   else if (api?.url) void quickWindow.loadURL(`${api.url}/?quick=1`)
   else void quickWindow.loadFile(join(__dirname, '../renderer/index.html'), { query: { quick: '1' } })
-  pinOwnOrigins([devServer, api?.url])
+  // The file fallback is a real page this app loaded: pin its exact URL (with
+  // and without the flag) so the quick window's IPC works packaged, offline,
+  // and in dev — and never for any other file on disk.
+  pinOwnOrigins([devServer, api?.url, appRendererFileUrl('?quick=1'), appRendererFileUrl()])
   lockNavigation(quickWindow.webContents)
   quickWindow.on('closed', () => {
     quickWindow = null
@@ -1518,11 +1578,13 @@ function createWindow(): BrowserWindow {
     // it renders its own offline state, which is more useful than a blank window.
     void window.loadFile(join(__dirname, '../renderer/index.html'))
   }
+  // The fallback's file page is ours: pin it exactly, so offline mode keeps a
+  // working interface instead of a window whose every button is refused.
 
   // The pages this app loads are the only pages IPC answers, and navigation
   // is locked: a link can never walk this window (and its preload bridge)
   // somewhere else — plain web links open in the real browser instead.
-  pinOwnOrigins([devServer, api?.url])
+  pinOwnOrigins([devServer, api?.url, appRendererFileUrl()])
   lockNavigation(window.webContents)
 
   if (isSmoke) runSmoke(window)
@@ -1660,6 +1722,16 @@ app.whenReady().then(async () => {
     // immediately (drives and tests use this door).
     applyQuickShortcut()
     if (process.argv.includes('--quick')) createQuickWindow()
+    // The two keep-it-running flags, honored every boot: the login item is
+    // re-asserted (the OS can lose it on updates), the runtime warms only if
+    // the person asked and it is not already answering.
+    try {
+      const flags = loadAppFlags(join(app.getPath('userData'), 'app-flags.json'))
+      if (flags.loginItem) app.setLoginItemSettings({ openAtLogin: true })
+      if (flags.warmRuntime) void warmStartRuntime()
+    } catch {
+      // Flags are a preference; a failure reading them is not a failed launch.
+    }
     engine = createEngineSocket({
       // Engine sessions, remembered per workspace so a conversation survives
       // an app restart (the engine's own --resume). A damaged file means

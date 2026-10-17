@@ -80,6 +80,12 @@ export type EngineState = {
   pull: PullState
   /** Whether the engine process is alive on this machine, as last reported. */
   alive: boolean
+  /**
+   * Live engine activity seen from ANOTHER window: this window has no turn of
+   * its own, but the machine's engine is clearly working. Read-only by design
+   * — the permission cards stay with the window that owns the turn.
+   */
+  ambient: { busy: boolean; note: string; updatedAt: string | null }
   /** What the engine's context holds, as far as this window honestly knows. */
   totals: ContextTotals
   /** Work orders waiting to run when the current turn closes. */
@@ -149,6 +155,7 @@ const state: EngineState = {
   detection: { loading: false, engines: [] },
   pull: { active: false, name: '', status: '', fraction: null, error: '' },
   alive: false,
+  ambient: { busy: false, note: '', updatedAt: null },
   totals: { turns: 0, inTokens: 0, outTokens: 0, costUsd: 0 },
   line: [],
   journal: [],
@@ -240,8 +247,28 @@ const ingest = (event: EngineEvent): void => {
     repeats.key = ''
     repeats.count = 0
   }
+  // A window with no turn of its own still SEES the machine working: this is
+  // how the quick-ask window (and any second window) knows the engine is
+  // mid-turn elsewhere instead of sitting in silent ignorance. Cards and
+  // answers remain the owning window's business.
+  if (!state.turn && event.kind !== 'closed') {
+    const note =
+      event.kind === 'status' && 'message' in (event as Record<string, unknown>)
+        ? String((event as { message?: unknown }).message ?? '').slice(0, 120)
+        : event.kind === 'tool'
+          ? 'using a tool'
+          : event.kind === 'text'
+            ? 'writing'
+            : 'working'
+    state.ambient = { busy: true, note, updatedAt: new Date().toISOString() }
+  }
   const turn = state.turn
-  if (!turn) return
+  if (!turn) {
+    if (event.kind === 'done' || event.kind === 'error' || event.kind === 'closed') {
+      state.ambient = { busy: false, note: '', updatedAt: state.ambient.updatedAt }
+    }
+    return
+  }
   if (event.kind === 'session') {
     turn.sessionId = event.id
   } else if (event.kind === 'status') {
@@ -349,6 +376,9 @@ const store: EngineStore = {
   },
   get alive() {
     return state.alive
+  },
+  get ambient() {
+    return state.ambient
   },
   get detection() {
     return state.detection
@@ -619,5 +649,6 @@ export function resetEngineForTests(): void {
   state.detection = { loading: false, engines: [] }
   state.pull = { active: false, name: '', status: '', fraction: null, error: '' }
   state.alive = false
+  state.ambient = { busy: false, note: '', updatedAt: null }
   emit()
 }
