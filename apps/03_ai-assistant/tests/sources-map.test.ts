@@ -95,7 +95,7 @@ test('the map reads conversations, pages and visits, newest first', (t) => {
   assert.equal(first.title, 'One')
   assert.equal(first.host, 'example.com')
   assert.equal(first.url, 'https://example.com/one')
-  assert.match(first.path, /^02 Sources\/Web Pages\/2026\/web-/)
+  assert.match(first.path, /^02 Sources[\\/]Web Pages[\\/]2026[\\/]web-/, 'the vault-relative path, in either separator')
   assert.ok(first.bytes > 0, 'a page capture says how much was kept')
 })
 

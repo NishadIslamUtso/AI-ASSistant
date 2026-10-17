@@ -31,13 +31,25 @@ jobs:
             const fs = require('fs');
             const p = 'apps/03_ai-assistant/junit-linux.xml';
             if (fs.existsSync(p)) {
-              let raw = fs.readFileSync(p, 'utf8');
-              if (raw.length > 30000) raw = '...truncated...' + raw.slice(-30000);
-              await github.rest.repos.createCommitComment({
-                owner: context.repo.owner, repo: context.repo.repo,
-                commit_sha: context.sha,
-                body: 'linux junit (tail):\n```xml\n' + raw + '\n```'
-              });
+              const raw = fs.readFileSync(p, 'utf8');
+              const lines = [];
+              for (const suite of raw.split(/(?=<testsuite )/)) {
+                const head = suite.match(/<testsuite name="([^"]+)"[^>]*failures="(\d+)" errors="(\d+)"/);
+                if (!head || (head[2] === '0' && head[3] === '0')) continue;
+                lines.push('FAILED SUITE ' + head[1] + ' (' + head[2] + ' failures, ' + head[3] + ' errors)');
+                for (const m of suite.matchAll(/<testcase classname="[^"]*" name="([^"]*)"[^>]*>\s*<failure message="([^"]*)"/g)) {
+                  lines.push('  - ' + m[1] + ' — ' + m[2].slice(0, 800));
+                }
+              }
+              if (lines.length) {
+                let body = lines.join('\n');
+                if (body.length > 40000) body = body.slice(0, 40000) + '\n...truncated';
+                await github.rest.repos.createCommitComment({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  commit_sha: context.sha,
+                  body: 'linux failures, in its own words:\n\n' + body
+                });
+              }
             }
       - name: Build
         working-directory: apps/03_ai-assistant
@@ -70,13 +82,25 @@ jobs:
             const fs = require('fs');
             const p = 'apps/03_ai-assistant/junit-windows.xml';
             if (fs.existsSync(p)) {
-              let raw = fs.readFileSync(p, 'utf8');
-              if (raw.length > 30000) raw = '...truncated...' + raw.slice(-30000);
-              await github.rest.repos.createCommitComment({
-                owner: context.repo.owner, repo: context.repo.repo,
-                commit_sha: context.sha,
-                body: 'windows junit (tail):\n```xml\n' + raw + '\n```'
-              });
+              const raw = fs.readFileSync(p, 'utf8');
+              const lines = [];
+              for (const suite of raw.split(/(?=<testsuite )/)) {
+                const head = suite.match(/<testsuite name="([^"]+)"[^>]*failures="(\d+)" errors="(\d+)"/);
+                if (!head || (head[2] === '0' && head[3] === '0')) continue;
+                lines.push('FAILED SUITE ' + head[1] + ' (' + head[2] + ' failures, ' + head[3] + ' errors)');
+                for (const m of suite.matchAll(/<testcase classname="[^"]*" name="([^"]*)"[^>]*>\s*<failure message="([^"]*)"/g)) {
+                  lines.push('  - ' + m[1] + ' — ' + m[2].slice(0, 800));
+                }
+              }
+              if (lines.length) {
+                let body = lines.join('\n');
+                if (body.length > 40000) body = body.slice(0, 40000) + '\n...truncated';
+                await github.rest.repos.createCommitComment({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  commit_sha: context.sha,
+                  body: 'windows failures, in its own words:\n\n' + body
+                });
+              }
             }
       - name: Build
         working-directory: apps/03_ai-assistant

@@ -36,7 +36,7 @@ test('an a11y tree lands as a source document with nodes, depth and a fenced tre
   const service = fixture(t)
   const result = service.capture({ type: 'a11y_tree', url: 'https://example.com/shop', title: 'Shop', tree: TREE, nodes: 5, depth: 2 })
   assert.equal(result.skipped, undefined)
-  assert.match(result.source, new RegExp(`02 Sources/A11y Trees/${YEAR}/a11y-`))
+  assert.match(result.source, new RegExp(`02 Sources[\\\\/]A11y Trees[\\\\/]${YEAR}[\\\\/]a11y-`), 'the vault-relative path, in either separator')
   const doc = service.files().read(result.source)
   assert.match(doc, /nodes: 5/)
   assert.match(doc, /depth: 2/)
