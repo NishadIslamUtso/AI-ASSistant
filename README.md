@@ -31,7 +31,7 @@ changelog, which records development in a promotional voice.
 
 ```bash
 git clone -b v3 https://github.com/NishadIslamUtso/AI-ASSistant.git
-cd AI-ASSistant/apps/03_ai-assistant
+cd AI-ASSistant/apps/03_oddbrain
 npm ci && npx vitest run      # 78 files / 621 tests
 npx tsc --noEmit && npm run build
 ```
@@ -48,7 +48,7 @@ CI runs the same on every push.
 ## Layout
 
 ```
-apps/03_ai-assistant/   the app (src/main, src/preload, src/renderer, src/shared, tests)
+apps/03_oddbrain/    the app (src/main, src/preload, src/renderer, src/shared, tests)
 00_LIVING_DOCS/         judge brief, changelog, receipts; archive/ holds old planning docs
 ```
 

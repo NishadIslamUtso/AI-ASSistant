@@ -33,7 +33,7 @@
     "ollama_origins": "not needed by the Electron app; Ollama is called from the main/app side, not a browser page"
   },
   "app_identity": {
-    "name": "AI ASSistant",
+    "name": "OddBrain",
     "casing": "preserve double S",
     "role": "driver of vault and extension",
     "vault_role": "organizer / keeper, Obsidian Markdown canonical",
@@ -109,10 +109,10 @@
       "191646.png - context menu Open in new window Pin Rename Add to project Move to group Delete on CSE220 MID",
       "191707.png - Settings Appearance Theme system/sun/moon Chat font Anthropic Serif Transcript size Small/Medium/Large Width Narrow/Medium/Wide Motion System/Reduced Voice Language English Style Buttery Speed Normal left nav General Account Privacy Billing Capabilities Memory Reflect Time and focus Claude Code System Extensions Developer Skills Connectors"
     ],
-    "exact_clone_target": "apps/01_claude-exact-pixel-clone (historical; apps/03_ai-assistant is the app)"
+    "exact_clone_target": "apps/01_claude-exact-pixel-clone (historical; apps/03_oddbrain is the app)"
   },
   "current_app": {
-    "path": "apps/03_ai-assistant",
+    "path": "apps/03_oddbrain",
     "what": "Electron + React + TypeScript desktop assistant, vault writes, artifacts, comment mode, full-window Settings",
     "not": "not a Claude clone; built from the owner's approved mockups"
   }

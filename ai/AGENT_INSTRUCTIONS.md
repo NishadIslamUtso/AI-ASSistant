@@ -5,11 +5,11 @@
 ## 1. What This Repo Is
 
 This is not a normal GitHub repo. It is **memory + handover + living requirements** for project
-**AI ASSistant**: a local-first desktop assistant that drives an Obsidian vault and, one day, collects
+**OddBrain**: a local-first desktop assistant that drives an Obsidian vault and, one day, collects
 from the browser through an extension.
 
-- **App** — `apps/03_ai-assistant/` (Electron + React + TypeScript). It is the product.
-- **Vault** — `vault/AI-Brain/`, Obsidian Markdown. The memory that outlives the app.
+- **App** — `apps/03_oddbrain/` (Electron + React + TypeScript). It is the product.
+- **Vault** — `vault/Brain/`, Obsidian Markdown. The memory that outlives the app.
 - **Extension** — `extension/`, MV3. Spec + starter; it cannot reach the app yet.
 
 The owner is Utso, one person, on a 4GB-VRAM laptop. The repo is written for AIs to continue from, not to
@@ -46,7 +46,7 @@ Work lands on `v3` only; `main` is frozen until the owner orders a merge.
 - Settings are terse: a label and the control. No written-out descriptions under options.
 - **No Vercel deployment files.** Deleted on request; do not re-add. (The Vercel design theme and the
   `vercel.json` written into exported site ZIPs are different things and stay.)
-- The app name is **AI ASSistant**. No Claude branding in anything a person reads.
+- The app name is **OddBrain**. No Claude branding in anything a person reads.
 - Never take JSX/UI from other branches. Logic only.
 - Open-source ready: no hardcoded names, emails, paths or model tags.
 - Work on `arena/3c06e1bf-ai-assistant-v3`, merge into `main` when the step is finished and verified.
@@ -65,14 +65,14 @@ Work lands on `v3` only; `main` is frozen until the owner orders a merge.
 
 - `.ai/` — machine-readable context (JSON) for fast injection; `ai/` is the same files, visible mirror.
 - `00_LIVING_DOCS/` — `00` so it sorts first; these are the source of truth.
-- `apps/03_ai-assistant/` — the app; `01` and `02` are history kept for porting logic.
+- `apps/03_oddbrain/` — the app; `01` and `02` are history kept for porting logic.
 - `spec/`, `docs/originals/` — historical; useful for pixel history, not for current work.
 - `memory/sessions/` — one log per session.
 
 ## 5. How to Build and Test
 
 ```bash
-cd apps/03_ai-assistant
+cd apps/03_oddbrain
 npm install
 npm test              # 28 files / 269 tests
 npm run typecheck     # clean
@@ -81,7 +81,7 @@ npm run preview:web   # http://localhost:4174 (interface only, and it says so)
 npm run build         # desktop bundle
 npm run smoke         # opens the real window: "SMOKE OK ... errors=0 warnings=0"
 npm run dev           # the desktop app (needs Ollama on 11434)
-npm run dist:win      # Windows installer (unsigned; notes in apps/03_ai-assistant/RELEASE-WINDOWS.md)
+npm run dist:win      # Windows installer (unsigned; notes in apps/03_oddbrain/RELEASE-WINDOWS.md)
 ```
 
 The desktop end-to-end check (mock model server + real window over the DevTools protocol) lives outside

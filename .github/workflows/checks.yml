@@ -15,13 +15,13 @@ jobs:
         with:
           node-version: 22
       - name: Install
-        working-directory: apps/03_ai-assistant
+        working-directory: apps/03_oddbrain
         run: npm install --no-audit --no-fund
       - name: Types
-        working-directory: apps/03_ai-assistant
+        working-directory: apps/03_oddbrain
         run: npx tsc --noEmit -p tsconfig.json
       - name: Tests
-        working-directory: apps/03_ai-assistant
+        working-directory: apps/03_oddbrain
         run: npx vitest run --reporter=default --reporter=junit --outputFile=junit-linux.xml
       - name: Linux speaks
         if: always()
@@ -29,7 +29,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const p = 'apps/03_ai-assistant/junit-linux.xml';
+            const p = 'apps/03_oddbrain/junit-linux.xml';
             if (fs.existsSync(p)) {
               const raw = fs.readFileSync(p, 'utf8');
               const lines = [];
@@ -52,7 +52,7 @@ jobs:
               }
             }
       - name: Build
-        working-directory: apps/03_ai-assistant
+        working-directory: apps/03_oddbrain
         run: npm run build
 
   windows:
@@ -65,13 +65,13 @@ jobs:
         with:
           node-version: 22
       - name: Install
-        working-directory: apps/03_ai-assistant
+        working-directory: apps/03_oddbrain
         run: npm ci --no-audit --no-fund
       - name: Types
-        working-directory: apps/03_ai-assistant
+        working-directory: apps/03_oddbrain
         run: npx tsc --noEmit -p tsconfig.json
       - name: Tests
-        working-directory: apps/03_ai-assistant
+        working-directory: apps/03_oddbrain
         run: npx vitest run --reporter=default --reporter=junit --outputFile=junit-windows.xml
       - name: Windows speaks
         if: always()
@@ -79,7 +79,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const p = 'apps/03_ai-assistant/junit-windows.xml';
+            const p = 'apps/03_oddbrain/junit-windows.xml';
             if (fs.existsSync(p)) {
               const raw = fs.readFileSync(p, 'utf8');
               const lines = [];
@@ -102,5 +102,5 @@ jobs:
               }
             }
       - name: Build
-        working-directory: apps/03_ai-assistant
+        working-directory: apps/03_oddbrain
         run: npm run build

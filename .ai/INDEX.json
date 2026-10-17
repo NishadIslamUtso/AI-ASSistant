@@ -23,22 +23,22 @@
       "type": "release"
     },
     {
-      "path": "apps/03_ai-assistant/src/shared/lib/memory.ts",
+      "path": "apps/03_oddbrain/src/shared/lib/memory.ts",
       "purpose": "Auto memory contract: the pass order, the path guard, read cap",
       "type": "app-source"
     },
     {
-      "path": "apps/03_ai-assistant/src/main/memoryFiles.ts",
+      "path": "apps/03_oddbrain/src/main/memoryFiles.ts",
       "purpose": "Memory folder reader: list/read/remove rooted at the engine's working folder",
       "type": "app-source"
     },
     {
-      "path": "apps/03_ai-assistant/src/main/journal.ts",
+      "path": "apps/03_oddbrain/src/main/journal.ts",
       "purpose": "The turn journal (engine-journal.json, cap 60) behind 'Earlier sessions'",
       "type": "app-source"
     },
     {
-      "path": "apps/03_ai-assistant/src/main/engine/",
+      "path": "apps/03_oddbrain/src/main/engine/",
       "purpose": "The engine spine: availability, claudeCode (stream-json), agy (its own verified wire), socket, stream, deploy, downloads (with a real ollama start/stop), checkpoints (race-free), packs, pull, skillCatalogInstall, storeIndex, exportPack, vaultSkills, houseRulesDeploy",
       "type": "app-source"
     },
@@ -108,12 +108,12 @@
       "type": "living-todo"
     },
     {
-      "path": "apps/03_ai-assistant/",
+      "path": "apps/03_oddbrain/",
       "purpose": "THE APP: Electron + React + TypeScript, vault service, settings, tests, browser preview",
       "type": "app"
     },
     {
-      "path": "apps/03_ai-assistant/tests/pending/",
+      "path": "apps/03_oddbrain/tests/pending/",
       "purpose": "Parked suites (composer menu, props, wiring) with a README explaining what unblocks each",
       "type": "app-tests"
     },
@@ -133,7 +133,7 @@
       "type": "extension"
     },
     {
-      "path": "vault/AI-Brain/",
+      "path": "vault/Brain/",
       "purpose": "The canonical Obsidian vault: 00 System to 90 Archive, templates, system docs",
       "type": "vault"
     },
@@ -154,13 +154,13 @@
     }
   ],
   "search_hints_for_ai": {
-    "where_is_the_app": "apps/03_ai-assistant/ - src/main, src/preload, src/renderer/src, src/shared",
-    "where_is_the_vault_write": "apps/03_ai-assistant/src/main/vault/ (service, routes, files, text, blacklist)",
-    "where_are_the_settings": "apps/03_ai-assistant/src/renderer/src/components/SettingsView.tsx + state/appearance.ts + state/performance.ts",
-    "where_is_the_memory_math": "apps/03_ai-assistant/src/shared/lib/inference.ts (fitCheck, fitToProfile, PROFILE_BUDGET_GB)",
+    "where_is_the_app": "apps/03_oddbrain/ - src/main, src/preload, src/renderer/src, src/shared",
+    "where_is_the_vault_write": "apps/03_oddbrain/src/main/vault/ (service, routes, files, text, blacklist)",
+    "where_are_the_settings": "apps/03_oddbrain/src/renderer/src/components/SettingsView.tsx + state/appearance.ts + state/performance.ts",
+    "where_is_the_memory_math": "apps/03_oddbrain/src/shared/lib/inference.ts (fitCheck, fitToProfile, PROFILE_BUDGET_GB)",
     "where_is_requirements": "00_LIVING_DOCS/REQUIREMENTS_LIVING.md",
     "where_is_handover": "00_LIVING_DOCS/HANDOVER_LIVING.md",
-    "where_is_vault_structure": "vault/AI-Brain/00 System/",
+    "where_is_vault_structure": "vault/Brain/00 System/",
     "where_is_extension_spec": "extension/README.md + extension/EXTENSION_SPEC.md",
     "where_to_log_changes": "00_LIVING_DOCS/CHANGELOG.md + memory/sessions/",
     "what_does_the_owner_want": "README.md section 'What the user has asked for (standing instructions)'"

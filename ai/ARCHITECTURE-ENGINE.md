@@ -202,7 +202,7 @@ everything about the vault, artifacts-as-files, Browsing Maps, real-data rule.
 - [ ] **6.4 — Face pass.** First-run init screen (08 reborn) + wire Today/Code
       to real engine events; mockups stay the design authority.
 - [ ] **6.5 — Installer.** You run ONE file; app + checks + brains land.
-      *Done when:* AI ASSistant icon on your desktop, engine inside, $0 spent.
+      *Done when:* OddBrain icon on your desktop, engine inside, $0 spent.
 
 ---
 

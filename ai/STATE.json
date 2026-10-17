@@ -2,7 +2,7 @@
   "date": "2026-10-16",
   "time_updated": "2026-10-16 (evening) Asia/Dhaka",
   "timezone": "Asia/Dhaka",
-  "repo_version": "ai-assistant 0.9.0",
+  "repo_version": "OddBrain 0.9.0",
   "canonical_repo": "https://github.com/NishadIslamUtso/AI-ASSistant",
   "workflow": {
     "active_branch": "v3",
@@ -16,12 +16,12 @@
       "1fb7def adversary reviewer (report-only) — g59",
       "e648dc0 watch mode — g58"
     ],
-    "verify_with": "git log --oneline -6 && cd apps/03_ai-assistant && npx vitest run && npx tsc --noEmit"
+    "verify_with": "git log --oneline -6 && cd apps/03_oddbrain && npx vitest run && npx tsc --noEmit"
   },
-  "note_for_next_ai": "The repo is the source of truth, not any handover text. Verify a file exists before trusting a status list. ALWAYS re-align with the remote before committing: the sandbox snapshot can come back stale (git-restore ritual: re-add origin, fetch, reset --mixed onto the remote tip). The app is AI ASSistant, NOT a Claude clone - do not reintroduce Claude branding. Nothing fake goes in front of the user: a screen may not exist without working; no test may depend on a mock engine (the scripted shim used for live drives in the sandbox is NOT shipped and no test imports it). The engines do the work: the app spawns the engine binary on its own wire in its own folder; the app never talks to model APIs for engine work. Permission cards are the only approval path. Owner's hardware reality: 8GB RAM / 4GB VRAM - keep bundles lean; quantized local brains only.",
+  "note_for_next_ai": "The repo is the source of truth, not any handover text. Verify a file exists before trusting a status list. ALWAYS re-align with the remote before committing: the sandbox snapshot can come back stale (git-restore ritual: re-add origin, fetch, reset --mixed onto the remote tip). The app is OddBrain, NOT a Claude clone - do not reintroduce Claude branding. Nothing fake goes in front of the user: a screen may not exist without working; no test may depend on a mock engine (the scripted shim used for live drives in the sandbox is NOT shipped and no test imports it). The engines do the work: the app spawns the engine binary on its own wire in its own folder; the app never talks to model APIs for engine work. Permission cards are the only approval path. Owner's hardware reality: 8GB RAM / 4GB VRAM - keep bundles lean; quantized local brains only.",
   "apps": {
-    "03_ai-assistant": {
-      "path": "apps/03_ai-assistant",
+    "03_oddbrain": {
+      "path": "apps/03_oddbrain",
       "status": "78 files / 621 tests on Electron 41.10.7; Windows-hostile tests honestly guarded; extension port paired per-install; audit: shipped runtime clean, dev-toolchain findings risk-accepted in CHANGELOG",
       "tech": "Electron 40 + electron-vite 5 + Vite 6 + React 19 + TypeScript 5.7 + Tailwind 4 + Vitest 2; engines are EXTERNAL binaries (claude CLI, agy, ollama) - no engine SDK is a dependency",
       "engines": {
@@ -63,9 +63,9 @@
         "Renamed OddBrain; took from the claudereverse study as clean code: real shell PATH resolution (Windows registry via PowerShell / login shell), quick-ask window on Ctrl+Shift+O over the ONE send path, Ctrl+F find via CSS Custom Highlight (no DOM mutation), artifact pop-out + printToPDF into the vault, Electron fuses"
       ],
       "installer": {
-        "file": "AI-ASSistant-Setup-0.9.0.exe",
-        "bytes": 88204306,
-        "sha256": "267a753011b0431d749b9b6c7bc26971664efc7bdaa9c8f802b61cbb54c58c07",
+        "file": "OddBrain-Setup-0.9.0.exe",
+        "bytes": 100260934,
+        "sha256": "3d227fcb99852df9f6d5d856e1eab6cd60b77148ed97262888082acc85630740",
         "note": "unsigned (SmartScreen expected); NSIS per-user; rebuild recipe in 00_LIVING_DOCS/RELEASE-WINDOWS.md"
       },
       "open_items": [

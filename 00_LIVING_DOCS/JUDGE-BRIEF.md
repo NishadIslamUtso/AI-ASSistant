@@ -25,7 +25,7 @@ Verify with:
 
 ```bash
 git clone -b v3 https://github.com/NishadIslamUtso/AI-ASSistant.git
-cd AI-ASSistant/apps/03_ai-assistant
+cd AI-ASSistant/apps/03_oddbrain
 npm ci && npx vitest run      # 78 files / 621 tests
 npx tsc --noEmit && npm run build
 ```

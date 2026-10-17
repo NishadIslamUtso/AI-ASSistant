@@ -5,13 +5,13 @@ vanish on every sandbox restart; this is the whole ritual, start to finish.
 
 ## The recipe (executed in this order)
 
-1. **Deps survive?** `ls apps/03_ai-assistant/node_modules` — if gone:
-   `npm install` in `apps/03_ai-assistant/`.
+1. **Deps survive?** `ls apps/03_oddbrain/node_modules` — if gone:
+   `npm install` in `apps/03_oddbrain/`.
 2. **Sanity build:** `npm run build` (typecheck + electron-vite → `out/`).
 3. **Wine (it is always gone):**
    `dpkg --add-architecture i386 && apt-get update -qq && apt-get install -y -qq wine wine64 wine32`
    (~65 s on the sandbox; wine 10.0 verified).
-4. **Build:** in `apps/03_ai-assistant/`:
+4. **Build:** in `apps/03_oddbrain/`:
    `npx electron-builder --win`
    (downloads Electron + NSIS + winCodeSign into `~/.cache`, then builds with
    `electron-builder.yml`: NSIS, oneClick, runAfterFinish, per-user, maximum
@@ -39,7 +39,7 @@ the vault and settings alone.
 ## 2026-10-17 rebuild note
 
 The installer is now built with `npx electron-builder --win nsis --x64` and an
-`afterPack` hook (`apps/03_ai-assistant/scripts/apply-fuses.cjs`) that flips the
+`afterPack` hook (`apps/03_oddbrain/scripts/apply-fuses.cjs`) that flips the
 Electron fuses on the packaged binary (no `ELECTRON_RUN_AS_NODE`, no
 `NODE_OPTIONS`, no `--inspect`). Under Linux this needs working wine with
 32-bit support (`dpkg --add-architecture i386; apt install wine32 wine`), a
