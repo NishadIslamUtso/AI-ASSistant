@@ -16,7 +16,7 @@ import { existsSync, readdirSync } from 'node:fs'
 import { basename, join, resolve } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { InputError, VaultMissingError } from './errors'
-import { createVaultFiles, type VaultFiles } from './files'
+import { createVaultFiles, toPosix, type VaultFiles } from './files'
 import { PRIVACY_FILE, SCOPE_FILE, excluded, readPatterns, replacePatterns } from './blacklist'
 import { digest, dhakaParts, parseFollowups, safeSegment, section, splitDocument, timestamp, yamlDocument } from './text'
 import { createZip, safeEntryName } from './zip'
@@ -671,7 +671,7 @@ export function createVaultService({
         .sort()
         .reverse()
       if (files.length) {
-        newest = join(activityRoot, year, files[0])
+        newest = toPosix(join(activityRoot, year, files[0]))
         break
       }
     }

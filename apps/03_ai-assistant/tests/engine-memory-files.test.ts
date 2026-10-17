@@ -20,7 +20,7 @@ describe('memory file reader', () => {
     const answer = await manager.list()
     expect(answer.ok).toBe(true)
     expect(answer.files).toEqual([])
-    expect(answer.folder).toContain('06 Review/Memory')
+    expect(answer.folder.replace(/\\/g, '/')).toContain('06 Review/Memory')
   })
 
   it('lists a real file with content, path, and updated time', async () => {

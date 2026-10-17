@@ -25,8 +25,11 @@ export function fallbackPrepend(platform = process.platform, env = process.env):
       userProfile ? join(userProfile, '.local', 'bin') : '',
     ].filter(Boolean)
   }
+  // The platform argument names the dialect: a POSIX entry must be POSIX
+  // even when the host joining it is Windows (a backslash inside a POSIX
+  // PATH list is not a path, it is a mistake).
   const home = env['HOME'] ?? ''
-  return [home ? join(home, '.local', 'bin') : ''].filter(Boolean)
+  return [home ? `${home}/.local/bin` : ''].filter(Boolean)
 }
 
 /**

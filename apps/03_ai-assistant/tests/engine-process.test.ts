@@ -125,7 +125,7 @@ test('elsewhere a stop is a plain signal', () => {
   const child = fakeEngine({ pid: 7 })
   const { spawn, calls, queue } = spawnCapturing()
   queue(child)
-  const { session } = sessionOn(child, spawn)
+  const { session } = sessionOn(child, spawn, { platform: 'linux' })
   session.stop()
   assert.equal(child.killed, true)
   assert.equal(calls.length, 1, 'no taskkill off Windows')

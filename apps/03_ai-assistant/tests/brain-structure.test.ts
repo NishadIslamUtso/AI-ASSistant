@@ -141,7 +141,7 @@ test('the default path is Documents/ASSistant/AI-Brain under any home', () => {
   // Separators are the platform's business; the shape is not.
   assert.match(defaultVaultPath('C:\\Users\\utso'), /Documents[/\\]ASSistant[/\\]AI-Brain$/)
   assert.ok(defaultVaultPath('C:\\Users\\utso').startsWith('C:\\Users\\utso'))
-  assert.equal(defaultVaultPath('/home/user'), '/home/user/Documents/ASSistant/AI-Brain')
+  assert.match(defaultVaultPath('/home/user'), /^[/\\]home[/\\]user[/\\]Documents[/\\]ASSistant[/\\]AI-Brain$/)
   assert.throws(() => defaultVaultPath(''))
 })
 

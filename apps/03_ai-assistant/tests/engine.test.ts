@@ -477,6 +477,9 @@ test('the socket: agy routes to its own adapter and an engine switch starts fres
   // an engine switch sets the old process aside and starts the chosen engine
   socket.send('y', {
     cwd: '.',
+    // The stop rules are the engine's dialect, not the CI host's: a POSIX
+    // stop is a plain signal, so the switch test pins the platform.
+    platform: 'linux',
     settings: { ...DEFAULT_ENGINE, id: 'claude-code', model: 'm' },
     onEvent: rec.on,
     spawnProcess: fake,

@@ -1,3 +1,4 @@
+import { toPosix } from '../vault/files'
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -469,7 +470,8 @@ export function remove(root: string, id: unknown): RemoveAnswer {
   if (!record) return { ok: false, error: 'That artifact is not in the library any more.' }
 
   const stamp = new Date().toISOString().replace(/[:.]/g, '-')
-  const destination = join(TRASH_DIR, `${id}-${stamp}`)
+  // The key says where the files went, so it speaks the vault's dialect.
+  const destination = toPosix(join(TRASH_DIR, `${id}-${stamp}`))
   try {
     mkdirSync(join(root, TRASH_DIR), { recursive: true })
     renameSync(itemDir(root, id), join(root, destination))

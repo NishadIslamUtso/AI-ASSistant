@@ -27,6 +27,16 @@ import {
 } from 'node:fs'
 import { dirname, resolve, sep } from 'node:path'
 import { InputError } from './errors'
+
+/**
+ * Vault-relative keys speak the Obsidian dialect: forward slashes, whatever
+ * the host separator is. Files on disk stay platform-true; keys that cross
+ * into answers, routes and the renderer are normalized here so a vault syncs
+ * and renders identically on every OS.
+ */
+export function toPosix(relative: string): string {
+  return relative.split(sep).join('/')
+}
 import { dhakaParts } from './text'
 
 export function createVaultFiles(root: string, clock: () => Date) {
@@ -194,7 +204,7 @@ export function createVaultFiles(root: string, clock: () => Date) {
           continue
         }
         if (!entry.name.endsWith(extension)) continue
-        files.push(full.slice(root.length + 1))
+        files.push(toPosix(full.slice(root.length + 1)))
         if (files.length >= limit) {
           capped = true
           return
