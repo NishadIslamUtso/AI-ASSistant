@@ -38,6 +38,12 @@ export type Appearance = {
   mascotWords: boolean
   /** The quiet explanation line under a settings row. Off, the rows are terse. */
   rowExplanations: boolean
+  /**
+   * A pack theme's own stylesheet, applied verbatim on top of the tokens —
+   * the pack's ENTIRE style, per the owner's ruling, not a token subset.
+   * Empty when no pack style is applied; Reset clears it.
+   */
+  packCss: string
 }
 
 export const APPEARANCE_KEY = 'ai-assistant.appearance'
@@ -103,7 +109,11 @@ export const DEFAULT_APPEARANCE: Appearance = Object.freeze({
   motion: 'system',
   mascotWords: true,
   rowExplanations: true,
+  packCss: '',
 })
+
+/** The id of the <style> element a pack theme's stylesheet lives in. */
+export const PACK_STYLE_ID = 'ob-pack-style'
 
 export function accentHex(name: AccentName): string {
   return (ACCENTS.find(accent => accent.name === name) || ACCENTS[0]).hex
@@ -145,6 +155,7 @@ export function normalizeAppearance(value: unknown): Appearance {
     mascotWords: typeof input.mascotWords === 'boolean' ? input.mascotWords : DEFAULT_APPEARANCE.mascotWords,
     rowExplanations:
       typeof input.rowExplanations === 'boolean' ? input.rowExplanations : DEFAULT_APPEARANCE.rowExplanations,
+    packCss: typeof input.packCss === 'string' ? input.packCss.slice(0, 200_000) : '',
   }
 }
 
@@ -185,6 +196,7 @@ export function applyAppearance(
 ): void {
   const variables = appearanceVariables(appearance)
   for (const [name, value] of Object.entries(variables)) root.style.setProperty(name, value)
+  applyPackStyle(appearance.packCss ?? '')
   // The theme is a palette swap, not a variable: it lives in the stylesheet as
   // `[data-theme='light']`, so `System` is the attribute's absence and the OS's
   // preference answers. The accent stays inline — it is chosen separately and
@@ -203,4 +215,26 @@ export function applyAppearance(
 export function applyStoredAppearance(): void {
   const stored = readStored(APPEARANCE_KEY, DEFAULT_APPEARANCE, normalizeAppearance)
   applyAppearance(stored.value)
+}
+
+/**
+ * The pack stylesheet, as its own <style> element after the app's stylesheet:
+ * same specificity, later order, so the pack wins. Set '' to remove it.
+ * Guarded for the node test environment, which has no document.
+ */
+export function applyPackStyle(css: string): void {
+  const doc = typeof document !== 'undefined' ? document : undefined
+  if (!doc || typeof doc.getElementById !== 'function' || typeof doc.createElement !== 'function') return
+  const existing = doc.getElementById(PACK_STYLE_ID)
+  if (!css) {
+    existing?.remove()
+    return
+  }
+  let element = existing
+  if (!element) {
+    element = doc.createElement('style')
+    element.id = PACK_STYLE_ID
+    doc.head.appendChild(element)
+  }
+  if (element.textContent !== css) element.textContent = css
 }

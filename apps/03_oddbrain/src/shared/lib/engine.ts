@@ -109,6 +109,8 @@ export type EngineAvailability = {
   version: string
   /** The one-liner that fixes a missing engine. */
   install: string
+  /** Where the working binary was found — absolute when probed directly. */
+  path?: string
 }
 
 const ENGINES: readonly EngineId[] = ['claude-code', 'agy']

@@ -140,7 +140,7 @@ type EngineStore = EngineState & {
   /** "Open a folder": pick where the engine works; persists. */
   pickWorkspace(): Promise<void>
   /** Ask the machine which engines really exist. */
-  checkEngines(): Promise<void>
+  checkEngines(fresh?: boolean): Promise<void>
   /** Bring a brain home; progress lands in `pull`. */
   startPull(name: string): Promise<{ ok: boolean; answer: string }>
   /** Take a brain off this machine. */
@@ -552,10 +552,10 @@ const store: EngineStore = {
     emit()
   },
 
-  async checkEngines(): Promise<void> {
+  async checkEngines(fresh = false): Promise<void> {
     if (state.detection.loading) return
     setState({ detection: { ...state.detection, loading: true } })
-    const engines = await getEngineApi().detect()
+    const engines = await getEngineApi().detect(fresh)
     setState({ detection: { loading: false, engines } })
   },
 

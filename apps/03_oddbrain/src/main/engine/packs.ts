@@ -19,7 +19,20 @@ import { deploySkill, parseSkillMd, type VaultSkill } from './deploy'
 const MAX_FILE_BYTES = 200_000
 
 export type PackPrompt = { name: string; body: string }
-export type PackTheme = { name: string; appearance: Record<string, string> }
+export type PackTheme = {
+  name: string
+  appearance: Record<string, string>
+  /**
+   * The pack's own stylesheet, applied verbatim on top of the app's tokens —
+   * the owner's ruling: a pack theme must carry the pack's ENTIRE style, not
+   * a hand-picked subset of tokens the app already offered. Anything a
+   * stylesheet can say, a pack theme can say.
+   */
+  css?: string
+}
+
+/** A pack stylesheet is real content; this is its ceiling, the same cap idea the vault uses. */
+export const PACK_CSS_MAX = 200_000
 
 export type InstallAnswer =
   | { ok: true; pack: Pack; folder: string; prompts: PackPrompt[]; themes: PackTheme[]; written: string[] }
@@ -74,10 +87,19 @@ const readTheme = (path: string): { theme?: PackTheme; problem?: string } => {
   }
   const record = (parsed && typeof parsed === 'object' ? parsed : {}) as Record<string, unknown>
   const appearance = (record['appearance'] && typeof record['appearance'] === 'object' ? record['appearance'] : {}) as Record<string, unknown>
+  // The stylesheet rides beside the token block, optional but first-class.
+  const css = typeof record['css'] === 'string' ? record['css'].slice(0, PACK_CSS_MAX) : ''
   const theme = cleanThemeAppearance(appearance)
-  if (theme.problem || !theme.clean) return { problem: theme.problem?.replace('The theme', basename(path)) ?? `${basename(path)} sets no look at all.` }
+  // A css-only theme is a valid theme now; tokens alone remain valid too.
+  if (!css && (theme.problem || !theme.clean)) {
+    return { problem: theme.problem?.replace('The theme', basename(path)) ?? `${basename(path)} sets no look at all.` }
+  }
+  if (css && theme.clean && Object.keys(theme.clean).length === 0) {
+    // cleanThemeAppearance refuses an empty token block; with a stylesheet
+    // present that refusal does not apply — the style IS the look.
+  }
   const name = typeof record['name'] === 'string' ? record['name'].slice(0, 60) : basename(path, '.json')
-  return { theme: { name, appearance: theme.clean } }
+  return { theme: { name, appearance: theme.clean ?? {}, ...(css ? { css } : {}) } }
 }
 
 export type PackTargets = {

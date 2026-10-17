@@ -93,6 +93,15 @@ export default function EngineBay() {
           className={`ml-auto h-1.5 w-1.5 rounded-full ${engine.running() ? 'bg-ok' : 'bg-muted'}`}
           title={engine.running() ? 'The engine is on this machine' : 'Idle'}
         />
+        <button
+          type="button"
+          onClick={() => void engine.checkEngines(true)}
+          disabled={engine.detection.loading}
+          title="Installed an engine just now? Ask the machine again, this skips the short remember-window."
+          className="shrink-0 rounded-md border border-line px-1.5 py-0.5 text-[10px] text-muted transition-colors hover:text-ink disabled:opacity-50"
+        >
+          {engine.detection.loading ? 'scanning…' : 'Re-scan'}
+        </button>
       </header>
 
       {/* The engine selection system. An engine that is not on this machine
@@ -105,9 +114,11 @@ export default function EngineBay() {
           const missing = known ? !known.found : false
           const title = missing
             ? `Not found on this machine. ${known?.install ?? ''}`
-            : known?.version
-              ? `${entry.hint}, ${known.version}`
-              : entry.hint
+            : known?.path
+              ? `${entry.hint}, ${known.version} — ${known.path}`
+              : known?.version
+                ? `${entry.hint}, ${known.version}`
+                : entry.hint
           return (
             <button
               key={entry.id}

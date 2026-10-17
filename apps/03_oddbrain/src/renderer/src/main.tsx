@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
+import ErrorBoundary from './components/ErrorBoundary'
 import { applyStoredAppearance } from './state/appearance'
 import './styles/globals.css'
 
@@ -12,6 +13,8 @@ applyStoredAppearance()
 
 createRoot(container).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary label="OddBrain">
+      <App />
+    </ErrorBoundary>
   </StrictMode>
 )

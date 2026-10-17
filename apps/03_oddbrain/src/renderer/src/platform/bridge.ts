@@ -60,6 +60,8 @@ export type DesktopBridge = {
         keepLoadedAlways: boolean
       }>
     }
+    /** Desktop only: the machine's own suggestion for the owner's name. */
+    whoami?: () => Promise<{ name: string }>
     /** Desktop only: open a github.com link in the person's browser. */
     openExternal?: (url: string) => Promise<{ ok: boolean }>
     /** Desktop only: the native menu's events (File > New chat, Go > screens). */
@@ -124,7 +126,7 @@ export type DesktopBridge = {
       answer: string
       pack?: { id: string; name: string; version: string; author: string; description: string; license: string; contributes: { skills: string[]; prompts: string[]; themes: string[] } }
       prompts?: Array<{ name: string; body: string }>
-      themes?: Array<{ name: string; appearance: Record<string, string> }>
+      themes?: Array<{ name: string; appearance: Record<string, string>; css?: string }>
       folder?: string
     }>
     list: () => Promise<Array<{ pack: { id: string; name: string; version: string; author: string; description: string }; folder: string; installedAt: string }>>
@@ -140,7 +142,7 @@ export type DesktopBridge = {
       packs?: Array<{ id: string; name: string; version: string; author: string; description: string; permissions: Record<string, unknown>; checksum: string; source: string; verified: boolean; problem: string }>
     }>
     indexInstall: (kind: string, locator: string, id: string) => Promise<{ ok: boolean; answer: string; written?: string[]; folder?: string }>
-    exportPack: (payload: { name: string; description: string; author: string; skills: string[]; theme: Record<string, string> | null }) => Promise<{ ok: boolean; answer: string; folder?: string; index?: string }>
+    exportPack: (payload: { name: string; description: string; author: string; skills: string[]; theme: { appearance: Record<string, string>; css?: string } | null }) => Promise<{ ok: boolean; answer: string; folder?: string; index?: string }>
     installStarter: () => Promise<{ ok: boolean; answer: string; folder?: string; written?: string[] }>
     communityIndex?: () => Promise<{ ok: boolean; path?: string }>
   }
@@ -400,7 +402,7 @@ export type EngineBridge = {
   read: () => Promise<{ engine: EngineSettings; running: boolean; history: EngineEvent[] }>
   pick: (id: EngineId) => Promise<{ ok: boolean; answer: string }>
   models: () => Promise<{ ok: boolean; models: EngineModelEntry[]; error?: string }>
-  detect: () => Promise<EngineAvailability[]>
+  detect: (fresh?: boolean) => Promise<EngineAvailability[]>
   pull: (name: string) => Promise<{ ok: boolean; answer: string }>
   deleteModel: (name: string) => Promise<{ ok: boolean; answer: string }>
   /** Pull progress ticks; returns the unsubscribe. */

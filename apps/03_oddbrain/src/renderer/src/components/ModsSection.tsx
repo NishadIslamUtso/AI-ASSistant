@@ -24,14 +24,17 @@ type Listed = { pack: Pack; folder: string; installedAt: string; via?: string }
 const THEMES_KEY = 'ai-assistant.pack-themes'
 
 /** Themes seen at install, kept by pack id so a look can be re-applied later. */
-const packTheme = (id: string): Record<string, string> | null => {
-  const all = readStored<Record<string, Record<string, string>>>(THEMES_KEY, {}, value => (typeof value === 'object' && value ? (value as Record<string, Record<string, string>>) : {})).value
+/** What a pack's theme remembers: the token preset AND its own stylesheet — the whole style, per the owner's ruling. */
+type StoredTheme = { appearance: Record<string, string>; css: string }
+
+const packTheme = (id: string): StoredTheme | null => {
+  const all = readStored<Record<string, StoredTheme>>(THEMES_KEY, {}, value => (typeof value === 'object' && value ? (value as Record<string, StoredTheme>) : {})).value
   return all[id] ?? null
 }
 
-const rememberTheme = (id: string, appearance: Record<string, string>): void => {
-  const all = readStored<Record<string, Record<string, string>>>(THEMES_KEY, {}, value => (typeof value === 'object' && value ? (value as Record<string, Record<string, string>>) : {})).value
-  writeStored(THEMES_KEY, { ...all, [id]: appearance })
+const rememberTheme = (id: string, theme: StoredTheme): void => {
+  const all = readStored<Record<string, StoredTheme>>(THEMES_KEY, {}, value => (typeof value === 'object' && value ? (value as Record<string, StoredTheme>) : {}) as Record<string, StoredTheme>).value
+  writeStored(THEMES_KEY, { ...all, [id]: theme })
 }
 
 export default function ModsSection({
@@ -82,8 +85,9 @@ export default function ModsSection({
         const theme = reply.themes?.[0]
         const pack = reply.pack
         if (theme && pack?.id) {
-          rememberTheme(pack.id, theme.appearance)
-          onAppearanceChange({ ...currentAppearance(), ...theme.appearance } as Appearance)
+          const css = typeof theme.css === 'string' ? theme.css : ''
+          rememberTheme(pack.id, { appearance: theme.appearance, css })
+          onAppearanceChange({ ...currentAppearance(), ...theme.appearance, packCss: css } as Appearance)
           setApplied(theme.name)
         }
         setAnswer(reply.answer)
@@ -122,13 +126,14 @@ export default function ModsSection({
   }
 
   const applyTheme = (pack: Pack): void => {
-    const appearance = packTheme(pack.id)
-    if (!appearance) {
+    const theme = packTheme(pack.id)
+    if (!theme) {
       setAnswer(`No theme was kept for ${pack.name}. Reinstall the pack to bring its look back.`)
       return
     }
-    onAppearanceChange({ ...currentAppearance(), ...appearance } as Appearance)
-    setAnswer(`Theme applied from ${pack.name}.`)
+    // The whole style goes on: the token block AND the pack's own stylesheet.
+    onAppearanceChange({ ...currentAppearance(), ...theme.appearance, packCss: theme.css } as Appearance)
+    setAnswer(`Theme applied from ${pack.name}${theme.css ? ' — its full stylesheet is on' : ''}.`)
   }
 
   if (isDemo) {
@@ -319,7 +324,7 @@ function ExportPack({ appearance, onExported }: { appearance: Appearance; onExpo
         description,
         author: 'me',
         skills: picked,
-        theme: withTheme ? { accent: appearance.accent, width: appearance.width, textSize: appearance.textSize, font: appearance.font, motion: appearance.motion } : null,
+        theme: withTheme ? { appearance: { accent: appearance.accent, width: appearance.width, textSize: appearance.textSize, font: appearance.font, motion: appearance.motion }, css: appearance.packCss || undefined } : null,
       })
       .then(reply => {
         setAnswer(reply.answer)

@@ -10,6 +10,7 @@
  */
 
 import { execFile } from 'node:child_process'
+import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 
 /** The folders the app has always prepended — now the FALLBACK, not the whole answer.
@@ -89,8 +90,45 @@ export async function askShellPath(platform = process.platform, env = process.en
   })
 }
 
+/** Known absolute install spots on Windows, for probing and for spawning. */
+export function engineCandidates(id: 'claude-code' | 'agy', env: NodeJS.ProcessEnv = process.env): string[] {
+  const npmDir = env['APPDATA'] ? join(env['APPDATA'], 'npm') : ''
+  const localBin = env['USERPROFILE'] ? join(env['USERPROFILE'], '.local', 'bin') : ''
+  const programs = env['LOCALAPPDATA'] ? join(env['LOCALAPPDATA'], 'Programs') : ''
+  if (id === 'claude-code') {
+    return [
+      ...(npmDir ? [join(npmDir, 'claude.cmd'), join(npmDir, 'claude')] : []),
+      ...(localBin ? [join(localBin, 'claude.exe'), join(localBin, 'claude')] : []),
+    ]
+  }
+  return [
+    ...(localBin ? [join(localBin, 'agy.exe'), join(localBin, 'agy')] : []),
+    ...(programs ? [join(programs, 'agy', 'agy.exe')] : []),
+  ]
+}
+
+/**
+ * The command a launch should spawn: an absolute binary when one sits in a
+ * known install spot, the bare name otherwise. The owner's machine answered
+ * "'agy' is not recognized as an internal or external command" because a
+ * bare name only works through a fresh PATH — this makes the spawn work even
+ * when the PATH snapshot is one beat behind an install.
+ */
+export function resolveEngineCommand(id: 'claude-code' | 'agy', env: NodeJS.ProcessEnv = process.env): string {
+  kickRefreshIfStale(process.platform, env)
+  for (const candidate of engineCandidates(id, env)) {
+    try {
+      if (existsSync(candidate)) return candidate
+    } catch {
+      /* a hostile path string throws on some platforms — skip it */
+    }
+  }
+  return id === 'claude-code' ? 'claude' : 'agy'
+}
+
 let cached: string | null = null
 let cachedAt = 0
+let refreshing = false
 const CACHE_MS = 5 * 60_000
 
 /** The PATH the engines spawn with. Resolved once, refreshed every 5 minutes. */
@@ -107,6 +145,19 @@ export async function enginePath(platform = process.platform, env = process.env,
 export function resetEnginePathCache(): void {
   cached = null
   cachedAt = 0
+  refreshing = false
+}
+
+/** Kick a fresh registry+fallback read once the snapshot is past its age. */
+function kickRefreshIfStale(platform = process.platform, env = process.env): void {
+  if (refreshing) return
+  if (cached && Date.now() - cachedAt < CACHE_MS) return
+  refreshing = true
+  void enginePath(platform, env)
+    .catch(() => {})
+    .finally(() => {
+      refreshing = false
+    })
 }
 
 /**
@@ -114,5 +165,10 @@ export function resetEnginePathCache(): void {
  * the app warmed it (it warms at boot), the honest fallback otherwise.
  */
 export function enginePathSync(platform = process.platform, env = process.env): string {
+  // The real machine caught this: an engine installed after boot stayed
+  // invisible because the sync read handed out the boot-time PATH forever.
+  // Now a stale snapshot triggers one background refresh, so the next
+  // detection or spawn sees the machine as it is now.
+  kickRefreshIfStale(platform, env)
   return cached ?? mergePath(fallbackPrepend(platform, env), '', env['PATH'] ?? '', platform)
 }

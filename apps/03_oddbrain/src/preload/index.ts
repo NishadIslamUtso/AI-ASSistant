@@ -37,7 +37,7 @@ const engineApi = {
   models: (): Promise<{ ok: boolean; models: EngineModelEntry[]; error?: string }> =>
     ipcRenderer.invoke('engine:models'),
   /** What engines are really installed on this machine. */
-  detect: (): Promise<EngineAvailability[]> => ipcRenderer.invoke('engine:detect'),
+  detect: (fresh?: boolean): Promise<EngineAvailability[]> => ipcRenderer.invoke('engine:detect', fresh === true),
   /** Bring a brain home; progress arrives through onPullEvent. */
   pull: (name: string): Promise<{ ok: boolean; answer: string }> => ipcRenderer.invoke('engine:pull', name),
   /** Take a brain off this machine. */
@@ -169,6 +169,8 @@ const api = {
     platform: process.platform,
     /** Open the vault folder in the file manager — the owner's own folder. */
     openVaultFolder: (): Promise<{ ok: boolean }> => ipcRenderer.invoke('vault:open-folder'),
+    /** The machine's own suggestion for the owner's name, for first run. */
+    whoami: (): Promise<{ name: string }> => ipcRenderer.invoke('app:whoami'),
     flags: {
       get: (): Promise<{ loginItem: boolean; warmRuntime: boolean; keepLoadedAlways: boolean }> =>
         ipcRenderer.invoke('app:flags:get'),
@@ -261,7 +263,7 @@ const api = {
       ipcRenderer.invoke('skills:scan'),
   },
   mods: {
-    installFromFile: (): Promise<{ ok: boolean; answer: string; pack?: unknown; prompts?: Array<{ name: string; body: string }>; themes?: Array<{ name: string; appearance: Record<string, string> }>; folder?: string }> =>
+    installFromFile: (): Promise<{ ok: boolean; answer: string; pack?: unknown; prompts?: Array<{ name: string; body: string }>; themes?: Array<{ name: string; appearance: Record<string, string>; css?: string }>; folder?: string }> =>
       ipcRenderer.invoke('mods:install-from-file'),
     list: (): Promise<Array<{ pack: unknown; folder: string; installedAt: string }>> => ipcRenderer.invoke('mods:list'),
     remove: (id: string): Promise<{ ok: boolean; answer: string }> => ipcRenderer.invoke('mods:remove', id),
@@ -274,7 +276,7 @@ const api = {
       ipcRenderer.invoke('mods:index-browse', { kind, locator }),
     indexInstall: (kind: string, locator: string, id: string): Promise<{ ok: boolean; answer: string; written?: string[]; folder?: string }> =>
       ipcRenderer.invoke('mods:index-install', { kind, locator, id }),
-    exportPack: (payload: { name: string; description: string; author: string; skills: string[]; theme: Record<string, string> | null }): Promise<{ ok: boolean; answer: string; folder?: string; index?: string }> =>
+    exportPack: (payload: { name: string; description: string; author: string; skills: string[]; theme: { appearance: Record<string, string>; css?: string } | null }): Promise<{ ok: boolean; answer: string; folder?: string; index?: string }> =>
       ipcRenderer.invoke('mods:export', payload),
     installStarter: (): Promise<{ ok: boolean; answer: string; folder?: string; written?: string[] }> =>
       ipcRenderer.invoke('mods:install-starter'),

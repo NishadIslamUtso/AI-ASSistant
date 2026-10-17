@@ -92,6 +92,7 @@ test('a half-written preference falls back field by field, never to nothing', ()
     motion: 'system',
     mascotWords: true,
     rowExplanations: true,
+    packCss: '',
   })
   assert.deepEqual(normalizeAppearance({ width: 'wide' }), {
     theme: 'system',
@@ -102,6 +103,7 @@ test('a half-written preference falls back field by field, never to nothing', ()
     motion: 'system',
     mascotWords: true,
     rowExplanations: true,
+    packCss: '',
   })
   assert.deepEqual(normalizeAppearance({ accent: 'blue', width: 'focused', theme: 'light' }), {
     theme: 'light',
@@ -112,6 +114,7 @@ test('a half-written preference falls back field by field, never to nothing', ()
     motion: 'system',
     mascotWords: true,
     rowExplanations: true,
+    packCss: '',
   })
 })
 

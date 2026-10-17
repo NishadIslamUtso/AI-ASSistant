@@ -34,6 +34,21 @@ export default function FirstRunView({
   const engine = useEngine()
   const [step, setStep] = useState(0)
   const [name, setName] = useState('')
+  // The machine's own name for this person, offered as the starting value —
+  // editable, never forced; the owner's machine reported the field used to
+  // come up empty and read as if the app could not detect anything.
+  useEffect(() => {
+    let gone = false
+    void bridge.app
+      .whoami?.()
+      .then(reply => {
+        if (!gone && reply.name) setName(current => current || reply.name)
+      })
+      .catch(() => {})
+    return () => {
+      gone = true
+    }
+  }, [])
   const [folder, setFolder] = useState('')
 
   useEffect(() => {
@@ -61,7 +76,7 @@ export default function FirstRunView({
   }
 
   return (
-    <div className="flex h-full items-center justify-center overflow-y-auto bg-bg" aria-label="Welcome">
+    <div data-find-scroll className="flex h-full items-center justify-center overflow-y-auto bg-bg" aria-label="Welcome">
       <div className="w-full max-w-[440px] rounded-2xl border border-line bg-card p-6">
         <div className="flex items-center gap-2.5">
           <BrainMark size={18} title="" />

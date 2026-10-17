@@ -2,6 +2,7 @@ import { app, BrowserWindow, dialog, Menu, safeStorage, shell, globalShortcut } 
 import { randomBytes } from 'node:crypto'
 import { pathToFileURL } from 'node:url'
 import { loadAppFlags, saveAppFlags } from './appFlags'
+import { userInfo } from 'node:os'
 import { handle, lockNavigation, pinOwnOrigins } from './ipcGuard'
 import { dirname, join, resolve } from 'node:path'
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
@@ -23,7 +24,7 @@ import { cloudEnabled, normalizePermissions } from '../shared/lib/permissions'
 import { registerArtifactIpc } from './artifacts/ipc'
 import { createEngineSocket, type EngineSocket } from './engine/socket'
 import { normalizeEngine } from '../shared/lib/engine'
-import { APPROVAL_MODES, type ApprovalMode, type EngineEvent, type EngineId, type EngineModelEntry } from '../shared/lib/engine'
+import { APPROVAL_MODES, type ApprovalMode, type EngineAvailability, type EngineEvent, type EngineId, type EngineModelEntry } from '../shared/lib/engine'
 import { ENGINE_IMAGE_MIMES, MAX_ENGINE_IMAGE_CHARS as ENGINE_IMAGE_CHARS, MAX_ENGINE_ATTACHMENTS as ENGINE_IMAGE_LIMIT } from '../shared/lib/media'
 import { listCheckpoints, restoreCheckpoint } from './engine/checkpoints'
 import { createRecipeManager } from './recipes'
@@ -586,6 +587,21 @@ function registerBridges(): void {
   // The two "keep it running" switches, in their own file (see appFlags.ts).
   const appFlagsFile = (): string => join(app.getPath('userData'), 'app-flags.json')
   handle('app:flags:get', () => loadAppFlags(appFlagsFile()))
+  // The machine's own name for this person, offered as a suggestion on first
+  // run. The real machine lesson: the app asked for a name and detected
+  // nothing, so the owner typed empty quotes and moved on. Spaces in the
+  // username are normal Windows — carried through untouched.
+  handle('app:whoami', (): { name: string } => {
+    try {
+      const info = userInfo()
+      const fromInfo = typeof info.username === 'string' ? info.username.trim() : ''
+      const fromEnv = (process.env['USERNAME'] ?? '').trim()
+      const name = fromInfo || fromEnv
+      return { name: name.slice(0, 60) }
+    } catch {
+      return { name: (process.env['USERNAME'] ?? '').trim().slice(0, 60) }
+    }
+  })
   handle('app:flags:set', (_event, patch: { loginItem?: boolean; warmRuntime?: boolean; keepLoadedAlways?: boolean }) => {
     const clean = {
       ...(typeof patch?.loginItem === 'boolean' ? { loginItem: patch.loginItem } : {}),
@@ -755,9 +771,9 @@ function registerBridges(): void {
   })
 
   // What is really installed on this machine — the bay refuses to guess.
-  handle('engine:detect', async (): Promise<Array<{ id: EngineId; found: boolean; version: string; install: string }>> => {
+  handle('engine:detect', async (_event, fresh?: boolean): Promise<EngineAvailability[]> => {
     const ids: EngineId[] = ['claude-code', 'agy']
-    return Promise.all(ids.map((id) => detectEngine(id)))
+    return Promise.all(ids.map((id) => detectEngine(id, fresh === true)))
   })
 
   handle('quick:open', () => {
@@ -1609,20 +1625,46 @@ function runSmoke(window: BrowserWindow): void {
   window.webContents.once('did-finish-load', () => {
     setTimeout(async () => {
       try {
+        // The real machine reported a chat that would not scroll. Photograph
+        // alone cannot see that, so the smoke run now proves the scroll
+        // chain on the built app: force overflow in the message scroller and
+        // demand that it actually moves.
+        let scrollLine = 'SCROLL skipped'
+        try {
+          const probe = (await window.webContents.executeJavaScript(
+            `(() => {
+              const scroller = document.querySelector('[data-find-scroll]')
+              if (!scroller) return { ok: false, why: 'no scroller in the tree' }
+              const filler = document.createElement('div')
+              filler.style.height = '4000px'
+              ;(scroller.firstElementChild ?? scroller).appendChild(filler)
+              const scrollable = scroller.scrollHeight > scroller.clientHeight
+              scroller.scrollTop = 99999
+              const moved = scroller.scrollTop > 100
+              filler.remove()
+              return { ok: scrollable && moved, scrollable, moved }
+            })()`,
+            true,
+          )) as { ok: boolean; why?: string; scrollable?: boolean; moved?: boolean }
+          scrollLine = probe && probe.ok ? 'SCROLL OK' : `SCROLL BROKEN ${JSON.stringify(probe)}`
+        } catch (probeError) {
+          scrollLine = `SCROLL FAILED ${(probeError as Error).message}`
+        }
         const image = await window.webContents.capturePage()
         if (smokeOut) writeFileSync(smokeOut, image.toPNG())
         const bounds = window.getBounds()
         const title = window.getTitle()
         const blank = image.isEmpty()
         console.log(
-          `SMOKE ${blank ? 'BLANK' : 'OK'} title="${title}" size=${bounds.width}x${bounds.height} ` +
+          `SMOKE ${blank ? 'BLANK' : 'OK'} ${scrollLine} title="${title}" size=${bounds.width}x${bounds.height} ` +
             `in ${Date.now() - started}ms errors=${consoleErrors.length} warnings=${consoleWarnings.length}`
         )
         for (const line of consoleErrors.slice(0, 10)) console.log(`  ERROR: ${line}`)
         for (const line of consoleWarnings.slice(0, 10)) console.log(`  WARN:  ${line}`)
         // The rule the owner set: a WARNING is already a failure. The smoke
         // run is the console-clean gate, so it enforces the whole sentence.
-        const failed = consoleErrors.length > 0 || consoleWarnings.length > 0 || blank
+        const failed =
+          consoleErrors.length > 0 || consoleWarnings.length > 0 || blank || scrollLine.startsWith('SCROLL BROKEN')
         app.exit(failed ? 1 : 0)
       } catch (error) {
         console.log(`SMOKE FAILED: ${(error as Error).message}`)

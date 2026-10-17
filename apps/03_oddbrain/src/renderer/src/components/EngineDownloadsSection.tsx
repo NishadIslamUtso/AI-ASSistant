@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Download, ExternalLink, Play, Trash2 } from 'lucide-react'
 import { ENGINE_DOWNLOADS } from '@shared/lib/engineDownloads'
+import { displayCommandLine } from '@shared/lib/commandLine'
 import { getEngineApi } from '@/platform/bridge'
 
 type Staged = { engine: string; endpoint: string; sha256: string; at: string }
@@ -155,7 +156,7 @@ export default function EngineDownloadsSection() {
               Run the {confirming.engine} installer on this machine? This is the whole command, nothing hidden:
             </p>
             <code className="mt-1 block break-all rounded border border-line px-1.5 py-1 text-[10.5px] text-muted">
-              {confirming.command.join(' ')}
+              {displayCommandLine(confirming.command)}
             </code>
             <div className="mt-1.5 flex items-center gap-1">
               <button
@@ -176,7 +177,7 @@ export default function EngineDownloadsSection() {
               <button
                 type="button"
                 onClick={() => {
-                  void navigator.clipboard?.writeText(confirming.command.join(' '))
+                  void navigator.clipboard?.writeText(displayCommandLine(confirming.command))
                   say('The command is on the clipboard — run it in PowerShell yourself if you prefer.')
                   setConfirming(null)
                 }}

@@ -13,7 +13,8 @@
  * a CLI is cheap, but launching it on every redraw is not.
  */
 import { execFile } from 'node:child_process'
-import { enginePathSync } from './enginePath'
+import { engineCandidates, enginePathSync } from './enginePath'
+import { existsSync } from 'node:fs'
 import type { EngineAvailability, EngineId } from '../../shared/lib/engine'
 
 const INSTALL_HINT: Record<EngineId, string> = {
@@ -24,6 +25,11 @@ const INSTALL_HINT: Record<EngineId, string> = {
 
 /** True when the version answer looks like the engine talking, not an error page. */
 const plausibleVersion = (text: string): boolean => text.trim().length > 0 && text.length < 200
+
+/** Known absolute install spots, probed when the PATH lookup fails. */
+export function defaultCandidates(id: EngineId, env: NodeJS.ProcessEnv = process.env): string[] {
+  return engineCandidates(id, env)
+}
 
 /**
  * Ask one engine binary whether it exists. Injected runner for tests: in
@@ -40,6 +46,10 @@ export function checkBinary(
       onDone: (error: unknown, stdout: string) => void,
     ) => void
     timeoutMs?: number
+    /** Which of the known install spots exist — a test seam over existsSync. */
+    exists?: (path: string) => boolean
+    /** The absolute spots to probe — a test seam over defaultCandidates. */
+    candidates?: string[]
   } = {},
 ): Promise<EngineAvailability> {
   const run =
@@ -49,14 +59,38 @@ export function checkBinary(
         onDone(error, typeof stdout === 'string' ? stdout : ''),
       )
     })
+  const exists = options.exists ?? ((p: string) => { try { return existsSync(p) } catch { return false } })
+  const candidates = (options.candidates ?? defaultCandidates(id)).filter(exists)
   return new Promise((resolve) => {
     run(command, ['--version'], (error, stdout) => {
-      resolve({
-        id,
-        found: !error && plausibleVersion(stdout),
-        version: !error && plausibleVersion(stdout) ? stdout.trim().split('\n')[0].slice(0, 80) : '',
-        install: INSTALL_HINT[id],
-      })
+      if (!error && plausibleVersion(stdout)) {
+        resolve({ id, found: true, version: stdout.trim().split('\n')[0].slice(0, 80), path: command, install: INSTALL_HINT[id] })
+        return
+      }
+      // The PATH answer failed. Before declaring the engine missing, probe
+      // the known install spots by absolute path — the real machine staged
+      // engines while the shell PATH snapshot was still stale, and bare-name
+      // spawns answered with "'agy' is not recognized".
+      const probeNext = (index: number): void => {
+        if (index >= candidates.length) {
+          resolve({ id, found: false, version: '', install: INSTALL_HINT[id] })
+          return
+        }
+        run(candidates[index], ['--version'], (probeError, probeOut) => {
+          if (!probeError && plausibleVersion(probeOut)) {
+            resolve({
+              id,
+              found: true,
+              version: probeOut.trim().split('\n')[0].slice(0, 80),
+              path: candidates[index],
+              install: INSTALL_HINT[id],
+            })
+            return
+          }
+          probeNext(index + 1)
+        })
+      }
+      probeNext(0)
     })
   })
 }
@@ -65,9 +99,10 @@ const CACHE_MS = 30_000
 const cache = new Map<EngineId, { at: number; answer: EngineAvailability }>()
 
 /** Cached once per short window so the bay can ask on every open. */
-export async function detectEngine(id: EngineId): Promise<EngineAvailability> {
+/** `fresh` skips the cache — the bay's Re-scan after you installed something. */
+export async function detectEngine(id: EngineId, fresh = false): Promise<EngineAvailability> {
   const hit = cache.get(id)
-  if (hit && Date.now() - hit.at < CACHE_MS) return hit.answer
+  if (!fresh && hit && Date.now() - hit.at < CACHE_MS) return hit.answer
   const answer = await checkBinary(id === 'agy' ? 'agy' : 'claude', id)
   cache.set(id, { at: Date.now(), answer })
   return answer

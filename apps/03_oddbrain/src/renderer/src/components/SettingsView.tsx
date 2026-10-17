@@ -6,6 +6,7 @@ import BrainStructureSection from './BrainStructureSection'
 import SkillsCatalogSection from './SkillsCatalogSection'
 import BrowserControlSection from './BrowserControlSection'
 import ModsSection from './ModsSection'
+import ErrorBoundary from './ErrorBoundary'
 import EngineBay from './EngineBay'
 import RecipesSection from './RecipesSection'
 import HooksSection from './HooksSection'
@@ -1449,7 +1450,7 @@ export default function SettingsView({
                 <div key={row.label} className="grid gap-1.5 sm:grid-cols-[180px_1fr] sm:gap-4">
                   <div className="text-[12.5px] text-muted sm:pt-1">{row.label}</div>
                   <div className="min-w-0">
-                    {row.body}
+                    <ErrorBoundary label={row.label}>{row.body}</ErrorBoundary>
                     {appearance.rowExplanations && row.note ? (
                       <p className="mt-1.5 text-[11.5px] leading-relaxed text-muted">{row.note}</p>
                     ) : null}

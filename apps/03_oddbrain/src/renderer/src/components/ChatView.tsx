@@ -110,8 +110,8 @@ export default function ChatView({
   }
 
   return (
-    <main className="flex min-w-0 flex-1 flex-col">
-      <div ref={scroller} data-find-root onScroll={trackScroll} className="min-h-0 flex-1 overflow-y-auto">
+    <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <div ref={scroller} data-find-root data-find-scroll onScroll={trackScroll} className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-[var(--chat-width)] px-6 py-6">
           {messages.length === 0 ? (
             <EmptyState onPick={setDraft} name={profileName} words={mascotWords} />

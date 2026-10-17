@@ -522,7 +522,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-full flex-col bg-bg text-ink">
+    <div className="flex h-full flex-col overflow-hidden bg-bg text-ink">
       <TitleBar
         engineModel={engineStore().settings.model}
         engineId={engineStore().settings.id}

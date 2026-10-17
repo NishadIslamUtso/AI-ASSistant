@@ -17,7 +17,7 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join, resolve, sep } from 'node:path'
 import { normalizePack, type Pack } from '../../shared/lib/packs'
-import { cleanThemeAppearance } from './packs'
+import { cleanThemeAppearance, PACK_CSS_MAX } from './packs'
 import { packDigest } from './storeIndex'
 
 export type ExportInput = {
@@ -27,7 +27,7 @@ export type ExportInput = {
   /** Names of skills the engine already has; each is read from disk. */
   skills: string[]
   /** The app's current look, as the renderer holds it; optional. */
-  theme?: Record<string, string> | null
+  theme?: { appearance: Record<string, string>; css?: string } | Record<string, string> | null
 }
 
 export type ExportAnswer =
@@ -69,7 +69,12 @@ export function exportPack(
     return { ok: false, answer: 'That name does not make a usable folder id (lowercase letters, digits, dots, dashes).' }
   }
   const wanted = [...new Set(Array.isArray(input.skills) ? input.skills.slice(0, 30) : [])]
-  const themeAppearance = input.theme && typeof input.theme === 'object' ? input.theme : null
+  const themeInput = input.theme && typeof input.theme === 'object' ? input.theme : null
+  const themeAppearance =
+    themeInput && 'appearance' in themeInput && typeof themeInput.appearance === 'object'
+      ? (themeInput as { appearance: Record<string, string>; css?: string }).appearance
+      : (themeInput as Record<string, string> | null)
+  const themeCss = themeInput && 'css' in themeInput && typeof themeInput.css === 'string' ? themeInput.css.slice(0, PACK_CSS_MAX) : ''
   if (!wanted.length && !themeAppearance) {
     return { ok: false, answer: 'Pick at least one skill, or include the theme, an empty pack contributes nothing.' }
   }
@@ -86,7 +91,11 @@ export function exportPack(
     const theme = cleanThemeAppearance(themeAppearance)
     if (theme.problem || !theme.clean) return { ok: false, answer: theme.problem || 'The theme names a look the app does not offer.' }
     const themeName = cap(input.name, 60)
-    files['themes/pack.json'] = JSON.stringify({ name: `${themeName} theme`, appearance: theme.clean }, null, 2)
+    files['themes/pack.json'] = JSON.stringify(
+      { name: `${themeName} theme`, appearance: theme.clean, ...(themeCss ? { css: themeCss } : {}) },
+      null,
+      2,
+    )
     contributions.themes.push('themes/pack.json')
   }
 
