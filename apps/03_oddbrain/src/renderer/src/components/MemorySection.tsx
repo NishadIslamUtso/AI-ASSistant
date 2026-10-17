@@ -51,7 +51,7 @@ export default function MemorySection() {
           type="button"
           onClick={() => void runMemoryPass()}
           disabled={memory.running}
-          className={`mt-2 h-8 rounded-lg px-3 text-[12px] font-medium ${memory.running ? 'bg-white/[0.06] text-muted' : 'bg-accent text-white hover:bg-accent/90'}`}
+          className={`mt-2 h-8 rounded-lg px-3 text-[12px] font-medium ${memory.running ? 'bg-white/[0.06] text-muted' : 'bg-accent text-[var(--accent-ink)] hover:bg-accent/90'}`}
         >
           {memory.running ? 'Sending…' : 'Send the memory pass'}
         </button>

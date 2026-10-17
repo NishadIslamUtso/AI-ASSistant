@@ -187,7 +187,7 @@ export default function CodeView({
                   title={step.note}
                   onClick={() => void engine.setApproval(step.id)}
                   className={`rounded-lg px-2.5 py-1 text-[11.5px] transition-colors ${
-                    active ? 'bg-accent text-white' : 'border border-line text-muted hover:text-ink'
+                    active ? 'bg-accent text-[var(--accent-ink)]' : 'border border-line text-muted hover:text-ink'
                   }`}
                 >
                   {step.label}

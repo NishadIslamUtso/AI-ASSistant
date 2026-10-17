@@ -232,7 +232,7 @@ export default function Composer({
               aria-label="Send"
               title="Send (Enter)"
               className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
-                canSend ? 'bg-accent text-white hover:bg-accent/90' : 'bg-white/[0.06] text-muted'
+                canSend ? 'bg-accent text-[var(--accent-ink)] hover:bg-accent/90' : 'bg-white/[0.06] text-muted'
               }`}
             >
               <ArrowUp size={15} />
@@ -434,7 +434,7 @@ function CookDialog({ draft, onDone }: { draft: string; onDone: (next: string | 
             const lines = hits.filter(hit => picked[hit.path] === true).map(hit => `[${title(hit.path)}: ${hit.text.trim().slice(0, 120)}]`)
             onDone(lines.length ? `${lines.join('\n')}\n\n${draft}` : draft)
           }}
-          className="rounded-lg bg-accent px-3 py-1 text-[12px] font-medium text-white hover:bg-accent/90 disabled:opacity-50"
+          className="rounded-lg bg-accent px-3 py-1 text-[12px] font-medium text-[var(--accent-ink)] hover:bg-accent/90 disabled:opacity-50"
         >
           OK
         </button>
@@ -755,7 +755,7 @@ function RecipeRunDialog({ recipe, onClose }: { recipe: Recipe; onClose: () => v
             type="button"
             onClick={() => void run()}
             disabled={!rendered.ok || sending}
-            className={`flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-medium ${rendered.ok && !sending ? 'bg-accent text-white hover:bg-accent/90' : 'bg-white/[0.06] text-muted'}`}
+            className={`flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-medium ${rendered.ok && !sending ? 'bg-accent text-[var(--accent-ink)] hover:bg-accent/90' : 'bg-white/[0.06] text-muted'}`}
           >
             <Play size={11} aria-hidden />
             {sending ? 'Sending…' : 'Run'}
@@ -828,7 +828,7 @@ function MapButton({ onInsert }: { onInsert: (mapBlock: string) => void }) {
                   <button
                     type="button"
                     onClick={() => { onInsert(mapContextBlock(answer.map ?? '')); setOpen(false) }}
-                    className="h-8 rounded-lg bg-accent px-3 text-[12.5px] font-medium text-white hover:bg-accent/90"
+                    className="h-8 rounded-lg bg-accent px-3 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-accent/90"
                   >
                     Add to message
                   </button>

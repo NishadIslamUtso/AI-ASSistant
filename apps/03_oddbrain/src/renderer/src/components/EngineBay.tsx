@@ -268,7 +268,7 @@ export default function EngineBay() {
               title={step.note}
               onClick={() => void engine.setApproval(step.id)}
               className={`rounded-md px-1 py-1 text-[11px] transition-colors ${
-                active ? 'bg-accent text-white' : 'text-muted hover:text-ink'
+                active ? 'bg-accent text-[var(--accent-ink)]' : 'text-muted hover:text-ink'
               }`}
             >
               {step.label}

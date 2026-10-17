@@ -224,7 +224,7 @@ export default function VaultView({ onAddToComposer }: { onAddToComposer: (path:
                   type="button"
                   onClick={() => onAddToComposer(selected.path, selected.content)}
                   title="Put this note into the composer as context"
-                  className="shrink-0 rounded-lg bg-accent px-2.5 py-1 text-[11.5px] font-medium text-white hover:bg-accent/90"
+                  className="shrink-0 rounded-lg bg-accent px-2.5 py-1 text-[11.5px] font-medium text-[var(--accent-ink)] hover:bg-accent/90"
                 >
                   Add to composer
                 </button>

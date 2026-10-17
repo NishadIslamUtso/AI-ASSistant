@@ -64,7 +64,7 @@ export default function SplitSection() {
               type="button"
               onClick={() => void breakDown()}
               disabled={split.phase === 'splitting'}
-              className={`h-7 rounded-lg px-3 text-[12px] font-medium ${split.phase === 'splitting' ? 'bg-white/[0.06] text-muted' : 'bg-accent text-white hover:bg-accent/90'}`}
+              className={`h-7 rounded-lg px-3 text-[12px] font-medium ${split.phase === 'splitting' ? 'bg-white/[0.06] text-muted' : 'bg-accent text-[var(--accent-ink)] hover:bg-accent/90'}`}
             >
               {split.phase === 'splitting' ? 'Breaking it down…' : 'Break it down'}
             </button>
@@ -105,7 +105,7 @@ export default function SplitSection() {
           <button
             type="button"
             onClick={() => void runSteps()}
-            className="h-7 rounded-lg bg-accent px-3 text-[12px] font-medium text-white hover:bg-accent/90"
+            className="h-7 rounded-lg bg-accent px-3 text-[12px] font-medium text-[var(--accent-ink)] hover:bg-accent/90"
           >
             Run the steps
           </button>

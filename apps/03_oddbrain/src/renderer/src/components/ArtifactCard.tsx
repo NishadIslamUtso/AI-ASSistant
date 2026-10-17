@@ -288,7 +288,7 @@ export default function ArtifactCard({
               type="button"
               onClick={() => void submitComment()}
               disabled={busy || !comment.trim()}
-              className="flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-[12px] font-medium text-white disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-[12px] font-medium text-[var(--accent-ink)] disabled:opacity-50"
             >
               {busy ? <Loader2 size={12} className="animate-spin" /> : null}
               {busy ? 'Changing…' : 'Change this element'}

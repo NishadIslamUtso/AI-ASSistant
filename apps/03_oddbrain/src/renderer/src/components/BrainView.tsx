@@ -66,7 +66,7 @@ export default function BrainView({
           <button
             type="button"
             onClick={onOpenVault}
-            className="mt-4 rounded-lg bg-accent px-3 py-1.5 text-[12.5px] font-medium text-white transition-colors hover:bg-accent/90"
+            className="mt-4 rounded-lg bg-accent px-3 py-1.5 text-[12.5px] font-medium text-[var(--accent-ink)] transition-colors hover:bg-accent/90"
           >
             Open Vault
           </button>

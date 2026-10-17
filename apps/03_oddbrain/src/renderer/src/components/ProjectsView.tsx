@@ -77,7 +77,7 @@ export default function ProjectsView({
           <button
             type="button"
             onClick={() => setCreating(true)}
-            className="ml-auto flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-[12.5px] font-medium text-white transition-colors hover:bg-accent/90"
+            className="ml-auto flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-[12.5px] font-medium text-[var(--accent-ink)] transition-colors hover:bg-accent/90"
           >
             <Plus size={13} aria-hidden /> New project
           </button>
@@ -106,7 +106,7 @@ export default function ProjectsView({
             <button
               type="submit"
               disabled={!name.trim()}
-              className="rounded-lg bg-accent px-3 py-1.5 text-[12.5px] font-medium text-white disabled:opacity-50"
+              className="rounded-lg bg-accent px-3 py-1.5 text-[12.5px] font-medium text-[var(--accent-ink)] disabled:opacity-50"
             >
               Create
             </button>
@@ -211,7 +211,7 @@ export default function ProjectsView({
                         <button
                           type="button"
                           onClick={() => saveEdit(project.id)}
-                          className="rounded-lg bg-accent px-3 py-1.5 text-[12px] font-medium text-white"
+                          className="rounded-lg bg-accent px-3 py-1.5 text-[12px] font-medium text-[var(--accent-ink)]"
                         >
                           Save
                         </button>

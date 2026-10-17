@@ -154,6 +154,11 @@ export default function TodayView({
   const reads = entries.filter((entry) => isToday(entry.at, now))
   const day = now.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })
 
+  // A brand-new day reads one quiet line, not five separate "nothing yet"s:
+  // the sections stay for a PARTIAL day, where each has something honest to say.
+  const mapsQuiet = mapsState === 'empty' || (mapsState === 'ready' && reads.length === 0)
+  const allQuiet = !conversations.length && !made.length && mapsQuiet && snapshotState === 'empty'
+
   return (
     <div className="flex-1 overflow-y-auto" aria-label="Today">
       <div className="mx-auto w-full max-w-[var(--chat-width)] px-4 py-8">
@@ -164,21 +169,15 @@ export default function TodayView({
           <button
             type="button"
             onClick={onNew}
-            className="ml-auto rounded-lg bg-accent px-3 py-1.5 text-[12.5px] font-medium text-white transition-colors hover:bg-accent/90"
+            className="ml-auto rounded-lg bg-accent px-3 py-1.5 text-[12.5px] font-medium text-[var(--accent-ink)] transition-colors hover:bg-accent/90"
           >
             New chat
           </button>
         </header>
 
-        {/* Quick actions: only doors the app really has, wired to real handlers. */}
+        {/* Quick actions: only doors the app really has, wired to real handlers.
+            New chat lives once, in the header above. */}
         <div className="mt-5 flex flex-wrap items-center gap-2" aria-label="Quick actions">
-          <button
-            type="button"
-            onClick={onNew}
-            className="rounded-lg bg-accent px-3 py-1.5 text-[12.5px] font-medium text-white transition-colors hover:bg-accent/90"
-          >
-            New chat
-          </button>
           <button
             type="button"
             onClick={() => onView('artifacts')}
@@ -211,6 +210,17 @@ export default function TodayView({
           </div>
         </section>
 
+        {allQuiet ? (
+          <section className="mt-6" aria-label="So far today">
+            <div className="rounded-xl border border-line bg-card px-4 py-6 text-center">
+              <p className="text-[13px] text-ink">A quiet day so far.</p>
+              <p className="mx-auto mt-1.5 max-w-[380px] text-[12.5px] leading-relaxed text-muted">
+                Today&rsquo;s conversations, work and reading will fill this page in as they happen.
+              </p>
+            </div>
+          </section>
+        ) : (
+          <>
         <section className="mt-6" aria-label="Current snapshot">
           <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted">Current snapshot</h2>
           {snapshotState === 'ready' ? (
@@ -313,6 +323,8 @@ export default function TodayView({
             </ul>
           )}
         </section>
+          </>
+        )}
       </div>
     </div>
   )

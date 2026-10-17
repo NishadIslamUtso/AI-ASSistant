@@ -137,6 +137,8 @@ type Row = {
   label: string
   /** Extra words the same search should find this row by. */
   terms?: string
+  /** The quiet explanation line, shown only while Appearance > Row explanations is on. */
+  note?: string
   body: ReactNode
 }
 
@@ -786,8 +788,9 @@ export default function SettingsView({
       {
         label: 'Theme',
         terms: 'theme dark light system appearance night day palette',
+        note: 'System follows the OS. Dark is the app\u2019s own palette.',
         body: (
-          <div className="flex gap-1.5">
+          <div className="flex flex-wrap gap-1.5 sm:justify-end">
             {THEMES.map(theme => (
               <button
                 key={theme.name}
@@ -810,8 +813,9 @@ export default function SettingsView({
       {
         label: 'Accent',
         terms: 'colour color theme violet blue teal amber rose',
+        note: 'The text on accent buttons picks its own readable ink, so every colour stays legible.',
         body: (
-          <div className="flex gap-1.5">
+          <div className="flex flex-wrap gap-1.5 sm:justify-end">
             {ACCENTS.map(accent => (
               <button
                 key={accent.name}
@@ -833,7 +837,7 @@ export default function SettingsView({
         label: 'Transcript text size',
         terms: 'text size small medium large font reading transcript',
         body: (
-          <div className="flex gap-1.5">
+          <div className="flex flex-wrap gap-1.5 sm:justify-end">
             {TEXT_SIZES.map(size => (
               <button
                 key={size.name}
@@ -858,7 +862,7 @@ export default function SettingsView({
         label: 'Chat font',
         terms: 'font serif sans reading typeface',
         body: (
-          <div className="flex gap-1.5">
+          <div className="flex flex-wrap gap-1.5 sm:justify-end">
             {FONTS.map(font => (
               <button
                 key={font.name}
@@ -882,6 +886,7 @@ export default function SettingsView({
       {
         label: 'Quick window',
         terms: 'quick window hotkey global shortcut ask anywhere Ctrl+Shift+O',
+        note: 'Ctrl+Shift+O opens the small window \u2014 the same engine, the same cards.',
         body: (
           <QuickShortcutRow />
         ),
@@ -890,7 +895,7 @@ export default function SettingsView({
         label: 'Motion',
         terms: 'animation motion calm balanced playful still reduced pulse streaming',
         body: (
-          <div className="flex gap-1.5">
+          <div className="flex flex-wrap gap-1.5 sm:justify-end">
             {MOTIONS.map(mode => (
               <button
                 key={mode.name}
@@ -914,7 +919,7 @@ export default function SettingsView({
         label: 'Conversation width',
         terms: 'column readable layout focused comfortable wide',
         body: (
-          <div className="flex gap-1.5">
+          <div className="flex flex-wrap gap-1.5 sm:justify-end">
             {WIDTHS.map(width => (
               <button
                 key={width.name}
@@ -930,6 +935,62 @@ export default function SettingsView({
                 title={`${width.px} pixels wide`}
               >
                 {width.label}
+              </button>
+            ))}
+          </div>
+        ),
+      },
+      {
+        label: 'Mascot mood words',
+        terms: 'mascot mood word caption appreciating welcome greeting words',
+        note: 'The little word under the mascot on the home screen.',
+        body: (
+          <div className="flex flex-wrap gap-1.5 sm:justify-end">
+            {[
+              { label: 'On', value: true },
+              { label: 'Off', value: false },
+            ].map(option => (
+              <button
+                key={option.label}
+                type="button"
+                className={`rounded-full border px-3 py-1 text-[12px] ${
+                  appearance.mascotWords === option.value
+                    ? 'border-accent bg-accent/15 text-ink'
+                    : 'border-line text-muted hover:bg-white/[0.06]'
+                }`}
+                onClick={() => onAppearanceChange({ ...appearance, mascotWords: option.value })}
+                aria-label={`Mascot mood words: ${option.label}`}
+                aria-pressed={appearance.mascotWords === option.value}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        ),
+      },
+      {
+        label: 'Row explanations',
+        terms: 'row explanations notes terse help text quiet',
+        note: 'On, a quiet line under some rows explains it. Off, the rows are terse.',
+        body: (
+          <div className="flex flex-wrap gap-1.5 sm:justify-end">
+            {[
+              { label: 'On', value: true },
+              { label: 'Off', value: false },
+            ].map(option => (
+              <button
+                key={option.label}
+                type="button"
+                className={`rounded-full border px-3 py-1 text-[12px] ${
+                  appearance.rowExplanations === option.value
+                    ? 'border-accent bg-accent/15 text-ink'
+                    : 'border-line text-muted hover:bg-white/[0.06]'
+                }`}
+                onClick={() => onAppearanceChange({ ...appearance, rowExplanations: option.value })}
+                aria-label={`Row explanations: ${option.label}`}
+                aria-pressed={appearance.rowExplanations === option.value}
+              >
+                {option.label}
               </button>
             ))}
           </div>
@@ -1361,7 +1422,7 @@ export default function SettingsView({
           </button>
         </header>
 
-        <div className="w-full max-w-[720px] px-5 py-5">
+        <div className="mx-auto w-full max-w-[720px] px-5 py-5">
           {rows.length === 0 ? (
             <p className="text-[12.5px] text-muted">Nothing here matches “{query.trim()}”.</p>
           ) : (
@@ -1369,7 +1430,12 @@ export default function SettingsView({
               {rows.map(row => (
                 <div key={row.label} className="grid gap-1.5 sm:grid-cols-[180px_1fr] sm:gap-4">
                   <div className="text-[12.5px] text-muted sm:pt-1">{row.label}</div>
-                  <div className="min-w-0">{row.body}</div>
+                  <div className="min-w-0">
+                    {row.body}
+                    {appearance.rowExplanations && row.note ? (
+                      <p className="mt-1.5 text-[11.5px] leading-relaxed text-muted">{row.note}</p>
+                    ) : null}
+                  </div>
                 </div>
               ))}
             </div>
@@ -1386,7 +1452,7 @@ export default function SettingsView({
 function QuickShortcutRow(): React.JSX.Element {
   const [on, setOn] = usePersistentState<boolean>('oddbrain.quickShortcut', true)
   return (
-    <div className="flex gap-1.5">
+    <div className="flex flex-wrap gap-1.5 sm:justify-end">
       {[
         { label: 'On', value: true },
         { label: 'Off', value: false },
@@ -1406,7 +1472,6 @@ function QuickShortcutRow(): React.JSX.Element {
           {option.label}
         </button>
       ))}
-      <span className="ml-2 self-center text-[11.5px] text-muted">Ctrl+Shift+O opens the small window — the same engine, the same cards.</span>
     </div>
   )
 }

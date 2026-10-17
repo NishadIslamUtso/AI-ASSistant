@@ -64,7 +64,7 @@ export default function WatchSection() {
               type="button"
               onClick={() => void start()}
               disabled={starting || !order.trim()}
-              className={`h-8 rounded-lg px-3 text-[12px] font-medium ${order.trim() && !starting ? 'bg-accent text-white hover:bg-accent/90' : 'bg-white/[0.06] text-muted'}`}
+              className={`h-8 rounded-lg px-3 text-[12px] font-medium ${order.trim() && !starting ? 'bg-accent text-[var(--accent-ink)] hover:bg-accent/90' : 'bg-white/[0.06] text-muted'}`}
             >
               {starting ? 'Starting…' : 'Watch the working folder'}
             </button>

@@ -50,6 +50,7 @@ export default function ChatView({
   attachments = [],
   onFiles,
   onDetach,
+  mascotWords = true,
 }: {
   chat: Chat | null
   draft: string
@@ -83,6 +84,8 @@ export default function ChatView({
   projects?: Project[]
   project?: string | null
   onProject?: (id: string | null) => void
+  /** Appearance > Mascot mood words: the little word under the mascot. */
+  mascotWords?: boolean
 }) {
   const scroller = useRef<HTMLDivElement | null>(null)
   const follow = useRef(true)
@@ -111,7 +114,7 @@ export default function ChatView({
       <div ref={scroller} data-find-root onScroll={trackScroll} className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-[var(--chat-width)] px-6 py-6">
           {messages.length === 0 ? (
-            <EmptyState onPick={setDraft} name={profileName} />
+            <EmptyState onPick={setDraft} name={profileName} words={mascotWords} />
           ) : (
             <div className="flex flex-col gap-7">
               {messages.map(message => (
@@ -157,20 +160,28 @@ export default function ChatView({
   )
 }
 
-function EmptyState({ onPick, name = '' }: { onPick: (value: string) => void; name?: string }) {
+function EmptyState({
+  onPick,
+  name = '',
+  words = true,
+}: {
+  onPick: (value: string) => void
+  name?: string
+  words?: boolean
+}) {
   return (
     <div className="flex flex-col items-center pt-20 text-center">
       {/* The kit's resting scene carries the hero's personality; the honest
           state (idle, nothing running) is this screen itself. The brand mark
-          stays in the title bar — the logo never moves. */}
-      <Mascot role="resting" size={104} withWord seed={1} />
+          stays in the title bar — the logo never moves. The mood word is a
+          switch (Appearance > Mascot mood words), default on. */}
+      <Mascot role="resting" size={104} seed={1} {...(words ? { withWord: true } : {})} />
       <h1 className="mt-3 text-[30px] font-semibold tracking-tight [font-family:var(--transcript-font)]">
         {greetingFor(name)}
       </h1>
-      <h2 className="mt-5 text-[15px] font-medium">How can I help you today?</h2>
-      <p className="mt-2 max-w-[420px] text-[13px] leading-relaxed text-muted">
-        The engines run on this machine. A brain without the <b>cloud</b> badge never
-        sends work anywhere; a brain wearing it sends its work to that brain&rsquo;s own
+      <p className="mt-4 max-w-[420px] text-[13px] leading-relaxed text-muted">
+        How can I help? The engines run on this machine. A brain without the <b>cloud</b> badge
+        never sends work anywhere; a brain wearing it sends its work to that brain&rsquo;s own
         service — the chip says which kind is picked.
       </p>
       <ul className="mt-7 flex w-full max-w-[520px] flex-col gap-2">

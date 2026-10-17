@@ -268,7 +268,7 @@ export default function ArtifactsView({
                       </button>
 
                       {active ? (
-                        <span className="pointer-events-none absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-white">
+                        <span className="pointer-events-none absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-[var(--accent-ink)]">
                           <Check size={13} />
                         </span>
                       ) : null}
@@ -406,7 +406,7 @@ export default function ArtifactsView({
                   <button
                     type="button"
                     onClick={() => void restore()}
-                    className="h-7 rounded-md bg-accent px-2.5 text-[11.5px] font-medium text-white transition-colors hover:bg-accent/90"
+                    className="h-7 rounded-md bg-accent px-2.5 text-[11.5px] font-medium text-[var(--accent-ink)] transition-colors hover:bg-accent/90"
                   >
                     Save v{version} again
                   </button>

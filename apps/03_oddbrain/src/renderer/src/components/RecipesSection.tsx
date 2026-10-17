@@ -238,7 +238,7 @@ function RecipeEditor({ initial, onClose }: { initial: Recipe; onClose: () => vo
           <button type="button" onClick={onClose} className="h-8 rounded-lg border border-line px-3 text-[12px] text-muted hover:text-ink">
             Cancel
           </button>
-          <button type="button" onClick={() => void submit()} className="h-8 rounded-lg bg-accent px-3 text-[12.5px] font-medium text-white hover:bg-accent/90">
+          <button type="button" onClick={() => void submit()} className="h-8 rounded-lg bg-accent px-3 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-accent/90">
             Save
           </button>
         </div>

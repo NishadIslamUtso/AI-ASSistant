@@ -30,7 +30,7 @@ test('the default appearance is what the app already looked like, token for toke
   assert.equal(DEFAULT_APPEARANCE.accent, 'violet')
   assert.equal(DEFAULT_APPEARANCE.width, 'comfortable')
   // The theme's own accent. Choosing violet chooses what was always there.
-  assert.equal(accentHex('violet'), '#7c5cff')
+  assert.equal(accentHex('violet'), '#7350ff')
   // ...and the width the conversation column already used.
   assert.equal(chatWidthPx('comfortable'), 760)
 })
@@ -45,6 +45,7 @@ test('the conversation column reads the token rather than a fixed number', () =>
 test('an appearance rewrites its tokens, and nothing else', () => {
   const variables = appearanceVariables({ accent: 'teal', width: 'wide', textSize: 'large', font: 'serif', motion: 'still' })
   assert.deepEqual(Object.keys(variables).sort(), [
+    '--accent-ink',
     '--chat-width',
     '--color-accent',
     '--motion',
@@ -89,6 +90,8 @@ test('a half-written preference falls back field by field, never to nothing', ()
     textSize: 'medium',
     font: 'sans',
     motion: 'system',
+    mascotWords: true,
+    rowExplanations: true,
   })
   assert.deepEqual(normalizeAppearance({ width: 'wide' }), {
     theme: 'system',
@@ -97,6 +100,8 @@ test('a half-written preference falls back field by field, never to nothing', ()
     textSize: 'medium',
     font: 'sans',
     motion: 'system',
+    mascotWords: true,
+    rowExplanations: true,
   })
   assert.deepEqual(normalizeAppearance({ accent: 'blue', width: 'focused', theme: 'light' }), {
     theme: 'light',
@@ -105,6 +110,8 @@ test('a half-written preference falls back field by field, never to nothing', ()
     textSize: 'medium',
     font: 'sans',
     motion: 'system',
+    mascotWords: true,
+    rowExplanations: true,
   })
 })
 
@@ -120,6 +127,7 @@ test('applying writes both variables onto the root, and nothing besides', () => 
   applyAppearance({ accent: 'amber', width: 'focused' }, root)
   assert.deepEqual(written, {
     '--color-accent': '#e0a44a',
+    '--accent-ink': '#1f1d1a',
     '--chat-width': '640px',
     '--transcript-size': '14.5px',
     '--transcript-font': "system-ui, 'Segoe UI', sans-serif",
@@ -174,6 +182,7 @@ test('the boot path applies what is stored before the first paint', () => {
   }
   assert.deepEqual(written, {
     '--color-accent': '#4f8bf5',
+    '--accent-ink': '#1f1d1a',
     '--chat-width': '1040px',
     '--transcript-size': '16.5px',
     '--transcript-font': "Georgia, 'Times New Roman', serif",

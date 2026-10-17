@@ -34,17 +34,28 @@ export type Appearance = {
   font: FontName
   /** The motion modes of the OddBrain kit; a stored 'reduced' reads as 'still'. */
   motion: MotionName
+  /** The little mood word under the mascot on the home screen. */
+  mascotWords: boolean
+  /** The quiet explanation line under a settings row. Off, the rows are terse. */
+  rowExplanations: boolean
 }
 
 export const APPEARANCE_KEY = 'ai-assistant.appearance'
 
-/** Violet is the theme's own accent, so the default changes nothing. */
-export const ACCENTS: readonly { name: AccentName; label: string; hex: string }[] = Object.freeze([
-  { name: 'violet', label: 'Violet', hex: '#7c5cff' },
-  { name: 'blue', label: 'Blue', hex: '#4f8bf5' },
-  { name: 'teal', label: 'Teal', hex: '#2fb3a2' },
-  { name: 'amber', label: 'Amber', hex: '#e0a44a' },
-  { name: 'rose', label: 'Rose', hex: '#e0688b' },
+/**
+ * Every accent ships with its own ink: the colour of text painted on it.
+ * It is not decoration — it is the readability guarantee. White text on the
+ * raw hues fails the WCAG line on all five (violet 4.35:1, amber 2.19:1),
+ * so violet is deepened just enough for white to clear 4.5:1, and the four
+ * lighter hues carry near-black ink instead. tests/accent-contrast.test.ts
+ * computes the ratios, so no hue can ship unreadable again.
+ */
+export const ACCENTS: readonly { name: AccentName; label: string; hex: string; ink: string }[] = Object.freeze([
+  { name: 'violet', label: 'Violet', hex: '#7350ff', ink: '#ffffff' },
+  { name: 'blue', label: 'Blue', hex: '#4f8bf5', ink: '#1f1d1a' },
+  { name: 'teal', label: 'Teal', hex: '#2fb3a2', ink: '#1f1d1a' },
+  { name: 'amber', label: 'Amber', hex: '#e0a44a', ink: '#1f1d1a' },
+  { name: 'rose', label: 'Rose', hex: '#e0688b', ink: '#1f1d1a' },
 ])
 
 /** Comfortable is the width the conversation already used. */
@@ -90,10 +101,17 @@ export const DEFAULT_APPEARANCE: Appearance = Object.freeze({
   textSize: 'medium',
   font: 'sans',
   motion: 'system',
+  mascotWords: true,
+  rowExplanations: true,
 })
 
 export function accentHex(name: AccentName): string {
   return (ACCENTS.find(accent => accent.name === name) || ACCENTS[0]).hex
+}
+
+/** The readable text colour for an accent, as `--accent-ink`. */
+export function accentInk(name: AccentName): string {
+  return (ACCENTS.find(accent => accent.name === name) || ACCENTS[0]).ink
 }
 
 export function chatWidthPx(name: WidthName): number {
@@ -124,6 +142,9 @@ export function normalizeAppearance(value: unknown): Appearance {
       : (input as { motion?: unknown }).motion === 'reduced'
         ? 'still'
         : DEFAULT_APPEARANCE.motion,
+    mascotWords: typeof input.mascotWords === 'boolean' ? input.mascotWords : DEFAULT_APPEARANCE.mascotWords,
+    rowExplanations:
+      typeof input.rowExplanations === 'boolean' ? input.rowExplanations : DEFAULT_APPEARANCE.rowExplanations,
   }
 }
 
@@ -144,6 +165,7 @@ export function fontStack(name: FontName): string {
 export function appearanceVariables(appearance: Appearance): Record<string, string> {
   return {
     '--color-accent': accentHex(appearance.accent),
+    '--accent-ink': accentInk(appearance.accent),
     '--chat-width': `${chatWidthPx(appearance.width)}px`,
     '--transcript-size': `${textSizePx(appearance.textSize)}px`,
     '--transcript-font': fontStack(appearance.font),

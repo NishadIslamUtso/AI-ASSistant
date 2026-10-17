@@ -72,7 +72,7 @@ export default function HouseRulesSection() {
           type="button"
           onClick={() => void save()}
           disabled={saving}
-          className="rounded-lg bg-accent px-3 py-1.5 text-[12.5px] font-medium text-white hover:bg-accent/90 disabled:opacity-50"
+          className="rounded-lg bg-accent px-3 py-1.5 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-accent/90 disabled:opacity-50"
         >
           {saving ? 'Delivering…' : 'Save and deliver to every engine'}
         </button>

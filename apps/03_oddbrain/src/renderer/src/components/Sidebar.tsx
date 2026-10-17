@@ -134,7 +134,7 @@ export default function Sidebar({
           onClick={onNew}
           aria-label="New chat"
           title="New chat"
-          className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-white transition-colors hover:bg-accent/90"
+          className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-[var(--accent-ink)] transition-colors hover:bg-accent/90"
         >
           <Plus size={15} />
         </button>
@@ -199,7 +199,7 @@ export default function Sidebar({
         <button
           type="button"
           onClick={onNew}
-          className="flex h-10 items-center justify-center gap-1.5 rounded-lg bg-accent text-[13px] font-medium text-white transition-colors hover:bg-accent/90"
+          className="flex h-10 items-center justify-center gap-1.5 rounded-lg bg-accent text-[13px] font-medium text-[var(--accent-ink)] transition-colors hover:bg-accent/90"
         >
           <Plus size={15} />
           New chat

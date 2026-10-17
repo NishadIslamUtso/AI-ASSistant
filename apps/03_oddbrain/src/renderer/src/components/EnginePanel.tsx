@@ -516,7 +516,7 @@ function CompactDialog({ onClose }: { onClose: () => void }) {
                 type="button"
                 onClick={() => void writeBrief()}
                 disabled={compact.phase === 'briefing'}
-                className={`flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-medium ${compact.phase === 'briefing' ? 'bg-white/[0.06] text-muted' : 'bg-accent text-white hover:bg-accent/90'}`}
+                className={`flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12.5px] font-medium ${compact.phase === 'briefing' ? 'bg-white/[0.06] text-muted' : 'bg-accent text-[var(--accent-ink)] hover:bg-accent/90'}`}
               >
                 {compact.phase === 'briefing' ? 'Pouring…' : 'Write the brief'}
               </button>
@@ -549,7 +549,7 @@ function CompactDialog({ onClose }: { onClose: () => void }) {
                   type="button"
                   onClick={() => void finishCompact().then((ok) => { if (ok) onClose() })}
                   disabled={compact.phase === 'ending'}
-                  className={`h-8 rounded-lg px-3 text-[12.5px] font-medium ${compact.phase === 'ending' ? 'bg-white/[0.06] text-muted' : 'bg-accent text-white hover:bg-accent/90'}`}
+                  className={`h-8 rounded-lg px-3 text-[12.5px] font-medium ${compact.phase === 'ending' ? 'bg-white/[0.06] text-muted' : 'bg-accent text-[var(--accent-ink)] hover:bg-accent/90'}`}
                 >
                   {compact.phase === 'ending' ? 'Ending…' : 'Compact now'}
                 </button>

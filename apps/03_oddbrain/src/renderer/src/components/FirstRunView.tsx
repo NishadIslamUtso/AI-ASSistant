@@ -140,7 +140,7 @@ export default function FirstRunView({
                     aria-checked={active}
                     onClick={() => void engine.setApproval(option.id)}
                     className={`rounded-lg px-2.5 py-1.5 text-[11.5px] ${
-                      active ? 'bg-accent text-white' : 'border border-line text-muted hover:text-ink'
+                      active ? 'bg-accent text-[var(--accent-ink)]' : 'border border-line text-muted hover:text-ink'
                     }`}
                   >
                     {option.label}
@@ -181,7 +181,7 @@ export default function FirstRunView({
             <button
               type="button"
               onClick={finish}
-              className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-[13px] font-medium text-white hover:bg-accent/90"
+              className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-[13px] font-medium text-[var(--accent-ink)] hover:bg-accent/90"
             >
               Start <ArrowRight size={13} aria-hidden />
             </button>
@@ -215,7 +215,7 @@ function StepButtons({
           type="button"
           onClick={next}
           disabled={nextDisabled}
-          className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-[12.5px] font-medium text-white hover:bg-accent/90 disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-accent/90 disabled:opacity-50"
         >
           {nextLabel} <ArrowRight size={12} aria-hidden />
         </button>

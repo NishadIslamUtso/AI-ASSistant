@@ -103,7 +103,7 @@ function QuickMode(): React.JSX.Element {
           onClick={send}
           disabled={!draft.trim() || turnRunning}
           aria-label="Send"
-          className="rounded-xl bg-accent px-3 py-2 text-[12.5px] font-medium text-white hover:bg-accent/90 disabled:opacity-50"
+          className="rounded-xl bg-accent px-3 py-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-accent/90 disabled:opacity-50"
         >
           Send
         </button>
@@ -631,6 +631,7 @@ export default function App() {
           />
         ) : (
         <ChatView
+          mascotWords={appearance.mascotWords}
           chat={chat}
           draft={draft}
           setDraft={setDraft}
