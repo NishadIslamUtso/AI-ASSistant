@@ -26,6 +26,12 @@ export type WatchFireInput = {
   names: string[]
   /** Files to ignore once: the engine touched these during the last run. */
   suppressed: string[]
+  /**
+   * When the suppression was harvested. The note promises ONE cooldown of
+   * ignoring, not forever: past it, an engine-written file is the person's
+   * file again, and an edit to it fires. Absent (old callers) means live.
+   */
+  suppressedAt?: number
   now: number
   lastEventAt: number
   lastFireAt: number
@@ -55,9 +61,10 @@ export function shouldWatchFire(input: WatchFireInput): WatchFireDecision {
   if (input.now < input.cooldownUntil) return { fire: false, why: 'cooldown' }
   if (input.now - input.lastEventAt < watchDebounceMs()) return { fire: false, why: 'debounce' }
   if (input.lastFireAt > 0 && input.now - input.lastFireAt < WATCH_MIN_GAP_MS) return { fire: false, why: 'gap' }
+  const suppressionLive = input.suppressedAt === undefined || input.now - input.suppressedAt < WATCH_COOLDOWN_MS
   const names = input.names
     .filter(name => watchableName(name))
-    .filter(name => !input.suppressed.some(hidden => samePath(name, hidden)))
+    .filter(name => !(suppressionLive && input.suppressed.some(hidden => samePath(name, hidden))))
   if (!names.length) return { fire: false, why: 'nothing-watchable' }
   return { fire: true, names: names.slice(0, WATCH_MAX_NAMES) }
 }

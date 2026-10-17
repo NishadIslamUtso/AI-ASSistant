@@ -87,6 +87,21 @@ test('suppression matches absolute engine paths against relative watch names', a
   assert.equal(decision.why, 'nothing-watchable')
 })
 
+test('suppression is one cooldown, not forever: an old harvest expires', async () => {
+  const { shouldWatchFire, WATCH_COOLDOWN_MS } = await import('../src/shared/lib/watchMode')
+  const decision = shouldWatchFire({
+    names: ['notes.md'],
+    suppressed: ['C:\\vault\\notes.md'],
+    suppressedAt: 10_000 - WATCH_COOLDOWN_MS - 1,
+    now: 10_000,
+    lastEventAt: 0,
+    lastFireAt: 0,
+    cooldownUntil: 0,
+    busy: false,
+  })
+  assert.ok(decision.fire, 'past the cooldown the engine-written file is the person\u2019s file again, and its change fires')
+})
+
 test('the order carries the trigger names and the anti-loop line', () => {
   const order = watchOrder(['a.md', 'b.md'], 'Summarise what changed in one line.')
   assert.match(order, /^Summarise what changed in one line\./)

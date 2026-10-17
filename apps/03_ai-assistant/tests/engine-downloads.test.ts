@@ -1,6 +1,7 @@
 // @vitest-environment node
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { existsSync } from 'node:fs'
 import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -219,6 +220,79 @@ test('the staged installer runs only on Windows, and the command is shown in ful
   assert.deepEqual(win.command, ['powershell', '-ExecutionPolicy', 'Bypass', '-File', join(root, 'claude-code', 'install.ps1')])
   const other = manager.runInstaller('ollama', 'win32')
   assert.equal(other.ok, false, 'a zip has no installer to run')
+  await rm(root, { recursive: true, force: true })
+})
+
+test('a redirect may not outrank the endpoint pin', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'dl6-'))
+  const manager = createDownloadManager({
+    root,
+    fetchImpl: async () => ({
+      ok: false,
+      status: 302,
+      headers: { get: (name) => (name === 'location' ? 'https://mirror.example/steal.ps1' : null) },
+    }),
+    onTick: () => undefined,
+  })
+  const answer = await manager.start('claude-code')
+  assert.equal(answer.ok, false, answer.answer)
+  assert.match(answer.answer, /redirect/)
+  assert.equal(existsSync(join(root, 'claude-code')), false, 'nothing staged from a hijacked hop')
+  await rm(root, { recursive: true, force: true })
+})
+
+test('a redirect that stays on the official host is followed', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'dl7-'))
+  let first = true
+  const manager = createDownloadManager({
+    root,
+    fetchImpl: async (url) => {
+      if (first) {
+        first = false
+        assert.equal(url, 'https://claude.ai/install.ps1')
+        return { ok: false, status: 302, headers: { get: (name) => (name === 'location' ? 'https://claude.ai/install.ps1' : null) } }
+      }
+      return {
+        ok: true,
+        status: 200,
+        headers: { get: (name) => (name === 'content-length' ? '11' : null) },
+        arrayBuffer: async () => new TextEncoder().encode('hello brain').buffer,
+      }
+    },
+    onTick: () => undefined,
+  })
+  const answer = await manager.start('claude-code')
+  assert.equal(answer.ok, true, answer.answer)
+  await rm(root, { recursive: true, force: true })
+})
+
+test('the run button\u2019s door: the staged installer executes only when told, and says so', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'dl8-'))
+  const spawned: Array<{ command: string; args: string[] }> = []
+  const manager = createDownloadManager({
+    root,
+    fetchImpl: async () => ({
+      ok: true,
+      status: 200,
+      headers: { get: (name) => (name === 'content-length' ? '11' : null) },
+      arrayBuffer: async () => new TextEncoder().encode('hello brain').buffer,
+    }),
+    spawnImpl: ((command: string, args: string[]) => {
+      spawned.push({ command, args })
+      return { pid: 4321 }
+    }) as never,
+    onTick: () => undefined,
+  })
+  const early = await manager.executeInstaller('claude-code', 'win32')
+  assert.equal(early.ok, false, 'nothing staged, nothing runs')
+  await manager.start('claude-code')
+  const posix = await manager.executeInstaller('claude-code', 'linux')
+  assert.equal(posix.ok, false)
+  assert.match(posix.answer, /Windows/)
+  const win = await manager.executeInstaller('claude-code', 'win32')
+  assert.equal(win.ok, true, win.answer)
+  assert.deepEqual(spawned[0]?.command, 'powershell')
+  assert.deepEqual(spawned[0]?.args, ['-ExecutionPolicy', 'Bypass', '-File', join(root, 'claude-code', 'install.ps1')])
   await rm(root, { recursive: true, force: true })
 })
 

@@ -567,6 +567,7 @@ function registerBridges(): void {
   handle('engine:download:start', (_event, engine: string) => downloads.start(typeof engine === 'string' ? engine : ''))
   handle('engine:download:status', () => downloads.status())
   handle('engine:download:run', (_event, engine: string) => downloads.runInstaller(typeof engine === 'string' ? engine : ''))
+  handle('engine:download:execute', (_event, engine: string) => downloads.executeInstaller(typeof engine === 'string' ? engine : ''))
   handle('engine:download:remove', (_event, engine: string) => downloads.remove(typeof engine === 'string' ? engine : ''))
   // The staged Ollama runtime, started and stopped HERE — the download
   // module's copy says this, so the doors must exist to make it true.

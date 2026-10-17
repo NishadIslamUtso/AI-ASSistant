@@ -132,6 +132,8 @@ const engineApi = {
       ipcRenderer.invoke('engine:download:status'),
     run: (engine: string): Promise<{ ok: boolean; answer: string; command?: string[] }> =>
       ipcRenderer.invoke('engine:download:run', engine),
+    execute: (engine: string): Promise<{ ok: boolean; answer: string }> =>
+      ipcRenderer.invoke('engine:download:execute', engine),
     remove: (engine: string): Promise<{ ok: boolean; answer: string }> =>
       ipcRenderer.invoke('engine:download:remove', engine),
     serveStart: (): Promise<{ ok: boolean; answer: string }> => ipcRenderer.invoke('engine:download:serve-start'),

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Download, ExternalLink, Trash2 } from 'lucide-react'
+import { Download, ExternalLink, Play, Trash2 } from 'lucide-react'
 import { ENGINE_DOWNLOADS } from '@shared/lib/engineDownloads'
 import { getEngineApi } from '@/platform/bridge'
 
@@ -20,6 +20,7 @@ export default function EngineDownloadsSection() {
   const [busy, setBusy] = useState('')
   const [tick, setTick] = useState<Tick | null>(null)
   const [lines, setLines] = useState<string[]>([])
+  const [confirming, setConfirming] = useState<{ engine: string; command: string[] } | null>(null)
 
   useEffect(() => {
     void getEngineApi().downloads.status().then(setStaged)
@@ -91,21 +92,41 @@ export default function EngineDownloadsSection() {
                   </button>
                 </span>
               ) : record ? (
-                <button
-                  type="button"
-                  title={`Remove the app-managed ${engine} and its files`}
-                  onClick={() => {
-                    void getEngineApi().downloads.remove(engine).then(answer => {
-                      say(answer.answer)
-                      if (answer.ok) {
-                        setStaged(current => ({ ...current, [engine]: undefined }))
-                      }
-                    })
-                  }}
-                  className="flex items-center gap-1 rounded-lg border border-line px-2 py-0.5 text-[11px] text-muted hover:text-ink"
-                >
-                  <Trash2 size={10} /> Remove
-                </button>
+                <span className="flex items-center gap-1">
+                  {info.kind === 'installer-script' ? (
+                    <button
+                      type="button"
+                      title={`Show the full installer command for ${engine}, then run it only if you say so`}
+                      onClick={() => {
+                        void getEngineApi().downloads.run(engine).then(answer => {
+                          if (!answer.ok || !answer.command) {
+                            say(answer.answer)
+                            return
+                          }
+                          setConfirming({ engine, command: answer.command })
+                        })
+                      }}
+                      className="flex items-center gap-1 rounded-lg border border-line px-2 py-0.5 text-[11px] text-ink hover:border-accent"
+                    >
+                      <Play size={10} /> Run installer
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    title={`Remove the app-managed ${engine} and its files`}
+                    onClick={() => {
+                      void getEngineApi().downloads.remove(engine).then(answer => {
+                        say(answer.answer)
+                        if (answer.ok) {
+                          setStaged(current => ({ ...current, [engine]: undefined }))
+                        }
+                      })
+                    }}
+                    className="flex items-center gap-1 rounded-lg border border-line px-2 py-0.5 text-[11px] text-muted hover:text-ink"
+                  >
+                    <Trash2 size={10} /> Remove
+                  </button>
+                </span>
               ) : (
                 <button
                   type="button"
@@ -128,6 +149,51 @@ export default function EngineDownloadsSection() {
           )
         })}
       </ul>
+        {confirming ? (
+          <div className="mt-1.5 rounded-lg border border-line bg-bg p-2">
+            <p className="text-[11px] text-ink">
+              Run the {confirming.engine} installer on this machine? This is the whole command, nothing hidden:
+            </p>
+            <code className="mt-1 block break-all rounded border border-line px-1.5 py-1 text-[10.5px] text-muted">
+              {confirming.command.join(' ')}
+            </code>
+            <div className="mt-1.5 flex items-center gap-1">
+              <button
+                type="button"
+                disabled={busy !== ''}
+                onClick={() => {
+                  setBusy(confirming.engine)
+                  void getEngineApi().downloads.execute(confirming.engine).then(answer => {
+                    setBusy('')
+                    say(answer.answer)
+                    setConfirming(null)
+                  })
+                }}
+                className="rounded-lg border border-accent px-2 py-0.5 text-[11px] text-ink hover:bg-accent/10"
+              >
+                Run it
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  void navigator.clipboard?.writeText(confirming.command.join(' '))
+                  say('The command is on the clipboard — run it in PowerShell yourself if you prefer.')
+                  setConfirming(null)
+                }}
+                className="rounded-lg border border-line px-2 py-0.5 text-[11px] text-muted hover:text-ink"
+              >
+                Copy instead
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirming(null)}
+                className="rounded-lg border border-line px-2 py-0.5 text-[11px] text-muted hover:text-ink"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : null}
       {busy && tick ? (
         <p className="mt-1 text-[11px] text-muted" role="status">
           {tick.engine}: {tick.total ? `${Math.round((tick.got / tick.total) * 100)}%` : `${Math.round(tick.got / 1024)} KB`}

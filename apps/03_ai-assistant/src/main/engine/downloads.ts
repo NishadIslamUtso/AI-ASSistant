@@ -33,6 +33,12 @@ export type DownloadManager = {
   remove(engine: string): Promise<{ ok: boolean; answer: string }>
   /** v1 guard: a staged installer may run only on Windows, only from our folder. */
   runInstaller(engine: string, platform?: string): { ok: boolean; answer: string; command?: string[] }
+  /**
+   * The run, once the person has seen the full command and pressed the button
+   * that says so. Windows only, staged file only; the installer's own
+   * progress is its own window — the app says it started and gets out.
+   */
+  executeInstaller(engine: string, platform?: string): { ok: boolean; answer: string }
   ollamaBinary(): string | null
   /** The staged Ollama runtime, started and stopped by the app, for real. */
   ollamaStart(): Promise<{ ok: boolean; answer: string }>
@@ -61,10 +67,12 @@ export function createDownloadManager(options: {
   join?: typeof join
   /** Overridable for tests — how the app knocks on the runtime's door. */
   probe?: () => Promise<boolean>
+  /** Overridable for tests — how the app starts an installer it was told to run. */
+  spawnImpl?: typeof spawn
 }): DownloadManager {
   const root = options.root
   const doFetch: FetchLike = options.fetchImpl ?? (async (url) => {
-    const reply = await fetch(url)
+    const reply = await fetch(url, { redirect: 'manual' })
     return {
       ok: reply.ok,
       status: reply.status,
@@ -72,6 +80,36 @@ export function createDownloadManager(options: {
       arrayBuffer: () => reply.arrayBuffer(),
     }
   })
+
+  /**
+   * One hop is never trusted: node's fetch would follow a redirect anywhere,
+   * and the endpoint pin is only as strong as its weakest hop. Every 3xx is
+   * resolved here and made to answer to the same official-URL rule as the
+   * first address — a 302 cannot rewrite the pin.
+   */
+  const OFFICIAL_HOP_LIMIT = 5
+  const fetchOfficial = async (
+    engine: string,
+    url: string
+  ): Promise<{ ok: boolean; status?: number; headers?: { get(name: string): string | null }; arrayBuffer?: () => Promise<ArrayBuffer>; body?: unknown; refusal?: string }> => {
+    let current = url
+    for (let hop = 0; hop <= OFFICIAL_HOP_LIMIT; hop++) {
+      const reply = await doFetch(current)
+      const location = reply.status && reply.status >= 300 && reply.status < 400 ? reply.headers?.get('location') : null
+      if (!location) return reply
+      const next = new URL(location, current).toString()
+      if (!isOfficialUrl(engine, next)) {
+        const host = ENGINE_DOWNLOADS[engine]?.host ?? 'The endpoint'
+        return {
+          ok: false,
+          status: reply.status,
+          refusal: `${host} answered with a redirect to somewhere this app does not know (${new URL(next).host}). The official endpoint is pinned, so nothing was downloaded.`,
+        }
+      }
+      current = next
+    }
+    return { ok: false, refusal: 'The official endpoint redirected too many times. Nothing was downloaded.' }
+  }
   const onTick = options.onTick ?? (() => undefined)
 
   const recordPath = (engine: string): string => join(root, engine, 'install-record.json')
@@ -107,12 +145,16 @@ export function createDownloadManager(options: {
         return { ok: false, answer: 'That endpoint is not the official one. Nothing was downloaded.' }
       }
       onTick({ engine, got: 0, total: null, phase: 'downloading' })
-      let reply: Awaited<ReturnType<FetchLike>>
+      let reply: Awaited<ReturnType<typeof fetchOfficial>>
       try {
-        reply = await doFetch(info.windows)
+        reply = await fetchOfficial(engine, info.windows)
       } catch (failure) {
         onTick({ engine, got: 0, total: null, phase: 'error', answer: `Could not reach ${info.host}: ${(failure as Error).message}` })
         return { ok: false, answer: `Could not reach ${info.host}. Nothing was downloaded.` }
+      }
+      if ('refusal' in reply && reply.refusal) {
+        onTick({ engine, got: 0, total: null, phase: 'error', answer: reply.refusal })
+        return { ok: false, answer: reply.refusal }
       }
       if (!reply.ok) {
         const answer = `${info.host} answered ${reply.status ?? 'with an error'}. The endpoint may have moved; nothing was downloaded.`
@@ -200,6 +242,20 @@ export function createDownloadManager(options: {
         ok: true,
         answer: 'The official installer will run in PowerShell.',
         command: ['powershell', '-ExecutionPolicy', 'Bypass', '-File', file],
+      }
+    },
+
+    executeInstaller(engine: string, platform = process.platform) {
+      const run = this.runInstaller(engine, platform)
+      if (!run.ok || !run.command) return { ok: false, answer: run.answer }
+      try {
+        const child = (options.spawnImpl ?? spawn)(run.command[0], run.command.slice(1), { stdio: 'ignore' })
+        return {
+          ok: true,
+          answer: `The official installer is running (pid ${child.pid}). Its progress is its own window; the brain appears here once it finishes.`,
+        }
+      } catch (failure) {
+        return { ok: false, answer: `The installer could not start: ${(failure as Error).message}` }
       }
     },
 

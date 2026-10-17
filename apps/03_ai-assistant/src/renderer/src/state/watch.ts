@@ -52,6 +52,7 @@ let lastEventAt = 0
 let lastFireAt = 0
 let cooldownUntil = 0
 let suppressed: string[] = []
+let suppressedAt: number | undefined
 let gathered = new Set<string>()
 let quiet: ReturnType<typeof setTimeout> | null = null
 let harvestDue = false
@@ -71,6 +72,7 @@ const harvestWhenClosed = (): void => {
     if (wasRunning && !running && harvestDue) {
       harvestDue = false
       suppressed = toolPathsOfLastTurn()
+      suppressedAt = Date.now()
     }
     wasRunning = running
   })
@@ -101,6 +103,7 @@ const maybeFire = (names: string[]): void => {
     const decision: WatchFireDecision = shouldWatchFire({
       names: batch,
       suppressed,
+      suppressedAt,
       now: Date.now(),
       lastEventAt,
       lastFireAt,
