@@ -4,7 +4,7 @@ Run it in this order; each line is a thing you can see with your own eyes.
 
 ## 1. Automated (no machine required)
 
-- [ ] `cd apps/03_ai-assistant && npm ci` completes
+- [ ] `cd apps/03_oddbrain && npm ci` completes
 - [ ] `npx vitest run` → **621 tests, 78 files, all passing**
 - [ ] `npx tsc --noEmit` → no output
 
@@ -17,7 +17,7 @@ Run it in this order; each line is a thing you can see with your own eyes.
 
 ## 2. The browser preview (interface only — it says so)
 
-- [ ] Header shows `AI ASSistant`, a `Preview` chip, and the preview line above the composer
+- [ ] Header shows `OddBrain`, a `Preview` chip, and the preview line above the composer
 - [ ] Sending a message explains that models run in the desktop app (no invented answers)
 - [ ] Settings opens as the full window with a rail: System, Agent access, Appearance, Models, Performance, Vault
 - [ ] The search box narrows the rail, and clearing it brings everything back
@@ -71,10 +71,10 @@ Run it in this order; each line is a thing you can see with your own eyes.
 
 ## 7. The Windows installer
 
-- [ ] `npm run dist:win` → `dist/AI-ASSistant-Setup-<version>.exe` (~88 MB; the
+- [ ] `npm run dist:win` → `dist/OddBrain-Setup-<version>.exe` (~100 MB; the
       shipped build is 0.9.0, sha256 `267a7530…` — table in
       `00_LIVING_DOCS/RELEASE-WINDOWS.md`)
-- [ ] SmartScreen says *unknown publisher* — expected, not a failure (`apps/03_ai-assistant/RELEASE-WINDOWS.md`
+- [ ] SmartScreen says *unknown publisher* — expected, not a failure (`apps/03_oddbrain/RELEASE-WINDOWS.md`
       says so before it appears)
 - [ ] Installing needs no admin rights; **uninstalling leaves the vault and settings in place**
 - [ ] **The install itself has not been run on Windows** — it is the owner's own test

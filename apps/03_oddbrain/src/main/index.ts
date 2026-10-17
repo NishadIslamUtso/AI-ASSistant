@@ -1624,7 +1624,7 @@ if (!gotLock) {
       submenu: [
         {
           label: 'Learn more',
-          click: () => void shell.openExternal('https://github.com/NishadIslamUtso/AI-ASSistant'),
+          click: () => void shell.openExternal('https://github.com/NishadIslamUtso/OddBrain'),
         },
         {
           label: 'About OddBrain',

@@ -30,8 +30,8 @@ changelog, which records development in a promotional voice.
 ## Verify
 
 ```bash
-git clone -b v3 https://github.com/NishadIslamUtso/AI-ASSistant.git
-cd AI-ASSistant/apps/03_oddbrain
+git clone -b v3 https://github.com/NishadIslamUtso/OddBrain.git
+cd OddBrain/apps/03_oddbrain
 npm ci && npx vitest run      # 78 files / 621 tests
 npx tsc --noEmit && npm run build
 ```

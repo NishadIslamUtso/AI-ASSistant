@@ -49,7 +49,7 @@ Work lands on `v3` only; `main` is frozen until the owner orders a merge.
 - The app name is **OddBrain**. No Claude branding in anything a person reads.
 - Never take JSX/UI from other branches. Logic only.
 - Open-source ready: no hardcoded names, emails, paths or model tags.
-- Work on `arena/3c06e1bf-ai-assistant-v3`, merge into `main` when the step is finished and verified.
+- Work on `v3`, merge into `main` when the step is finished and verified.
 - One step at a time, verified, then stop. "Don't rush it and don't destroy it."
 - Voice/Jarvis is parked until the owner has better hardware.
 

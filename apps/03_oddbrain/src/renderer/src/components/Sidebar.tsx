@@ -600,7 +600,7 @@ function UserMenu({
           <div className="my-0.5 border-t border-line" />
           <UserMenuItem
             label="Learn more"
-            onClick={() => { setOpen(false); void bridge.app?.openExternal?.('https://github.com/NishadIslamUtso/AI-ASSistant') }}
+            onClick={() => { setOpen(false); void bridge.app?.openExternal?.('https://github.com/NishadIslamUtso/OddBrain') }}
           />
         </div>
       ) : null}

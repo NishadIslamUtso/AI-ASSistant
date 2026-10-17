@@ -4,12 +4,12 @@ This repo is designed so any branch is fully testable, by a person or by an AI, 
 
 ## What a branch contains
 
-- `apps/03_ai-assistant/` — **the app**: Electron + React + TypeScript. Main process (files, settings, vault
+- `apps/03_oddbrain/` — **the app**: Electron + React + TypeScript. Main process (files, settings, vault
   service), preload bridge, renderer (chat, artifacts, comment mode, Settings), shared logic, tests.
 - `apps/01_claude-exact-pixel-clone/`, `apps/02_electron-claude-clone-v6/` — historical; not the target.
 - `extension/` — MV3 starter + spec. The app now opens `127.0.0.1:8765` for it (capture side only,
   `chrome-extension://` origins); the extension itself has not been loaded or run against the app yet.
-- `vault/AI-Brain/` — the canonical Obsidian vault.
+- `vault/Brain/` — the canonical Obsidian vault.
 - `00_LIVING_DOCS/`, `.ai/` — living docs and machine-readable context. **Both must be updated in the branch.**
 
 ## How to test a branch
@@ -17,7 +17,7 @@ This repo is designed so any branch is fully testable, by a person or by an AI, 
 ```bash
 git fetch origin
 git checkout <branch>
-cd apps/03_ai-assistant
+cd apps/03_oddbrain
 npm install
 npm test                 # 269 tests, 28 files — the whole automated suite
 npm run typecheck        # strict TypeScript, no output means clean
@@ -30,13 +30,13 @@ Then, with Ollama running (`ollama serve`, and a model pulled):
 ```bash
 npm run dev              # the real desktop app
 npm run smoke            # builds, opens, closes — prints "SMOKE OK ... errors=0 warnings=0"
-npm run dist:win         # Windows installer -> dist/AI-ASSistant-Setup-<version>.exe (unsigned, see its notes)
+npm run dist:win         # Windows installer -> dist/OddBrain-Setup-<version>.exe (unsigned, see its notes)
 ```
 
 ## What to check by hand
 
 1. A conversation answers, streams, and **stops** when you press stop (a stopped answer keeps its partial text).
-2. The conversation appears in the vault as Markdown under `02 Sources/Conversations/AI ASSistant/<year>/`.
+2. The conversation appears in the vault as Markdown under `02 Sources/Conversations/<provider>/<year>/`.
 3. **Settings** (sidebar, bottom left) opens as the full window: rail on the left, `System`, `Appearance`,
    `Performance`, `Vault`. The search box finds settings by name.
 4. `Appearance` → accent and conversation width change the app immediately and survive a reload.

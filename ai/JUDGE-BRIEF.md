@@ -24,8 +24,8 @@ everything in `archive/` and the promotional voice of `CHANGELOG.md`.
 Verify with:
 
 ```bash
-git clone -b v3 https://github.com/NishadIslamUtso/AI-ASSistant.git
-cd AI-ASSistant/apps/03_ai-assistant
+git clone -b v3 https://github.com/NishadIslamUtso/OddBrain.git
+cd OddBrain/apps/03_oddbrain
 npm ci && npx vitest run      # 78 files / 621 tests
 npx tsc --noEmit && npm run build
 ```
@@ -61,10 +61,11 @@ allow-failure mode until it has run green once).
    structural-identity checks remain on purpose — the no-old-name guard,
    the fuse-hook wiring, the shortcut name — and they say so in their own
    text instead of passing as behavior.
-6. **The repo is still named AI-ASSistant on GitHub.** Product, installer
-   (`OddBrain-Setup-0.9.0.exe`, sha256 `a174b777…58e491`), app title and
-   shortcut all say OddBrain; the GitHub repo carries the old name until the
-   owner renames it (that button is his).
+6. **Everything says OddBrain, including the GitHub repo.** Product,
+   installer (`OddBrain-Setup-0.9.0.exe`, sha256 `cfb7e7a7…045a`), app title,
+   shortcut, source tree (`apps/03_oddbrain`), checkout vault (`vault/Brain`),
+   default vault path (`Documents\OddBrain\Brain`), and the repo itself —
+   renamed by the owner 2026-10-17; the old URL redirects.
 
 ## The three rules the code actually keeps
 
