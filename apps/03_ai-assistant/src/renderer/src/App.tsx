@@ -64,9 +64,12 @@ import BrainMark from './components/BrainMark'
 function QuickMode(): React.JSX.Element {
   const engine = useEngine()
   const [draft, setDraft] = useState('')
+  // The gate is the TURN, not the process: the session stays alive between
+  // turns on purpose, and a living idle process accepts the next ask.
+  const turnRunning = engine.turn?.state === 'running'
   const send = (): void => {
     const prompt = draft.trim()
-    if (!prompt || engine.running()) return
+    if (!prompt || turnRunning) return
     setDraft('')
     void engine.send(prompt)
   }
@@ -98,7 +101,7 @@ function QuickMode(): React.JSX.Element {
         <button
           type="button"
           onClick={send}
-          disabled={!draft.trim() || engine.running()}
+          disabled={!draft.trim() || turnRunning}
           aria-label="Send"
           className="rounded-xl bg-accent px-3 py-2 text-[12.5px] font-medium text-white hover:bg-accent/90 disabled:opacity-50"
         >

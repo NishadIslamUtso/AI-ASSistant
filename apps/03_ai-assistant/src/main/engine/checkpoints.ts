@@ -51,7 +51,10 @@ export async function snapshotFile(
   let before: Buffer
   try {
     before = await readFile(original)
-  } catch {
+  } catch (failure) {
+    // Only a missing file is a ghost. A file we cannot READ is not "not
+    // there" — pretending so would record a restore that deletes real work.
+    if ((failure as NodeJS.ErrnoException).code !== 'ENOENT') throw failure
     return { original, copy: '', at: new Date(epochMs).toISOString(), existed: false }
   }
   await mkdir(dir, { recursive: true })
@@ -60,13 +63,21 @@ export async function snapshotFile(
   return { original, copy, at: new Date(epochMs).toISOString(), existed: true }
 }
 
-/** Put a kept copy back, or delete a ghost the engine created. */
-export async function restoreCheckpoint(dir: string, copy: string): Promise<{ ok: boolean; answer: string }> {
+/**
+ * Put a kept copy back, or delete a ghost the engine created. A ghost is
+ * named by its ORIGINAL path — many files can be created in one turn, and
+ * "the first ghost in the index" once deleted the wrong one of them.
+ */
+export async function restoreCheckpoint(dir: string, copy: string, original = ''): Promise<{ ok: boolean; answer: string }> {
   const index = await readIndex(dir)
-  const ghost = index.find(entry => entry.existed === false && !entry.copy)
-  if (!copy && ghost) {
+  if (!copy) {
+    const ghost = original
+      ? index.find(entry => entry.existed === false && !entry.copy && entry.original === original)
+      : index.find(entry => entry.existed === false && !entry.copy)
+    if (!ghost) return { ok: false, answer: 'No record says that file was created by the engine.' }
     try {
       await rm(ghost.original, { force: true })
+      await writeIndex(dir, index.filter(entry => entry !== ghost))
       return { ok: true, answer: `Removed ${ghost.original} (it did not exist before the engine)` }
     } catch (failure) {
       return { ok: false, answer: `Could not remove: ${(failure as Error).message}` }
@@ -78,6 +89,7 @@ export async function restoreCheckpoint(dir: string, copy: string): Promise<{ ok
   if (!byCopy) return { ok: false, answer: 'That copy has no record of where it came from.' }
   try {
     await copyFile(copy, byCopy.original)
+    await writeIndex(dir, index.filter(entry => entry !== byCopy))
     return { ok: true, answer: `Restored ${byCopy.original}` }
   } catch (failure) {
     return { ok: false, answer: `Could not restore: ${(failure as Error).message}` }

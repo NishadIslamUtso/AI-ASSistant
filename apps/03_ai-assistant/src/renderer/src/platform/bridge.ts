@@ -76,7 +76,7 @@ export type DesktopBridge = {
     openFolder: (folder: string) => Promise<{ ok: boolean }>
     checkpoints: {
       list: () => Promise<{ ok: boolean; checkpoints: Array<{ copy: string; original: string; at: string }> }>
-      restore: (copy: string) => Promise<{ ok: boolean; answer: string }>
+      restore: (copy: string, original?: string) => Promise<{ ok: boolean; answer: string }>
     }
   }
   settings: {
@@ -407,7 +407,7 @@ export type EngineBridge = {
   send: (prompt: string, cwd: string, pictures?: Array<{ mime: string; data: string }>) => Promise<{ ok: boolean; answer: string }>
   checkpoints: {
     list: () => Promise<{ ok: boolean; checkpoints: Array<{ copy: string; original: string; at: string }> }>
-    restore: (copy: string) => Promise<{ ok: boolean; answer: string }>
+    restore: (copy: string, original?: string) => Promise<{ ok: boolean; answer: string }>
   }
   watch: {
     start: (folder: string) => Promise<{ ok: boolean; answer: string }>

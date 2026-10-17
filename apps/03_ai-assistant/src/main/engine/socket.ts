@@ -40,9 +40,16 @@ export type EngineSocket = {
  * for tests; production hands a small JSON file.
  */
 export type SessionMemory = {
-  load(cwd: string): string
-  save(cwd: string, sessionId: string): void
+  load(key: string): string
+  save(key: string, sessionId: string): void
 }
+
+/**
+ * One conversation per ENGINE per workspace: claude-code's session id means
+ * nothing to agy and vice versa, so a shared key would hand one engine the
+ * other's resume id.
+ */
+export const sessionKey = (engineId: string, cwd: string): string => `${engineId}::${cwd}`
 
 export const noSessionMemory: SessionMemory = { load: () => '', save: () => undefined }
 
@@ -51,6 +58,12 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
   let sessionEngine: string | null = null
   let busy = false
   let currentCwd = ''
+  // What the live session was STARTED with. The engine's launch flags fix its
+  // model and approval gear for the life of the process, so a changed setting
+  // must mean a relaunch — reusing the process would silently run under the
+  // OLD gear while the UI shows the new one.
+  let sessionModel: string | null = null
+  let sessionApproval: string | null = null
 
   const onEvent = (input: EngineStartInput, event: EngineEvent): void => {
     // The socket owns the busy flag: a finished or failed task frees the
@@ -60,7 +73,7 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
       // Persisted per workspace, so the next launch of the app can continue
       // this conversation where it left off. (The live process is tracked by
       // `session` itself; the memory matters only after the process is gone.)
-      memory.save(input.cwd, event.id)
+      memory.save(sessionKey(input.settings.id, input.cwd), event.id)
     }
     input.onEvent(event)
   }
@@ -82,8 +95,6 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
 
   return {
     send(prompt: string, input: EngineStartInput & { images?: Array<{ mime: string; data: string }> }): EngineAnswer {
-      currentCwd = input.cwd
-
       // Both engines are wired: claude-code on its stream-json wire, agy on
       // its own (verified against the real v1.4.0 binary). An engine that is
       // missing from the machine says so honestly at spawn time — the branch
@@ -96,25 +107,47 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
         sessionEngine = null
         busy = false
       }
-      if (session?.isRunning()) {
+      // Reuse only when the process still matches what the settings now ask
+      // for: same folder, same model, same approval gear. Anything else gets
+      // an honest relaunch (the conversation itself survives via the resume
+      // id where the engine supports one).
+      const gearChanged =
+        sessionModel !== input.settings.model ||
+        sessionApproval !== input.settings.approval ||
+        currentCwd !== input.cwd
+      if (session?.isRunning() && !gearChanged) {
         if (busy) {
           return { ok: false, answer: 'An engine is already working. Stop it first, or wait for it to finish.' }
         }
-        // Same engine, new task — no relaunch, no refusal.
+        // Same engine, same gear, new task — no relaunch, no refusal.
         const sent = session.send(prompt, input.images)
-        if (!sent) return { ok: false, answer: 'The engine just closed, try again.' }
+        if (!sent) return { ok: false, answer: session.refusal?.() ?? 'The engine just closed, try again.' }
         busy = true
         return { ok: true, answer: 'started' }
       }
-      // Fresh start. If this workspace had a session before the app (or the
-      // engine) closed, continue it — the owner's conversation is not lost
-      // just because a process ended.
-      session = start({ ...input, resumeId: memory.load(input.cwd) })
+      if (session?.isRunning()) {
+        // The gear changed under a living process: set it aside and start the
+        // engine anew so the launch flags match what the UI promises.
+        session.stop()
+        session = null
+        busy = false
+      }
+      // Fresh start. If this engine+workspace had a session before the app
+      // (or the engine) closed, continue it — the owner's conversation is not
+      // lost just because a process ended.
+      session = start({ ...input, resumeId: memory.load(sessionKey(input.settings.id, input.cwd)) })
+      currentCwd = input.cwd
+      sessionModel = input.settings.model
+      sessionApproval = input.settings.approval
       if (!session.isRunning()) {
         return { ok: false, answer: 'The engine could not be started on this machine.' }
       }
       const sent = session.send(prompt, input.images)
-      if (!sent) return { ok: true, answer: 'starting' }
+      if (!sent) {
+        // A refused first line (agy with a picture, say) is a REFUSAL, not a
+        // start — saying "starting" here left the turn hanging forever.
+        return { ok: false, answer: session.refusal?.() ?? 'The engine could not accept that task.' }
+      }
       busy = true
       return { ok: true, answer: 'started' }
     },
@@ -126,7 +159,13 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
       session?.stop()
       session = null
       busy = false
-      if (currentCwd) memory.save(currentCwd, '')
+      // Forget per engine+workspace: the gear is going away with the process,
+      // so a stale id must not survive under a different key shape either.
+      if (sessionEngine && currentCwd) memory.save(sessionKey(sessionEngine, currentCwd), '')
+      sessionEngine = null
+      sessionModel = null
+      sessionApproval = null
+      currentCwd = ''
     },
   }
 }

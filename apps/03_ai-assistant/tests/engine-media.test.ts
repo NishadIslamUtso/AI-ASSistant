@@ -78,8 +78,7 @@ test('a checkpoint keeps the old self; restore puts it back', async () => {
   assert.equal(restored.ok, true, restored.answer)
   assert.equal(await readFile(file, 'utf8'), 'the first words', 'the old self came back')
   const listed = await listCheckpoints(dir)
-  assert.equal(listed.length, 1)
-  assert.equal(listed[0].original, file)
+  assert.equal(listed.length, 0, 'a restored checkpoint leaves the list — it is used, not pending')
   await rm(dir, { recursive: true, force: true })
 })
 
@@ -276,4 +275,85 @@ test('the repetition inspector: the third identical step cries once, then stays 
   const criesAfter = turn.items.filter(item => item.kind === 'status' && item.text.includes('three times'))
   assert.equal(criesAfter.length, 2, 'a NEW loop, after a different step, may say it again')
   fake.listener?.({ kind: 'done', text: 'ok' })
+})
+
+test('two created files are undone one at a time, each by its own name', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'ckpt-multi-'))
+  const first = join(dir, 'alpha.md')
+  const second = join(dir, 'beta.md')
+  await takeCheckpoint(dir, first, Date.now())
+  await takeCheckpoint(dir, second, Date.now() + 1)
+  await writeFile(first, 'created')
+  await writeFile(second, 'created')
+  // Undo the SECOND ghost by name: the first file must survive untouched.
+  const unmade = await restoreCheckpoint(dir, '', second)
+  assert.equal(unmade.ok, true, unmade.answer)
+  assert.match(unmade.answer, /beta\.md/)
+  await assert.rejects(() => stat(second), 'the named file is gone')
+  assert.equal(await readFile(first, 'utf8'), 'created', 'the other creation is untouched')
+  const listed = await listCheckpoints(dir)
+  assert.equal(listed.length, 1, 'only the undone ghost left the list')
+  assert.equal(listed[0].original, first)
+  await rm(dir, { recursive: true, force: true })
+})
+
+test('a file that cannot be READ fails the checkpoint — it is not "not there"', async () => {
+  if (process.platform === 'win32' || (typeof process.getuid === 'function' && process.getuid() === 0)) {
+    return // chmod does not bind on Windows, and root reads everything
+  }
+  const { chmod } = await import('node:fs/promises')
+  const dir = await mkdtemp(join(tmpdir(), 'ckpt-denied-'))
+  const sealed = join(dir, 'sealed.md')
+  await writeFile(sealed, 'secret')
+  await chmod(sealed, 0o000)
+  try {
+    await assert.rejects(() => takeCheckpoint(dir, sealed), 'EACCES is not a ghost; it is a failure')
+  } finally {
+    await chmod(sealed, 0o644)
+    await rm(dir, { recursive: true, force: true })
+  }
+})
+
+test('a checkpoint that cannot be saved DENIES the change — the guarantee fails closed', async () => {
+  const { mkdtempSync, writeFileSync } = await import('node:fs')
+  const { tmpdir } = await import('node:os')
+  const { join } = await import('node:path')
+  const { EventEmitter } = await import('node:events')
+  const { startClaudeCodeSession } = await import('../src/main/engine/claudeCode')
+  const dir = mkdtempSync(join(tmpdir(), 'ckpt-shut-'))
+  const target = join(dir, 'notes.md')
+  writeFileSync(target, 'the old self', 'utf8')
+  const sent: string[] = []
+  const child = new EventEmitter() as unknown as import('node:child_process').ChildProcess & {
+    stdout: EventEmitter; stderr: EventEmitter; stdin: { write(data: string): boolean }
+    pid: number; killed: boolean; exitCode: number | null; signalCode: null
+  }
+  ;(child as unknown as { stdout: EventEmitter }).stdout = new EventEmitter()
+  ;(child as unknown as { stderr: EventEmitter }).stderr = new EventEmitter()
+  ;(child as unknown as { stdin: unknown }).stdin = {
+    write: (line: string) => { sent.push(line); return true },
+  }
+  ;(child as unknown as { pid: number }).pid = 4243
+  ;(child as unknown as { killed: boolean }).killed = false
+  ;(child as unknown as { signalCode: null }).signalCode = null
+  ;(child as unknown as { exitCode: number | null }).exitCode = null
+  // The checkpoint folder's path is a FILE: every save inside it must fail.
+  writeFileSync(join(dir, 'checkpoints'), 'not a folder')
+  const session = startClaudeCodeSession({
+    cwd: dir,
+    settings: { ...DEFAULT_ENGINE, workspace: dir, approval: 'ask' },
+    checkpointDir: join(dir, 'checkpoints'),
+    onEvent: () => undefined,
+    spawnProcess: (() => child) as unknown as typeof spawn,
+  })
+  ;(child as unknown as { stdout: EventEmitter }).stdout.emit('data', Buffer.from(
+    JSON.stringify({ type: 'control_request', request_id: 'r9', request: { subtype: 'can_use_tool', tool_name: 'Write', input: { file_path: target } } }) + '\n',
+  ))
+  session.answer('r9', true)
+  await new Promise(resolve => setTimeout(resolve, 80))
+  const responseLine = sent.find(line => line.includes('control_response'))
+  assert.ok(responseLine, 'the engine still got an answer — silence would wedge the CLI')
+  assert.match(responseLine ?? '', /"behavior":"deny"/, 'the answer is a DENY, not a swallowed allow')
+  assert.match(responseLine ?? '', /could not keep the file/, 'the deny says why')
+  await rm(dir, { recursive: true, force: true })
 })

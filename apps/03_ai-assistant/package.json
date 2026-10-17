@@ -2,7 +2,7 @@
   "name": "oddbrain",
   "version": "0.9.0",
   "private": true,
-  "description": "AI ASSistant — a local-first desktop assistant. Your files, your models, your machine.",
+  "description": "OddBrain — a local-first desktop assistant. Your files, your models, your machine.",
   "author": "",
   "license": "Apache-2.0",
   "main": "./out/main/index.js",

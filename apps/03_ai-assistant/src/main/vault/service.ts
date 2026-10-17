@@ -637,7 +637,7 @@ export function createVaultService({
     }
     return {
       ok: true,
-      filename: `ai-assistant-artifact-${dhakaParts(clock()).date}.zip`,
+      filename: `oddbrain-artifact-${dhakaParts(clock()).date}.zip`,
       zip: zip.toString('base64'),
       bytes: zip.length,
     }

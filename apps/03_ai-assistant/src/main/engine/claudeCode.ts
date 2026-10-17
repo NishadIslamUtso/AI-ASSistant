@@ -32,6 +32,8 @@ import { checkpointWorthTaking, takeCheckpoint } from './checkpoints'
 export type EngineSession = {
   /** Hand the engine a task. Returns false if the session already closed. */
   send(prompt: string, images?: Array<{ mime: string; data: string }>): boolean
+  /** Why the last send refused to send, when there is an honest reason. */
+  refusal?(): string
   /** Answer a permission the engine asked for. */
   answer(requestId: string, allow: boolean): void
   /** Close the engine now. */
@@ -308,9 +310,24 @@ export function startClaudeCodeSession(input: StartSessionInput): EngineSession 
         )
       }
       if (allow && asked && checkpointWorthTaking(asked.tool) && asked.file && input.checkpointDir) {
-        void takeCheckpoint(input.checkpointDir, asked.file)
-          .catch(() => undefined)
+        // Fail CLOSED: the promise is "the old self is kept before the Allow
+        // travels". If keeping it fails, the Allow must not travel — the
+        // engine gets an honest deny and the person sees why.
+        takeCheckpoint(input.checkpointDir, asked.file)
           .then(() => respond())
+          .catch((failure: unknown) => {
+            input.onEvent({ kind: 'error', text: `Checkpoint failed, so the change was denied: ${(failure as Error).message}` })
+            writeLine(
+              `${JSON.stringify({
+                type: 'control_response',
+                response: {
+                  request_id: requestId,
+                  subtype: 'success',
+                  response: { behavior: 'deny', message: 'OddBrain could not keep the file\u2019s previous state, so it denied this change.' },
+                },
+              })}\n`,
+            )
+          })
       } else {
         respond()
       }

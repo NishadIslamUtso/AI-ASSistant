@@ -162,7 +162,7 @@ test('the socket remembers sessions per workspace, so a closed app does not lose
   socket.send('first task', { cwd: 'C:\\work', settings: DEFAULT_ENGINE, onEvent: recOne.on, spawnProcess: spawnOne })
   const initLine = `${JSON.stringify({ type: 'system', subtype: 'init', session_id: 's-42' })}\n`
   fakeOne.child.stdout.emit('data', Buffer.from(initLine, 'utf8'))
-  assert.equal(saved['C:\\work'], 's-42', 'the session id is remembered per workspace')
+  assert.equal(saved['claude-code::C:\\work'], 's-42', 'the session id is remembered per engine AND workspace')
 
   // The app "restarts": the engine process closes, a new socket is built,
   // and the memory is all that survives.
@@ -202,4 +202,66 @@ test('the socket: a living engine is continued in place, never resumed from file
   captured.length = 0
   socket.send('second', input)
   assert.equal(captured.length, 0, 'no relaunch happened at all')
+})
+
+test('the socket: a changed gear relaunches the living engine — the flags must match the UI', () => {
+  const memory = { load: (): string => '', save: () => undefined }
+  const fakeOne = fakeEngine()
+  const fakeTwo = fakeEngine()
+  const rec = recorder()
+  const launches: string[][] = []
+  const spawn = ((_command: string, args: string[]) => {
+    launches.push(args)
+    return launches.length === 1 ? fakeOne.child : fakeTwo.child
+  }) as unknown as typeof import('node:child_process').spawn
+  const socket = createEngineSocket(memory)
+  socket.send('first', { cwd: '.', settings: DEFAULT_ENGINE, onEvent: rec.on, spawnProcess: spawn })
+  fakeOne.child.stdout.emit(
+    'data',
+    Buffer.from(`${JSON.stringify({ type: 'result', subtype: 'success', result: 'ok' })}\n`, 'utf8'),
+  )
+  // Same folder, same engine — but the approval gear changed. The launch
+  // flags fix the gear for the life of the process, so reuse would silently
+  // run under the OLD permission mode while the UI shows the new one.
+  const regear = { ...DEFAULT_ENGINE, approval: 'full' as const }
+  const answer = socket.send('second', { cwd: '.', settings: regear, onEvent: rec.on, spawnProcess: spawn })
+  assert.equal(answer.ok, true, answer.answer)
+  assert.equal(launches.length, 2, 'the gear change forced an honest relaunch')
+  assert.match(launches[1].join(' '), /--permission-mode bypassPermissions/, 'the new gear is on the launch line')
+  // And the OLD process is gone, not left running underneath.
+  assert.equal(fakeOne.child.killed, true, 'the stale process was set aside')
+})
+
+test('the socket: the resume memory is keyed per engine, never shared', () => {
+  const saved: Record<string, string> = {}
+  const memory = { load: (k: string): string => saved[k] ?? '', save: (k: string, id: string): void => { saved[k] = id } }
+  const fake = fakeEngine()
+  const rec = recorder()
+  const spawn = (() => fake.child) as unknown as typeof import('node:child_process').spawn
+  const socket = createEngineSocket(memory)
+  socket.send('claude task', { cwd: 'C:\\work', settings: DEFAULT_ENGINE, onEvent: rec.on, spawnProcess: spawn })
+  fake.child.stdout.emit('data', Buffer.from(`${JSON.stringify({ type: 'system', subtype: 'init', session_id: 's-cl' })}\n`, 'utf8'))
+  assert.ok(saved['claude-code::C:\\work'], 'claude-code has its own key')
+  assert.equal(Object.keys(saved).some(k => !k.startsWith('claude-code::')), false, 'no plain-workspace key exists to hand another engine')
+})
+
+test('the socket: agy refusing pictures is a REFUSAL, not a start', async () => {
+  const { AGY_PICTURES_ANSWER } = await import('../src/main/engine/agy')
+  const memory = { load: (): string => '', save: () => undefined }
+  const fake = fakeEngine()
+  const rec = recorder()
+  const spawn = (() => fake.child) as unknown as typeof import('node:child_process').spawn
+  const socket = createEngineSocket(memory)
+  const answer = socket.send(
+    'look at this',
+    {
+      cwd: '.',
+      settings: { ...DEFAULT_ENGINE, id: 'agy' },
+      onEvent: rec.on,
+      spawnProcess: spawn,
+      images: [{ mime: 'image/png', data: 'aGk=' }],
+    },
+  )
+  assert.equal(answer.ok, false, 'nothing was sent, so nothing started')
+  assert.equal(answer.answer, AGY_PICTURES_ANSWER, 'the honest reason is what the person sees')
 })

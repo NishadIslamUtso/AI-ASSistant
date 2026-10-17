@@ -41,6 +41,9 @@ function releaseBudgetSlot(): void {
 function acquireBudgetSlot(): boolean {
   if (runningInstances >= INSTANCE_BUDGET) return false
   runningInstances += 1
+  // A grant changes the budget picture as much as a release does: subscribers
+  // that waited on a full board must hear "a seat opened" in both directions.
+  for (const notify of budgetSubscribers) notify()
   return true
 }
 

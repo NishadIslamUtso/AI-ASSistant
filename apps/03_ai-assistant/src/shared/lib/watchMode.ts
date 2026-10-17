@@ -10,6 +10,13 @@
 import { REPO_MAP_IGNORES } from './repoMap'
 
 export const WATCH_DEBOUNCE_MS = 5_000
+
+/**
+ * The debounce is a product value, but two modules must agree on it and tests
+ * must not wait five real seconds for quiet. One read, one seam.
+ */
+export const watchDebounceMs = (): number =>
+  (globalThis as { __obWatchDebounceMs?: number }).__obWatchDebounceMs ?? WATCH_DEBOUNCE_MS
 export const WATCH_MIN_GAP_MS = 15_000
 export const WATCH_COOLDOWN_MS = 15_000
 export const WATCH_MAX_NAMES = 5
@@ -46,7 +53,7 @@ export function watchableName(name: string): boolean {
 export function shouldWatchFire(input: WatchFireInput): WatchFireDecision {
   if (input.busy) return { fire: false, why: 'busy' }
   if (input.now < input.cooldownUntil) return { fire: false, why: 'cooldown' }
-  if (input.now - input.lastEventAt < WATCH_DEBOUNCE_MS) return { fire: false, why: 'debounce' }
+  if (input.now - input.lastEventAt < watchDebounceMs()) return { fire: false, why: 'debounce' }
   if (input.lastFireAt > 0 && input.now - input.lastFireAt < WATCH_MIN_GAP_MS) return { fire: false, why: 'gap' }
   const names = input.names
     .filter(name => watchableName(name))

@@ -441,7 +441,9 @@ const store: EngineStore = {
     if (state.turn?.state === 'running') {
       return { ok: false, answer: 'The engine is already working on the last task.' }
     }
-    void store.init()
+    // Hydrate BEFORE the first send, not beside it: a cold window that sends
+    // immediately must go out with the real engine and folder, not defaults.
+    await store.init()
     repeats.key = ''
     repeats.count = 0
     const turn: EngineTurn = { prompt, items: [], permissions: [], state: 'running', sessionId: null, usage: null, pictures: pictures.length }

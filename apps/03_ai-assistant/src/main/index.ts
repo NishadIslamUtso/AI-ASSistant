@@ -1,4 +1,5 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu, safeStorage, shell, globalShortcut } from 'electron'
+import { app, BrowserWindow, dialog, Menu, safeStorage, shell, globalShortcut } from 'electron'
+import { handle, lockNavigation, pinOwnOrigins } from './ipcGuard'
 import { dirname, join, resolve } from 'node:path'
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { startLocalApi, type LocalApi } from './api/server'
@@ -232,9 +233,9 @@ function pushEngineEvent(event: EngineEvent): void {
 
 
 function registerBridges(): void {
-  ipcMain.handle('settings:read', () => settings)
+  handle('settings:read', () => settings)
 
-  ipcMain.handle(
+  handle(
     'settings:update',
     (
       _event,
@@ -284,7 +285,7 @@ function registerBridges(): void {
     }
   )
 
-  ipcMain.handle('cloud:providers', () => cloudView())
+  handle('cloud:providers', () => cloudView())
 
   /**
    * Every model the saved keys can reach, with each provider's own problem
@@ -292,7 +293,7 @@ function registerBridges(): void {
    * others, and a failure is a sentence here, never a thrown error in the
    * interface.
    */
-  ipcMain.handle('cloud:models', async () => {
+  handle('cloud:models', async () => {
     if (!cloud) return { ok: false, error: 'Cloud providers are not running in this process.', models: [], problems: [] }
     try {
       const { models, problems } = await cloud.models()
@@ -302,7 +303,7 @@ function registerBridges(): void {
     }
   })
 
-  ipcMain.handle('cloud:save-key', (_event, id: string, key: string) => {
+  handle('cloud:save-key', (_event, id: string, key: string) => {
     const provider = providerById(String(id || ''))
     if (!provider || !keyStore) return { ok: false, error: 'That is not a provider this app knows.' }
     if (!String(key || '').trim()) return { ok: false, error: 'Paste a key first.' }
@@ -310,13 +311,13 @@ function registerBridges(): void {
     return cloudView()
   })
 
-  ipcMain.handle('cloud:clear-key', (_event, id: string) => {
+  handle('cloud:clear-key', (_event, id: string) => {
     keyStore?.clear(String(id || ''))
     return cloudView()
   })
 
   /** The Test button: one provider, asked for its own model list. */
-  ipcMain.handle('cloud:test', async (_event, id: string) => {
+  handle('cloud:test', async (_event, id: string) => {
     if (!cloud) return { ok: false, error: 'Cloud providers are not running in this process.' }
     try {
       const models = await cloud.listModels(String(id || ''))
@@ -331,7 +332,7 @@ function registerBridges(): void {
    * Settings > System: a port that is open is a fact the person should be able to
    * see, not something to find out from an extension that quietly stopped working.
    */
-  ipcMain.handle('extension:status', () => ({
+  handle('extension:status', () => ({
     ok: true,
     listening: Boolean(extensionApi?.listening),
     port: extensionApi?.port ?? extensionPortWanted(),
@@ -339,7 +340,7 @@ function registerBridges(): void {
     error: extensionApi?.error || '',
   }))
 
-  ipcMain.handle('vault:choose-folder', async () => {
+  handle('vault:choose-folder', async () => {
     const [window] = BrowserWindow.getAllWindows()
     const chosen = await dialog.showOpenDialog(window, {
       title: 'Choose the folder OddBrain keeps its notes in',
@@ -349,7 +350,7 @@ function registerBridges(): void {
     return chosen.canceled || !chosen.filePaths.length ? null : chosen.filePaths[0]
   })
 
-  ipcMain.handle('structure:inspect', (_event, root: string) => {
+  handle('structure:inspect', (_event, root: string) => {
     try {
       const plan = structurePlan(root)
       return 'error' in plan
@@ -360,7 +361,7 @@ function registerBridges(): void {
     }
   })
 
-  ipcMain.handle('structure:apply', (_event, root: string, options: { refresh?: boolean } | undefined) => {
+  handle('structure:apply', (_event, root: string, options: { refresh?: boolean } | undefined) => {
     try {
       const done = integrateVaultStructure(root)
       if (!done.ok) return { ok: false, error: done.error }
@@ -402,7 +403,7 @@ function registerBridges(): void {
   // Settling a conflict the owner was told about: the beside-copy was added by
   // the structure apply, and only that recorded shape may be resolved. The
   // owner's own file is written only when they said so; 'both' touches nothing.
-  ipcMain.handle(
+  handle(
     'structure:resolve',
     (_event, root: string, original: string, added: string, action: 'mine' | 'new' | 'both' | 'combine') => {
       try {
@@ -449,7 +450,7 @@ function registerBridges(): void {
 
   // The default vault: his Documents\\ASSistant\\AI-Brain. Created on his press —
   // this one press is the decision — then integrated like any other folder.
-  ipcMain.handle('vault:use-default', async () => {
+  handle('vault:use-default', async () => {
     const home = process.env['USERPROFILE'] || process.env['HOME'] || ''
     let target = ''
     try {
@@ -472,7 +473,7 @@ function registerBridges(): void {
   // The link check: every [[link]] in the vault, resolved by exact path and
   // counted honestly — dead links and ambiguous bare names are reported, never
   // repaired behind the owner's back. Read-only.
-  ipcMain.handle('vault:link-check', () => {
+  handle('vault:link-check', () => {
     try {
       return createVaultService({ vaultPath: vaultRoot() }).links()
     } catch (error) {
@@ -488,19 +489,19 @@ function registerBridges(): void {
   // The engine: read the choice, change it, hand it a task, answer its
   // permission cards. Every answer is a value or a plain sentence — a refused
   // task is information, not an exception.
-  ipcMain.handle('engine:read', () => ({
+  handle('engine:read', () => ({
     engine: settings.engine,
     running: engine?.running() === true,
     history: [...engineHistory],
   }))
 
-  ipcMain.handle('engine:pick', (_event, id: string): { ok: boolean; answer: string } => {
+  handle('engine:pick', (_event, id: string): { ok: boolean; answer: string } => {
     const wanted = normalizeEngine({ id }).id
     settings = writeSettings(settingsFile, { ...settings, engine: { ...settings.engine, id: wanted } })
     return { ok: true, answer: `engine set to ${wanted}` }
   })
 
-  ipcMain.handle(
+  handle(
     'engine:send',
     (_event, prompt: string, cwd: string, pictures: unknown = []): { ok: boolean; answer: string } => {
       const text = typeof prompt === 'string' ? prompt.trim().slice(0, 20000) : ''
@@ -562,15 +563,15 @@ function registerBridges(): void {
       for (const window of BrowserWindow.getAllWindows()) window.webContents.send('engine:download-event', tick)
     },
   })
-  ipcMain.handle('engine:download:start', (_event, engine: string) => downloads.start(typeof engine === 'string' ? engine : ''))
-  ipcMain.handle('engine:download:status', () => downloads.status())
-  ipcMain.handle('engine:download:run', (_event, engine: string) => downloads.runInstaller(typeof engine === 'string' ? engine : ''))
-  ipcMain.handle('engine:download:remove', (_event, engine: string) => downloads.remove(typeof engine === 'string' ? engine : ''))
+  handle('engine:download:start', (_event, engine: string) => downloads.start(typeof engine === 'string' ? engine : ''))
+  handle('engine:download:status', () => downloads.status())
+  handle('engine:download:run', (_event, engine: string) => downloads.runInstaller(typeof engine === 'string' ? engine : ''))
+  handle('engine:download:remove', (_event, engine: string) => downloads.remove(typeof engine === 'string' ? engine : ''))
   // The staged Ollama runtime, started and stopped HERE — the download
   // module's copy says this, so the doors must exist to make it true.
-  ipcMain.handle('engine:download:serve-start', () => downloads.ollamaStart())
-  ipcMain.handle('engine:download:serve-stop', () => downloads.ollamaStop())
-  ipcMain.handle('engine:download:serve-status', () => downloads.ollamaStatus())
+  handle('engine:download:serve-start', () => downloads.ollamaStart())
+  handle('engine:download:serve-stop', () => downloads.ollamaStop())
+  handle('engine:download:serve-status', () => downloads.ollamaStatus())
 
   // The battle tally: a PRIVATE local ledger of what won for this person.
   // Real counts only, capped, never sent anywhere. No public scoreboard.
@@ -584,7 +585,7 @@ function registerBridges(): void {
       return []
     }
   }
-  ipcMain.handle('battle:record', (_event, entry: Partial<BattleEntry>): { ok: boolean; answer: string } => {
+  handle('battle:record', (_event, entry: Partial<BattleEntry>): { ok: boolean; answer: string } => {
     const prompt = typeof entry?.prompt === 'string' ? entry.prompt.slice(0, 500) : ''
     const winner = typeof entry?.winner === 'string' ? entry.winner.slice(0, 120) : ''
     const loser = typeof entry?.loser === 'string' ? entry.loser.slice(0, 120) : ''
@@ -599,22 +600,22 @@ function registerBridges(): void {
       return { ok: false, answer: `Could not write the tally: ${(failure as Error).message}` }
     }
   })
-  ipcMain.handle('battle:ledger', (): { ok: boolean; entries: BattleEntry[] } => ({ ok: true, entries: readLedger().slice(-50).reverse() }))
+  handle('battle:ledger', (): { ok: boolean; entries: BattleEntry[] } => ({ ok: true, entries: readLedger().slice(-50).reverse() }))
 
   // Recipes: saved work orders as plain markdown the owner can read and
   // share. Shown in full before a run; the engine's own cards still gate
   // everything a run tries to do — a recipe approves nothing by itself.
   const recipes = createRecipeManager(join(app.getPath('userData'), 'recipes'))
-  ipcMain.handle('recipes:list', () => recipes.list())
-  ipcMain.handle('recipes:save', (_event, recipe: unknown) => recipes.save(recipe as never))
-  ipcMain.handle('recipes:remove', (_event, name: string) => recipes.remove(typeof name === 'string' ? name : ''))
+  handle('recipes:list', () => recipes.list())
+  handle('recipes:save', (_event, recipe: unknown) => recipes.save(recipe as never))
+  handle('recipes:remove', (_event, name: string) => recipes.remove(typeof name === 'string' ? name : ''))
 
   // Compaction: the brief's receipt on disk, and the fresh start. The brief
   // is the ENGINE's own words; these doors only keep the record and end the
   // session so the next send cannot --resume the long conversation back in.
   const briefs = createCompactManager(join(app.getPath('userData'), 'handoffs'))
-  ipcMain.handle('compact:save', (_event, input: { brief?: string; workspace?: string; at?: string }) => briefs.save(input ?? {}))
-  ipcMain.handle('engine:fresh', (): { ok: boolean; answer: string } => {
+  handle('compact:save', (_event, input: { brief?: string; workspace?: string; at?: string }) => briefs.save(input ?? {}))
+  handle('engine:fresh', (): { ok: boolean; answer: string } => {
     if (!engine) return { ok: false, answer: 'The engine door is not open on this machine yet.' }
     engine.fresh()
     return { ok: true, answer: 'Session ended and its resume id forgotten. The next task starts fresh.' }
@@ -622,7 +623,7 @@ function registerBridges(): void {
 
   // The repo map: the working folder's structure on one page — the folder the
   // engine already works in, never a path handed over from the window.
-  ipcMain.handle('repo:map', async (): Promise<unknown> => buildRepoMap(settings.engine.workspace || vaultRoot()))
+  handle('repo:map', async (): Promise<unknown> => buildRepoMap(settings.engine.workspace || vaultRoot()))
 
   // Hooks: the owner's own commands at the engine's moments. Added by hand,
   // shown in full, capped; packs cannot contribute one (the manifest refuses
@@ -649,33 +650,33 @@ function registerBridges(): void {
       return []
     }
   }
-  ipcMain.handle('hooks:list', () => ({ ok: true, hooks: readHooks() }))
-  ipcMain.handle('hooks:save', (_event, hook: unknown) => hookRunner.upsert(hook as never))
-  ipcMain.handle('hooks:remove', (_event, id: string) => hookRunner.remove(typeof id === 'string' ? id : ''))
-  ipcMain.handle('hooks:test', (_event, command: string) => hookRunner.test(typeof command === 'string' ? command : ''))
+  handle('hooks:list', () => ({ ok: true, hooks: readHooks() }))
+  handle('hooks:save', (_event, hook: unknown) => hookRunner.upsert(hook as never))
+  handle('hooks:remove', (_event, id: string) => hookRunner.remove(typeof id === 'string' ? id : ''))
+  handle('hooks:test', (_event, command: string) => hookRunner.test(typeof command === 'string' ? command : ''))
 
   // Watch mode: one watched folder; events are REPORTED to the window, and
   // the renderer decides whether a run fires (it owns the one send path).
   const watcher = createFolderWatcher((tick: WatchTick) => {
     for (const window of BrowserWindow.getAllWindows()) window.webContents.send('watch:event', tick)
   })
-  ipcMain.handle('watch:start', (_event, folder: string) => watcher.start(typeof folder === 'string' ? folder : ''))
-  ipcMain.handle('watch:stop', () => watcher.stop())
-  ipcMain.handle('watch:status', () => watcher.status())
+  handle('watch:start', (_event, folder: string) => watcher.start(typeof folder === 'string' ? folder : ''))
+  handle('watch:stop', () => watcher.stop())
+  handle('watch:status', () => watcher.status())
 
   // Checkpoints: what the app kept the moment before an allowed write, and
   // the way back. Read from the folder the engine was handed at send time.
-  ipcMain.handle('engine:checkpoints:list', async () => {
+  handle('engine:checkpoints:list', async () => {
     try {
       return { ok: true, checkpoints: await listCheckpoints(join(app.getPath('userData'), 'checkpoints')) }
     } catch {
       return { ok: true, checkpoints: [] }
     }
   })
-  ipcMain.handle('engine:checkpoint:restore', (_event, copy: string): Promise<{ ok: boolean; answer: string }> =>
-    restoreCheckpoint(join(app.getPath('userData'), 'checkpoints'), typeof copy === 'string' ? copy : ''))
+  handle('engine:checkpoint:restore', (_event, copy: string, original: string): Promise<{ ok: boolean; answer: string }> =>
+    restoreCheckpoint(join(app.getPath('userData'), 'checkpoints'), typeof copy === 'string' ? copy : '', typeof original === 'string' ? original : ''))
 
-  ipcMain.handle('engine:answer', (_event, requestId: string, allow: boolean): { ok: boolean } => {
+  handle('engine:answer', (_event, requestId: string, allow: boolean): { ok: boolean } => {
     const session = engine?.current()
     if (!session || typeof requestId !== 'string' || !requestId) return { ok: false }
     session.answer(requestId, allow === true)
@@ -715,23 +716,23 @@ function registerBridges(): void {
 
   // The vault folder, opened in the file manager. The vault root only —
   // this door is a convenience for the owner, not a general launcher.
-  ipcMain.handle('vault:open-folder', async (): Promise<{ ok: boolean }> => {
+  handle('vault:open-folder', async (): Promise<{ ok: boolean }> => {
     const error = await shell.openPath(vaultRoot())
     return { ok: !error }
   })
 
   // What is really installed on this machine — the bay refuses to guess.
-  ipcMain.handle('engine:detect', async (): Promise<Array<{ id: EngineId; found: boolean; version: string; install: string }>> => {
+  handle('engine:detect', async (): Promise<Array<{ id: EngineId; found: boolean; version: string; install: string }>> => {
     const ids: EngineId[] = ['claude-code', 'agy']
     return Promise.all(ids.map((id) => detectEngine(id)))
   })
 
-  ipcMain.handle('quick:open', () => {
+  handle('quick:open', () => {
     createQuickWindow()
     return { ok: true }
   })
 
-  ipcMain.handle('quick:shortcut', (_event, payload: { enabled: boolean }) => {
+  handle('quick:shortcut', (_event, payload: { enabled: boolean }) => {
     quickShortcutEnabled = payload.enabled !== false
     applyQuickShortcut()
     return { ok: true, enabled: quickShortcutEnabled }
@@ -740,21 +741,26 @@ function registerBridges(): void {
   // An artifact in ITS OWN window: the same sandboxed preview HTML the
   // in-app iframe shows, at full reading size. Nothing new executes — the
   // CSP travels with the html.
-  ipcMain.handle('artifact:popout', (_event, payload: { html: string; title: string }) => {
+  handle('artifact:popout', (_event, payload: { html: string; title: string }) => {
     const win = new BrowserWindow({
       width: 760,
       height: 860,
       title: payload.title || 'OddBrain — artifact',
       autoHideMenuBar: true,
       backgroundColor: '#141417',
+      // Model-produced HTML in a full window is exactly where the Electron
+      // hardening must be explicit, not defaulted: sandbox on, no Node, and
+      // navigation locked (the PDF window below does the same).
+      webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false },
     })
+    lockNavigation(win.webContents)
     void win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(payload.html))
     return { ok: true }
   })
 
   // Save as PDF: rendered offscreen, written into the vault so it sits with
   // the owner's work, never into a temp folder nobody can find.
-  ipcMain.handle('artifact:pdf', async (_event, payload: { html: string; name: string }): Promise<{ ok: boolean; answer: string }> => {
+  handle('artifact:pdf', async (_event, payload: { html: string; name: string }): Promise<{ ok: boolean; answer: string }> => {
     try {
       const safe = pdfSafeName(payload.name) + '.pdf'
       const dir = join(vaultRoot(), 'Artifacts PDF')
@@ -774,7 +780,7 @@ function registerBridges(): void {
     }
   })
 
-  ipcMain.handle('engine:stop', () => {
+  handle('engine:stop', () => {
     engine?.stop()
     return { ok: true }
   })
@@ -782,7 +788,7 @@ function registerBridges(): void {
   // Bringing a brain home. The door streams progress sentences; each becomes
   // an event on the same channel the engine's own events use, so the bay can
   // show a real bar instead of a spinner of lies.
-  ipcMain.handle('engine:pull', async (_event, rawName: string): Promise<{ ok: boolean; answer: string }> => {
+  handle('engine:pull', async (_event, rawName: string): Promise<{ ok: boolean; answer: string }> => {
     const name = validateModelName(rawName)
     if (!name) return { ok: false, answer: 'That is not a model name this app will ask for.' }
     const door = settings.engine.baseUrl || 'http://localhost:11434'
@@ -827,7 +833,7 @@ function registerBridges(): void {
   })
 
   // Taking a brain off the machine, when the owner no longer wants it.
-  ipcMain.handle('engine:model-delete', async (_event, rawName: string): Promise<{ ok: boolean; answer: string }> => {
+  handle('engine:model-delete', async (_event, rawName: string): Promise<{ ok: boolean; answer: string }> => {
     const name = validateModelName(rawName)
     if (!name) return { ok: false, answer: 'That is not a model name this app will ask for.' }
     const door = settings.engine.baseUrl || 'http://localhost:11434'
@@ -847,7 +853,7 @@ function registerBridges(): void {
   // Capture the current conversation as a capsule: the digest lands in the
   // vault's Captures/ folder — the same shape the browser extension queues
   // into, so both paths feed one memory.
-  ipcMain.handle('vault:capture-chat', (_event, payload: { title: string; markdown: string }): { ok: boolean; answer: string } => {
+  handle('vault:capture-chat', (_event, payload: { title: string; markdown: string }): { ok: boolean; answer: string } => {
     const title = typeof payload?.title === 'string' ? payload.title.trim().slice(0, 80) : ''
     const markdown = typeof payload?.markdown === 'string' ? payload.markdown : ''
     if (!title || !markdown || markdown.length > 100_000) {
@@ -868,7 +874,7 @@ function registerBridges(): void {
   // A handoff: the finished turn, written into the vault as one markdown
   // document any later session (here or in a terminal) can continue from.
   // The name is validated and the vault's own path rules apply.
-  ipcMain.handle('vault:save-handoff', (_event, payload: { name: string; markdown: string }): { ok: boolean; answer: string } => {
+  handle('vault:save-handoff', (_event, payload: { name: string; markdown: string }): { ok: boolean; answer: string } => {
     const name = typeof payload?.name === 'string' ? payload.name.trim() : ''
     const markdown = typeof payload?.markdown === 'string' ? payload.markdown : ''
     if (!name || name.length > 120 || /[\\/:*?"<>|\n\r]/.test(name) || !markdown || markdown.length > 200_000) {
@@ -888,7 +894,7 @@ function registerBridges(): void {
   // structure, written to the app's exports folder. Obsidian (or a backup,
   // or another machine) takes folders of markdown as they are — nothing is
   // converted, because nothing needs converting.
-  ipcMain.handle('vault:export-copy', (): { ok: boolean; answer: string } => {
+  handle('vault:export-copy', (): { ok: boolean; answer: string } => {
     const service = createVaultService({ vaultPath: vaultRoot() })
     if (!service.available()) return { ok: false, answer: 'No vault to copy.' }
     const stamp = stampFor(new Date())
@@ -899,7 +905,7 @@ function registerBridges(): void {
   })
 
   // The skills the owner's engine already has — the import list.
-  ipcMain.handle('skills:scan', () => {
+  handle('skills:scan', () => {
     const home = process.env['USERPROFILE'] || process.env['HOME'] || ''
     return scanClaudeSkills(join(home, '.claude', 'skills'))
   })
@@ -908,7 +914,7 @@ function registerBridges(): void {
   // the catalog (this door fetches nothing else), the file comes from
   // anthropics/skills, and it lands in every engine's own folder through the
   // same deploy everything else uses.
-  ipcMain.handle('skills:install-catalog', async (_event, name: string): Promise<{ ok: boolean; answer: string; written?: string[] }> => {
+  handle('skills:install-catalog', async (_event, name: string): Promise<{ ok: boolean; answer: string; written?: string[] }> => {
     const result = await installCatalogSkill(String(name ?? ''), skillTargets())
     if (!result.ok) return { ok: false, answer: result.answer }
     return { ok: true, answer: `${result.skill.name} installed to ${result.written.length} engine folders`, written: result.written }
@@ -916,7 +922,7 @@ function registerBridges(): void {
 
   // Deploy the app's vault into every engine's own folder. The renderer sends
   // its vault; the main process validates every name before anything lands.
-  ipcMain.handle('skills:deploy', (_event, skills: VaultSkill[]): { ok: boolean; written: string[] } => {
+  handle('skills:deploy', (_event, skills: VaultSkill[]): { ok: boolean; written: string[] } => {
     const written: string[] = []
     for (const skill of Array.isArray(skills) ? skills.slice(0, 200) : []) {
       if (!skill || typeof skill.name !== 'string' || !skill.name.trim()) continue
@@ -932,7 +938,7 @@ function registerBridges(): void {
   })
 
   // The one MCP list, stored once, deployed to every engine's config.
-  ipcMain.handle('mcp:read', () => {
+  handle('mcp:read', () => {
     try {
       return JSON.parse(readFileSync(mcpFile, 'utf8')) as { servers: McpServer[] }
     } catch {
@@ -940,7 +946,7 @@ function registerBridges(): void {
     }
   })
 
-  ipcMain.handle('mcp:write', (_event, payload: { servers: McpServer[] }): { ok: boolean; written: string[] } => {
+  handle('mcp:write', (_event, payload: { servers: McpServer[] }): { ok: boolean; written: string[] } => {
     const servers = Array.isArray(payload?.servers) ? payload.servers.slice(0, 100) : []
     writeFileSync(mcpFile, JSON.stringify({ servers }), 'utf8')
     return { ok: true, written: deployMcp(servers, settings.engine.workspace || vaultRoot()) }
@@ -950,7 +956,7 @@ function registerBridges(): void {
   // picks the folder; the pack is validated, copied to a readable place, and
   // its skills deploy to the engines. Remove = undo exactly what the install
   // record says was written. No index, no server, no account in Phase 1.
-  ipcMain.handle('mods:install-from-file', async (): Promise<{ ok: boolean; answer: string; pack?: unknown; prompts?: unknown; themes?: unknown; folder?: string; written?: string[] }> => {
+  handle('mods:install-from-file', async (): Promise<{ ok: boolean; answer: string; pack?: unknown; prompts?: unknown; themes?: unknown; folder?: string; written?: string[] }> => {
     const picked = await dialog.showOpenDialog({
       title: 'Which pack folder?',
       properties: ['openDirectory'],
@@ -969,9 +975,9 @@ function registerBridges(): void {
     }
   })
 
-  ipcMain.handle('mods:list', () => listPacks(join(app.getPath('userData'), 'extensions')))
+  handle('mods:list', () => listPacks(join(app.getPath('userData'), 'extensions')))
 
-  ipcMain.handle('mods:remove', (_event, id: string): { ok: boolean; answer: string } =>
+  handle('mods:remove', (_event, id: string): { ok: boolean; answer: string } =>
     removePack(String(id ?? ''), join(app.getPath('userData'), 'extensions'), skillTargets()),
   )
 
@@ -1002,7 +1008,7 @@ function registerBridges(): void {
     }
     return { kind: 'folder', path: clean }
   }
-  ipcMain.handle('mods:index-add', (_event, payload: { kind?: string; locator?: string }): { ok: boolean; answer: string } => {
+  handle('mods:index-add', (_event, payload: { kind?: string; locator?: string }): { ok: boolean; answer: string } => {
     const source = toSource(String(payload?.kind ?? ''), String(payload?.locator ?? ''))
     if (!source) return { ok: false, answer: 'Give a folder that holds index.json, or an https URL that answers it.' }
     if (source.kind === 'folder' && !existsSync(join(source.path, 'index.json'))) {
@@ -1022,8 +1028,8 @@ function registerBridges(): void {
       return { ok: false, answer: 'The index list could not be written.' }
     }
   })
-  ipcMain.handle('mods:index-list', () => readIndexes())
-  ipcMain.handle('mods:index-remove', (_event, locator: string): { ok: boolean } => {
+  handle('mods:index-list', () => readIndexes())
+  handle('mods:index-remove', (_event, locator: string): { ok: boolean } => {
     const list = readIndexes().filter(item => item.locator !== String(locator ?? ''))
     try {
       writeFileSync(indexesFile(), JSON.stringify({ indexes: list }, null, 2), 'utf8')
@@ -1032,12 +1038,12 @@ function registerBridges(): void {
       return { ok: false }
     }
   })
-  ipcMain.handle('mods:index-browse', async (_event, payload: { kind?: string; locator?: string }) => {
+  handle('mods:index-browse', async (_event, payload: { kind?: string; locator?: string }) => {
     const source = toSource(String(payload?.kind ?? ''), String(payload?.locator ?? ''))
     if (!source) return { ok: false as const, problem: 'That is not a folder path or an https URL.' }
     return readIndex(source)
   })
-  ipcMain.handle('mods:index-install', async (_event, payload: { kind?: string; locator?: string; id?: string }) => {
+  handle('mods:index-install', async (_event, payload: { kind?: string; locator?: string; id?: string }) => {
     const source = toSource(String(payload?.kind ?? ''), String(payload?.locator ?? ''))
     if (!source) return { ok: false as const, answer: 'That is not a folder path or an https URL.' }
     return installFromIndex(source, String(payload?.id ?? ''), { storeRoot: join(app.getPath('userData'), 'extensions'), ...skillTargets() })
@@ -1046,7 +1052,7 @@ function registerBridges(): void {
   // Mods (Phase 3): publish. Export turns the engine's real skills and the
   // app's current look into a pack folder plus an index.json entry beside it
   // — send the folder to share it, or add it as an index to install from it.
-  ipcMain.handle('mods:export', (_event, payload: { name?: string; description?: string; author?: string; skills?: string[]; theme?: Record<string, string> | null }) => {
+  handle('mods:export', (_event, payload: { name?: string; description?: string; author?: string; skills?: string[]; theme?: Record<string, string> | null }) => {
     const home = process.env['USERPROFILE'] || process.env['HOME'] || ''
     if (!home) return { ok: false as const, answer: 'No home folder is known, so there is nowhere to export to.' }
     const root = join(home, 'AI-ASSistant packs')
@@ -1069,7 +1075,7 @@ function registerBridges(): void {
   // The community store the app ships with: a REAL folder of packs beside the
   // extension's resources — offline from the first run. In dev it is the
   // repo's own store/; packaged, the copy electron-builder ships.
-  ipcMain.handle('mods:community-index', (): { ok: boolean; path?: string } => {
+  handle('mods:community-index', (): { ok: boolean; path?: string } => {
     // Launched from source, getAppPath can be the built main/ folder; the
     // checkout root (two up) is what actually holds store/.
     const candidates = app.isPackaged
@@ -1083,7 +1089,7 @@ function registerBridges(): void {
 
   // The starter pack: the app's own real files, written to a temp folder and
   // installed through the very same path a friend's folder would take.
-  ipcMain.handle('mods:install-starter', (): { ok: boolean; answer: string; folder?: string; written?: string[] } => {
+  handle('mods:install-starter', (): { ok: boolean; answer: string; folder?: string; written?: string[] } => {
     const files = starterPackFiles()
     const staging = join(app.getPath('temp'), `ai-assistant-starter-${Date.now()}`)
     try {
@@ -1108,14 +1114,14 @@ function registerBridges(): void {
   // The resume ids themselves stay in engine-sessions.json; this file only
   // carries the owner's links and history.
   const boardFile = (): string => join(app.getPath('userData'), 'sessions-board.json')
-  ipcMain.handle('sessions:board-read', (): unknown => {
+  handle('sessions:board-read', (): unknown => {
     try {
       return JSON.parse(readFileSync(boardFile(), 'utf8'))
     } catch {
       return { continuing: {}, done: [] }
     }
   })
-  ipcMain.handle('sessions:board-write', (_event, value: unknown): { ok: boolean } => {
+  handle('sessions:board-write', (_event, value: unknown): { ok: boolean } => {
     try {
       writeFileSync(boardFile(), JSON.stringify(normalizeBoard(value), null, 2), 'utf8')
       return { ok: true }
@@ -1123,7 +1129,7 @@ function registerBridges(): void {
       return { ok: false }
     }
   })
-  ipcMain.handle('sessions:pick-files', async (): Promise<string[]> => {
+  handle('sessions:pick-files', async (): Promise<string[]> => {
     const picked = await dialog.showOpenDialog({
       title: 'Which files does this thread touch?',
       properties: ['openFile', 'multiSelections'],
@@ -1135,7 +1141,7 @@ function registerBridges(): void {
   // validated on the way in and the way out; a damaged file means "no
   // projects yet", never a failed launch.
   const projectsFile = join(app.getPath('userData'), 'projects.json')
-  ipcMain.handle('projects:read', (): Project[] => {
+  handle('projects:read', (): Project[] => {
     try {
       return normalizeProjects(JSON.parse(readFileSync(projectsFile, 'utf8')))
     } catch {
@@ -1143,18 +1149,18 @@ function registerBridges(): void {
     }
   })
 
-  ipcMain.handle('projects:write', (_event, projects: unknown): { ok: boolean; projects: Project[] } => {
+  handle('projects:write', (_event, projects: unknown): { ok: boolean; projects: Project[] } => {
     const clean = normalizeProjects(projects)
     writeFileSync(projectsFile, JSON.stringify(clean, null, 2), 'utf8')
     return { ok: true, projects: clean }
   })
 
-  ipcMain.handle('projects:new', (_event, name: string): Project => newProject(String(name ?? '')))
+  handle('projects:new', (_event, name: string): Project => newProject(String(name ?? '')))
 
   // "Work here" — the owner points the engine at a project's folder. The
   // window never chooses a working folder behind the app's back; this door
   // IS the owner's explicit choice, same as the picker.
-  ipcMain.handle('engine:workspace-set', (_event, folder: string): { ok: boolean; answer: string } => {
+  handle('engine:workspace-set', (_event, folder: string): { ok: boolean; answer: string } => {
     const clean = typeof folder === 'string' ? folder.trim().slice(0, 4096) : ''
     // Empty is allowed and means "back to the vault" — a real choice, not a mistake.
     if (clean === '') {
@@ -1172,7 +1178,7 @@ function registerBridges(): void {
   // The engine sessions, per workspace: the threads a fresh launch will
   // continue. Read-only for the screen, with an explicit forget.
   const sessionsFile = (): string => join(app.getPath('userData'), 'engine-sessions.json')
-  ipcMain.handle('engine:sessions', (): Array<{ workspace: string; sessionId: string }> => {
+  handle('engine:sessions', (): Array<{ workspace: string; sessionId: string }> => {
     try {
       const data = JSON.parse(readFileSync(sessionsFile(), 'utf8')) as Record<string, string>
       return Object.entries(data)
@@ -1184,7 +1190,7 @@ function registerBridges(): void {
     }
   })
 
-  ipcMain.handle('engine:sessions-forget', (_event, workspace: string): { ok: boolean } => {
+  handle('engine:sessions-forget', (_event, workspace: string): { ok: boolean } => {
     try {
       const file = sessionsFile()
       const data = JSON.parse(readFileSync(file, 'utf8')) as Record<string, string>
@@ -1200,7 +1206,7 @@ function registerBridges(): void {
   // at least plausible; it is the owner's machine and this is a convenience.
   // Open a link in the person's browser. Guarded to https and a short list of
   // hosts we actually name in the interface — this door is not a launcher.
-  ipcMain.handle('app:open-external', async (_event, url: string): Promise<{ ok: boolean }> => {
+  handle('app:open-external', async (_event, url: string): Promise<{ ok: boolean }> => {
     let parsed: URL
     try {
       parsed = new URL(String(url ?? ''))
@@ -1212,7 +1218,7 @@ function registerBridges(): void {
     return { ok: true }
   })
 
-  ipcMain.handle('app:open-folder', async (_event, folder: string): Promise<{ ok: boolean }> => {
+  handle('app:open-folder', async (_event, folder: string): Promise<{ ok: boolean }> => {
     const clean = typeof folder === 'string' ? folder.trim() : ''
     if (!clean || clean.length > 4096 || /[\n\r]/.test(clean)) return { ok: false }
     if (!existsSync(clean)) return { ok: false }
@@ -1222,7 +1228,7 @@ function registerBridges(): void {
 
   // The rulebook itself: read for the edit screen, write to persist and
   // deploy immediately to every engine's global file.
-  ipcMain.handle('houserules:read', () => {
+  handle('houserules:read', () => {
     const rules = readHouseRules()
     return {
       rules: {
@@ -1236,7 +1242,7 @@ function registerBridges(): void {
     }
   })
 
-  ipcMain.handle('houserules:write', (_event, rules: Partial<HouseRules>): { ok: boolean; written: string[] } => {
+  handle('houserules:write', (_event, rules: Partial<HouseRules>): { ok: boolean; written: string[] } => {
     const clean: Partial<HouseRules> = {}
     for (const key of Object.keys(DEFAULT_HOUSE_RULES) as Array<keyof HouseRules>) {
       const value = rules?.[key]
@@ -1252,7 +1258,7 @@ function registerBridges(): void {
   // the same list Claude Code itself would choose from. Real data only: what
   // Ollama reports, with cloud brains flagged because their work leaves the
   // machine and the label must say so.
-  ipcMain.handle('engine:models', async (): Promise<{ ok: boolean; models: EngineModelEntry[]; error?: string }> => {
+  handle('engine:models', async (): Promise<{ ok: boolean; models: EngineModelEntry[]; error?: string }> => {
     // Each engine is served by its OWN source: Claude Code reads its brains
     // from the owner's door; agy answers only to Google. Never a pickable lie.
     if (settings.engine.id !== 'claude-code') {
@@ -1300,7 +1306,7 @@ function registerBridges(): void {
 
   // The throttle: how much the engine may do before asking. The app offers
   // the engine's own official settings and imposes nothing beyond them.
-  ipcMain.handle('engine:approval', (_event, approval: string): { ok: boolean; answer: string } => {
+  handle('engine:approval', (_event, approval: string): { ok: boolean; answer: string } => {
     const mode: ApprovalMode = APPROVAL_MODES.includes(approval as ApprovalMode)
       ? (approval as ApprovalMode)
       : 'ask'
@@ -1311,9 +1317,9 @@ function registerBridges(): void {
   // The turn journal: finished turns kept as a small record a reopened
   // window can show. Bounded, plain, never a fake resumable transcript.
   const journal = createJournalManager(join(app.getPath('userData'), 'engine-journal.json'))
-  ipcMain.handle('journal:list', () => journal.list())
-  ipcMain.handle('journal:append', (_event, entry: unknown) => journal.append(entry as never))
-  ipcMain.handle('journal:clear', () => journal.clear())
+  handle('journal:list', () => journal.list())
+  handle('journal:append', (_event, entry: unknown) => journal.append(entry as never))
+  handle('journal:clear', () => journal.clear())
 
   // Auto memory: what the engine remembered, listed for the owner. Reads
   // and removes stay inside the vault's memory folder; the WRITES are the
@@ -1322,23 +1328,23 @@ function registerBridges(): void {
   // spawns in — so what the pane lists is always what the engine wrote,
   // even when the workspace is not the vault.
   const memoryFiles = createMemoryManager(() => settings.engine.workspace || vaultRoot())
-  ipcMain.handle('memory:list', () => memoryFiles.list())
-  ipcMain.handle('memory:remove', (_event, name: string) => memoryFiles.remove(typeof name === 'string' ? name : ''))
+  handle('memory:list', () => memoryFiles.list())
+  handle('memory:remove', (_event, name: string) => memoryFiles.remove(typeof name === 'string' ? name : ''))
 
-  ipcMain.handle('engine:thinking', (_event, thinking: string): { ok: boolean; answer: string } => {
+  handle('engine:thinking', (_event, thinking: string): { ok: boolean; answer: string } => {
     const mode = thinking === 'extended' ? 'extended' : 'default'
     settings = writeSettings(settingsFile, { ...settings, engine: { ...settings.engine, thinking: mode } })
     return { ok: true, answer: mode === 'extended' ? 'Extended thinking: the engine gets its own big budget.' : 'Default thinking.' }
   })
 
-  ipcMain.handle('engine:model', (_event, model: string, provider?: string): { ok: boolean; answer: string } => {
+  handle('engine:model', (_event, model: string, provider?: string): { ok: boolean; answer: string } => {
     const clean = normalizeEngine({ ...settings.engine, model, cloudProvider: provider === 'anthropic' ? 'anthropic' : '' })
     settings = writeSettings(settingsFile, { ...settings, engine: clean })
     return { ok: true, answer: clean.cloudProvider ? `brain set to ${clean.model} via ${clean.cloudProvider}` : `brain set to ${clean.model}` }
   })
 
   // "Open a folder" — the engine's workplace, chosen once and remembered.
-  ipcMain.handle('engine:pick-workspace', async (): Promise<{ ok: boolean; answer: string }> => {
+  handle('engine:pick-workspace', async (): Promise<{ ok: boolean; answer: string }> => {
     const answer = await dialog.showOpenDialog({
       title: 'Where should the engine work?',
       properties: ['openDirectory', 'createDirectory'],
@@ -1404,6 +1410,8 @@ function createQuickWindow(): void {
   if (devServer) void quickWindow.loadURL(`${devServer}/?quick=1`)
   else if (api?.url) void quickWindow.loadURL(`${api.url}/?quick=1`)
   else void quickWindow.loadFile(join(__dirname, '../renderer/index.html'), { query: { quick: '1' } })
+  pinOwnOrigins([devServer, api?.url])
+  lockNavigation(quickWindow.webContents)
   quickWindow.on('closed', () => {
     quickWindow = null
   })
@@ -1491,12 +1499,6 @@ function createWindow(): BrowserWindow {
     consoleErrors.push(`renderer failed to load (${code}): ${description}`)
   })
 
-  // External links open in the real browser, never inside the app window.
-  window.webContents.setWindowOpenHandler(({ url }) => {
-    void shell.openExternal(url)
-    return { action: 'deny' }
-  })
-
   // Show on first paint so there is never a white flash, and so a screenshot
   // taken by the smoke run captures something real rather than an unpainted frame.
   window.once('ready-to-show', () => window.show())
@@ -1514,6 +1516,12 @@ function createWindow(): BrowserWindow {
     // it renders its own offline state, which is more useful than a blank window.
     void window.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  // The pages this app loads are the only pages IPC answers, and navigation
+  // is locked: a link can never walk this window (and its preload bridge)
+  // somewhere else — plain web links open in the real browser instead.
+  pinOwnOrigins([devServer, api?.url])
+  lockNavigation(window.webContents)
 
   if (isSmoke) runSmoke(window)
 

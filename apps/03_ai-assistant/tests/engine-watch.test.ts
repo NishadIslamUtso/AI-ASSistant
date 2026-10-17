@@ -96,13 +96,5 @@ test('the order carries the trigger names and the anti-loop line', () => {
   assert.match(WATCH_NOTE, /never chases its own tail/)
 })
 
-test('the wiring: the bay has the section, main reports events, and the renderer owns the fire', () => {
-  const bay = read('../src/renderer/src/components/EngineBay.tsx')
-  const section = read('../src/renderer/src/components/WatchSection.tsx')
-  const state = read('../src/renderer/src/state/watch.ts')
-  const main = read('../src/main/index.ts')
-  for (const door of ["'watch:start'", "'watch:stop'", "'watch:status'"]) {
-  }
-  const preload = read('../src/preload/index.ts')
-  const bridge = read('../src/renderer/src/platform/bridge.ts')
-})
+// The old 'wiring' test — a loop with no body, no assertions — is gone for
+// good: watch-fire.test.ts now drives the real fire end to end.

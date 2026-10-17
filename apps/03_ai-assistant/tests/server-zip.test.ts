@@ -91,3 +91,48 @@ test('a name with an unusual but safe character survives unchanged', () => {
   assert.equal(readZip(archive)[0].name, 'notes/Ünicode and spaces.md')
   assert.equal(readZip(archive)[0].content, 'ok')
 })
+
+test('unzipArchive answers a zip bomb BEFORE it spends the memory', async () => {
+  const { unzipArchive } = await import('../src/main/engine/downloads')
+  const { mkdtemp, rm } = await import('node:fs/promises')
+  const { tmpdir } = await import('node:os')
+  const { join } = await import('node:path')
+
+  /** Rewrite the DECLARED uncompressed size of entry 0, on a COPY — the
+   *  original archive stays honest for the later cases. */
+  const lieAboutSize = (zip: Uint8Array, claimed: number): Uint8Array => {
+    const copy = new Uint8Array(zip) // Buffer#slice is a view; a real copy it is
+    const view = new DataView(copy.buffer, copy.byteOffset, copy.byteLength)
+    for (let i = 0; i < copy.length - 4; i += 1) {
+      if (view.getUint32(i, true) === 0x02014b50) {
+        view.setUint32(i + 24, claimed, true)
+        return copy
+      }
+    }
+    throw new Error('no central directory found')
+  }
+
+  const dir = await mkdtemp(join(tmpdir(), 'zipbomb-'))
+  const small = createZip([{ name: 'innocent.txt', content: 'tiny' }])
+  const fsStub = { mkdir: async () => undefined, writeFile: async () => undefined }
+
+  // One entry claiming more than the per-file cap: refused before inflation.
+  const liar = lieAboutSize(small, 5 * 1024 * 1024 * 1024)
+  const perFile = await unzipArchive(liar, join(dir, 'a'), { files: 200, perFile: 1024, totalUncompressed: 4096 }, fsStub)
+  assert.equal(perFile.ok, false)
+  assert.match(perFile.answer, /too big/)
+
+  // Many honest-looking entries whose total blows the aggregate cap.
+  const many = createZip(
+    Array.from({ length: 50 }, (_, i) => ({ name: `f${i}.txt`, content: 'x'.repeat(100) })),
+  )
+  const aggregate = await unzipArchive(many, join(dir, 'b'), { files: 200, perFile: 1024, totalUncompressed: 1024 }, fsStub)
+  assert.equal(aggregate.ok, false)
+  assert.match(aggregate.answer, /cap/)
+
+  // A modest archive within every cap still unpacks.
+  const fine = await unzipArchive(small, join(dir, 'c'), { files: 200, perFile: 1024, totalUncompressed: 4096 }, fsStub)
+  assert.equal(fine.ok, true, fine.answer)
+
+  await rm(dir, { recursive: true, force: true })
+})

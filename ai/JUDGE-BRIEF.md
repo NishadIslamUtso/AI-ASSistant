@@ -13,10 +13,10 @@ everything in `archive/` and the promotional voice of `CHANGELOG.md`.
 
 | Claim | Proof |
 |---|---|
-| The Claude Code wire (stream-json, tool events, permission round-trip, resume) is parsed correctly, including hostile chunk boundaries | `npm ci && npx vitest run` — the parser tests feed real wire shapes, chopped at every byte offset |
+| The Claude Code wire (stream-json, tool events, permission round-trip, resume) is parsed correctly, including hostile chunk boundaries | `npm ci && npx vitest run` — the parser tests feed real wire shapes, chopped at regular offsets and mid-character |
 | A Deny reaches the engine as a real deny response (not UI suppression) | wire-level tests + code path in `src/main/engine/claudeCode.ts` |
-| File checkpoints complete before an Allow is forwarded; the previous version is restorable; engine-created files are listed and undoable | race-regression test + checkpoint tests; live figure `receipts/shots/g66-checkpoint-ghost.png` |
-| Watch mode never fires on deletions; the engine's own writes are suppressed | tests + `g68-watch-truths.png` |
+| File checkpoints complete before an Allow is forwarded — and a checkpoint that CANNOT be saved denies the change instead of allowing blind; engine-created files are undone one at a time, by name | race test, fail-closed test, multi-ghost test; live figure `receipts/shots/g66-checkpoint-ghost.png` |
+| Watch mode never fires on deletions; the engine's own writes are suppressed; a bricked watcher now FAILS the suite (a real fire is driven end to end in `tests/watch-fire.test.ts`) | behavioral test + `g68-watch-truths.png` |
 | The app asks the user's shell for the real PATH and merges it (fixes "'claude' is not recognized" in packaged apps) | tests in `tests/claudereverse-takes.test.ts` |
 | Memory reads stay inside the memory folder, symlink-safe | tests with real symlinks on a real filesystem |
 | The agy wire implementation matches the real agy v1.4.0 binary's documented non-interactive mode | flags verified against the real binary's `--help` and probes; see the limitation below |
@@ -26,7 +26,7 @@ Verify with:
 ```bash
 git clone -b v3 https://github.com/NishadIslamUtso/AI-ASSistant.git
 cd AI-ASSistant/apps/03_ai-assistant
-npm ci && npx vitest run      # 76 files / 611 tests, all behavioral
+npm ci && npx vitest run      # 78 files / 621 tests
 npx tsc --noEmit && npm run build
 ```
 
@@ -52,14 +52,19 @@ allow-failure mode until it has run green once).
 4. **Windows is the target OS and has never run a test or an install.** The
    CI Windows job was added 2026-10-17 and may fail at first. The installer
    was built cross-platform (wine) but never installed by a human.
-5. **The test suite is honest as of 2026-10-17.** Earlier versions padded the
-   count with asserts that read source files and regexed them; 169 such
-   asserts were removed and the count fell 621 → 611. What remains asserts
-   behavior (parsers, filesystem, state machines) or shipped data (the
-   motion SVGs), not source code's appearance.
-6. **The 0.9.0 acceptance exe predates the OddBrain rename.** The next build
-   is `OddBrain-Setup-0.9.0.exe`; until then exe, repo name, and product
-   name disagree.
+5. **The test suite is honest as of 2026-10-17, and its honesty is
+   mutation-checked.** 169 asserts that read source files were removed, and
+   the count stands at 78 files / 621 tests after the judge round added
+   behavioral tests: a bricked watch mode now fails the suite, a checkpoint
+   that cannot save now denies the change instead of allowing blind, and a
+   zip bomb is refused before it inflates. A small number of
+   structural-identity checks remain on purpose — the no-old-name guard,
+   the fuse-hook wiring, the shortcut name — and they say so in their own
+   text instead of passing as behavior.
+6. **The repo is still named AI-ASSistant on GitHub.** Product, installer
+   (`OddBrain-Setup-0.9.0.exe`, sha256 `a174b777…58e491`), app title and
+   shortcut all say OddBrain; the GitHub repo carries the old name until the
+   owner renames it (that button is his).
 
 ## The three rules the code actually keeps
 

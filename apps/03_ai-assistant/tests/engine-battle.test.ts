@@ -201,7 +201,10 @@ test('a ghost checkpoint restores to nothing: the engine-created file is deleted
   const kept = await takeCheckpoint(dir, real, 1729075200001)
   assert.equal(kept?.existed, true)
   const again = await restoreCheckpoint(dir, '')
-  assert.equal(again.ok, true)
+  // The ghost's record was used up by the first restore, so the second one
+  // honestly reports that there is nothing left to remove.
+  assert.equal(again.ok, false)
+  assert.match(again.answer, /No record says/)
   assert.equal(await readFile(real, 'utf8'), 'old words', 'the real file stood untouched')
   await rm(dir, { recursive: true, force: true })
 })

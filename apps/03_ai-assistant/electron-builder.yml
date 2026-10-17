@@ -1,4 +1,4 @@
-# electron-builder.yml — how AI ASSistant becomes something a person can install.
+# electron-builder.yml — how OddBrain becomes something a person can install.
 #
 # Deliberately small, and every line here is a decision rather than a default:
 #
@@ -100,7 +100,7 @@ nsis:
   runAfterFinish: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: AI ASSistant
+  shortcutName: OddBrain
   artifactName: OddBrain-Setup-${version}.exe
   # Uninstall leaves the person's own data alone. The vault lives where they chose
   # it, and the app's settings live in the user's app-data folder — neither is the

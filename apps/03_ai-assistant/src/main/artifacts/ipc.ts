@@ -1,4 +1,5 @@
-import { BrowserWindow, dialog, ipcMain } from 'electron'
+import { handle } from '../ipcGuard'
+import { BrowserWindow, dialog } from 'electron'
 import { readFileSync, statSync } from 'node:fs'
 import { basename, extname } from 'node:path'
 import { adopt, duplicate, list, read, remove, rename, restore, save, type ItemAnswer } from './store'
@@ -25,7 +26,7 @@ function looksLikeArtifact(value: unknown): boolean {
 }
 
 function registerImport(root: string): void {
-  ipcMain.handle('artifacts:import', async (): Promise<ImportAnswer> => {
+  handle('artifacts:import', async (): Promise<ImportAnswer> => {
     const [window] = BrowserWindow.getAllWindows()
     const chosen = await dialog.showOpenDialog(window, {
       title: 'Bring a file into the artifact library',
@@ -62,14 +63,14 @@ function registerImport(root: string): void {
 }
 
 export function registerArtifactIpc(root: string): void {
-  ipcMain.handle('artifacts:list', () => list(root))
-  ipcMain.handle('artifacts:read', (_event, id: unknown, version?: unknown) => read(root, id, version))
-  ipcMain.handle('artifacts:save', (_event, input: unknown) => save(root, (input || {}) as never))
-  ipcMain.handle('artifacts:rename', (_event, id: unknown, title: unknown) => rename(root, id, title))
-  ipcMain.handle('artifacts:duplicate', (_event, id: unknown) => duplicate(root, id))
-  ipcMain.handle('artifacts:restore', (_event, id: unknown, version: unknown) => restore(root, id, version))
-  ipcMain.handle('artifacts:remove', (_event, id: unknown) => remove(root, id))
-  ipcMain.handle('artifacts:adopt', (_event, records: unknown) => adopt(root, records))
+  handle('artifacts:list', () => list(root))
+  handle('artifacts:read', (_event, id: unknown, version?: unknown) => read(root, id, version))
+  handle('artifacts:save', (_event, input: unknown) => save(root, (input || {}) as never))
+  handle('artifacts:rename', (_event, id: unknown, title: unknown) => rename(root, id, title))
+  handle('artifacts:duplicate', (_event, id: unknown) => duplicate(root, id))
+  handle('artifacts:restore', (_event, id: unknown, version: unknown) => restore(root, id, version))
+  handle('artifacts:remove', (_event, id: unknown) => remove(root, id))
+  handle('artifacts:adopt', (_event, records: unknown) => adopt(root, records))
   registerImport(root)
 }
 

@@ -177,7 +177,7 @@ test('a deployable export comes back as a real archive', async t => {
     ],
   })
   assert.equal(result.status, 200)
-  assert.match(result.body.filename, /^ai-assistant-artifact-\d{4}-\d{2}-\d{2}\.zip$/)
+  assert.match(result.body.filename, /^oddbrain-artifact-\d{4}-\d{2}-\d{2}\.zip$/)
   const bytes = Buffer.from(result.body.zip, 'base64')
   assert.equal(bytes.length, result.body.bytes)
   assert.equal(bytes.readUInt32LE(0), 0x04034b50, 'a local file header: the archive is readable')

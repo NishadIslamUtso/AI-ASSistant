@@ -16,9 +16,11 @@ changelog, which records development in a promotional voice.
 - Engines: claude-code (full wire), agy (wire implemented against the real
   binary; a signed-in turn has not been driven yet), headless Ollama as the
   free fallback. Engines are detected on the machine, not invented.
-- Permission cards: every file-touching step asks. Deny reaches the engine as
-  a real deny. Checkpoints are taken before an Allow is forwarded, and every
-  change is restorable — including files the engine created from nothing.
+- Permission cards: every file-touching step asks ("Full speed" is the one
+  gear that turns the cards off, and it says so). Deny reaches the engine as a
+  real deny. Checkpoints are taken before an Allow is forwarded — and if a
+  checkpoint cannot be taken, the change is denied, not allowed blind. Every
+  change is restorable, including files the engine created from nothing.
 - Watch mode, recipes, split steps, battles, compaction, turn journal, auto
   memory, artifact previews with pop-out and PDF export, find-in-conversation,
   a quick-ask window on a global hotkey — all riding the one send path.
@@ -30,7 +32,7 @@ changelog, which records development in a promotional voice.
 ```bash
 git clone -b v3 https://github.com/NishadIslamUtso/AI-ASSistant.git
 cd AI-ASSistant/apps/03_ai-assistant
-npm ci && npx vitest run      # 76 files / 611 tests
+npm ci && npx vitest run      # 78 files / 621 tests
 npx tsc --noEmit && npm run build
 ```
 

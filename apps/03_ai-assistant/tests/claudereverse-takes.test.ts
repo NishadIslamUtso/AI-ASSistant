@@ -75,6 +75,15 @@ test('the app is OddBrain now — identity, installer, fuses', () => {
   // Fuses are build config: the hook must be wired and the script must flip
   // the three abuse fuses on the packaged binary.
   assert.match(builder, /afterPack: scripts\/apply-fuses\.cjs/, 'the fuse hook is wired into the build')
+  // The name the person SEES outside the app too: the Start Menu shortcut and
+  // the package metadata. The shortcut once still said the old name while
+  // every window said the new one.
+  assert.match(builder, /shortcutName: OddBrain/, 'the installed shortcut is OddBrain')
+  assert.doesNotMatch(builder, /AI ASSistant/, 'the builder config carries no old name')
+  const pkg = JSON.parse(readFileSync(join(import.meta.dirname ?? 'tests', '..', 'package.json'), 'utf8')) as { description?: string }
+  assert.match(pkg.description ?? '', /OddBrain/, 'the package description is OddBrain')
+  const vault = read('src/main/vault/service.ts')
+  assert.match(vault, /oddbrain-artifact-/, 'the export zip carries the product name')
   const fuses = read('scripts/apply-fuses.cjs')
   assert.match(fuses, /FuseV1Options\.RunAsNode\]: false/, 'fuses: no Node-eval backdoor')
   assert.match(fuses, /EnableNodeOptionsEnvironmentVariable\]: false/, 'fuses: no NODE_OPTIONS')

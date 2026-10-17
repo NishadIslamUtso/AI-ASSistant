@@ -86,8 +86,8 @@ const engineApi = {
   checkpoints: {
     list: (): Promise<{ ok: boolean; checkpoints: Array<{ copy: string; original: string; at: string }> }> =>
       ipcRenderer.invoke('engine:checkpoints:list'),
-    restore: (copy: string): Promise<{ ok: boolean; answer: string }> =>
-      ipcRenderer.invoke('engine:checkpoint:restore', copy),
+    restore: (copy: string, original?: string): Promise<{ ok: boolean; answer: string }> =>
+      ipcRenderer.invoke('engine:checkpoint:restore', copy, original),
   },
   watch: {
     start: (folder: string): Promise<{ ok: boolean; answer: string }> => ipcRenderer.invoke('watch:start', folder),
@@ -190,8 +190,8 @@ const api = {
     checkpoints: {
       list: (): Promise<{ ok: boolean; checkpoints: Array<{ copy: string; original: string; at: string }> }> =>
         ipcRenderer.invoke('engine:checkpoints:list'),
-      restore: (copy: string): Promise<{ ok: boolean; answer: string }> =>
-        ipcRenderer.invoke('engine:checkpoint:restore', copy),
+      restore: (copy: string, original?: string): Promise<{ ok: boolean; answer: string }> =>
+      ipcRenderer.invoke('engine:checkpoint:restore', copy, original),
     },
   },
   houseRules: {

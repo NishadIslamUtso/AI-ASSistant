@@ -183,6 +183,7 @@ export function startAgySession(input: EngineStartInput & { spawnProcess?: typeo
   })
 
   const isRunning = (): boolean => !finished && child.exitCode === null && !child.killed
+  let refusalReason = ''
 
   const writeLine = (line: string): boolean => {
     if (!isRunning()) return false
@@ -197,9 +198,18 @@ export function startAgySession(input: EngineStartInput & { spawnProcess?: typeo
   return {
     send(prompt: string, images: Array<{ mime: string; data: string }> = []): boolean {
       // Pictures: agy's image shape is unverified — an honest refusal beats a
-      // silent drop or an invented block.
-      if (images.length) return false
+      // silent drop or an invented block. The reason travels with the session
+      // so the socket can show it instead of inventing "starting".
+      if (images.length) {
+        refusalReason = AGY_PICTURES_ANSWER
+        return false
+      }
       return writeLine(agyUserLine(prompt))
+    },
+    refusal(): string {
+      const reason = refusalReason
+      refusalReason = ''
+      return reason
     },
     answer(): void {
       // agy's print mode surfaces no stdio permission questions (verified in

@@ -4,8 +4,8 @@ import { engineStore, subscribeEngine } from './engine'
 import {
   shouldWatchFire,
   watchOrder,
+  watchDebounceMs,
   WATCH_COOLDOWN_MS,
-  WATCH_DEBOUNCE_MS,
   type WatchFireDecision,
 } from '@shared/lib/watchMode'
 
@@ -121,7 +121,7 @@ const maybeFire = (names: string[]): void => {
       }
       patch({ runs: state.runs + 1, lastFired: decision.names.join(', ') })
     })()
-  }, WATCH_DEBOUNCE_MS)
+  }, watchDebounceMs())
 }
 
 /** Start watching a folder; the order is saved and said back in full. */

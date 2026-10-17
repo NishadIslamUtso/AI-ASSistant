@@ -282,7 +282,7 @@ export function createDownloadManager(options: {
 export async function unzipArchive(
   bytes: Uint8Array,
   destination: string,
-  limits = { files: 200, perFile: 200 * 1024 * 1024 },
+  limits = { files: 200, perFile: 200 * 1024 * 1024, totalUncompressed: 400 * 1024 * 1024 },
   fs: { mkdir(path: string, options?: { recursive?: boolean }): Promise<unknown>; writeFile(path: string, data: Uint8Array): Promise<unknown> } = { mkdir, writeFile },
 ): Promise<{ ok: boolean; answer: string }> {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
@@ -296,11 +296,20 @@ export async function unzipArchive(
   if (count > limits.files) return { ok: false, answer: 'too many files' }
   let offset = view.getUint32(end + 16, true)
   const decoder = new TextDecoder()
+  let totalDeclared = 0
   await fs.mkdir(destination, { recursive: true })
   for (let index = 0; index < count; index += 1) {
     if (view.getUint32(offset, true) !== 0x02014b50) return { ok: false, answer: 'damaged central directory' }
     const method = view.getUint16(offset + 10, true)
     const compressedSize = view.getUint32(offset + 20, true)
+    // The central directory DECLARES the uncompressed size — check it before
+    // inflating a single byte, or a hostile archive spends the memory first
+    // and answers for it afterwards. Also tracked: the aggregate, so ten
+    // "small" entries cannot add up to a disk-eater.
+    const declaredSize = view.getUint32(offset + 24, true)
+    totalDeclared += declaredSize
+    if (declaredSize > limits.perFile) return { ok: false, answer: 'a file inside is too big' }
+    if (totalDeclared > limits.totalUncompressed) return { ok: false, answer: 'the archive unpacks to more than the cap' }
     const nameLength = view.getUint16(offset + 28, true)
     const extraLength = view.getUint16(offset + 30, true)
     const commentLength = view.getUint16(offset + 32, true)
@@ -315,7 +324,13 @@ export async function unzipArchive(
     const raw = bytes.subarray(dataStart, dataStart + compressedSize)
     let content: Uint8Array
     if (method === 0) content = raw
-    else if (method === 8) content = new Uint8Array(inflateRawSync(raw))
+    else if (method === 8) {
+      try {
+        content = new Uint8Array(inflateRawSync(raw, { maxOutputLength: limits.perFile }))
+      } catch {
+        return { ok: false, answer: 'a file inside is bigger than it declared, or damaged' }
+      }
+    }
     else return { ok: false, answer: `unsupported compression method ${method}` }
     if (content.length > limits.perFile) return { ok: false, answer: 'a file inside is too big' }
     const out = join(destination, name)

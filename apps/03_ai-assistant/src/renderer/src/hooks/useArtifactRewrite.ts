@@ -84,7 +84,9 @@ export default function useArtifactRewrite({
     setBusyId(artifact.id)
     setError('')
     setErrorFor('')
-    setStage('Asking the model to rewrite that element…')
+    // Not the chat engine: this is a direct, local-brain edit with its own
+    // stop button — said out loud so nobody wonders which model ran.
+    setStage('Asking the local brain (not the chat engine) to rewrite that element…')
     try {
       const { content } = await askLocal({
         model,

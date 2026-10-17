@@ -109,10 +109,10 @@ test('fresh ends the session AND forgets its resume id, or --resume drags it all
   const socket = createEngineSocket(memory)
   socket.send('the long conversation', { cwd: 'C:\\work', settings: DEFAULT_ENGINE, onEvent: () => undefined, spawnProcess: first.spawnMock })
   first.child.stdout.emit('data', Buffer.from(`${JSON.stringify({ type: 'system', subtype: 'init', session_id: 's-long' })}\n`, 'utf8'))
-  assert.equal(saved['C:\\work'], 's-long')
+  assert.equal(saved['claude-code::C:\\work'], 's-long')
 
   socket.fresh()
-  assert.equal(saved['C:\\work'], '', 'the resume id is forgotten, not merely the process stopped')
+  assert.equal(saved['claude-code::C:\\work'], '', 'the resume id is forgotten, not merely the process stopped')
 
   const second = spawnFactory()
   socket.send('the next task', { cwd: 'C:\\work', settings: DEFAULT_ENGINE, onEvent: () => undefined, spawnProcess: second.spawnMock })

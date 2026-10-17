@@ -280,9 +280,11 @@ export default function EnginePanel() {
                     ? `Remove ${entry.original} — the engine created it; it did not exist before`
                     : `Put the older self of ${entry.original} back`}
                   onClick={() => {
-                    void bridge.engine.checkpoints.restore(entry.copy).then((answer) => {
+                    // The original path rides along so the right ghost is the
+                    // one undone — several files can be created in one turn.
+                    void bridge.engine.checkpoints.restore(entry.copy, entry.original).then((answer) => {
                       setRestored(answer.answer)
-                      if (answer.ok) setKept(current => current.filter(row => row.copy !== entry.copy))
+                      if (answer.ok) setKept(current => current.filter(row => !(row.copy === entry.copy && row.original === entry.original)))
                     })
                   }}
                   className="rounded-lg border border-line px-2 py-0.5 text-[11px] text-muted hover:text-ink"
