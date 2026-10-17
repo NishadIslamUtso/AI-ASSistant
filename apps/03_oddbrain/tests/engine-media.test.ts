@@ -204,21 +204,34 @@ test('the engine takes the checkpoint the instant an Allow would change a file',
   child.exitCode = null
   child.signalCode = null
   child.kill = () => { child.killed = true }
+  // Deterministic waits, not fixed sleeps: on a loaded CI machine the
+  // checkpoint's async keep can outrun a 10/20 ms nap, and the test then read
+  // undefined (the flake that hit windows three times). Wait for the real
+  // things: the permission event, then the answer line.
+  const events: Array<{ kind: string; requestId?: string }> = []
   const session = startClaudeCodeSession({
     cwd: workspace,
     settings: { id: 'claude-code', model: 'm', baseUrl: '', workspace, approval: 'ask' },
     checkpointDir: dir,
     spawnProcess: (() => child) as never,
-    onEvent: () => undefined,
+    onEvent: (event) => events.push(event as { kind: string; requestId?: string }),
   })
+  const waitFor = async (predicate: () => boolean, what: string): Promise<void> => {
+    let waited = 0
+    while (!predicate() && waited < 10_000) {
+      await new Promise((r) => setTimeout(r, 5))
+      waited += 5
+    }
+    assert.ok(predicate(), `the engine never ${what}`)
+  }
   child.stdout.emit('data', Buffer.from(JSON.stringify({
     type: 'control_request',
     request_id: 'w-1',
     request: { subtype: 'can_use_tool', tool_name: 'Write', input: { file_path: target, content: 'x' } },
   }) + '\n'))
-  await new Promise((r) => setTimeout(r, 10))
+  await waitFor(() => events.some((event) => event.kind === 'permission' && event.requestId === 'w-1'), 'report the permission')
   session.answer('w-1', true)
-  await new Promise((r) => setTimeout(r, 20))
+  await waitFor(() => child.stdin.writes.some((line) => line.includes('control_response')), 'answer the engine')
   const reply = JSON.parse(child.stdin.writes.find(line => line.includes('control_response')) ?? '{}')
   assert.equal(reply.response.response.behavior, 'allow', 'the engine still got its answer')
   const kept = await listCheckpoints(dir)
