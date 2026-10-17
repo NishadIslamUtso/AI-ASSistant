@@ -7,6 +7,7 @@ import SkillsCatalogSection from './SkillsCatalogSection'
 import BrowserControlSection from './BrowserControlSection'
 import ModsSection from './ModsSection'
 import { DESIGN_SYSTEMS } from '@shared/lib/design-systems'
+import ConnectorsSection from './ConnectorsSection'
 import ErrorBoundary from './ErrorBoundary'
 import EngineBay from './EngineBay'
 import RecipesSection from './RecipesSection'
@@ -521,22 +522,9 @@ export default function SettingsView({
   const rowsById: Record<SectionId, Row[]> = {
     connectors: [
       {
-        label: 'Engine',
-        terms: 'claude-code agy engine connector local cli install npm',
-        body: (
-          <div className="min-w-0">
-            <div className="text-[12.5px]">
-              {isDemo ? 'Not in this window' : `${engineState.settings.id} · ${engineState.settings.model}`}
-            </div>
-            {/* The install line the marketplace used to keep, the connector's
-                own door must say how to open it. */}
-            {!isDemo && engineState.settings.id === 'claude-code' && (
-              <div className="mt-0.5 text-[11.5px] text-muted">
-                Missing the CLI? Install it with <span className="font-mono">npm install -g @anthropic-ai/claude-code</span>, then restart this app.
-              </div>
-            )}
-          </div>
-        ),
+        label: 'The three brains',
+        terms: 'claude-code agy ollama engine connector connect install login sign in winget local cli brains',
+        body: <ConnectorsSection />,
       },
       {
         label: 'Browser extension',
