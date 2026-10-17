@@ -13,7 +13,7 @@
  * a CLI is cheap, but launching it on every redraw is not.
  */
 import { execFile } from 'node:child_process'
-import { engineCandidates, enginePathSync } from './enginePath'
+import { engineCandidates, enginePathSync, shellSafeCommand } from './enginePath'
 import { existsSync } from 'node:fs'
 import type { EngineAvailability, EngineId } from '../../shared/lib/engine'
 
@@ -62,7 +62,7 @@ export function checkBinary(
   const exists = options.exists ?? ((p: string) => { try { return existsSync(p) } catch { return false } })
   const candidates = (options.candidates ?? defaultCandidates(id)).filter(exists)
   return new Promise((resolve) => {
-    run(command, ['--version'], (error, stdout) => {
+    run(shellSafeCommand(command), ['--version'], (error, stdout) => {
       if (!error && plausibleVersion(stdout)) {
         resolve({ id, found: true, version: stdout.trim().split('\n')[0].slice(0, 80), path: command, install: INSTALL_HINT[id] })
         return
@@ -76,7 +76,7 @@ export function checkBinary(
           resolve({ id, found: false, version: '', install: INSTALL_HINT[id] })
           return
         }
-        run(candidates[index], ['--version'], (probeError, probeOut) => {
+        run(shellSafeCommand(candidates[index]), ['--version'], (probeError, probeOut) => {
           if (!probeError && plausibleVersion(probeOut)) {
             resolve({
               id,

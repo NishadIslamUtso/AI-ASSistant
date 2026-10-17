@@ -23,7 +23,7 @@
 import { spawn, type ChildProcess } from 'node:child_process'
 import { StringDecoder } from 'node:string_decoder'
 import { join } from 'node:path'
-import { enginePathSync, resolveEngineCommand } from './enginePath'
+import { enginePathSync, resolveEngineCommand, shellSafeCommand } from './enginePath'
 import type { ApprovalMode, EngineEvent, EngineSettings } from '../../shared/lib/engine'
 import { PERMISSION_MODE } from '../../shared/lib/engine'
 import { createEngineParser } from './stream'
@@ -177,7 +177,7 @@ export function startClaudeCodeSession(input: StartSessionInput): EngineSession 
   let child: ChildProcess
   const start = input.spawnProcess ?? spawn
   try {
-    child = start(resolveEngineCommand('claude-code'), args, {
+    child = start(shellSafeCommand(resolveEngineCommand('claude-code')), args, {
       cwd: input.cwd,
       env: {
         ...sanitizeEnvironment(process.env),

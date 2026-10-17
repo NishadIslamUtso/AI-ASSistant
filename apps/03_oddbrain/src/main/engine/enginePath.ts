@@ -126,6 +126,20 @@ export function resolveEngineCommand(id: 'claude-code' | 'agy', env: NodeJS.Proc
   return id === 'claude-code' ? 'claude' : 'agy'
 }
 
+/**
+ * Quote a command for a Windows shell spawn. The engines launch through the
+ * shell there, and an absolute path like
+ * `C:\Users\Nishad Islam Utso\.local\bin\claude.exe` dies at the first
+ * space unquoted — the owner's own terminal proved it:
+ * "Processing -File 'C:\Users\Nishad' failed". A quoted command rides
+ * through `cmd /d /s /c` intact. Off Windows the array form needs no
+ * quoting and nothing changes.
+ */
+export function shellSafeCommand(command: string, platform: NodeJS.Platform = process.platform): string {
+  if (platform !== 'win32') return command
+  return /\s/.test(command) ? `"${command}"` : command
+}
+
 let cached: string | null = null
 let cachedAt = 0
 let refreshing = false

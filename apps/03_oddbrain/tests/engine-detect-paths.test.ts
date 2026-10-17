@@ -1,10 +1,10 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs'
+import { mkdtempSync, writeFileSync, mkdirSync, rmSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { checkBinary, defaultCandidates } from '../src/main/engine/availability'
-import { engineCandidates, resolveEngineCommand } from '../src/main/engine/enginePath'
+import { engineCandidates, resolveEngineCommand, shellSafeCommand } from '../src/main/engine/enginePath'
 import type { EngineAvailability } from '../src/shared/lib/engine'
 
 /**
@@ -72,4 +72,28 @@ test('defaultCandidates mirrors engineCandidates for both engines', () => {
   const env = fakeEnv('/x')
   assert.deepEqual(defaultCandidates('claude-code', env), engineCandidates('claude-code', env))
   assert.deepEqual(defaultCandidates('agy', env), engineCandidates('agy', env))
+})
+
+test('a Windows absolute path with spaces is quoted exactly once — the trap his terminal proved', () => {
+  const native = 'C:\\Users\\Nishad Islam Utso\\.local\\bin\\claude.exe'
+  assert.equal(shellSafeCommand(native, 'win32'), `"${native}"`)
+  // bare names and space-free paths go through untouched
+  assert.equal(shellSafeCommand('claude', 'win32'), 'claude')
+  assert.equal(shellSafeCommand('C:\\Users\\nishad\\.local\\bin\\claude.exe', 'win32'), 'C:\\Users\\nishad\\.local\\bin\\claude.exe')
+})
+
+test('off Windows the helper is a no-op — the array form needs no quoting', () => {
+  assert.equal(shellSafeCommand('/home/nishad islam utso/.local/bin/claude', 'linux'), '/home/nishad islam utso/.local/bin/claude')
+})
+
+test('every place that shells out an engine command quotes it first', () => {
+  // Source pins: a new engine spawn or probe that forgets the quoting
+  // re-creates the exact "'claude' is not recognized" his machine showed.
+  const claude = readFileSync(new URL('../src/main/engine/claudeCode.ts', import.meta.url), 'utf8')
+  const agy = readFileSync(new URL('../src/main/engine/agy.ts', import.meta.url), 'utf8')
+  const detect = readFileSync(new URL('../src/main/engine/availability.ts', import.meta.url), 'utf8')
+  assert.match(claude, /start\(shellSafeCommand\(resolveEngineCommand\('claude-code'\)\)/)
+  assert.match(agy, /start\(shellSafeCommand\(resolveEngineCommand\('agy'\)\)/)
+  assert.ok(detect.includes('run(shellSafeCommand(command)'))
+  assert.ok(detect.includes('run(shellSafeCommand(candidates[index])'))
 })
