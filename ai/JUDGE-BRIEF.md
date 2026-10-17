@@ -69,6 +69,15 @@ promoted from allow-failure to a required, green gate on 2026-10-17).
    default vault path (`Documents\OddBrain\Brain`), and the repo itself —
    renamed by the owner 2026-10-17; the old URL redirects.
 
+## Where the installer comes from
+
+Every push to `v3` or `main` packages the Windows exe on a real Windows
+runner (the `installer` workflow) and uploads it as an artifact of that run —
+download it from the Actions run page, with its sha256 beside it. Pushing a
+tag `v*` publishes a GitHub Release with the exe attached. The workspace
+hash below is the same build recipe; the CI artifact is the independently
+verifiable one.
+
 ## The three rules the code actually keeps
 
 1. One send path: every feature (recipes, watch, split, quick window) sends
