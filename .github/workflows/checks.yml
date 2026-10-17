@@ -1,7 +1,7 @@
-# The gate, on every push. Linux has always run this; Windows (the target
-# OS) joined 2026-10-17 in allow-failure mode until it has run green once —
-# a red X here is information, and hiding it would be the old habit this
-# repo is trying to lose.
+# The gate, on every push, on both operating systems. Linux always ran it;
+# Windows (the target OS) joined 2026-10-17 as allow-failure until it ran
+# green once — and when it did, the training wheels came off the same day.
+# A red X here fails the push now. It earned that.
 name: checks
 on: [push, pull_request]
 jobs:
@@ -57,7 +57,6 @@ jobs:
 
   windows:
     runs-on: windows-latest
-    continue-on-error: true
     permissions:
       contents: write
     steps:
