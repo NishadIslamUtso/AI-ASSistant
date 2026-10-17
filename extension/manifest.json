@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "AI ASSistant - Vault Collector",
+  "name": "OddBrain - Vault Collector",
   "version": "0.1.4",
   "description": "Local-only collector + context suggester. AI sites by default, optional broad capture. Capsule Hub + Quillbot style.",
   "permissions": ["storage", "activeTab", "scripting", "contextMenus"],
@@ -59,7 +59,7 @@
   ],
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "AI ASSistant Vault"
+    "default_title": "OddBrain Vault"
   },
   "icons": {
     "16": "icons/icon16.png",

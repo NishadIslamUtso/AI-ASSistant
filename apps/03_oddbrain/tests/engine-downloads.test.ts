@@ -8,6 +8,7 @@ import { join } from 'node:path'
 import {
   ENGINE_DOWNLOADS,
   MAX_DOWNLOAD_BYTES,
+  isOfficialDownloadHost,
   isOfficialUrl,
   parseShaLine,
 } from '../src/shared/lib/engineDownloads'
@@ -241,16 +242,17 @@ test('a redirect may not outrank the endpoint pin', async () => {
   await rm(root, { recursive: true, force: true })
 })
 
-test('a redirect that stays on the official host is followed', async () => {
+test('the publisher\u2019s own redirect is followed — the pin follows the publisher', async () => {
   const root = await mkdtemp(join(tmpdir(), 'dl7-'))
-  let first = true
+  const hops: string[] = []
   const manager = createDownloadManager({
     root,
     fetchImpl: async (url) => {
-      if (first) {
-        first = false
-        assert.equal(url, 'https://claude.ai/install.ps1')
-        return { ok: false, status: 302, headers: { get: (name) => (name === 'location' ? 'https://claude.ai/install.ps1' : null) } }
+      hops.push(url)
+      if (url === 'https://claude.ai/install.ps1') {
+        // The REAL chain, verified live 2026-10-17: claude.ai hands the
+        // script to its own download host.
+        return { ok: false, status: 302, headers: { get: (name) => (name === 'location' ? 'https://downloads.claude.ai/claude-code-releases/bootstrap.ps1' : null) } }
       }
       return {
         ok: true,
@@ -263,7 +265,37 @@ test('a redirect that stays on the official host is followed', async () => {
   })
   const answer = await manager.start('claude-code')
   assert.equal(answer.ok, true, answer.answer)
+  assert.deepEqual(hops, ['https://claude.ai/install.ps1', 'https://downloads.claude.ai/claude-code-releases/bootstrap.ps1'])
   await rm(root, { recursive: true, force: true })
+})
+
+test('an allowed hop that then points somewhere strange is still refused', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'dl9-'))
+  let hop = 0
+  const manager = createDownloadManager({
+    root,
+    fetchImpl: async () => {
+      hop += 1
+      if (hop === 1) return { ok: false, status: 302, headers: { get: (name) => (name === 'location' ? 'https://downloads.claude.ai/one' : null) } }
+      return { ok: false, status: 302, headers: { get: (name) => (name === 'location' ? 'https://mirror.example/two' : null) } }
+    },
+    onTick: () => undefined,
+  })
+  const answer = await manager.start('claude-code')
+  assert.equal(answer.ok, false)
+  assert.match(answer.answer, /redirect/)
+  await rm(root, { recursive: true, force: true })
+})
+
+test('the host rule: publisher hosts pass, user-info tricks and strangers do not', () => {
+  assert.equal(isOfficialDownloadHost('claude-code', 'https://downloads.claude.ai/claude-code-releases/bootstrap.ps1'), true)
+  assert.equal(isOfficialDownloadHost('claude-code', 'https://claude.ai/install.ps1'), true)
+  assert.equal(isOfficialDownloadHost('ollama', 'https://github.com/ollama/ollama/releases/latest/download/ollama-windows-amd64.zip'), true)
+  assert.equal(isOfficialDownloadHost('ollama', 'https://objects.githubusercontent.com/x'), true)
+  assert.equal(isOfficialDownloadHost('claude-code', 'https://mirror.example/steal.ps1'), false)
+  assert.equal(isOfficialDownloadHost('claude-code', 'https://downloads.claude.ai@evil.example/x'), false, 'user-info never passes')
+  assert.equal(isOfficialDownloadHost('claude-code', 'http://downloads.claude.ai/x'), false, 'no plain http')
+  assert.equal(isOfficialDownloadHost('nonsense', 'https://claude.ai/x'), false)
 })
 
 test('the run button\u2019s door: the staged installer executes only when told, and says so', async () => {

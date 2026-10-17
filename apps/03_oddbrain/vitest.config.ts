@@ -17,6 +17,12 @@ export default defineConfig({
         replacement: fileURLToPath(new URL('./tests/shims/node-test.ts', import.meta.url)),
       },
       {
+        // The main process's electron import, for tests of its guards (the
+        // shim carries no GUI — only the decision points under test).
+        find: /^electron$/,
+        replacement: fileURLToPath(new URL('./tests/shims/electron.ts', import.meta.url)),
+      },
+      {
         find: /^@shared\//,
         replacement: fileURLToPath(new URL('./src/shared/', import.meta.url)),
       },

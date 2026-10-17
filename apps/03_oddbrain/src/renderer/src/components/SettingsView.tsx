@@ -67,6 +67,69 @@ import {
  * browser preview there is no folder to choose and no model to run.
  */
 
+/** The pairing secret, shown only on this screen, copied or rotated on a press. */
+function AgentAccessCard({ isDemo }: { isDemo: boolean }): ReactNode {
+  const [token, setToken] = useState('')
+  const [revealed, setRevealed] = useState(false)
+  const [note, setNote] = useState('')
+  useEffect(() => {
+    if (isDemo) return
+    void bridge.extensionPair.get().then(view => setToken(view.token)).catch(() => setNote('The token could not be read.'))
+  }, [isDemo])
+  if (isDemo) return <div className="text-[12px] text-muted">Pairing lives in the desktop app.</div>
+  return (
+    <div className="min-w-0">
+      <div className="text-[12.5px]">The browser extension proves itself with this token.</div>
+      <div className="mt-0.5 text-[11.5px] text-muted">
+        Copy it once into the extension popup (Pairing tab). It never travels over the network; rotating it makes every
+        already-paired extension ask again.
+      </div>
+      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+        <code className="max-w-full break-all rounded border border-line bg-bg px-1.5 py-1 text-[11px]">
+          {revealed ? token : `${token.slice(0, 4)}${'\u2022'.repeat(18)}`}
+        </code>
+        <button
+          type="button"
+          aria-label={revealed ? 'Hide the pairing token' : 'Show the pairing token'}
+          onClick={() => setRevealed(value => !value)}
+          className="rounded-lg border border-line px-2 py-0.5 text-[11px] text-ink hover:border-accent"
+        >
+          {revealed ? 'Hide' : 'Show'}
+        </button>
+        <button
+          type="button"
+          aria-label="Copy the pairing token"
+          onClick={() => {
+            void navigator.clipboard?.writeText(token)
+            setNote('Copied. Paste it into the extension popup, Pairing tab.')
+          }}
+          className="rounded-lg border border-line px-2 py-0.5 text-[11px] text-ink hover:border-accent"
+        >
+          Copy
+        </button>
+        <button
+          type="button"
+          aria-label="Rotate the pairing token"
+          onClick={() => {
+            void bridge.extensionPair.rotate().then(view => {
+              if (view.ok) {
+                setToken(view.token)
+                setNote('Rotated. The old token is dead; pair the extension again with the new one.')
+              } else {
+                setNote('The rotation could not be saved.')
+              }
+            })
+          }}
+          className="rounded-lg border border-line px-2 py-0.5 text-[11px] text-muted hover:text-ink"
+        >
+          Rotate
+        </button>
+      </div>
+      {note ? <div className="mt-1 text-[11.5px] text-muted">{note}</div> : null}
+    </div>
+  )
+}
+
 export type SectionId = 'agents' | 'hooks' | 'memory' | 'house' | 'skills' | 'recipes' | 'extensions' | 'engine' | 'system' | 'connectors' | 'appearance' | 'models' | 'performance' | 'vault'
 
 type Row = {
@@ -499,6 +562,11 @@ export default function SettingsView({
             </div>
           </div>
         ),
+      },
+      {
+        label: 'Agent access',
+        terms: 'agent access pairing token extension pair x-oddbrain-pair rotate secret',
+        body: <AgentAccessCard isDemo={isDemo} />,
       },
       {
         label: 'Cloud providers',

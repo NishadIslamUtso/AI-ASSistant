@@ -651,6 +651,7 @@ function RecipeButton() {
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
         aria-haspopup="menu"
+        aria-label="Recipes: saved work orders — pick one, fill it in, see it in full, run it"
         title="Recipes: saved work orders — pick one, fill it in, see it in full, run it"
         className="flex h-7 items-center gap-1.5 rounded-lg px-1.5 text-muted hover:text-ink"
       >

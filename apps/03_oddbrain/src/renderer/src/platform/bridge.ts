@@ -43,6 +43,10 @@ import type {
 
 /** What the preload script exposes today. It grows as the main process does. */
 export type DesktopBridge = {
+  extensionPair: {
+    get: () => Promise<{ token: string }>
+    rotate: () => Promise<{ ok: boolean; token: string }>
+  }
   app: {
     version: string
     platform: string
@@ -227,6 +231,10 @@ export const hasDesktopBridge = (): boolean =>
 
 /** Empty, and honest about it. See rule 2 above. */
 const demoBridge: DesktopBridge = {
+  extensionPair: {
+    get: async () => ({ token: '' }),
+    rotate: async () => ({ ok: false, token: '' }),
+  },
   quick: {
     open: () => Promise.resolve({ ok: false }),
     shortcut: () => Promise.resolve({ ok: false, enabled: false }),
@@ -446,6 +454,10 @@ export type EngineBridge = {
     serveStatus: () => Promise<{ ok: boolean; answer: string; running: boolean }>
     onEvent: (listener: (tick: { engine: string; got: number; total: number | null; phase: string; answer?: string }) => void) => () => void
   }
+  extensionPair: {
+    get: () => Promise<{ token: string }>
+    rotate: () => Promise<{ ok: boolean; token: string }>
+  }
   answer: (requestId: string, allow: boolean) => Promise<{ ok: boolean }>
   stop: () => Promise<{ ok: boolean }>
   onEvent: (listener: (event: EngineEvent) => void) => () => void
@@ -529,6 +541,10 @@ const demoEngineBridge: EngineBridge = {
     serveStop: async () => ({ ok: false, answer: 'The runtime stops in the desktop app.' }),
     serveStatus: async () => ({ ok: true, running: false, answer: 'The desktop app knows the runtime state.' }),
     onEvent: () => () => undefined,
+  },
+  extensionPair: {
+    get: async () => ({ token: '' }),
+    rotate: async () => ({ ok: false, token: '' }),
   },
   stop: async () => ({ ok: false }),
   onEvent: () => () => undefined,

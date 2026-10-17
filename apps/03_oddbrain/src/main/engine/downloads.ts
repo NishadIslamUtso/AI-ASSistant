@@ -13,7 +13,7 @@ import { spawn } from 'node:child_process'
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { inflateRawSync } from 'node:zlib'
-import { ENGINE_DOWNLOADS, MAX_DOWNLOAD_BYTES, isOfficialUrl, parseShaLine } from '../../shared/lib/engineDownloads'
+import { ENGINE_DOWNLOADS, MAX_DOWNLOAD_BYTES, isOfficialDownloadHost, isOfficialUrl, parseShaLine } from '../../shared/lib/engineDownloads'
 
 export type DownloadTick = { engine: string; got: number; total: number | null; phase: 'downloading' | 'staged' | 'error'; answer?: string }
 
@@ -98,7 +98,7 @@ export function createDownloadManager(options: {
       const location = reply.status && reply.status >= 300 && reply.status < 400 ? reply.headers?.get('location') : null
       if (!location) return reply
       const next = new URL(location, current).toString()
-      if (!isOfficialUrl(engine, next)) {
+      if (!isOfficialDownloadHost(engine, next)) {
         const host = ENGINE_DOWNLOADS[engine]?.host ?? 'The endpoint'
         return {
           ok: false,
@@ -353,6 +353,7 @@ export async function unzipArchive(
   let offset = view.getUint32(end + 16, true)
   const decoder = new TextDecoder()
   let totalDeclared = 0
+  let totalActual = 0
   await fs.mkdir(destination, { recursive: true })
   for (let index = 0; index < count; index += 1) {
     if (view.getUint32(offset, true) !== 0x02014b50) return { ok: false, answer: 'damaged central directory' }
@@ -389,6 +390,13 @@ export async function unzipArchive(
     }
     else return { ok: false, answer: `unsupported compression method ${method}` }
     if (content.length > limits.perFile) return { ok: false, answer: 'a file inside is too big' }
+    // The declared total was checked up front, but declarations are attacker
+    // data: a forged zero here means the REAL bytes above were never counted.
+    // The cap that matters is the one measured on what actually inflated.
+    totalActual += content.length
+    if (totalActual > limits.totalUncompressed) {
+      return { ok: false, answer: 'the archive unpacks to more than the cap' }
+    }
     const out = join(destination, name)
     const cut = Math.max(out.lastIndexOf('/'), out.lastIndexOf('\\'))
     await fs.mkdir(cut > 0 ? out.slice(0, cut) : destination, { recursive: true })

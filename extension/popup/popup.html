@@ -26,13 +26,23 @@ button.primary { background:#fff; color:#000; border-color:#fff; }
 </head>
 <body>
 <div class="header">
-  <h1>AI ASSistant Vault</h1>
+  <h1>OddBrain Vault</h1>
   <span id="status" style="font-size:10px;color:#0a0;">● Local</span>
 </div>
 <div class="tabs">
   <button class="tab active" data-tab="capsules">Capsules</button>
   <button class="tab" data-tab="blacklist">Never-Check</button>
   <button class="tab" data-tab="activity">Activity</button>
+  <button class="tab" data-tab="pairing">Pairing</button>
+</div>
+<div class="content" id="pairing-tab" style="display:none;">
+  <p style="font-size:11px;color:#aaa;">This extension proves itself to the app with a pairing token. Copy it once from <b>OddBrain → Settings → Plugins → Agent access</b> and paste it here. It stays in this browser only.</p>
+  <input id="pair-token" placeholder="paste the pairing token" style="margin:8px 0;">
+  <div style="display:flex;gap:6px;">
+    <button id="pair-save" class="primary">Save token</button>
+    <button id="pair-clear">Clear</button>
+  </div>
+  <p id="pair-status" style="font-size:11px;color:#0a0;margin-top:8px;"></p>
 </div>
 <div class="content" id="capsules-tab">
   <div id="broad-banner" class="permission-banner" style="display:none;">
@@ -64,7 +74,7 @@ button.primary { background:#fff; color:#000; border-color:#fff; }
     <button id="clear-queue">Clear Queue</button>
     <button id="test-offline">Test offline queue</button>
   </div>
-  <p style="font-size:10px;color:#666;margin-top:8px;">If you see "Queued, app offline" - start AI ASSistant app at 127.0.0.1:8765</p>
+  <p style="font-size:10px;color:#666;margin-top:8px;">If you see "Queued, app offline" - start OddBrain (it listens at 127.0.0.1:8765)</p>
 </div>
 <script src="popup.js"></script>
 </body>

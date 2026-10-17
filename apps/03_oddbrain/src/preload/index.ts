@@ -145,6 +145,10 @@ const engineApi = {
       return () => ipcRenderer.removeListener('engine:download-event', channel)
     },
   },
+  extensionPair: {
+    get: (): Promise<{ token: string }> => ipcRenderer.invoke('extension-pair:get'),
+    rotate: (): Promise<{ ok: boolean; token: string }> => ipcRenderer.invoke('extension-pair:rotate'),
+  },
   /** Answer one of the engine's permission cards. */
   answer: (requestId: string, allow: boolean): Promise<{ ok: boolean }> =>
     ipcRenderer.invoke('engine:answer', requestId, allow),

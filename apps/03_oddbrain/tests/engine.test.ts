@@ -432,6 +432,60 @@ test('the socket: a stop frees the turn even before any event arrives', () => {
   assert.equal(socket.running(), false)
 })
 
+test('the socket: a changed launch flag relaunches the engine with the new flags', async () => {
+  const { EventEmitter } = await import('node:events')
+  type FakeChild = import('node:child_process').ChildProcess & {
+    stdout: import('node:events').EventEmitter
+    stderr: import('node:events').EventEmitter
+    stdin: { write(data: string): boolean }
+    pid: number; killed: boolean; exitCode: number | null; signalCode: null
+    kill(): void
+  }
+  const makeChild = (): FakeChild => {
+    const child = new EventEmitter() as unknown as FakeChild
+    child.stdout = new EventEmitter()
+    child.stderr = new EventEmitter()
+    child.stdin = { write: () => true }
+    child.pid = 5555
+    child.killed = false
+    child.exitCode = null
+    child.signalCode = null
+    child.kill = () => { child.killed = true }
+    return child
+  }
+  const children: FakeChild[] = []
+  let spawnCount = 0
+  const fake = (() => {
+    spawnCount += 1
+    const child = makeChild()
+    children.push(child)
+    return child
+  }) as unknown as typeof import('node:child_process').spawn
+  const rec = recorder()
+  const socket = createEngineSocket()
+  const base = { cwd: '.', onEvent: rec.on, spawnProcess: fake }
+
+  // Same engine, same model, only the THINKING budget changed: the running
+  // process was launched without the new flag — a silent gear mismatch — so
+  // the honest move is a relaunch, not reuse.
+  const first = socket.send('a', { ...base, settings: { ...DEFAULT_ENGINE, thinking: 'default' } })
+  assert.equal(first.ok, true)
+  const line = JSON.stringify({ type: 'result', subtype: 'success', result: 'done' }) + '\n'
+  children[0].stdout.emit('data', Buffer.from(line, 'utf8'))
+
+  const second = socket.send('b', { ...base, settings: { ...DEFAULT_ENGINE, thinking: 'extended' } })
+  assert.equal(second.ok, true, second.answer)
+  assert.equal(children[0].killed, true, 'the process launched with the old thinking flag is set aside')
+  assert.equal(spawnCount, 2, 'a fresh start carries the new launch flag')
+  children[1].stdout.emit('data', Buffer.from(line, 'utf8'))
+
+  // And an UNCHANGED gear still reuses: the fix must not turn every send into a relaunch.
+  const third = socket.send('c', { ...base, settings: { ...DEFAULT_ENGINE, thinking: 'extended' } })
+  assert.equal(third.ok, true)
+  assert.equal(spawnCount, 2, 'same launch flags, same process')
+  socket.stop()
+})
+
 test('the socket: agy routes to its own adapter and an engine switch starts fresh', async () => {
   const { EventEmitter } = await import('node:events')
   type FakeChild = import('node:child_process').ChildProcess & {

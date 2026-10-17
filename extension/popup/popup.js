@@ -92,6 +92,30 @@ async function loadBlacklist() {
   });
 }
 
+// Pairing: the token the person pasted from OddBrain's Agent access card.
+async function loadPairing() {
+  try {
+    const data = await chrome.storage.local.get({pairToken: ""});
+    document.getElementById('pair-token').value = data.pairToken || "";
+    const status = document.getElementById('pair-status');
+    status.textContent = data.pairToken ? "\u25cf Paired with this browser's stored token." : "No token yet - captures will be refused (401) until you paste one.";
+    status.style.color = data.pairToken ? "#0a0" : "#e0a000";
+  } catch(e) {}
+}
+document.getElementById('pair-save')?.addEventListener('click', async () => {
+  const value = document.getElementById('pair-token').value.trim();
+  await chrome.storage.local.set({pairToken: value});
+  const status = document.getElementById('pair-status');
+  status.textContent = value ? "Saved. The next capture carries it as x-oddbrain-pair." : "Cleared.";
+  status.style.color = value ? "#0a0" : "#e0a000";
+});
+document.getElementById('pair-clear')?.addEventListener('click', async () => {
+  await chrome.storage.local.set({pairToken: ""});
+  document.getElementById('pair-token').value = "";
+  loadPairing();
+});
+loadPairing();
+
 document.getElementById('blacklist-add')?.addEventListener('click', async () => {
   const input = document.getElementById('blacklist-input');
   const pattern = input.value.trim();

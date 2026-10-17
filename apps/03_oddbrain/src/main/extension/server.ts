@@ -67,6 +67,8 @@ export type ExtensionApi = {
   listening: boolean
   error: string
   close: () => Promise<void>
+  /** Swap the pairing secret (Rotate in Settings): the old one stops working immediately. */
+  setPairToken: (next: string) => void
 }
 
 const header = (value: string | string[] | undefined): string =>
@@ -150,7 +152,7 @@ export function startExtensionApi(options: {
   const host = options.host || '127.0.0.1'
   const service = options.vault
   const mayCapture = (): boolean => (options.mayCapture ? options.mayCapture() : true)
-  const pairToken = options.pairToken ?? randomBytes(24).toString('hex')
+  let pairToken = options.pairToken ?? randomBytes(24).toString('hex')
 
   const server = createServer((request, response) => {
     void handle(request, response).catch(error => {
@@ -238,7 +240,7 @@ export function startExtensionApi(options: {
         {
           ok: false,
           error:
-            'This extension is not paired with OddBrain yet. Open OddBrain, copy the pairing token from Settings > Agent access, and send it as the x-oddbrain-pair header.',
+            'This extension is not paired with OddBrain yet. Open OddBrain, choose Settings > Plugins > Agent access, copy the pairing token, and paste it into the extension popup (or send it as the x-oddbrain-pair header).',
         },
         decision.allow
       )
@@ -340,6 +342,7 @@ export function startExtensionApi(options: {
         listening: false,
         error: reason,
         close: async () => {},
+        setPairToken: (next: string) => { pairToken = next },
       })
     })
     // Loopback only, like everything else in this app. This port is part of the
@@ -355,6 +358,7 @@ export function startExtensionApi(options: {
         listening: true,
         error: '',
         close: () => new Promise<void>(done => server.close(() => done())),
+        setPairToken: (next: string) => { pairToken = next },
       })
     })
   })

@@ -1,9 +1,9 @@
 {
   "id": "ai-assistant.looks",
-  "name": "Looks \u2014 every accent",
+  "name": "Looks — every accent",
   "version": "1.0.0",
-  "author": "AI ASSistant",
-  "description": "The app\u2019s five accents as one-look packs: Violet, Blue, Teal, Amber, Rose. Install and pick any of them in Appearance.",
+  "author": "OddBrain",
+  "description": "The app’s five accents as one-look packs: Violet, Blue, Teal, Amber, Rose. Install and pick any of them in Appearance.",
   "license": "MIT",
   "permissions": {
     "shell": false

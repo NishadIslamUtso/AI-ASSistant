@@ -78,12 +78,19 @@ const harvestWhenClosed = (): void => {
   })
 }
 
-/** Files to stop watching for one window: what the engine's last run touched. */
+/**
+ * Files to stop watching for one window: what the engine's last run WROTE.
+ * Only the write tools count — a file the engine merely READ is the person's
+ * to change, and suppressing it hid real edits for a cooldown. (Bash commands
+ * name no path we can trust, so they are not suppressed; the cooldown, the
+ * gap and the busy-gate hold the line.)
+ */
+const WATCH_SUPPRESSED_TOOLS = new Set(['Write', 'Edit', 'MultiEdit', 'NotebookEdit'])
 const toolPathsOfLastTurn = (): string[] => {
   const turn = engineStore().turn
   if (!turn) return []
   return turn.items
-    .filter(item => item.kind === 'tool')
+    .filter(item => item.kind === 'tool' && WATCH_SUPPRESSED_TOOLS.has((item as { name?: string }).name ?? ''))
     .map(item => ((item as { summary?: string }).summary ?? '').trim())
     .filter(Boolean)
 }

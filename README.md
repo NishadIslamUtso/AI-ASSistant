@@ -32,7 +32,7 @@ changelog, which records development in a promotional voice.
 ```bash
 git clone -b v3 https://github.com/NishadIslamUtso/OddBrain.git
 cd OddBrain/apps/03_oddbrain
-npm ci && npx vitest run      # 78 files / 621 tests
+npm ci && npx vitest run      # 80 files / 640 tests
 npx tsc --noEmit && npm run build
 ```
 
@@ -52,5 +52,5 @@ apps/03_oddbrain/    the app (src/main, src/preload, src/renderer, src/shared, t
 00_LIVING_DOCS/         judge brief, changelog, receipts; archive/ holds old planning docs
 ```
 
-MIT-licensed own code. Engine CLIs are the user's installs; no Anthropic or
-Google assets are bundled.
+OddBrain's own code is Apache-2.0 (see `LICENSE`). Engine CLIs are the user's
+installs; no Anthropic or Google assets are bundled.

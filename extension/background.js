@@ -56,9 +56,12 @@ async function setupHistoryListener() {
       } catch(e) {}
       
       try {
+        const token = await new Promise((done) => {
+          try { chrome.storage.local.get({pairToken: ""}, (d) => done(typeof d.pairToken === "string" ? d.pairToken : "")); } catch(e) { done(""); }
+        });
         await fetch("http://127.0.0.1:8765/capture", {
           method:"POST",
-          headers:{"Content-Type":"application/json"},
+          headers:{"Content-Type":"application/json", "x-oddbrain-pair": token},
           body: JSON.stringify({type:"browser_visit", url, title, visited_at, capture_status:"visit-only", source:"history-api", captured_at: visited_at})
         });
       } catch(e) {

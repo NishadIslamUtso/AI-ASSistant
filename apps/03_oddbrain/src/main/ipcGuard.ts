@@ -13,20 +13,61 @@ import { ipcMain, shell, type IpcMainInvokeEvent, type WebContents } from 'elect
 
 type Listener = (event: IpcMainInvokeEvent, ...args: never[]) => unknown
 
-let ownOrigins: RegExp | null = null
-
-const escapeRe = (u: string): string => u.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+/**
+ * The pinned pages, as PARSED origins — never string prefixes. A prefix would
+ * happily accept `http://127.0.0.1:PORT@evil.example/` (the app's address as
+ * URL user-info, the attacker's actual host) and every `file:` URL on disk.
+ * Origin comparison accepts none of that: user-info fails, nearby ports are
+ * different origins, and a file URL must be the app's own, exactly.
+ */
+const ownOriginSet = new Set<string>()
+const ownFileUrls = new Set<string>()
 
 /**
- * Pin the only page origins IPC may ever come from. Called when the windows
- * are created, with every URL the app itself loads; `file:` is always ours.
+ * Pin the only pages IPC may ever come from. Called when the windows are
+ * created, with every URL the app itself loads. file: pages are pinned by
+ * their exact URL, not by scheme.
  */
 export function pinOwnOrigins(urls: Array<string | undefined | null>): void {
-  const parts = urls
-    .filter((u): u is string => typeof u === 'string' && u.length > 0)
-    .map(escapeRe)
-  parts.push('file:')
-  ownOrigins = new RegExp(`^(?:${parts.join('|')})`)
+  ownOriginSet.clear()
+  ownFileUrls.clear()
+  for (const raw of urls) {
+    if (typeof raw !== 'string' || raw.length === 0) continue
+    try {
+      const parsed = new URL(raw)
+      if (parsed.protocol === 'file:') {
+        ownFileUrls.add(parsed.href.split('#')[0])
+      } else if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+        ownOriginSet.add(parsed.origin)
+      }
+      // Any other scheme is simply never pinned: the app does not load it.
+    } catch {
+      // Not a URL — pinning it would be a lie. Skipped.
+    }
+  }
+}
+
+/**
+ * The one origin check, used by BOTH the IPC wrapper and navigation lockdown
+ * so the two doors can never disagree. Parses the candidate and compares
+ * components; a string prefix is not a trust decision.
+ */
+export function urlIsOurs(url: string): boolean {
+  if (typeof url !== 'string' || url.length === 0) return false
+  let parsed: URL
+  try {
+    parsed = new URL(url)
+  } catch {
+    return false
+  }
+  if (parsed.protocol === 'file:') {
+    return ownFileUrls.has(parsed.href.split('#')[0])
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false
+  // User-info in any form means the visible host text is not the real host.
+  // The app never builds such a URL, so one arriving here is someone else's.
+  if (parsed.username !== '' || parsed.password !== '') return false
+  return ownOriginSet.has(parsed.origin)
 }
 
 /**
@@ -36,7 +77,7 @@ export function pinOwnOrigins(urls: Array<string | undefined | null>): void {
 export function handle(channel: string, listener: Listener): void {
   ipcMain.handle(channel, (event, ...args) => {
     const url: string = event.senderFrame?.url ?? ''
-    if (ownOrigins && !ownOrigins.test(url)) {
+    if (!urlIsOurs(url)) {
       throw new Error(`OddBrain refused "${channel}" from a page it did not load (${url || 'no url'}).`)
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -66,7 +107,7 @@ export function lockNavigation(contents: WebContents): void {
     return { action: 'deny' }
   })
   contents.on('will-navigate', (event, url) => {
-    if (ownOrigins?.test(url)) return
+    if (urlIsOurs(url)) return
     event.preventDefault()
     if (safeExternalUrl(url)) void shell.openExternal(url)
   })

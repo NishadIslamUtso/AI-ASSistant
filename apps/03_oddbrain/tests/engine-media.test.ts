@@ -357,3 +357,20 @@ test('a checkpoint that cannot be saved DENIES the change — the guarantee fail
   assert.match(responseLine ?? '', /could not keep the file/, 'the deny says why')
   await rm(dir, { recursive: true, force: true })
 })
+
+test('thirty concurrent checkpoints leave thirty records, not one', async () => {
+  const { mkdtemp, rm } = await import('node:fs/promises')
+  const { tmpdir } = await import('node:os')
+  const { join } = await import('node:path')
+  const { rememberCheckpoint, listCheckpoints } = await import('../src/main/engine/checkpoints')
+  const dir = await mkdtemp(join(tmpdir(), 'ckpt-race-'))
+  // All at once, exactly how concurrent permission approvals arrive.
+  await Promise.all(
+    Array.from({ length: 30 }, (_, i) =>
+      rememberCheckpoint(dir, { copy: '', original: `src/file-${i}.ts`, at: new Date(2026, 9, 17, i).toISOString(), existed: false }),
+    ),
+  )
+  const listed = await listCheckpoints(dir, 50)
+  assert.equal(listed.length, 30, 'every concurrent record survives; the last write erased none')
+  await rm(dir, { recursive: true, force: true })
+})

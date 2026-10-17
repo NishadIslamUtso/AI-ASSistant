@@ -26,12 +26,12 @@ Verify with:
 ```bash
 git clone -b v3 https://github.com/NishadIslamUtso/OddBrain.git
 cd OddBrain/apps/03_oddbrain
-npm ci && npx vitest run      # 78 files / 621 tests
+npm ci && npx vitest run      # 80 files / 640 tests
 npx tsc --noEmit && npm run build
 ```
 
 CI runs the same four steps on every push (Linux; a Windows job exists in
-allow-failure mode until it has run green once).
+promoted from allow-failure to a required, green gate on 2026-10-17).
 
 ## What is NOT proven — read before judging
 
@@ -49,12 +49,14 @@ allow-failure mode until it has run green once).
    real engine sign-in cannot happen in this sandbox. The stand-in proves the
    app's half of the wire, never a model's answer. One real claude-binary
    permission round-trip exists (an external judge drove it, 2026-10-17).
-4. **Windows is the target OS and has never run a test or an install.** The
-   CI Windows job was added 2026-10-17 and may fail at first. The installer
+4. **Windows runs and gates, but no human has installed on it yet.** The CI
+   Windows job runs on every push, is a required check, and has been green
+   since 2026-10-17 (the same day it was promoted from allow-failure). The
+   installer
    was built cross-platform (wine) but never installed by a human.
 5. **The test suite is honest as of 2026-10-17, and its honesty is
    mutation-checked.** 169 asserts that read source files were removed, and
-   the count stands at 78 files / 621 tests after the judge round added
+   the count stands at 80 files / 640 tests after the judge rounds added
    behavioral tests: a bricked watch mode now fails the suite, a checkpoint
    that cannot save now denies the change instead of allowing blind, and a
    zip bomb is refused before it inflates. A small number of
@@ -77,7 +79,7 @@ allow-failure mode until it has run green once).
 
 ## Known limitations
 
-- Linux-only verification so far (see 4 above).
+- A human Windows install and a signed-in real-engine turn are still owed (see 4).
 - The receipts gallery mixes stand-in and real evidence; every figure's
   caption in the gallery does not distinguish them — this brief does.
 - `CHANGELOG.md` records development in a promotional voice; treat it as a

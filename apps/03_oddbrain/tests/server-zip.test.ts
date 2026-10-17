@@ -130,6 +130,30 @@ test('unzipArchive answers a zip bomb BEFORE it spends the memory', async () => 
   assert.equal(aggregate.ok, false)
   assert.match(aggregate.answer, /cap/)
 
+  // Forged LOW declarations: entries claiming zero uncompressed bytes while
+  // actually inflating large. The declared aggregate passes every check; the
+  // cap that holds is the one measured on the bytes that really came out.
+  const lieLow = (zip: Uint8Array): Uint8Array => {
+    const copy = new Uint8Array(zip)
+    const view = new DataView(copy.buffer, copy.byteOffset, copy.byteLength)
+    let patched = 0
+    for (let i = 0; i < copy.length - 4; i += 1) {
+      if (view.getUint32(i, true) === 0x02014b50) {
+        view.setUint32(i + 24, 0, true)
+        patched += 1
+      }
+    }
+    assert.ok(patched >= 2, 'the fixture has two central entries to forge')
+    return copy
+  }
+  const forged = createZip([
+    { name: 'a.txt', content: 'y'.repeat(900) },
+    { name: 'b.txt', content: 'z'.repeat(900) },
+  ])
+  const low = await unzipArchive(lieLow(forged), join(dir, 'd'), { files: 200, perFile: 1024, totalUncompressed: 100 }, fsStub)
+  assert.equal(low.ok, false, 'declared-zero entries must not smuggle 1800 real bytes past a 100-byte cap')
+  assert.match(low.answer, /cap/)
+
   // A modest archive within every cap still unpacks.
   const fine = await unzipArchive(small, join(dir, 'c'), { files: 200, perFile: 1024, totalUncompressed: 4096 }, fsStub)
   assert.equal(fine.ok, true, fine.answer)

@@ -15,8 +15,15 @@ export type EngineDownloadInfo = {
   /** The exact official endpoint for Windows, the machine he runs. */
   windows: string
   kind: EngineDownloadKind
-  /** The only host a download for this engine may come from. */
+  /** The only host a download for this engine may start from. */
   host: string
+  /**
+   * Hosts the official endpoint itself may hand us to. Publishers redirect —
+   * claude.ai sends the script from downloads.claude.ai, ollama.com sends the
+   * zip from its GitHub releases — and refusing their own redirects broke the
+   * door. Every hop must still be on THIS list, by parsed host, or refused.
+   */
+  redirectHosts?: readonly string[]
   /** What the card says before any byte moves. */
   note: string
   /** For kind 'page': the official page to open by hand. */
@@ -28,12 +35,14 @@ export const ENGINE_DOWNLOADS: Record<string, EngineDownloadInfo | undefined> = 
     windows: 'https://claude.ai/install.ps1',
     kind: 'installer-script',
     host: 'claude.ai',
+    redirectHosts: ['downloads.claude.ai'],
     note: 'Anthropic\u2019s own native installer script. Needs no Node. The app stages it, and running it is a separate permission.',
   },
   ollama: {
     windows: 'https://ollama.com/download/ollama-windows-amd64.zip',
     kind: 'zip',
     host: 'ollama.com',
+    redirectHosts: ['github.com', 'objects.githubusercontent.com'],
     note: 'The headless runtime only, from ollama.com\u2019s own zip. No desktop app, no tray, nothing autostarts: start and stop it right here — or run your own Ollama and leave this staged copy alone.',
   },
   agy: {
@@ -53,6 +62,26 @@ export function isOfficialUrl(engine: string, url: string): boolean {
   try {
     const parsed = new URL(url)
     return parsed.protocol === 'https:' && parsed.host === info.host && parsed.href === info.windows
+  } catch {
+    return false
+  }
+}
+
+/**
+ * True for the official STARTING endpoint or a host the publisher itself
+ * redirects to. This — not exact equality — is the rule every redirect hop
+ * must pass: the pin follows the publisher, never a stranger.
+ */
+export function isOfficialDownloadHost(engine: string, url: string): boolean {
+  const info = ENGINE_DOWNLOADS[engine]
+  if (!info) return false
+  if (info.kind === 'page') return false
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'https:') return false
+    if (parsed.username !== '' || parsed.password !== '') return false
+    if (parsed.host === info.host) return true
+    return (info.redirectHosts ?? []).includes(parsed.host)
   } catch {
     return false
   }

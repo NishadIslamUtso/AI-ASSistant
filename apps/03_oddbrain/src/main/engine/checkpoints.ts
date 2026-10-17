@@ -69,31 +69,34 @@ export async function snapshotFile(
  * "the first ghost in the index" once deleted the wrong one of them.
  */
 export async function restoreCheckpoint(dir: string, copy: string, original = ''): Promise<{ ok: boolean; answer: string }> {
-  const index = await readIndex(dir)
-  if (!copy) {
-    const ghost = original
-      ? index.find(entry => entry.existed === false && !entry.copy && entry.original === original)
-      : index.find(entry => entry.existed === false && !entry.copy)
-    if (!ghost) return { ok: false, answer: 'No record says that file was created by the engine.' }
-    try {
-      await rm(ghost.original, { force: true })
-      await writeIndex(dir, index.filter(entry => entry !== ghost))
-      return { ok: true, answer: `Removed ${ghost.original} (it did not exist before the engine)` }
-    } catch (failure) {
-      return { ok: false, answer: `Could not remove: ${(failure as Error).message}` }
+  // The restore's index update rides the same chain as rememberCheckpoint:
+  // a restore racing a fresh checkpoint must not erase the new record.
+  return withIndex(dir, async (index) => {
+    if (!copy) {
+      const ghost = original
+        ? index.find(entry => entry.existed === false && !entry.copy && entry.original === original)
+        : index.find(entry => entry.existed === false && !entry.copy)
+      if (!ghost) return { ok: false, answer: 'No record says that file was created by the engine.' }
+      try {
+        await rm(ghost.original, { force: true })
+        await writeIndex(dir, index.filter(entry => entry !== ghost))
+        return { ok: true, answer: `Removed ${ghost.original} (it did not exist before the engine)` }
+      } catch (failure) {
+        return { ok: false, answer: `Could not remove: ${(failure as Error).message}` }
+      }
     }
-  }
-  const inside = copy.startsWith(dir)
-  if (!inside) return { ok: false, answer: 'That copy is not one of this app\'s checkpoints.' }
-  const byCopy = index.find(entry => entry.copy === copy)
-  if (!byCopy) return { ok: false, answer: 'That copy has no record of where it came from.' }
-  try {
-    await copyFile(copy, byCopy.original)
-    await writeIndex(dir, index.filter(entry => entry !== byCopy))
-    return { ok: true, answer: `Restored ${byCopy.original}` }
-  } catch (failure) {
-    return { ok: false, answer: `Could not restore: ${(failure as Error).message}` }
-  }
+    const inside = copy.startsWith(dir)
+    if (!inside) return { ok: false, answer: 'That copy is not one of this app\'s checkpoints.' }
+    const byCopy = index.find(entry => entry.copy === copy)
+    if (!byCopy) return { ok: false, answer: 'That copy has no record of where it came from.' }
+    try {
+      await copyFile(copy, byCopy.original)
+      await writeIndex(dir, index.filter(entry => entry !== byCopy))
+      return { ok: true, answer: `Restored ${byCopy.original}` }
+    } catch (failure) {
+      return { ok: false, answer: `Could not restore: ${(failure as Error).message}` }
+    }
+  })
 }
 
 /** The checkpoints folder's own little index: one JSON line per copy. */
@@ -108,17 +111,33 @@ async function readIndex(dir: string): Promise<CheckpointRecord[]> {
 }
 
 export async function writeIndex(dir: string, records: CheckpointRecord[]): Promise<void> {
-  const previous = indexWrites.get(dir) ?? Promise.resolve()
-  const run = previous.catch(() => undefined).then(async () => {
-    await mkdir(dir, { recursive: true })
-    await writeFile(join(dir, 'index.json'), JSON.stringify(records.slice(-200), null, 2))
-  })
-  indexWrites.set(dir, run)
-  await run
+  await mkdir(dir, { recursive: true })
+  await writeFile(join(dir, 'index.json'), JSON.stringify(records.slice(-200), null, 2))
 }
 
-/** One write chain per checkpoints folder: index writes never interleave. */
-const indexWrites = new Map<string, Promise<void>>()
+/** One chain per checkpoints folder: index READ-modify-writes never interleave. */
+const indexWrites = new Map<string, Promise<unknown>>()
+
+/**
+ * The whole read-mutate-write cycle runs as ONE queued unit, and it is the
+ * ONLY way the index changes. Reading outside the chain is what lost records:
+ * two concurrent checkpoints each read the same index, each appended its own,
+ * and the second write erased the first. writeIndex itself chains nothing —
+ * every caller here already holds the folder's turn.
+ */
+async function withIndex<T>(dir: string, mutate: (records: CheckpointRecord[]) => T): Promise<T> {
+  const previous = indexWrites.get(dir) ?? Promise.resolve()
+  const run = previous.catch(() => undefined).then(async () => {
+    const records = await readIndex(dir)
+    return await mutate(records)
+  })
+  indexWrites.set(dir, run as Promise<unknown>)
+  try {
+    return await run
+  } finally {
+    if (indexWrites.get(dir) === run) indexWrites.delete(dir)
+  }
+}
 
 /**
  * The latest checkpoints, newest first, capped. Ghosts ride along — a ghost
@@ -146,7 +165,8 @@ export async function takeCheckpoint(dir: string, original: string, epochMs = Da
  * losing older records even when the write races a restart.
  */
 export async function rememberCheckpoint(dir: string, record: Checkpoint): Promise<void> {
-  const records = await readIndex(dir)
-  records.push(record)
-  await writeIndex(dir, records)
+  await withIndex(dir, async (records) => {
+    records.push(record)
+    await writeIndex(dir, records)
+  })
 }

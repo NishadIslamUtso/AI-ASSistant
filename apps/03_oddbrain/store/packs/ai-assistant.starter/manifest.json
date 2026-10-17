@@ -1,8 +1,8 @@
 {
   "id": "ai-assistant.starter",
-  "name": "AI ASSistant starter pack",
+  "name": "OddBrain starter pack",
   "version": "1.0.0",
-  "author": "AI ASSistant",
+  "author": "OddBrain",
   "description": "The app's browser-page skill: see the page the user has open, through the local door. One look to start from.",
   "license": "unspecified",
   "permissions": {

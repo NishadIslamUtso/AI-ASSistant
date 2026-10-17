@@ -86,6 +86,13 @@ export default function useModels(
     const timer = setTimeout(() => controller.abort(), 8000)
     setStatus('loading')
     void loadOnline()
+    // The web demo has no Ollama behind it: asking would 404 into the console
+    // on every load. The desktop app (not a demo) owns this request.
+    if (isDemo) {
+      setLocal([])
+      setStatus('offline')
+      return
+    }
     try {
       const data = await listModels(controller.signal)
       if (!Array.isArray(data.models)) throw new Error('Ollama returned an invalid model list.')

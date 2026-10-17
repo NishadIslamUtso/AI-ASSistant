@@ -64,6 +64,11 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
   // OLD gear while the UI shows the new one.
   let sessionModel: string | null = null
   let sessionApproval: string | null = null
+  // What the living process was LAUNCHED with: a flag or a base URL that
+  // changed under it would only apply on the next start, silently.
+  let sessionThinking: string | null = null
+  let sessionBaseUrl: string | null = null
+  let sessionHadKey = false
 
   const onEvent = (input: EngineStartInput, event: EngineEvent): void => {
     // The socket owns the busy flag: a finished or failed task frees the
@@ -114,6 +119,9 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
       const gearChanged =
         sessionModel !== input.settings.model ||
         sessionApproval !== input.settings.approval ||
+        sessionThinking !== input.settings.thinking ||
+        sessionBaseUrl !== input.settings.baseUrl ||
+        sessionHadKey !== Boolean(input.auth?.apiKey) ||
         currentCwd !== input.cwd
       if (session?.isRunning() && !gearChanged) {
         if (busy) {
@@ -139,6 +147,9 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
       currentCwd = input.cwd
       sessionModel = input.settings.model
       sessionApproval = input.settings.approval
+      sessionThinking = input.settings.thinking
+      sessionBaseUrl = input.settings.baseUrl
+      sessionHadKey = Boolean(input.auth?.apiKey)
       if (!session.isRunning()) {
         return { ok: false, answer: 'The engine could not be started on this machine.' }
       }
@@ -165,6 +176,9 @@ export function createEngineSocket(memory: SessionMemory = noSessionMemory): Eng
       sessionEngine = null
       sessionModel = null
       sessionApproval = null
+      sessionThinking = null
+      sessionBaseUrl = null
+      sessionHadKey = false
       currentCwd = ''
     },
   }

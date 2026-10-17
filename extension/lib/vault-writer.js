@@ -1,5 +1,23 @@
 const LOCAL_API = "http://127.0.0.1:8765";
 
+/**
+ * The pairing secret: the person copies it once from OddBrain (Settings >
+ * Plugins > Agent access) into this extension's popup. Every request to the
+ * app carries it as x-oddbrain-pair; without it the app refuses with 401.
+ * The token stays in this browser's own storage and never goes anywhere else.
+ */
+async function getPairToken() {
+  const data = await safeStorageGet({ pairToken: "" });
+  return typeof data.pairToken === "string" ? data.pairToken : "";
+}
+
+async function pairHeaders(json) {
+  const headers = { "Content-Type": "application/json" };
+  const token = await getPairToken();
+  if (token) headers["x-oddbrain-pair"] = token;
+  return headers;
+}
+
 function isExtensionValid() {
   try { return !!(chrome.runtime && chrome.runtime.id); } catch(e) { return false; }
 }
@@ -10,7 +28,7 @@ async function safeStorageGet(defaults) {
     return await chrome.storage.local.get(defaults);
   } catch(e) {
     if (e.message && e.message.includes("Extension context invalidated")) {
-      console.warn("AI ASSistant: Extension context invalidated, please reload page");
+      console.warn("OddBrain: Extension context invalidated, please reload page");
       return defaults;
     }
     return defaults;
@@ -23,7 +41,7 @@ async function safeStorageSet(obj) {
     await chrome.storage.local.set(obj);
   } catch(e) {
     if (e.message && e.message.includes("Extension context invalidated")) {
-      console.warn("AI ASSistant: Extension context invalidated, please reload page");
+      console.warn("OddBrain: Extension context invalidated, please reload page");
       return;
     }
     // ignore
@@ -36,9 +54,22 @@ async function postCapture(payload) {
   try {
     const res = await fetch(`${LOCAL_API}/capture`, {
       method: "POST",
-      headers: {"Content-Type":"application/json"},
+      headers: await pairHeaders(true),
       body: JSON.stringify(dataWithTime)
     });
+    if (res.status === 401) {
+      // Not paired (or rotated out): the app refused this capture. Queueing
+      // would keep page contents in this browser without consent, so the
+      // capture is dropped and the reason is recorded instead.
+      try {
+        const act = await safeStorageGet({activity: []});
+        const activity = act.activity || [];
+        activity.push({...dataWithTime, success:false, queued:false, reason:"not paired - paste the token from OddBrain Settings > Plugins > Agent access"});
+        if (activity.length > 100) activity.shift();
+        await safeStorageSet({activity});
+      } catch(e) {}
+      return {ok:false, unpaired:true};
+    }
     if (!res.ok) throw new Error("API not ok "+res.status);
     // Save to activity log
     try {
@@ -90,7 +121,7 @@ async function flushQueue() {
     const remaining = [];
     for (const item of q) {
       try {
-        await fetch(`${LOCAL_API}/capture`, {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(item)});
+        await fetch(`${LOCAL_API}/capture`, {method:"POST", headers: await pairHeaders(true), body: JSON.stringify(item)});
       } catch(e) {
         remaining.push(item);
       }
@@ -103,7 +134,7 @@ async function getContext(query) {
   if (!isExtensionValid()) return {capsules: [], entities: [], claims: []};
   // Try local API first
   try {
-    const res = await fetch(`${LOCAL_API}/context?q=${encodeURIComponent(query)}`);
+    const res = await fetch(`${LOCAL_API}/context?q=${encodeURIComponent(query)}`, { headers: await pairHeaders(false) });
     if (res.ok) {
       const data = await res.json();
       if (data.capsules) {
@@ -147,3 +178,8 @@ async function getContext(query) {
 }
 
 setInterval(() => { try { flushQueue(); } catch(e) {} }, 30000);
+
+/* Test seam: a plain-script library in the browser, a module under test. */
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { getPairToken, pairHeaders, postCapture, flushQueue, getContext, queueCapture };
+}

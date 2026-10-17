@@ -1782,6 +1782,20 @@ app.whenReady().then(async () => {
     if (extensionApi.listening) {
       console.log(`[extension] listening at ${extensionApi.url}, captures, context and the never-check list only`)
     }
+    // The pairing secret belongs to the person, not to the extension: the app
+    // shows it only here, copies it on their press, and rotation is theirs
+    // too — an old extension stops working the moment they rotate.
+    handle('extension-pair:get', () => ({ token: pairToken }))
+    handle('extension-pair:rotate', () => {
+      pairToken = randomBytes(24).toString('hex')
+      try {
+        writeFileSync(join(app.getPath('userData'), 'extension-pair.json'), JSON.stringify({ token: pairToken }), 'utf8')
+      } catch {
+        // A failed save means the rotation lives until reboot; still told below.
+      }
+      if (extensionApi) extensionApi.setPairToken(pairToken)
+      return { ok: true, token: pairToken }
+    })
     createWindow()
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow()

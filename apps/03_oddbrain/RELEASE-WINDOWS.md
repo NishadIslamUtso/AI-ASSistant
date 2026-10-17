@@ -1,23 +1,21 @@
 # Release notes — the Windows installer
 
-## The name changed (2026-10-17): the app is OddBrain now
-
-The 0.9.0 exe below was cut BEFORE the rename and still says the old name on
-disk — identical features, older label. The NEXT installer carries the new
-name: `OddBrain-Setup-0.9.0.exe` (appId `com.oddbrain.desktop`). A packaged
-app named OddBrain also gets a fresh userData folder, so a 0.9.0-era install
-starts with clean settings — the vault folder is chosen by hand either way.
-
-## 0.9.0 — current (the audit build, 2026-10-16)
+## 0.9.0 — current (2026-10-17, the build to install)
 
 | | |
 |---|---|
-| Name | `AI-ASSistant-Setup-0.9.0.exe` |
-| Size | 88,204,306 bytes |
-| SHA-256 | `267a753011b0431d749b9b6c7bc26971664efc7bdaa9c8f802b61cbb54c58c07` |
+| Name | `OddBrain-Setup-0.9.0.exe` |
+| Size | SEE THE ROOT TABLE — this file defers to it |
+| SHA-256 | SEE THE ROOT TABLE — this file defers to it |
 | Signed | No — SmartScreen will say "unknown publisher" |
 
-**What it is:** the full v3 feature set as of the audit build (auto-keep memory, engine downloads, watch mode, checkpoints, store/mods, Split, Battles, Recipes) with the typecheck and full test suite green. Built with electron-builder NSIS on this branch; one exe kept at a time by rule. The judges' fix batch (2026-10-17) landed AFTER this exe was cut — the next installer carries it.
+**What it is:** the full v3 feature set, the judges' security rounds, the
+full OddBrain rename and the Windows-green suite. Built with
+electron-builder NSIS on this branch; one exe kept at a time by rule. The
+exact size and hash of the CURRENT build live in
+`00_LIVING_DOCS/RELEASE-WINDOWS.md` (the root table) and in the release
+commit message — one source of truth, updated with every rebuild, so this
+file can never point at a stale byte count again.
 
 ## 0.1.2 — historical: the owner's own artwork, verbatim
 

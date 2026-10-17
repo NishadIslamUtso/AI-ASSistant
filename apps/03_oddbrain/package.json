@@ -49,5 +49,8 @@
   },
   "overrides": {
     "sprintf-js": "^1.1.2"
+  },
+  "engines": {
+    "node": ">=22.12"
   }
 }
