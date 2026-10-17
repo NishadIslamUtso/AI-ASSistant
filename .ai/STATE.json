@@ -64,8 +64,8 @@
       ],
       "installer": {
         "file": "OddBrain-Setup-0.9.0.exe",
-        "bytes": 100262479,
-        "sha256": "cfb7e7a72d313d973e601bb1cf80e1094c94c6172769805750c27b883713045a",
+        "bytes": 100262886,
+        "sha256": "3f09aeab46b75460a8dd97864e2889dc3fbb5a785e9d04a82a244d884485232f",
         "note": "unsigned (SmartScreen expected); NSIS per-user; rebuild recipe in 00_LIVING_DOCS/RELEASE-WINDOWS.md"
       },
       "open_items": [

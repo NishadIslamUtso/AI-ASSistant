@@ -64,7 +64,7 @@ promoted from allow-failure to a required, green gate on 2026-10-17).
    the fuse-hook wiring, the shortcut name — and they say so in their own
    text instead of passing as behavior.
 6. **Everything says OddBrain, including the GitHub repo.** Product,
-   installer (`OddBrain-Setup-0.9.0.exe`, sha256 `cfb7e7a7…045a`), app title,
+   installer (`OddBrain-Setup-0.9.0.exe`, sha256 `3f09aeab…232f`), app title,
    shortcut, source tree (`apps/03_oddbrain`), checkout vault (`vault/Brain`),
    default vault path (`Documents\OddBrain\Brain`), and the repo itself —
    renamed by the owner 2026-10-17; the old URL redirects.
