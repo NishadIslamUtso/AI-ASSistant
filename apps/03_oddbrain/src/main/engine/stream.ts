@@ -69,8 +69,18 @@ export function createEngineParser(): EngineParser {
       if (subtype === 'permission_denied')
         return [{ kind: 'status', text: 'a tool use was denied by the engine\'s safe mode' }]
       // The brain not answering yet: say so, or the window looks frozen.
+      // By the third try the owner needs the FIX, not another count — the
+      // machine sat at "retry 1, 2, 3" with nothing actionable. The engine
+      // is left alone to keep retrying; only the words change.
       if (subtype === 'api_retry') {
         const attempt = typeof message.attempt === 'number' ? message.attempt : null
+        if (attempt !== null && attempt >= 3) {
+          return [{
+            kind: 'status',
+            text:
+              'the brain is still not answering \u2014 if this keeps failing: run `claude` once in a terminal and sign in, or check your connection. Still trying.',
+          }]
+        }
         return [{ kind: 'status', text: attempt ? `the brain is not answering, retry ${attempt}` : 'the brain is not answering, retrying' }]
       }
       return []

@@ -13,7 +13,7 @@ import { spawn } from 'node:child_process'
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { inflateRawSync } from 'node:zlib'
-import { ENGINE_DOWNLOADS, MAX_DOWNLOAD_BYTES, isOfficialDownloadHost, isOfficialUrl, parseShaLine } from '../../shared/lib/engineDownloads'
+import { ENGINE_DOWNLOADS, MAX_DOWNLOAD_BYTES, humanBytes, isOfficialDownloadHost, isOfficialUrl, parseShaLine } from '../../shared/lib/engineDownloads'
 
 export type DownloadTick = { engine: string; got: number; total: number | null; phase: 'downloading' | 'staged' | 'error'; answer?: string }
 
@@ -163,7 +163,7 @@ export function createDownloadManager(options: {
       }
       const declared = Number(reply.headers?.get('content-length') ?? '0')
       if (declared > MAX_DOWNLOAD_BYTES) {
-        const answer = `${info.host} offered more than the ${Math.round(MAX_DOWNLOAD_BYTES / (1024 * 1024))} MB cap. Nothing was downloaded.`
+        const answer = `${info.host} offered more than the ${humanBytes(MAX_DOWNLOAD_BYTES)} cap. Nothing was downloaded.`
         onTick({ engine, got: 0, total: null, phase: 'error', answer })
         return { ok: false, answer }
       }

@@ -334,7 +334,7 @@ test('checksum lines and the size cap are pure', () => {
     parseShaLine('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  ollama.zip'),
     'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
   )
-  assert.ok(MAX_DOWNLOAD_BYTES === 400 * 1024 * 1024)
+  assert.ok(MAX_DOWNLOAD_BYTES === 2_500 * 1024 * 1024, 'the cap admits Ollama\u2019s real installer')
 })
 
 test('removal forgets the engine and its record together', async () => {

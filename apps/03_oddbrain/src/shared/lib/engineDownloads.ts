@@ -87,8 +87,18 @@ export function isOfficialDownloadHost(engine: string, url: string): boolean {
   }
 }
 
-/** Nothing gets bigger than this without an honest refusal (Ollama's zip is far smaller). */
-export const MAX_DOWNLOAD_BYTES = 400 * 1024 * 1024
+/** Nothing gets bigger than this without an honest refusal. The real lesson,
+ * from the owner's machine twice: Ollama's Windows installer outgrew the old
+ * 400 MB cap, so the app refused the official download forever with a
+ * sentence that blamed the publisher. 2.5 GB is still a hard ceiling — the
+ * point of the cap is a hostile offer, not a big honest one. */
+export const MAX_DOWNLOAD_BYTES = 2_500 * 1024 * 1024
+
+/** Bytes as a human reads them, for the refusals and progress lines. */
+export function humanBytes(n: number): string {
+  if (n >= 1024 * 1024 * 1024) return `${Math.round((n / (1024 * 1024 * 1024)) * 10) / 10} GB`
+  return `${Math.round(n / (1024 * 1024))} MB`
+}
 
 /** Pull a 64-hex digest out of a published checksum file, if one is there. */
 export function parseShaLine(text: string): string {

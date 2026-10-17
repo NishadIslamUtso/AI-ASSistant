@@ -90,18 +90,47 @@ export async function askShellPath(platform = process.platform, env = process.en
   })
 }
 
+/**
+ * Folders this app itself manages engines in. The staged layout is
+ * `<root>/<engine-id>/app` with the binary possibly at the root too — the
+ * owner's machine put engines there by hand, and the probe list ignored it.
+ * Registered at boot from the app's user-data folder; tests register temp
+ * dirs through the same door.
+ */
+const stagingRoots: string[] = []
+
+/** Register one more folder the engine probe should look inside. */
+export function registerStagingRoot(dir: string): void {
+  if (dir && !stagingRoots.includes(dir)) stagingRoots.push(dir)
+}
+
+/** Test seam: forget every registered staging root. */
+export function resetStagingRoots(): void {
+  stagingRoots.length = 0
+}
+
 /** Known absolute install spots on Windows, for probing and for spawning. */
 export function engineCandidates(id: 'claude-code' | 'agy', env: NodeJS.ProcessEnv = process.env): string[] {
   const npmDir = env['APPDATA'] ? join(env['APPDATA'], 'npm') : ''
   const localBin = env['USERPROFILE'] ? join(env['USERPROFILE'], '.local', 'bin') : ''
   const programs = env['LOCALAPPDATA'] ? join(env['LOCALAPPDATA'], 'Programs') : ''
+  const binary = id === 'claude-code' ? 'claude' : 'agy'
+  const staged = stagingRoots.flatMap((root) => [
+    join(root, id, 'app', `${binary}.exe`),
+    join(root, id, 'app', `${binary}.cmd`),
+    join(root, id, 'app', binary),
+    join(root, id, `${binary}.exe`),
+    join(root, id, binary),
+  ])
   if (id === 'claude-code') {
     return [
+      ...staged,
       ...(npmDir ? [join(npmDir, 'claude.cmd'), join(npmDir, 'claude')] : []),
       ...(localBin ? [join(localBin, 'claude.exe'), join(localBin, 'claude')] : []),
     ]
   }
   return [
+    ...staged,
     ...(localBin ? [join(localBin, 'agy.exe'), join(localBin, 'agy')] : []),
     ...(programs ? [join(programs, 'agy', 'agy.exe')] : []),
   ]

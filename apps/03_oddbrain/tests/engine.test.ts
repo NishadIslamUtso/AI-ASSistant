@@ -177,7 +177,8 @@ test('the wire: self-denials, retries and failed tools are news, not silence', (
   )
   assert.equal(events.length, 3)
   assert.match(events[0].text, /denied/)
-  assert.match(events[1].text, /retry 3/)
+  // the third retry names the actual fix instead of counting forever
+  assert.match(events[1].text, /run `claude` once in a terminal and sign in/)
   assert.match(events[2].text, /command not found/)
 })
 

@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto'
 import { pathToFileURL } from 'node:url'
 import { loadAppFlags, saveAppFlags } from './appFlags'
 import { userInfo } from 'node:os'
+import { registerStagingRoot } from './engine/enginePath'
 import { handle, lockNavigation, pinOwnOrigins } from './ipcGuard'
 import { dirname, join, resolve } from 'node:path'
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
@@ -1415,6 +1416,15 @@ function registerBridges(): void {
   // the time this runs, so the workspace path they need is known.
   const placedSkills = deployBuiltInSkills(skillTargets())
   if (placedSkills.length) console.log(`[skills] refreshed ${placedSkills.length} built-in engine skill file(s)`)
+}
+
+// Engines the app itself staged (engines/<id>/app under its own data
+// folder) are probe candidates from the first detection on — the owner's
+// machine put engines there and the probe list ignored that folder.
+try {
+  registerStagingRoot(join(app.getPath('userData'), 'engines'))
+} catch {
+  /* no data folder yet (odd test launches) — nothing staged to register */
 }
 
 const isSmoke = process.argv.includes('--smoke')
