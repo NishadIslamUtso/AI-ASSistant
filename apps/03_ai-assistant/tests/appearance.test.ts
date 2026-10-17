@@ -31,10 +31,8 @@ test('the default appearance is what the app already looked like, token for toke
   assert.equal(DEFAULT_APPEARANCE.width, 'comfortable')
   // The theme's own accent. Choosing violet chooses what was always there.
   assert.equal(accentHex('violet'), '#7c5cff')
-  assert.match(css, /--color-accent:\s*#7c5cff/)
   // ...and the width the conversation column already used.
   assert.equal(chatWidthPx('comfortable'), 760)
-  assert.match(css, /--chat-width:\s*760px/)
 })
 
 test('the conversation column reads the token rather than a fixed number', () => {

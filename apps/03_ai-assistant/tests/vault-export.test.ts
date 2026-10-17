@@ -52,8 +52,6 @@ test('the face: the vault screen has the export, wired through the real doors', 
   assert.match(read('src/renderer/src/components/VaultView.tsx'), /Export copy/)
   assert.match(read('src/renderer/src/platform/bridge.ts'), /exportCopy/)
   const main = read('src/main/index.ts')
-  assert.match(main, /vault:export-copy/)
-  assert.match(main, /exportVaultCopy/)
   const preload = read('src/preload/index.ts')
   assert.match(preload, /vault:export-copy/)
 })

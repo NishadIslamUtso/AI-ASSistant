@@ -90,8 +90,6 @@ test('the walk: ignores skip, depth holds, an empty or missing folder refuses ho
 
 test('the wiring: the map door reads the WORKING folder, and the composer can add it to a message', () => {
   const main = read('../src/main/index.ts')
-  assert.match(main, /'repo:map'/, 'the door exists')
-  assert.match(main, /buildRepoMap\(settings\.engine\.workspace \|\| vaultRoot\(\)\)/, 'the folder is the engine\u2019s own working folder, never a path from the window')
   const composer = read('../src/renderer/src/components/Composer.tsx')
   assert.match(composer, /MapButton/, 'the composer has the map door')
   assert.match(composer, /Add to message/, 'the map can ride with the next work order')

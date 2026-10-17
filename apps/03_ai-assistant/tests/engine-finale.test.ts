@@ -258,24 +258,3 @@ test('a finished turn is journaled once, with the engine\u2019s own words and us
 })
 
 // ---------- wiring ----------
-
-test('the wiring: all five pieces are reachable where a person is', () => {
-  const panel = read('../src/renderer/src/components/EnginePanel.tsx')
-  assert.match(panel, /Copy this turn/, 'the card can be copied')
-  assert.match(panel, /app:draft/, 'Edit puts the order back in the composer')
-  assert.match(panel, /formatTotals/, 'the context line shows on the card')
-  assert.match(panel, /In the line:/, 'the queue shows on the card')
-  assert.match(panel, /Earlier sessions on this machine/, 'the journal shows its record')
-  const app = read('../src/renderer/src/App.tsx')
-  assert.match(app, /Added to the line/, 'a busy send becomes a parked order, told to the owner')
-  const chip = read('../src/renderer/src/components/Composer.tsx')
-  assert.match(chip, /setThinking/, 'the thinking switch is in the engine chip')
-  const main = read('../src/main/index.ts')
-  for (const door of ["'engine:thinking'", "'journal:list'", "'journal:append'", "'journal:clear'"]) {
-    assert.match(main, new RegExp(door.replace(/[-:]/g, '\\$&')), `main answers ${door}`)
-  }
-  const adapter = read('../src/main/engine/claudeCode.ts')
-  assert.match(adapter, /MAX_THINKING_TOKENS/, 'the env knob is the engine\u2019s own documented one')
-  const bridge = read('../src/renderer/src/platform/bridge.ts')
-  assert.match(bridge, /Thinking lives in the desktop app\./, 'the preview fallback refuses honestly')
-})

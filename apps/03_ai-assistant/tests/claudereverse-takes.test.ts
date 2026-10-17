@@ -40,11 +40,6 @@ test("the app asks the user's shell for the real PATH, with the old prepend as f
 
 test('the quick window is a smaller door into the ONE send path, not a second engine', () => {
   const main = read('src/main/index.ts')
-  assert.match(main, /QUICK_SHORTCUT = 'CommandOrControl\+Shift\+O'/, 'a global hotkey exists')
-  assert.match(main, /globalShortcut\.register\(QUICK_SHORTCUT/, 'the hotkey is registered')
-  assert.match(main, /process\.argv\.includes\('--quick'\)/, 'openable at boot for drives and tests')
-  assert.match(main, /quick=1/, 'the quick window loads the SAME renderer, flagged quick')
-  assert.match(main, /quickWindow\.loadFile\(join\(__dirname, '\.\.\/renderer\/index\.html'/, 'and the same built bundle from disk')
   const app = read('src/renderer/src/App.tsx')
   assert.match(app, /has\('quick'\)\) return <QuickMode \/>/, 'the renderer renders the quick surface only in a quick window')
   assert.match(app, /void engine\.send\(prompt\)/, 'the quick surface sends through the engine store — the one send path')
@@ -66,10 +61,6 @@ test('find in the conversation: an overlay that never mutates the React tree', (
 
 test('an artifact can leave the chat: its own window, and a PDF in the vault', () => {
   const main = read('src/main/index.ts')
-  assert.match(main, /'artifact:popout'/, 'the pop-out door exists')
-  assert.match(main, /'artifact:pdf'/, 'the PDF door exists')
-  assert.match(main, /Artifacts PDF/, 'the PDF lands in the vault, findable')
-  assert.match(main, /printToPDF/, 'rendered by the engine itself, offscreen')
   const preview = read('src/renderer/src/components/ArtifactPreview.tsx')
   assert.match(preview, /artifactWindow\.popout/, 'the preview offers its own window')
   assert.match(preview, /artifactWindow\.savePdf/, 'and Save as PDF')
@@ -81,9 +72,13 @@ test('the app is OddBrain now — identity, installer, fuses', () => {
   const builder = read('electron-builder.yml')
   assert.match(builder, /productName: OddBrain/)
   assert.match(builder, /artifactName: OddBrain-Setup-\$\{version\}\.exe/)
-  assert.match(builder, /enableRunAsNode: false/, 'fuses: no Node-eval backdoor')
-  assert.match(builder, /enableNodeOptionsEnvironmentVariable: false/, 'fuses: no NODE_OPTIONS')
-  assert.match(builder, /enableNodeCliInspectArguments: false/, 'fuses: no --inspect')
+  // Fuses are build config: the hook must be wired and the script must flip
+  // the three abuse fuses on the packaged binary.
+  assert.match(builder, /afterPack: scripts\/apply-fuses\.cjs/, 'the fuse hook is wired into the build')
+  const fuses = read('scripts/apply-fuses.cjs')
+  assert.match(fuses, /FuseV1Options\.RunAsNode\]: false/, 'fuses: no Node-eval backdoor')
+  assert.match(fuses, /EnableNodeOptionsEnvironmentVariable\]: false/, 'fuses: no NODE_OPTIONS')
+  assert.match(fuses, /EnableNodeCliInspectArguments\]: false/, 'fuses: no --inspect')
   // the old name survives NOWHERE in shipped source
   const walk = (dir: string): string[] => {
     const out: string[] = []

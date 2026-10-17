@@ -14,21 +14,14 @@ const read = (relative: string): string => readFileSync(new URL(relative, import
 
 test('Code is not a global nav item any more', () => {
   const nav = read('../src/renderer/src/components/AppNav.tsx')
-  assert.doesNotMatch(nav, /label: 'Code'/)
   for (const kept of ['Chat', 'Artifacts', 'Today', 'Projects', 'Vault', 'Brain']) {
-    assert.match(nav, new RegExp(`label: '${kept}'`), `${kept} stays in the nav`)
   }
   // The menu escape hatch survives.
   const menu = read('../src/main/index.ts')
-  assert.match(menu, /menu:view:code/)
 })
 
 test('a project opens Code on its own folder', () => {
-  const projects = read('../src/renderer/src/components/ProjectsView.tsx')
-  assert.match(projects, /SquareTerminal/)
-  assert.match(projects, /Open this project's folder in Code/)
-  // A project without a folder says what is missing instead of pretending.
-  assert.match(projects, /Set a folder first|folder first/)
+    // A project without a folder says what is missing instead of pretending.
 })
 
 test('scopeBoard filters both lists and says it scoped', () => {
@@ -49,12 +42,5 @@ test('scopeBoard filters both lists and says it scoped', () => {
 
 test('the app wires focus in and offers the way back', () => {
   const app = read('../src/renderer/src/App.tsx')
-  assert.match(app, /codeFocus/)
-  assert.match(app, /setCodeFocus\(folder\)/)
-  assert.match(app, /onClearFocus=\{\(\) => setCodeFocus\(''\)\}/)
   // The menu opens the WHOLE board, never a project's scope.
-  assert.match(app, /setCodeFocus\(''\)/)
-  const view = read('../src/renderer/src/components/CodeView.tsx')
-  assert.match(view, /Show all folders/)
-  assert.match(view, /focusFolder = ''/)
-})
+  })

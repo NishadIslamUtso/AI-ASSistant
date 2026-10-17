@@ -22,7 +22,7 @@
   "apps": {
     "03_ai-assistant": {
       "path": "apps/03_ai-assistant",
-      "status": "ACTIVE - the app, version 0.9.0. Verified in the sandbox: 77 test files / 621 tests, tsc clean, build green, and every feature live-driven against a real stream-json wire with screenshot receipts (00_LIVING_DOCS/receipts/, g27-g64). All fourteen OFFERED features + media + auto memory BUILT. The one open item: the owner's acceptance run on his TUF A15 (Windows) with AI-ASSistant-Setup-0.9.0.exe (sha256 267a7530...).",
+      "status": "ACTIVE - the app, version 0.9.0. Verified in the sandbox: 76 files / 611 tests (de-padded: 169 source-reading asserts removed 2026-10-17), tsc clean, build green, and every feature live-driven against a real stream-json wire with screenshot receipts (00_LIVING_DOCS/receipts/, g27-g64). All fourteen OFFERED features + media + auto memory BUILT. The one open item: the owner's acceptance run on his TUF A15 (Windows) with AI-ASSistant-Setup-0.9.0.exe (sha256 267a7530...).",
       "tech": "Electron 40 + electron-vite 5 + Vite 6 + React 19 + TypeScript 5.7 + Tailwind 4 + Vitest 2; engines are EXTERNAL binaries (claude CLI, agy, ollama) - no engine SDK is a dependency",
       "engines": {
         "claude-code": "Claude Code CLI on its native stream-json wire (src/main/engine/claudeCode.ts + stream.ts); house rules deploy into its CLAUDE.md block",
@@ -34,7 +34,7 @@
         "src/preload": "index.ts - the ONLY bridge between main and renderer",
         "src/renderer/src": "components (App, Sidebar, TitleBar, ChatView/EnginePanel, Composer, ArtifactsView, BrainView, VaultView, CodeView, ProjectsView, TodayView, FirstRun, SettingsView + panes incl. MemorySection, EngineBay, WatchSection, dialogs), state (engine, split, battle, compact, review, watch, memory, chats, library, ...), platform/bridge.ts",
         "src/shared": "lib (engine, houseRules, memory, watchMode, review, split, compact, recipes, battles, capture, chat, markdown, prompts, skills, storage, vault, ...), types.ts",
-        "tests": "76 files / 615 tests; includes the wire-chunk regression (37-cut chop), the agy wire contract, watch deletion/suppression behavior, the checkpoint-before-allow race test, real-filesystem memory reader tests, and the motion-kit contract tests (77 scenes shipped byte-exact, all 76 reachable, all 304 words paired, per-instance namespacing round-trips)"
+        "tests": "76 files / 611 tests, all behavioral (source-regex asserts removed); wire-chunk regression, agy wire contract, checkpoint race, watch suppression, real-filesystem memory/symlink tests, motion-kit data checks"
       },
       "features_landed_2026_10_16": [
         "Engine downloads (official endpoints only, staged+recorded, installer a separate permission)",

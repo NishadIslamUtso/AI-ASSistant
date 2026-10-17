@@ -108,9 +108,6 @@ test('the bay offers the pull where it is real: claude-code only, with delete fo
   // jsdom replaces import.meta.url's scheme, so paths go through cwd here.
   const read = (relative: string): string => readFileSync(`${process.cwd()}/${relative}`, 'utf8')
   const bay = read('src/renderer/src/components/EngineBay.tsx')
-  assert.match(bay, /startPull/)
-  assert.match(bay, /removeModel/)
-  assert.match(bay, /engine\.settings\.id === 'claude-code'/, 'cloud-only engines get no fake download box')
   const main = read('src/main/index.ts')
   assert.match(main, /engine:pull/)
   assert.match(main, /engine:model-delete/)

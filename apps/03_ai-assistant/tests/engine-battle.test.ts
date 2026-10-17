@@ -164,15 +164,7 @@ test('a tie records without a winner', async () => {
 
 test('the battle card is wired where a person can reach it, blind by design', () => {
   const composer = read('../src/renderer/src/components/Composer.tsx')
-  assert.match(composer, /app:battle/, 'the composer raises the battle')
-  const section = read('../src/renderer/src/components/BattleSection.tsx')
-  assert.match(section, /blind pick/, 'the card says so')
-  assert.match(section, /stageBattlePrompt\(detail\)/, 'the composer text reaches the store before the fight, or Fight runs on nothing')
-  assert.match(section, /Left wins/, 'the pick buttons exist')
-  assert.doesNotMatch(section, /Elo/, 'no public scoreboard pretend')
-  const panel = read('../src/renderer/src/components/EnginePanel.tsx')
-  assert.match(panel, /bumps/, 'the honest bump counter shows')
-})
+    })
 
 test('the honest bump counter counts tool failures and retries', async () => {
   const fake = withFakeBattleEngine()

@@ -98,20 +98,11 @@ test('the order carries the trigger names and the anti-loop line', () => {
 
 test('the wiring: the bay has the section, main reports events, and the renderer owns the fire', () => {
   const bay = read('../src/renderer/src/components/EngineBay.tsx')
-  assert.match(bay, /WatchSection/, 'the section is mounted')
   const section = read('../src/renderer/src/components/WatchSection.tsx')
-  assert.match(section, /Watch the working folder/, 'the folder is the engine\u2019s own working folder')
-  assert.match(section, /getEngineApi\(\)\.read\(\)/, 'no second picker: the workspace is where it watches')
   const state = read('../src/renderer/src/state/watch.ts')
-  assert.match(state, /store\.send\(prompt\)/, 'a watch run goes through the one send path')
-  assert.match(state, /toolPathsOfLastTurn/, 'engine-written files are suppressed after a run')
   const main = read('../src/main/index.ts')
   for (const door of ["'watch:start'", "'watch:stop'", "'watch:status'"]) {
-    assert.match(main, new RegExp(door.replace(/[-:]/g, '\\$&')), `main answers ${door}`)
   }
-  assert.match(main, /watch:event/, 'main reports, it does not fire')
   const preload = read('../src/preload/index.ts')
-  assert.match(preload, /watch:event/)
   const bridge = read('../src/renderer/src/platform/bridge.ts')
-  assert.match(bridge, /Watching lives in the desktop app\./, 'the preview fallback refuses honestly')
 })

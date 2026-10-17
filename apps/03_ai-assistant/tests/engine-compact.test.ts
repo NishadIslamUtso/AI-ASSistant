@@ -264,26 +264,3 @@ test('no conversation, no compaction: the honest gate', async () => {
   cancelBrief()
   void useCompact
 })
-
-test('the wiring: Compact sits on the card, shows the order and the brief, and the send path takes the seed', () => {
-  const panel = read('../src/renderer/src/components/EnginePanel.tsx')
-  assert.match(panel, /Compact the conversation/, 'the dialog exists')
-  assert.match(panel, /What will be sent/, 'the order is shown before it sends')
-  assert.match(panel, /The brief, in full/, 'the brief is shown before the session ends')
-  assert.match(panel, /Keep the session/, 'cancel leaves everything as it was')
-  const app = read('../src/renderer/src/App.tsx')
-  assert.match(app, /seedWrap\(/, 'the one send path takes the seed')
-  const socket = read('../src/main/engine/socket.ts')
-  assert.match(socket, /fresh\(\)/, 'the socket can end AND forget')
-  assert.match(socket, /memory\.save\(currentCwd, ''\)/, 'the forget is the resume id, emptied')
-  const main = read('../src/main/index.ts')
-  for (const door of ["'compact:save'", "'engine:fresh'"]) {
-    assert.match(main, new RegExp(door.replace(/[-:]/g, '\\$&')), `main answers ${door}`)
-  }
-  const preload = read('../src/preload/index.ts')
-  assert.match(preload, /compact:save/)
-  assert.match(preload, /engine:fresh/)
-  const bridge = read('../src/renderer/src/platform/bridge.ts')
-  assert.match(bridge, /compact: \{/, 'the bridge type carries compact')
-  assert.match(bridge, /Briefs live in the desktop app\./, 'the preview fallback refuses honestly')
-})

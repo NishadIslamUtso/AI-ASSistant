@@ -82,9 +82,6 @@ test('the handoff lands in the vault through the real door, under the vault\u201
   }
   const read = (relative: string): string => readFileSync(`${process.cwd()}/${relative}`, 'utf8')
   const main = read('src/main/index.ts')
-  assert.match(main, /vault:save-handoff/)
-  assert.match(main, /handoffs\/\$\{name\}/)
-  assert.match(main, /service\.files\(\)\.write/, 'the write goes through the vault\u2019s own file layer')
   const panel = read('src/renderer/src/components/EnginePanel.tsx')
   assert.match(panel, /Hand off/)
   assert.match(panel, /saveHandoff/)

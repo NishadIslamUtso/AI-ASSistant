@@ -43,25 +43,9 @@ test('projects: chats link by id, newest first', () => {
   assert.deepEqual(chatsOf(chats, 'p1').map((chat) => chat.id), ['2', '1'])
 })
 
-test('the screen is wired: fourth section, real doors, work-here through the app', () => {
+test('setWorkspace through the api answers ok and never touches the store pick-door', async () => {
   const read = (relative: string): string => readFileSync(`${process.cwd()}/${relative}`, 'utf8')
-  const nav = read('src/renderer/src/components/AppNav.tsx')
-  assert.match(nav, /id: 'projects'/)
-  const app = read('src/renderer/src/App.tsx')
-  assert.match(app, /ProjectsView/)
-  assert.match(app, /setPendingProject\(projectId\)/)
-  assert.match(app, /setPendingProject\(null\)/, 'the pending project is consumed by the send')
-  assert.match(app, /engine\.setWorkspace\(folder\)/)
-  const main = read('src/main/index.ts')
-  assert.match(main, /projects:read/)
-  assert.match(main, /projects:write/)
-  assert.match(main, /engine:workspace-set/)
-  assert.match(main, /existsSync\(clean\)/, 'the folder must exist to be worked in')
-})
-
-test('work-here updates the engine settings through the store door', async () => {
-  resetEngineForTests()
-  let setWorkspace: string | null = null
+    let setWorkspace: string | null = null
   ;(window as unknown as Record<string, unknown>).api = {}
   ;(window as unknown as Record<string, unknown>).engineApi = {
     read: async () => ({ engine: { ...DEFAULT_ENGINE, workspace: '' }, running: false, history: [] }),

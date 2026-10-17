@@ -84,25 +84,3 @@ test('the status line tells the truth for every ending', () => {
   assert.match(hookStatusLine('lint', 2, 100, 'no perms'), /exit 2 \(0\.1s\): no perms/)
   assert.match(hookStatusLine('lint', null, 10_000, ''), /did not finish in 10\.0s and was stopped/)
 })
-
-test('the wiring: the pane, the doors, and the fire point — with packs still unable to contribute one', () => {
-  const settings = read('../src/renderer/src/components/SettingsView.tsx')
-  assert.match(settings, /HooksSection/, 'the pane is registered')
-  assert.match(settings, /id: 'hooks'/, 'the pane is in the list')
-  const pane = read('../src/renderer/src/components/HooksSection.tsx')
-  assert.match(pane, /Run once/, 'a command can be tried before it is bound')
-  assert.match(pane, /no engine output is piped in/i, 'the pane says what a hook does NOT get')
-  const main = read('../src/main/index.ts')
-  for (const door of ["'hooks:list'", "'hooks:save'", "'hooks:remove'", "'hooks:test'"]) {
-    assert.match(main, new RegExp(door.replace(/[-:]/g, '\\$&')), `main answers ${door}`)
-  }
-  assert.match(main, /hookRunner\.run\('turn-done'\)/, 'hooks fire when a turn finishes')
-  assert.match(main, /hookRunner\.run\('turn-error'\)/, 'hooks fire when a turn fails')
-  assert.match(main, /hookRunner\.run\('permission'\)/, 'hooks fire when a card waits')
-  const preload = read('../src/preload/index.ts')
-  assert.match(preload, /hooks:list/)
-  const bridge = read('../src/renderer/src/platform/bridge.ts')
-  assert.match(bridge, /Hooks live in the desktop app\./, 'the preview fallback refuses honestly')
-  const packs = read('../src/main/engine/packs.ts')
-  assert.doesNotMatch(packs, /contributes\.hooks|hook/i, 'the pack format has no hook contribution, and stays that way')
-})

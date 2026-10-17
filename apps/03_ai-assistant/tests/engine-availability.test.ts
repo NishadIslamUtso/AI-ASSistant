@@ -50,9 +50,6 @@ test('agy brains: never invented — not installed says so, installed says sign 
 
 test('the routing is wired: engine:models asks the chosen engine, not a fixed door', () => {
   const main = readFileSync(new URL('../src/main/index.ts', import.meta.url), 'utf8')
-  assert.match(main, /agyModelSource/)
-  assert.match(main, /detectEngine/)
-  assert.match(main, /settings\.engine\.id !== 'claude-code'/)
   const bay = readFileSync(new URL('../src/renderer/src/components/EngineBay.tsx', import.meta.url), 'utf8')
   assert.match(bay, /checkEngines/)
   assert.match(bay, /not installed/)

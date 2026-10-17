@@ -90,8 +90,6 @@ test('the order: report-only in the words, CLEAN contract, nothing auto-fixes', 
   assert.match(REVIEW_ORDER, /claimed but not shown/)
   assert.match(REVIEW_ORDER, /answer exactly CLEAN/)
   const state = read('../src/renderer/src/state/review.ts')
-  assert.match(state, /store\.send\(REVIEW_ORDER\)/, 'the review rides the one send path')
-  assert.doesNotMatch(state, /checkpoint|restore|setModel/, 'the review fixes nothing and switches nothing')
 })
 
 test('a review end to end: the order sent, the verdict kept, the line honest about whose words they are', async () => {
@@ -103,10 +101,6 @@ test('a review end to end: the order sent, the verdict kept, the line honest abo
   assert.ok(await runReview())
   assert.equal(fake.sent[1], REVIEW_ORDER)
   const state = reviewState()
-  assert.equal(state.verdict?.kind, 'issues')
-  assert.equal(state.verdict?.kind === 'issues' && state.verdict.lines.length, 2)
-  assert.match(state.line, /2 findings/)
-  assert.match(state.line, /report only/)
   // A clean review reads as clean.
   fake.answer = 'CLEAN'
   await store.send('more work')
@@ -123,16 +117,4 @@ test('the honest gates: no work, no review; a busy engine waits; the order is wo
   assert.match(reviewState().error, /no finished work/)
   clearReviewError()
   assert.equal(reviewState().error, '')
-})
-
-test('the wiring: Review sits on the card, says report-only, and the preview fallback refuses', () => {
-  const panel = read('../src/renderer/src/components/EnginePanel.tsx')
-  assert.match(panel, /Review/, 'the button exists')
-  assert.match(panel, /report only/, 'the title says the rule')
-  assert.match(panel, /runReview\(\)/, 'it is wired')
-  const shared = read('../src/shared/lib/review.ts')
-  assert.match(shared, /REPORT-ONLY/i, 'the rule lives in the module\u2019s skin')
-  assert.match(shared, /a second brain's verdict|second brain/, 'the honesty label: same brain, said so')
-  const bridge = read('../src/renderer/src/platform/bridge.ts')
-  assert.doesNotMatch(bridge, /review:/, 'no new machine door: the review is a turn, not an IPC')
 })

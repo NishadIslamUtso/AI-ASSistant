@@ -1,9 +1,11 @@
-# The console-clean gate, on every push — the rule the owner set.
-# Runs the three checks the docs promise: types, tests, build.
+# The gate, on every push. Linux has always run this; Windows (the target
+# OS) joined 2026-10-17 in allow-failure mode until it has run green once —
+# a red X here is information, and hiding it would be the old habit this
+# repo is trying to lose.
 name: checks
 on: [push, pull_request]
 jobs:
-  checks:
+  linux:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -13,6 +15,27 @@ jobs:
       - name: Install
         working-directory: apps/03_ai-assistant
         run: npm install --no-audit --no-fund
+      - name: Types
+        working-directory: apps/03_ai-assistant
+        run: npx tsc --noEmit -p tsconfig.json
+      - name: Tests
+        working-directory: apps/03_ai-assistant
+        run: npx vitest run
+      - name: Build
+        working-directory: apps/03_ai-assistant
+        run: npm run build
+
+  windows:
+    runs-on: windows-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        working-directory: apps/03_ai-assistant
+        run: npm ci --no-audit --no-fund
       - name: Types
         working-directory: apps/03_ai-assistant
         run: npx tsc --noEmit -p tsconfig.json

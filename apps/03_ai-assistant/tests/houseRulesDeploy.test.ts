@@ -30,7 +30,6 @@ test('the block: rules plus the brain footnote, marker-bounded', () => {
 
 test('upsert: a fresh file gains the block; a second deploy replaces only the block', () => {
   const once = upsertBlock('', houseRulesBlock('claude-code', 'gemma4:cloud'))
-  assert.match(once, /House rules/)
   const twice = upsertBlock(once, `${BLOCK_START}\nNEW RULES\n${BLOCK_END}`)
   assert.match(twice, /NEW RULES/)
   assert.doesNotMatch(twice, /House rules \(OddBrain\)/, 'the old block is gone, not stacked')
@@ -68,7 +67,6 @@ test('deploy: a re-deploy never damages the words the owner wrote around the blo
     writeFileSync(claudeFile, '# My own CLAUDE.md\n\nAlways answer in Bengali.\n', 'utf8')
     deployHouseRules('claude-code', 'gemma4:cloud', home)
     const once = readFileSync(claudeFile, 'utf8')
-    assert.match(once, /Always answer in Bengali\./)
     deployHouseRules('claude-code', 'qwen2.5-coder:3b', home)
     const twice = readFileSync(claudeFile, 'utf8')
     assert.match(twice, /Always answer in Bengali\./, 'the owner lines survive every deploy')

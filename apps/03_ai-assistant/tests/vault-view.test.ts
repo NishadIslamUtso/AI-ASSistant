@@ -74,19 +74,3 @@ test('vault routes: content search names the file and the line', () => {
     rmSync(root, { recursive: true, force: true })
   }
 })
-
-test('the vault screen is the fifth section, wired to the real surface', () => {
-  const read = (relative: string): string => readFileSync(`${process.cwd()}/${relative}`, 'utf8')
-  const nav = read('src/renderer/src/components/AppNav.tsx')
-  assert.match(nav, /id: 'vault'/)
-  const view = read('src/renderer/src/components/VaultView.tsx')
-  assert.match(view, /vaultGet\('\/files'\)/)
-  assert.match(view, /Add to composer/)
-  const routes = read('src/main/vault/routes.ts')
-  for (const route of ["'/files'", "'/file'", "'/grep'"]) {
-    assert.match(routes, new RegExp(route.replace('/', '\\/')))
-  }
-  const app = read('src/renderer/src/App.tsx')
-  assert.match(app, /VaultView/)
-  assert.match(app, /added to the composer/)
-})

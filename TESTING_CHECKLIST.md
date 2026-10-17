@@ -5,7 +5,7 @@ Run it in this order; each line is a thing you can see with your own eyes.
 ## 1. Automated (no machine required)
 
 - [ ] `cd apps/03_ai-assistant && npm ci` completes
-- [ ] `npx vitest run` → **621 tests, 77 files, all passing**
+- [ ] `npx vitest run` → **611 tests, 76 files, all passing**
 - [ ] `npx tsc --noEmit` → no output
 
 > Every engine-era feature (battles, split, recipes, compaction, watch, review,

@@ -73,6 +73,9 @@ npmRebuild: false
 # The interface is served from the app's own process over http, so the packaged
 # build must not be sandboxed away from loopback.
 asar: true
+# Fuses are flipped on the packaged binary by @electron/fuses (scripts/apply-fuses.cjs):
+# no ELECTRON_RUN_AS_NODE, no NODE_OPTIONS, no --inspect in production.
+afterPack: scripts/apply-fuses.cjs
 
 win:
   target:
@@ -103,11 +106,3 @@ nsis:
   # it, and the app's settings live in the user's app-data folder — neither is the
   # installer's business to remove.
   deleteAppDataOnUninstall: false
-
-# Electron fuses: the packaged app refuses the classic abuse paths — no
-# Node-eval backdoor through ELECTRON_RUN_AS_NODE, no NODE_OPTIONS injection,
-# no --inspect on the production binary. Cheap, standard hardening.
-electronFuses:
-  enableRunAsNode: false
-  enableNodeOptionsEnvironmentVariable: false
-  enableNodeCliInspectArguments: false

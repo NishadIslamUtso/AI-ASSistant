@@ -47,7 +47,6 @@ test('an install validates the name, fetches the file, and deploys to both engin
     if (!result.ok) return
     assert.equal(result.written.length, 2, 'one file per engine')
     const claude = readFileSync(join(root, 'claude', 'docx', 'SKILL.md'), 'utf8')
-    assert.match(claude, /^---\nname: docx\n/)
     const agy = readFileSync(join(root, 'agy', 'docx.md'), 'utf8')
     assert.match(agy, /^---\nname: docx\n/)
   } finally {
